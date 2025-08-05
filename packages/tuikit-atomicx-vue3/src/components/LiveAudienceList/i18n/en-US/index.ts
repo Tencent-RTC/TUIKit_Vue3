@@ -1,0 +1,18 @@
+export const resource = {
+  'Online audience': 'Online audience',
+  'No audience yet': 'No audience yet',
+  Mute: 'Mute',
+  Unmute: 'Unmute',
+  'Kick out': 'Kick out',
+  'Invite to seat': 'Invite to seat',
+  'Cancel invitation': 'Cancel invitation',
+  'Accept invitation': 'Accept invitation',
+  'Reject invitation': 'Reject invitation',
+  'Operation successful': 'Operation successful',
+  'Operation failed': 'Operation failed',
+  Me: 'Me',
+  'Kick out of room': 'Kick out of room',
+  'Scroll to load more': 'Scroll to load more',
+  'Loading...': 'Loading...',
+  'Only show 200 viewers': 'Only show 200 viewers',
+};

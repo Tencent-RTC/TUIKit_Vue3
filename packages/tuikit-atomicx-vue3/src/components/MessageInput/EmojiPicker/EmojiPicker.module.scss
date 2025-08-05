@@ -1,0 +1,27 @@
+.emoji-picker {
+
+  &__icon {
+    cursor: pointer;
+  }
+
+  &__list {
+    display: flex;
+    flex-flow: row wrap;
+    gap: 8px;
+    width: 310px;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 10px;
+    background-color: var(--dropdown-color-default);
+    box-shadow: 0 0 10px 0 var(--shadow-color);
+
+    &-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+  }
+}

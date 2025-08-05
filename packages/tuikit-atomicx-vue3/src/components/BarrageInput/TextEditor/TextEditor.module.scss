@@ -1,0 +1,45 @@
+.input-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+  user-select: none;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-color-primary);
+
+  &.disabled {
+    cursor: not-allowed;
+  }
+}
+
+.input-prefix {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.input-suffix {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.editor {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  height: 100%;
+}
+
+.disabled-editor {
+  color: var(--text-color-secondary);
+  text-align: center;
+  line-height: 1.5;
+  font-size: 14px;
+  user-select: none;
+  pointer-events: none;
+}

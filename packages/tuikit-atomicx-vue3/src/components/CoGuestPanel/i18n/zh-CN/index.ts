@@ -1,0 +1,16 @@
+export const resource = {
+  'Application for live': '连麦申请',
+  'Invite for live': '邀请连麦',
+  'Seat is empty': '麦位空闲',
+  'No invited users yet': '暂无可邀请用户',
+  'Current seat': '当前麦位',
+  Accept: '接受',
+  Reject: '拒绝',
+  Disconnect: '断开连麦',
+  Cancel: '取消',
+  Invite: '邀请',
+  'Invite more': '邀请更多',
+  Inviting: '邀请中',
+  'No application for live': '暂无连麦申请',
+  Me: '我',
+};
