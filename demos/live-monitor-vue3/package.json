@@ -1,0 +1,26 @@
+{
+  "name": "vite-project",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tencentcloud/uikit-base-component-vue3": "0.3.6",
+    "@tencentcloud/uikit-base-widget-vue3": "0.0.1",
+    "tuikit-atomicx-vue3": "0.1.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/tsconfig": "^0.7.0",
+    "typescript": "~5.7.2",
+    "vite": "^6.2.0",
+    "sass": "^1.90.0",
+    "vue-tsc": "^2.2.4",
+    "replace": "^1.2.1"
+  }
+}
