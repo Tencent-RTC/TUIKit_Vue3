@@ -1,0 +1,25 @@
+.input-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  min-width: 0;
+  user-select: none;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-color-primary);
+
+  &.disabled {
+    cursor: not-allowed;
+  }
+}
+
+.input-prefix,
+.input-suffix {
+  display: flex;
+  align-items: center;
+}
+
+.editor {
+  flex: 1;
+  display: flex;
+}

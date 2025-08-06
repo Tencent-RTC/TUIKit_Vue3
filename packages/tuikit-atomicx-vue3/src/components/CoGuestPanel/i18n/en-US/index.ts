@@ -1,0 +1,16 @@
+export const resource = {
+  'Application for live': 'Application for live',
+  'Invite for live': 'Invite for live',
+  'Seat is empty': 'Seat is empty',
+  'No invited users yet': 'No invited users yet',
+  'Current seat': 'Current seat',
+  Accept: 'Accept',
+  Reject: 'Reject',
+  Disconnect: 'Disconnect',
+  Cancel: 'Cancel',
+  Invite: 'Invite',
+  'Invite more': 'Invite more',
+  Inviting: 'Inviting',
+  'No application for live': 'No application for live',
+  Me: 'Me',
+};

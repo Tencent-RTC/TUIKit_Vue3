@@ -1,0 +1,57 @@
+@use '../../../styles//mixins/scrollbar' as scrollbar;
+
+.tiptap.ProseMirror {
+  height: auto;
+  flex: 1 0 auto;
+  word-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+  -webkit-user-select: text;
+  user-select: text;
+  overflow-y: auto;
+  border: none !important;
+  outline: none !important;
+
+  @include scrollbar.scrollbar-base();
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  p {
+      margin: 0;
+      padding: 0;
+      font-style: normal;
+      outline: none !important;
+  }
+
+  img {
+      &.ProseMirror-selectednode {
+          outline: 2px solid #68cef8;
+      }
+  }
+
+  .message-emoji {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    user-select: text;
+    pointer-events: none;
+  }
+  .message-image {
+    display: inline-block;
+    width: 100px;
+    user-select: text;
+  }
+}
+
+
+
+.tiptap p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+

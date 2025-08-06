@@ -1,0 +1,41 @@
+{
+  "name": "tuikit-atomicx-vue3",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {},
+  "peerDependencies": {
+    "@tencentcloud/chat": "^3.5.4",
+    "@tencentcloud/chat-uikit-engine": "~2.5.1",
+    "@tencentcloud/tui-core": "latest",
+    "@tencentcloud/tuiroom-engine-js": "~3.2.1",
+    "@tencentcloud/uikit-base-component-vue3": "0.3.6",
+    "vue": "^3.4.21"
+  },
+  "dependencies": {
+    "@tencentcloud/universal-api": "^2.4.0",
+    "@tiptap/extension-image": "^2.11.5",
+    "@tiptap/extension-placeholder": "^2.11.5",
+    "@tiptap/starter-kit": "^2.11.5",
+    "@tiptap/vue-3": "^2.11.5",
+    "@vue/tsconfig": "^0.7.0",
+    "classnames": "^2.5.1",
+    "date-fns": "^4.1.0",
+    "reka-ui": "^2.1.1",
+    "axios": "^1.11.0",
+    "eventemitter3": "^4.0.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "@tencentcloud/eslint-config-hybrid": "~0.0.1",
+    "@types/node": "^22.15.18",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "glob": "^11.0.2",
+    "sass": "^1.72.0",
+    "typescript": "^5.5.4",
+    "vite": "^5.2.0",
+    "vite-plugin-dts": "^3.7.3",
+    "vite-plugin-static-copy": "^2.2.0",
+    "vue-tsc": "^2.0.6"
+  }
+}

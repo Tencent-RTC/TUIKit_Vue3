@@ -1,0 +1,43 @@
+.message-input {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-color-operate);
+  height: 160px;
+  flex-shrink: 0;
+  padding: 3px 10px 10px;
+  gap: 4px;
+
+  &__toolbar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    color: var(--text-color-secondary);
+    gap: 8px;
+  }
+
+  &__wrapper {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+
+  &__leftInline,
+  &__rightInline {
+    display: flex;
+    align-items: center;
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__footerToolbar {
+    display: flex;
+    justify-content: end;
+  }
+}
