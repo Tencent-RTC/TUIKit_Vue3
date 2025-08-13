@@ -16,6 +16,8 @@
 import { onMounted, ref } from 'vue';
 import { useLiveMonitorState } from 'tuikit-atomicx-vue3';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import router from '../router';
+import { ErrorCode } from '../types';
 
 const { t } = useUIKit();
 const { getLiveList, startPlay, stopPlay } = useLiveMonitorState();
@@ -42,9 +44,14 @@ const stopCurrentPageLive = async () => {
 const loadAndPlayNewPage = async () => {
   currentPageLiveList = await getLiveList(currentPage.value, pageSize);
   hasMoreData.value = currentPageLiveList.length >= pageSize;
-  currentPageLiveList.forEach((item: any) => {
-    startPlay(item.liveId, `live_monitor_view_${item.liveId}`);
-  });
+  for (const item of currentPageLiveList) {
+    startPlay(item.liveId, `live_monitor_view_${item.liveId}`).catch((error: any) => {
+      if (error === ErrorCode.LOGIN_TIMEOUT) {
+        localStorage.removeItem('tuiLiveMonitor-userInfo');
+        router.push('/login');
+      }
+    });
+  }
 };
 
 onMounted(() => {
