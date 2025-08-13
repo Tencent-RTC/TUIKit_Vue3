@@ -4,11 +4,13 @@
       :autoFocus="props.autoFocus"
       :containerClass="props.containerClass"
       :containerStyle="props.containerStyle"
+      :width="props.width"
       :height="props.height"
       :minHeight="props.minHeight"
       :maxHeight="props.maxHeight"
       :placeholder="props.placeholder"
       :disabled="props.disabled"
+      :maxLength="props.maxLength"
       @focus="handleFocus"
       @blur="handleBlur"
     />
@@ -24,20 +26,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, withDefaults, defineProps } from 'vue';
+import { ref, withDefaults, defineProps, defineEmits } from 'vue';
 import { useUIKit, TUIButton } from '@tencentcloud/uikit-base-component-vue3';
 import { useMessageInputState } from '../../states/MessageInputState';
 import BarrageInput from './BarrageInput.vue';
+
+const emit = defineEmits<{
+  (e: 'focus'): void;
+  (e: 'blur'): void;
+}>();
 
 interface Props {
   containerClass?: string;
   containerStyle?: Record<string, any>;
   height?: string;
+  width?: string;
   minHeight?: string;
   maxHeight?: string;
   placeholder?: string;
   disabled?: boolean;
   autoFocus?: boolean;
+  maxLength?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -48,6 +57,7 @@ const props = withDefaults(defineProps<Props>(), {
   maxHeight: '140px',
   disabled: false,
   autoFocus: false,
+  maxLength: 80,
 });
 
 const { t } = useUIKit();
@@ -77,10 +87,12 @@ const handleTouchEnd = () => {
 
 const handleFocus = async () => {
   isFocus.value = true;
+  emit('focus');
 };
 
 const handleBlur = () => {
   isFocus.value = false;
+  emit('blur');
 };
 </script>
 

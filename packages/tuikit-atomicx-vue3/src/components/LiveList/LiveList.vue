@@ -6,7 +6,7 @@
           <div class="live-room-cover">
             <div class="header">
               <div class="left">
-                <IconLiveCoverHeader :size="10"/>
+                <IconLiveCoverHeader :size="10" />
                 <span> {{ t('LIVE') }} </span>
               </div>
               <div class="right">
@@ -27,7 +27,7 @@
         <span>{{ t('No More') }}</span>
       </div>
     </div>
-    <div v-else-if="!isLoadingLiveList" class="no-live">
+    <div v-else-if="!isLoadingMore" class="no-live">
       <IconNoLiveRoom :size="60" />
       <span>{{ t('No Live') }}</span>
     </div>
@@ -39,41 +39,46 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, computed, defineEmits } from 'vue';
+import { ref, computed, defineEmits, watch } from 'vue';
 import { useUIKit, IconLiveCoverHeader, IconNoLiveRoom } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveState } from '../../states/LiveState';
 import { LiveInfo } from '../../types';
 import { useLoginState } from '../../states/LoginState';
 import { Avatar } from '../Avatar';
 
-const { liveList, hasMoreLive, isLoadingLiveList, isLoadingMore, fetchLiveList } = useLiveState();
+const { liveList, currentCursor, fetchLiveList } = useLiveState();
 const { loginUserInfo } = useLoginState();
 const { t } = useUIKit();
 
 const DEFAULT_COVER = 'https://liteav-test-1252463788.cos.ap-guangzhou.myqcloud.com/voice_room/voice_room_cover1.png';
 const scrollContainerRef = ref<HTMLElement | null>(null);
 
+const isLoadingMore = ref(false);
+const hasMoreLive = computed(() => currentCursor.value !== '');
+
 const shouldFetchMoreLiveList = computed(() => {
-  return hasMoreLive.value && !isLoadingMore.value && !isLoadingLiveList.value;
+  return hasMoreLive.value && !isLoadingMore.value;
 });
 
 const isShowMoreVisible = computed(() => {
   return shouldFetchMoreLiveList.value && !scrollContainerRef.value;
 });
 
-const emit = defineEmits<{
-  (e: 'live-room-click', liveInfo: LiveInfo): void;
-}>();
-
 watch(
   loginUserInfo,
-  user => {
+  async user => {
     if (user && user.userId) {
-      fetchLiveList({});
+      isLoadingMore.value = true;
+      await fetchLiveList({});
+      isLoadingMore.value = false;
     }
   },
   { immediate: true }
 );
+
+const emit = defineEmits<{
+  (e: 'live-room-click', liveInfo: LiveInfo): void;
+}>();
 
 function liveRoomClick(liveInfo: LiveInfo) {
   console.log('liveRoomClick,liveInfo:', liveInfo);
@@ -96,7 +101,17 @@ function handleWheel(event: WheelEvent) {
   }
 
   if (event.deltaY > 0 && isScrollAtBottom() && shouldFetchMoreLiveList.value) {
-    fetchLiveList({ append: true });
+    fetchMoreLives();
+  }
+}
+
+async function fetchMoreLives() {
+  if (!hasMoreLive.value || isLoadingMore.value) return;
+  try {
+    isLoadingMore.value = true;
+    await fetchLiveList({ cursor: currentCursor.value });
+  } finally {
+    isLoadingMore.value = false;
   }
 }
 
@@ -106,7 +121,6 @@ function handleCoverImageError(event: Event) {
     image.src = DEFAULT_COVER;
   }
 }
-
 </script>
 
 <style lang="scss" scoped>

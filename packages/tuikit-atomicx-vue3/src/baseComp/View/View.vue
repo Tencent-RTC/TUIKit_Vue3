@@ -1,7 +1,9 @@
 <template>
   <div
     :class="computedClass"
-    :style="props.style"
+    :style="{
+      gap: gap ? `${gap}px` : undefined,
+    }"
   >
     <slot />
   </div>
@@ -9,33 +11,28 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
-import type { CSSProperties } from 'vue';
 import cs from 'classnames';
 
 defineOptions({
   // eslint-disable-next-line vue/no-reserved-component-names
   name: 'View',
-  inheritAttrs: true,
 });
 
 interface ViewProps {
+  gap?: number;
   // 方向：row | column
   dir?: 'row' | 'column';
-  // 主轴对齐：flex-start | flex-end | center | space-between | space-around | space-evenly
+  // main aix：flex-start | flex-end | center | space-between | space-around | space-evenly
   justify?: 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
-  // 交叉轴对齐：flex-start | flex-end | center | baseline | stretch
+  // cross aix：flex-start | flex-end | center | baseline | stretch
   align?: 'flex-start' | 'flex-end' | 'center' | 'baseline' | 'stretch';
-  // 原有属性
-  class?: string;
-  style?: CSSProperties;
 }
 
 const props = withDefaults(defineProps<ViewProps>(), {
+  gap: undefined,
   dir: 'column',
   justify: undefined,
   align: undefined,
-  class: undefined,
-  style: undefined,
 });
 
 // 计算最终的 class
@@ -46,11 +43,10 @@ const computedClass = computed(() => cs(
     [`view__v--justify-${props.justify}`]: props.justify,
     [`view__v--align-${props.align}`]: props.align,
   },
-  props.class,
 ));
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .view__v {
   box-sizing: border-box;
   display: flex;
@@ -62,12 +58,12 @@ const computedClass = computed(() => cs(
   padding: 0;
   min-width: 0;
 
-  // 方向类
+  // direction class
   &--dir-row {
     flex-direction: row;
   }
 
-  // justify-content 类
+  // justify-content class
   &--justify-flex-start {
     justify-content: flex-start;
   }
@@ -92,7 +88,7 @@ const computedClass = computed(() => cs(
     justify-content: space-evenly;
   }
 
-  // align-items 类
+  // align-items class
   &--align-flex-start {
     align-items: flex-start;
   }

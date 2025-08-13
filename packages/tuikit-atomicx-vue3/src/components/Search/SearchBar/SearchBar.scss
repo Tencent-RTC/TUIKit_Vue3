@@ -1,0 +1,122 @@
+@use "sass:map";
+@use "@tencentcloud/uikit-base-component-vue3/src/providers/UIKitProvider/styles/variables.scss" as *;
+
+.SearchBar {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  gap: 10px;
+
+  &__left {
+    color: var(--text-color-secondary);
+  }
+
+  &__right {
+    font-size: 16px;
+    color: var(--text-color-secondary);
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    color: var(--text-color-secondary);
+  }
+
+  &__input {
+    flex: 1;
+
+    // 自定义 TUIInput 样式
+    .tui-input {
+      width: 100%;
+      
+      .tui-input__native-input {
+        height: 40px;
+        padding: 8px 12px 8px 40px;
+        border: 1px solid var(--stroke-color-primary);
+        border-radius: 20px;
+        font-size: 14px;
+        outline: none;
+        background-color: var(--bg-color-input);
+        color: var(--text-color-primary);
+
+        &::placeholder {
+          color: var(--text-color-tertiary);
+        }
+
+        &:focus {
+          border-color: var(--button-color-primary-default);
+          background-color: var(--bg-color-operate);
+        }
+      }
+
+      .tui-input__prefix-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-color-tertiary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+      }
+
+      .tui-input__clear-icon {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        color: var(--text-color-tertiary);
+        border-radius: 50%;
+
+        &:hover {
+          color: var(--text-color-secondary);
+          background-color: var(--bg-color-default);
+        }
+      }
+    }
+  }
+
+  &__clear-icon {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    transition: color 0.3s;
+
+    .clearIcon {
+      color: var(--text-color-disabled);
+      
+      &:hover {
+        color: var(--text-color-secondary);
+      }
+    }
+  }
+
+  &__clear-icon--default {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  &__button {
+    display: flex;
+    align-items: center;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  // H5 模式
+  &--h5 {
+    padding: 10px;
+  }
+} 

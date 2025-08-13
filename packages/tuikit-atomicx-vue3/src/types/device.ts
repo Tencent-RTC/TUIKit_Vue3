@@ -3,6 +3,8 @@ export enum DeviceError {
   NoDeviceDetected = 'NoDeviceDetected',
   NoSystemPermission = 'NoSystemPermission',
   NotSupportCapture = 'NotSupportCapture',
+  OccupiedError = 'OccupiedError',
+  UnknownError = 'UnknownError',
 }
 
 export enum AudioOutput {

@@ -5,7 +5,7 @@
   >
     <SearchBar
       v-if="enableSearch"
-      :placeholder="searchPlaceholder || t('TUIConversation.Search')"
+      :placeholder="searchPlaceholder || t('UserPicker.search')"
       :on-search="searchManager.handleSearch"
     />
 
@@ -17,7 +17,7 @@
         v-if="searchManager.isSearchEmpty.value"
         :class="$style['empty-search']"
       >
-        {{ t('TUIChat.No Result') }}
+        {{ t('UserPicker.no_result') }}
       </div>
       <ListMode
         v-else-if="!isTreeMode"
@@ -138,7 +138,7 @@ const updateNodeByKey = (nodeKey: string, partialNode: Partial<IUserPickerNode<a
   const newData = JSON.parse(JSON.stringify(internalDataSource.value));
 
   // Recursive function: find and update node
-  const updateNode = (nodes: Array<IUserPickerNode<any>>): boolean => {
+  const updateNode = (nodes: any[]): boolean => {
     for (let i = 0; i < nodes.length; i += 1) {
       if (nodes[i].key === nodeKey) {
         // Found target node, apply updates
@@ -176,7 +176,7 @@ const updateNodeByKey = (nodeKey: string, partialNode: Partial<IUserPickerNode<a
 
   // Try to update, return original data if node is not found
   if (Array.isArray(newData)) {
-    updateNode(newData as Array<IUserPickerNode<any>>);
+    updateNode(newData as any[]);
   }
   internalDataSource.value = newData;
 
@@ -189,7 +189,7 @@ const updateNodeByKey = (nodeKey: string, partialNode: Partial<IUserPickerNode<a
 // Implement methods exposed by ref
 const refMethods: IUserPickerRef<any> = {
   getSelectedItems: () => selectionManager.getSelectedItems(),
-  updateListData: (newDataSource: Array<IUserPickerRow<any>>) => {
+  updateListData: (newDataSource: any[]) => {
     // Update list data
     if (!isTreeMode.value) {
       internalDataSource.value = newDataSource;

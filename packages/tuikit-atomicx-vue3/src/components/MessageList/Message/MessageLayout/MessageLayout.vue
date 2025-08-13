@@ -129,6 +129,7 @@ function handleReadReceiptClose() {
         v-if="!isHiddenMessageMeta"
         :class="metaClasses"
         :status="message.status"
+        :flow="message.flow"
         :timestamp="message.time * 1000"
         :need-read-receipt="message.needReadReceipt"
         :read-receipt-info="message.readReceiptInfo"

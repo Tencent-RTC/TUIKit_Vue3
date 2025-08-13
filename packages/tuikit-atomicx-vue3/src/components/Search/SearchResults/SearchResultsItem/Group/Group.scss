@@ -1,0 +1,54 @@
+@use "sass:map";
+@use "@tencentcloud/uikit-base-component-vue3/src/providers/UIKitProvider/styles/variables.scss" as *;
+
+.SearchGroup {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.SearchGroup__avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.SearchGroup__info {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.SearchGroup__name {
+  width: 100%;
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-color-primary);
+}
+
+.SearchGroup__intro {
+  font-size: 12px;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+  color: var(--text-color-secondary);
+}
+
+:global(.SearchGroup__highlight) {
+  background-color: var(--bg-color-operate);
+  color: var(--text-color-link);
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 500;
+} 

@@ -3,7 +3,7 @@
     <LiveSceneSelect :displayMode="mediaSourceList.length === 0 ? 'panel' : 'button'" @addMaterial="selectMaterial" />
     <!-- 素材列表区域 -->
     <div class="materials-list">
-      <template v-for="material in mediaSourceList" :key="material.id">
+      <template v-for="material in mediaSourceListWithZOrderSort" :key="material.id">
         <MaterialItem
           :material="material"
           @cameraSetting="updateCameraSetting(material)"
@@ -57,6 +57,12 @@ const { getCameraList } = useDeviceState();
 TUIRoomEngine.once('ready', async () => {
   await getCameraList();
 });
+
+const mediaSourceListWithZOrderSort = computed(() =>
+  [...mediaSourceList.value].sort(
+    (item1: MediaSource, item2: MediaSource) => item2.layout?.zOrder - item1.layout?.zOrder
+  )
+);
 
 // 状态数据
 const showMaterialDialog = ref(false);

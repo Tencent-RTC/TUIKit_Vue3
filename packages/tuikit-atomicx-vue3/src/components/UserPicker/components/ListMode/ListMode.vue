@@ -3,7 +3,7 @@
     v-if="dataSource.length === 0"
     :class="$style.list__empty"
   >
-    {{ t('TUIChat.No Data Available') }}
+    {{ t('UserPicker.no_data_available') }}
   </div>
   <div
     v-else
@@ -64,7 +64,7 @@ import { Avatar } from '../../../Avatar';
 import type { IUserPickerRow } from '../../type';
 
 interface ListModeProps<T = unknown> {
-  dataSource: Array<IUserPickerRow<T>>;
+  dataSource: IUserPickerRow<T>[];
   selectedKeys: Set<string>;
   lockedKeys: Set<string>;
   onItemClick: (key: string) => void;

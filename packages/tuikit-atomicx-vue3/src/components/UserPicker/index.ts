@@ -8,6 +8,8 @@ import type {
   IUserPickerResult,
 } from './type';
 
+import './i18n';
+
 export type {
   IUserPickerProps,
   IUserPickerRef,

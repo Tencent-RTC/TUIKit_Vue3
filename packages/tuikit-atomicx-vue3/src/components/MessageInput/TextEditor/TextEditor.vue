@@ -1,11 +1,14 @@
 <template>
   <div :class="[styles['input-wrapper'], props.disabled && styles.disabled]">
     <div :class="styles['input-prefix']">
-      <slot name="prefix"></slot>
+      <slot name="prefix" />
     </div>
-    <div ref="editorRef" :class="styles['editor']"></div>
+    <div
+      ref="editorRef"
+      :class="styles['editor']"
+    />
     <div :class="styles['input-suffix']">
-      <slot name="suffix"></slot>
+      <slot name="suffix" />
     </div>
   </div>
 </template>
@@ -19,26 +22,26 @@ import { createEditor } from './EditorCore';
 import styles from './TextEditor.module.scss';
 import type { Editor } from './EditorCore';
 
-interface ITextEditorProps {
+interface TextEditorProps {
   autoFocus?: boolean;
   disabled?: boolean;
   placeholder?: string;
 }
 
-const props = withDefaults(defineProps<ITextEditorProps>(), {
+const props = withDefaults(defineProps<TextEditorProps>(), {
   autoFocus: true,
   disabled: false,
   placeholder: '',
 });
 
 const { t } = useUIKit();
-const { currentConversationID } = useConversationListState();
+const { activeConversation } = useConversationListState();
 const { updateRawValue, sendMessage, setEditorInstance, setContent } = useMessageInputState();
 
 const editorRef = ref<HTMLDivElement | null>(null);
 const isFocused = ref(props.autoFocus);
 
-const placeholderText = computed(() => (props.disabled ? '' : props.placeholder || t('TUIChat.Enter a message')));
+const placeholderText = computed(() => (props.disabled ? '' : props.placeholder || t('MessageInput.enter_a_message')));
 
 let editorInstance: Editor | null = null;
 
@@ -54,7 +57,7 @@ onMounted(() => {
       placeholder: placeholderText.value,
       autoFocus: props.autoFocus,
       disabled: props.disabled,
-      onUpdate: content => {
+      onUpdate: (content) => {
         updateRawValue(content);
       },
       onEnter: () => {
@@ -82,8 +85,8 @@ onUnmounted(() => {
   }
 });
 
-watch(currentConversationID, (newID, oldID) => {
-  if (newID !== oldID) {
+watch(activeConversation, (newConversation, oldConversation) => {
+  if (newConversation?.conversationID !== oldConversation?.conversationID) {
     setContent('');
   }
 });

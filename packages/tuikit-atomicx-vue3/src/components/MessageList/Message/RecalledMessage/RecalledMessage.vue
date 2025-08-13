@@ -4,18 +4,18 @@
     :style="props.style"
   >
     <template v-if="isMessageOwner">
-      {{ t('TUIChat.You') }}{{ t('TUIChat.recalled a message') }}
+      {{ t('MessageList.you') }}{{ t('MessageList.recalled_a_message') }}
       <View
         v-if="isTextMessage"
         role="button"
         class="recalled-message__button"
         @click="recallMessageToInput"
       >
-        {{ t('TUIChat.Re-edit') }}
+        {{ t('MessageList.reedit') }}
       </View>
     </template>
     <template v-else>
-      {{ otherDisplayName }} {{ t('TUIChat.recalled a message') }}
+      {{ otherDisplayName }} {{ t('MessageList.recalled_a_message') }}
     </template>
   </View>
 </template>

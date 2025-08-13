@@ -4,7 +4,7 @@
     :class="$style.selected__panel"
   >
     <div :class="$style.selected__header">
-      <span :class="$style.selected__title">{{ t('TUIChat.Selected') }}</span>
+      <span :class="$style.selected__title">{{ t('UserPicker.selected') }}</span>
       <span :class="$style.selected__count">
         {{ leafItems.length }}
         <template v-if="maxCount < InfinityValue"> / {{ maxCount }} </template>

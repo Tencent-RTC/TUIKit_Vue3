@@ -98,10 +98,11 @@ export interface JoinLiveParams {
 }
 
 export interface UpdateLiveInfoParams {
-  liveId: string;
+  liveId?: string;
   activityStatus?: number;
   categoryList?: Array<number>;
   coverUrl?: string;
   backgroundUrl?: string;
   isPublicVisible?: boolean;
+  layoutTemplate?: TUISeatLayoutTemplate;
 }

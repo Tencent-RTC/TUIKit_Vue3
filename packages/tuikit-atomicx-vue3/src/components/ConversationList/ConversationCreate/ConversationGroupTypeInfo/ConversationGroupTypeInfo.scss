@@ -1,0 +1,63 @@
+.conversationGroupTypeInfo {
+  display: flex;
+  flex-direction: column;
+  padding: 0 10px;
+  overflow-y: scroll;
+  color: var(--text-color-primary);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  &__box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-radius: 16px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    cursor: pointer;
+    background-color: var(--bg-color-operate);
+    border: 1px solid var(--stroke-color-primary);
+
+    &:hover {
+      border: 1px solid var(--text-color-link);
+    }
+
+    &--active {
+      border: 1px solid var(--text-color-link);
+    }
+  }
+
+  &__title {
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__description {
+    font-size: 12px;
+    line-height: 16px;
+    text-align: justify;
+    hyphens: auto;
+  }
+
+  &__document {
+    font-size: 16px;
+    text-align: justify;
+    text-decoration: none;
+    margin: 1rem auto;
+
+    &:link,
+    &:active,
+    &:visited {
+      color: var(--text-color-link);
+    }
+  }
+
+  &__activeIcon {
+    fill: var(--text-color-link) !important;
+  }
+}

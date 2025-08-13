@@ -27,7 +27,7 @@ const {
 const userPickerRef = ref<IUserPickerRef<undefined> | null>(null);
 
 // Convert conversation list to UserPicker data format
-const forwardListDataSource = computed((): Array<IUserPickerRow<undefined>> => {
+const forwardListDataSource = computed((): any[] => {
   if (!conversationList.value) {
     return [];
   }
@@ -59,7 +59,7 @@ const forwardListDataSource = computed((): Array<IUserPickerRow<undefined>> => {
 // Track if forward button should be disabled
 const isDisableConfirm = ref(true);
 
-function handleSelectedChange(selectedItems: Array<IUserPickerRow<undefined>>) {
+function handleSelectedChange(selectedItems: any[]) {
   isDisableConfirm.value = selectedItems.length === 0;
   // Update forwardConversationIDList to maintain compatibility with existing logic
   forwardConversationIDList.value = selectedItems.map(item => item.key);
@@ -105,7 +105,7 @@ function closeMessageForward() {
         @click="closeMessageForward"
       />
       <span class="forward-header__title">
-        {{ t('TUIChat.Forward') }}
+        {{ t('MessageList.forward') }}
       </span>
       <div class="forward-header__placeholder" />
     </View>
@@ -118,7 +118,7 @@ function closeMessageForward() {
       :on-selected-change="handleSelectedChange"
       :on-max-count-exceed="() => {
         TUIToast.error({
-          message: t('TUIChat.Max Count Exceed'),
+          message: t('MessageList.max_count_exceed'),
         });
       }"
     />
@@ -131,7 +131,7 @@ function closeMessageForward() {
         :disabled="isDisableConfirm"
         @click="forward"
       >
-        {{ t('TUIChat.Forward') }}
+        {{ t('MessageList.forward') }}
       </TUIButton>
     </View>
   </Modal>

@@ -11,6 +11,7 @@ import MessageStatusIcon from './MessageStatusIcon.vue';
 interface MessageMetaProps {
   isGroup: boolean;
   timestamp: number;
+  flow: string;
   needReadReceipt?: boolean;
   readReceiptInfo?: {
     readCount: number;
@@ -24,6 +25,7 @@ interface MessageMetaProps {
 
 const props = withDefaults(defineProps<MessageMetaProps>(), {
   timestamp: 0,
+  flow: '',
   needReadReceipt: false,
   readReceiptInfo: undefined,
   status: undefined,
@@ -41,9 +43,11 @@ const handleGroupUnreadClick = () => {
   emits('onReadReceiptTextClick');
 };
 
-const shouldShowStatusIcon = computed(() => !props.needReadReceipt
-  || props.status === 'unSend'
-  || props.status === 'fail');
+const shouldShowStatusIcon = computed(() => (
+  props.flow === 'out'
+  && (!props.needReadReceipt
+    || props.status === 'unSend'
+    || props.status === 'fail')));
 
 const readReceiptText = computed(() => {
   if (!props.needReadReceipt || props.status !== 'success' || !props.readReceiptInfo) {
@@ -52,14 +56,14 @@ const readReceiptText = computed(() => {
 
   if (props.isGroup) {
     if (props.readReceiptInfo.unreadCount > 0) {
-      return `${props.readReceiptInfo.unreadCount} ${t('TUIChat.UNREAD')} ·`;
+      return `${props.readReceiptInfo.unreadCount} ${t('MessageList.unread')} ·`;
     }
-    return `${t('TUIChat.ALL_READ')} ·`;
+    return `${t('MessageList.all_read')} ·`;
   }
   if (props.readReceiptInfo.isPeerRead) {
-    return `${t('TUIChat.READ')} ·`;
+    return `${t('MessageList.read')} ·`;
   }
-  return `${t('TUIChat.UNREAD')} ·`;
+  return `${t('MessageList.unread')} ·`;
 });
 </script>
 
