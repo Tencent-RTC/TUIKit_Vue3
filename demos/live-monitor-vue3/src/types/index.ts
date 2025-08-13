@@ -5,3 +5,7 @@ export type BasicUserInfo = {
   userName: string,
   avatarUrl: string,
 }
+
+export enum ErrorCode {
+  LOGIN_TIMEOUT = -70001,
+}

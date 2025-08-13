@@ -8,10 +8,14 @@
         ></div>
         <LiveMonitorView class="live-monitor-view" :live-info="item" />
         <div class="live-id">{{ `${t('RoomId')} ${item.liveId}` }}</div>
-        <div v-if="!isFullscreen" class="display-details" @click="handleClickDetails(item.liveId)">
+        <div v-show="!isFullscreen" class="display-details" @click="handleClickDetails(item.liveId)">
           {{ 'Display details' }}
         </div>
-        <IconClose v-else class="close-fullscreen" :size="32" @click="handleCloseFullscreen" />
+        <IconClose v-show="isFullscreen" class="close-fullscreen" :size="32" @click="handleCloseFullscreen" />
+        <div v-show="isFullscreen" class="toggle-audio-button" @click="toggleMuteAudio(item.liveId)">
+          <IconMute size="32" v-if="isMuted" />
+          <IconSpeakerPhone size="32" v-else />
+        </div>
       </div>
       <div class="live-info">
         <div class="live-name">{{ item.liveName }}</div>
@@ -43,14 +47,18 @@ import {
   IconClock,
   IconClose,
   IconEndLive,
+  IconMute,
+  IconSpeakerPhone,
   useUIKit,
 } from '@tencentcloud/uikit-base-component-vue3';
 import { defaultCoverUrl } from '../config';
 import { setFullScreen, exitFullScreen } from '../utils';
 
-const { monitorLiveInfoList, closeRoom, stopPlay } = useLiveMonitorState();
+const { monitorLiveInfoList, closeRoom, stopPlay, muteLiveAudio } = useLiveMonitorState();
 const { t } = useUIKit();
 const isFullscreen = ref(false);
+const isMuted = ref(true);
+let isFullscreenLiveId = '';
 
 const handleCloseLive = async (liveId: string) => {
   await stopPlay(liveId);
@@ -61,7 +69,7 @@ const handleClickDetails = (liveId: string) => {
   const element = document.getElementById(liveId);
   if (element) {
     setFullScreen(element);
-    isFullscreen.value = true;
+    isFullscreenLiveId = liveId;
   }
 };
 
@@ -71,20 +79,31 @@ const handleCloseFullscreen = () => {
   }
 };
 
-const handleFullscreenChange = () => {
+const toggleMuteAudio = async (liveId: string) => {
+  const newMutedState = !isMuted.value;
+  await muteLiveAudio(liveId, newMutedState);
+  isMuted.value = newMutedState;
+};
+
+const onFullscreenChange = async () => {
   if (document.fullscreenElement) {
     isFullscreen.value = true;
   } else {
     isFullscreen.value = false;
+    if (!isMuted.value && isFullscreenLiveId) {
+      await muteLiveAudio(isFullscreenLiveId, true);
+      isMuted.value = true;
+      isFullscreenLiveId = '';
+    }
   }
 };
 
 onMounted(() => {
-  addEventListener('fullscreenchange', handleFullscreenChange);
+  addEventListener('fullscreenchange', onFullscreenChange);
 });
 
 onUnmounted(() => {
-  removeEventListener('fullscreenchange', handleFullscreenChange);
+  removeEventListener('fullscreenchange', onFullscreenChange);
 });
 </script>
 
@@ -109,13 +128,15 @@ onUnmounted(() => {
       position: relative;
       display: flex;
       justify-content: center;
+      align-items: center;
       width: 100%;
       height: 270px;
       border-radius: 12px;
       overflow: hidden;
 
       .display-details,
-      .close-fullscreen {
+      .close-fullscreen,
+      .toggle-audio-button {
         position: absolute;
         color: var(--text-color-secondary);
         font-size: 14px;
@@ -139,6 +160,11 @@ onUnmounted(() => {
       .close-fullscreen {
         top: 32px;
         right: 32px;
+      }
+
+      .toggle-audio-button {
+        top: 32px;
+        right: 72px;
       }
 
       .live-view-background {
