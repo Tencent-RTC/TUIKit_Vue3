@@ -1,0 +1,135 @@
+.conversationCreateUserSelectList {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &__searchInput {
+    padding: 8px 16px;
+  }
+
+  &__user {
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--text-color-link);
+
+    &:hover {
+      background-color: var(--list-color-hover);
+    }
+
+    &--active {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-color-link);
+    }
+
+    &Name {
+      flex: 1;
+      font-size: 14px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: keep-all;
+      text-align: left;
+      color: var(--text-color-primary);
+
+      &--active {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text-color-link);
+      }
+    }
+  }
+
+  &__userCheckbox {
+    cursor: pointer;
+    color: var(--text-color-primary);
+  }
+
+  &__activeIcon {
+    color: var(--text-color-link);
+  }
+
+  &__nextContainer {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 20px auto 10px;
+  }
+
+  &__next {
+    cursor: pointer;
+    text-align: center;
+    border-radius: 31px;
+    font-size: 14px;
+    color: #fff;
+    padding: 12px 36px;
+    background-color: var(--text-color-link);
+  }
+
+  &__container {
+    height: 0;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    padding: 0 10px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  &__list {
+    position: relative;
+  }
+
+  &__groupContainer {
+    width: 100%;
+  }
+
+  &__title {
+    font-weight: 600;
+    font-size: 12px;
+    padding: 8px 10px;
+    text-align: left;
+    color: var(--text-color-secondary);
+  }
+
+  &__groupBox {
+    width: 100%;
+  }
+
+  &__userAvatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    margin-right: 8px;
+  }
+
+  &__userInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+  }
+
+  &__userName {
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-color-primary);
+  }
+
+  &__userID {
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-color-secondary);
+  }
+}

@@ -1,7 +1,9 @@
 import { AttachmentPicker, FilePicker, ImagePicker, VideoPicker } from './AttachmentPicker';
 import { EmojiPicker } from './EmojiPicker';
-import { TextEditor } from './TextEditor';
 import MessageInput from './MessageInput.vue';
+import { TextEditor } from './TextEditor';
+
+import './i18n';
 
 export {
   TextEditor,

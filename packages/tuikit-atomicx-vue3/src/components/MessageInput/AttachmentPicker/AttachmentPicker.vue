@@ -70,13 +70,13 @@ const { t } = useUIKit();
 const isCollapsed = computed(() => props.attachmentPickerMode === 'collapsed');
 
 const pickerItems = computed(() => [
-  { type: 'File', Component: FilePicker },
-  { type: 'Image', Component: ImagePicker },
-  { type: 'Video', Component: VideoPicker },
+  { type: 'file', Component: FilePicker },
+  { type: 'image', Component: ImagePicker },
+  { type: 'video', Component: VideoPicker },
 ].map(({ type, Component }) => ({
   Component,
   props: {
-    label: isCollapsed.value ? t(`TUIChat.${type}`) : '',
+    label: isCollapsed.value ? t(`MessageInput.${type}`) : '',
     iconSize: isCollapsed.value ? ICON_SIZE.COLLAPSED : ICON_SIZE.EXPANDED,
   },
 })));

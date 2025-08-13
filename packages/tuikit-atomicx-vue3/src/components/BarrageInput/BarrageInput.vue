@@ -9,12 +9,16 @@
         :placeholder="disabledAndPlaceholder.placeholder"
         :disabled="disabledAndPlaceholder.disabled"
         :autoFocus="autoFocus"
+        :maxLength="props.maxLength"
         @focus="emit('focus')"
         @blur="emit('blur')"
       >
         <template #prefix>
           <div class="input-actions">
-            <EmojiPicker :disabled="disabledAndPlaceholder.disabled" :trigger-style="{ display: 'flex' }" />
+            <EmojiPicker
+              :disabled="disabledAndPlaceholder.disabled"
+              :trigger-style="{ display: 'flex' }"
+            />
           </div>
         </template>
       </TextEditor>
@@ -24,11 +28,11 @@
 
 <script setup lang="ts">
 import { computed, defineProps, withDefaults, defineEmits } from 'vue';
+import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { useLiveAudienceState } from '../../states/LiveAudienceState';
+import { useLoginState } from '../../states/LoginState';
 import { EmojiPicker } from './EmojiPicker';
 import TextEditor from './TextEditor/TextEditor.vue';
-import { useLoginState } from '../../states/LoginState';
-import { useLiveAudienceState } from '../../states/LiveAudienceState';
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 
 const emit = defineEmits<{
   (e: 'focus'): void;
@@ -41,12 +45,14 @@ const { audienceList } = useLiveAudienceState();
 interface Props {
   containerClass?: string;
   containerStyle?: Record<string, any>;
+  width?: string;
   height?: string;
   minHeight?: string;
   maxHeight?: string;
   placeholder?: string;
   disabled?: boolean;
   autoFocus?: boolean;
+  maxLength?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -57,6 +63,7 @@ const props = withDefaults(defineProps<Props>(), {
   maxHeight: '140px',
   disabled: false,
   autoFocus: true,
+  maxLength: 80,
 });
 
 const containerStyle = computed(() => {
@@ -67,6 +74,10 @@ const containerStyle = computed(() => {
 
   if (props.height) {
     defaultStyle.height = props.height;
+  }
+
+  if (props.width) {
+    defaultStyle.width = props.width;
   }
 
   return { ...defaultStyle, ...props.containerStyle };

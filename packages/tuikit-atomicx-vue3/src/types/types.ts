@@ -1886,3 +1886,31 @@ export enum TUILiveLayoutManagerEvents {
    */
   onLiveVideoLayoutListChanged = 'onLiveVideoLayoutListChanged',
 }
+
+/**
+ * 直播间麦位排版模板
+ *
+ * @enum {Number}
+ */
+const TUISeatLayoutTemplate_HACK_JSDOC = {
+  /** 横屏动态1v3 */
+  LandscapeDynamic_1v3: 200,
+  /** 竖屏动态9宫格 */
+  PortraitDynamic_Grid9: 600,
+  /** 竖屏动态1v6  */
+  PortraitDynamic_1v6: 601,
+  /** 竖屏固定9宫格 */
+  PortraitFixed_Grid9: 800,
+  /** 竖屏固定1v6 */
+  PortraitFixed_1v6: 801,
+  /** 竖屏6v6 */
+  PortraitFixed_6v6: 802,
+};
+export enum TUISeatLayoutTemplate {
+  LandscapeDynamic_1v3 = 200,
+  PortraitDynamic_Grid9 = 600,
+  PortraitDynamic_1v6 = 601,
+  PortraitFixed_Grid9 = 800,
+  PortraitFixed_1v6 = 801,
+  PortraitFixed_6v6 = 802,
+}

@@ -4,7 +4,8 @@ import StarterKit from '@tiptap/starter-kit';
 import { Extension, Editor } from '@tiptap/vue-3';
 import { MessageContentType } from '../../../states/MessageInputState';
 import { isMobile } from '../../../utils/environment';
-import type { IInputContent } from '../../../states/MessageInputState';
+import { CharacterCount } from './CharacterCountExtension';
+import type { InputContent } from '../../../states/MessageInputState';
 import type { JSONContent, EditorOptions as TiptapEditorOptions } from '@tiptap/vue-3';
 import './Editor.scss';
 
@@ -71,7 +72,7 @@ function createEnterKeyExtension(options?: { onEnter?: (() => void) | undefined 
   });
 }
 
-function convertEditorContent(node: JSONContent): IInputContent[] {
+function convertEditorContent(node: JSONContent): InputContent[] {
   if (!node?.content) {
     return [];
   }
@@ -123,10 +124,11 @@ interface EditorOptions {
   placeholder?: string;
   autoFocus?: boolean;
   disabled?: boolean;
-  onUpdate?: (content: IInputContent[]) => void;
+  onUpdate?: (content: InputContent[]) => void;
   onEnter?: () => void;
   onFocus?: () => void;
   onBlur?: () => void;
+  maxLength?: number;
 }
 
 function createEditor({
@@ -134,6 +136,7 @@ function createEditor({
   placeholder = '',
   autoFocus = false,
   disabled = false,
+  maxLength,
   onUpdate,
   onEnter,
   onFocus,
@@ -141,6 +144,9 @@ function createEditor({
 }: EditorOptions) {
   const createBaseExtensions = (enterHandler?: () => void) => [
     StarterKit,
+    CharacterCount.configure({
+      limit: maxLength,
+    }),
     createEnterKeyExtension(enterHandler ? { onEnter: enterHandler } : undefined),
     createEmojiExtension(),
     createImageExtension(),

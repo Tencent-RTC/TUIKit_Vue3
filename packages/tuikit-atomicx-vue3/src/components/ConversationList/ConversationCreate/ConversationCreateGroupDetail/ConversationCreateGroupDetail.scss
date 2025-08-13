@@ -1,0 +1,102 @@
+.conversationCreateGroupDetail {
+  &__nextContainer {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 20px auto 10px;
+  }
+
+  &__next {
+    cursor: pointer;
+    text-align: center;
+    border-radius: 31px;
+    font-size: 14px;
+    padding: 12px 36px;
+    background-color: var(--text-color-link);
+  }
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    padding: 0 10px;
+    overflow-y: auto;
+    color: var(--text-color-primary);
+  }
+
+  &__box {
+    padding: 10px 0;
+    position: relative;
+  }
+
+  &__inputText {
+    font-weight: 600;
+    font-size: 16px !important;
+    border-bottom: 1px solid var(--stroke-color-primary);
+    color: var(--text-color-primary);
+
+    &::placeholder {
+      font-weight: 400;
+      font-size: 16px;
+      color: var(--text-color-tertiary) 40%;
+    }
+  }
+
+  &__inputReadonly {
+    position: absolute;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+  }
+
+  &__inputTitle {
+    font-weight: 400;
+    font-size: 16px;
+    padding: 0 10px 0 6px;
+    color: var(--text-color-tertiary) 40%;
+  }
+
+  &__illustrate {
+    font-size: 12px;
+    line-height: 16px;
+    text-align: justify;
+    padding: 0 14px;
+    hyphens: auto;
+    color: var(--text-color-tertiary) 40%;
+  }
+
+  &__portrait {
+    &Title {
+      font-weight: 600;
+      font-size: 14px;
+      padding: 12px 0 12px 10px;
+      color: var(--text-color-primary);
+    }
+
+    &InfoContainer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      margin-bottom: 10px;
+      padding: 0 10px;
+    }
+
+    &Info {
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+      padding: 6px;
+      box-sizing: border-box;
+
+      &Nick {
+        font-size: 12px;
+        margin-top: 6px;
+        max-width: 48px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+}

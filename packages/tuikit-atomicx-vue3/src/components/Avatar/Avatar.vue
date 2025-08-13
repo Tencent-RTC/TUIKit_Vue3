@@ -11,13 +11,12 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, useSlots, h, CSSProperties } from 'vue';
+import { computed, ref, useSlots, h } from 'vue';
+import type { CSSProperties } from 'vue';
 import { Badge } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { AvatarBadge as AvatarOnlineBadge } from './AvatarBadge';
-
-// Default avatar image
-const DEFAULT_AVATAR_URL = 'https://web.sdk.qcloud.com/component/TUIKit/assets/avatar_21.png';
+import { DEFAULT_USER_AVATAR } from './constants/avatar';
 
 // Avatar size type
 type AvatarSize = 'xxl' | 'xl' | 'lg' | 'md' | 'sm' | 'xs' | number;
@@ -212,7 +211,7 @@ const baseAvatar = computed(() => h(
       }
       return h('img', {
         class: 'avatar__image',
-        src: DEFAULT_AVATAR_URL,
+        src: DEFAULT_USER_AVATAR,
         alt: 'default avatar',
         onLoad: () => setIsLoading(false),
         onError: () => setIsLoading(false),

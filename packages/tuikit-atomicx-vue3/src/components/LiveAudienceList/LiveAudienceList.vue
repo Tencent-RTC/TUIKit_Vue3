@@ -49,7 +49,7 @@
       </div>
     </div>
     <div
-      v-if="loginUserInfo && localLiveStatus === LiveStatus.Live"
+      v-if="loginUserInfo && localLiveStatus === LiveStatus.Live && !isOwner"
       class="viewer-item current-user-item"
     >
       <span class="rank">-</span>

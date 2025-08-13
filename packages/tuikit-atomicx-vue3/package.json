@@ -1,8 +1,29 @@
 {
   "name": "tuikit-atomicx-vue3",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": [
+    "*.css",
+    "*.scss",
+    "*.sass"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./chat": {
+      "types": "./dist/chat/index.d.ts",
+      "import": "./dist/chat/index.js"
+    },
+    "./rtc": {
+      "types": "./dist/rtc/index.d.ts",
+      "import": "./dist/rtc/index.js"
+    }
+  },
   "scripts": {},
   "peerDependencies": {
     "@tencentcloud/chat": "^3.5.4",
@@ -16,6 +37,7 @@
     "@tencentcloud/universal-api": "^2.4.0",
     "@tiptap/extension-image": "^2.11.5",
     "@tiptap/extension-placeholder": "^2.11.5",
+    "@tiptap/pm": "^3.1.0",
     "@tiptap/starter-kit": "^2.11.5",
     "@tiptap/vue-3": "^2.11.5",
     "@vue/tsconfig": "^0.7.0",

@@ -100,36 +100,36 @@ const actions = computed(() => {
   if (isInCoGuest) {
     tempActions.push({ label: t('Kick out'), action: 'disconnect', actionFn: () => disconnect(props.userId) });
   }
-  if (isAvailableCoGuest) {
-    tempActions.push({
-      label: t('Invite to seat'),
-      action: 'takeSeat',
-      actionFn: () =>
-        sendCoGuestRequest({
-          userId: props.userId,
-          seatIndex: -1,
-        }),
-    });
-  }
-  if (isSentCoGuest) {
-    tempActions.push({
-      label: t('Cancel invitation'),
-      action: 'cancelCoGuestRequest',
-      actionFn: () => cancelCoGuestRequest({ userId: props.userId }),
-    });
-  }
-  if (isReceivedCoGuest) {
-    tempActions.push({
-      label: t('Accept invitation'),
-      action: 'acceptCoGuestRequest',
-      actionFn: () => acceptCoGuestRequest({ userId: props.userId }),
-    });
-    tempActions.push({
-      label: t('Reject invitation'),
-      action: 'rejectCoGuestRequest',
-      actionFn: () => rejectCoGuestRequest({ userId: props.userId }),
-    });
-  }
+  // if (isAvailableCoGuest) {
+  //   tempActions.push({
+  //     label: t('Invite to seat'),
+  //     action: 'takeSeat',
+  //     actionFn: () =>
+  //       sendCoGuestRequest({
+  //         userId: props.userId,
+  //         seatIndex: -1,
+  //       }),
+  //   });
+  // }
+  // if (isSentCoGuest) {
+  //   tempActions.push({
+  //     label: t('Cancel invitation'),
+  //     action: 'cancelCoGuestRequest',
+  //     actionFn: () => cancelCoGuestRequest({ userId: props.userId }),
+  //   });
+  // }
+  // if (isReceivedCoGuest) {
+  //   tempActions.push({
+  //     label: t('Accept invitation'),
+  //     action: 'acceptCoGuestRequest',
+  //     actionFn: () => acceptCoGuestRequest({ userId: props.userId }),
+  //   });
+  //   tempActions.push({
+  //     label: t('Reject invitation'),
+  //     action: 'rejectCoGuestRequest',
+  //     actionFn: () => rejectCoGuestRequest({ userId: props.userId }),
+  //   });
+  // }
   tempActions.push({
     label: t('Kick out of room'),
     action: 'kickUserOutOfRoom',

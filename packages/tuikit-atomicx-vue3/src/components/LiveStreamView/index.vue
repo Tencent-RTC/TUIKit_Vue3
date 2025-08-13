@@ -8,7 +8,7 @@
       <div class="live-stream-ui" v-if="needPlayStreamViewInfo.length > 0">
         <div v-for="(item, index) in needPlayStreamViewInfo" :key="`seat-${index}`" :style="item.region">
           <slot name="streamViewUI" v-bind="{ userInfo: item.userInfo }"></slot>
-          <DefaultStreamViewUI :containerStyle="item.region" v-if="!$slots.streamViewUI" :userInfo="item.userInfo" />
+          <DefaultStreamViewUI :streamViewInfoList="needPlayStreamViewInfo" v-if="!$slots.streamViewUI" :userInfo="item.userInfo" />
         </div>
       </div>
       <slot
@@ -28,6 +28,7 @@ import { useLiveSeatState } from '../../states/LiveSeatState';
 import { useLoginState } from '../../states/LoginState';
 import { useLiveState } from '../../states/LiveState';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { SeatUserInfo } from '../../types';
 
 const { t } = useUIKit();
 const { seatList, canvas, startPlayStream, stopPlayStream } = useLiveSeatState();
@@ -70,7 +71,7 @@ const seatListWithRealSize = computed(() => {
   return seatList.value.map((item, index) => {
     const ratioLayout = ratioLayoutList.value[index];
     return {
-      userInfo: item.userInfo,
+      userInfo: item.userInfo as SeatUserInfo,
       region: {
         position: 'absolute' as const,
         left: `${streamViewSize.value.width * ratioLayout.x}px`,

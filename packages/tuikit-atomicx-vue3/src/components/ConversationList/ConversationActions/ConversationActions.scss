@@ -1,0 +1,73 @@
+.conversationActions {
+  position: relative;
+
+  &__popup-icon {
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: var(--hover-bg-color, #f0f0f0);
+    }
+
+    .more-icon {
+      font-size: 16px;
+      color: var(--text-color-secondary, #666);
+      font-weight: bold;
+    }
+  }
+
+  &__container {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    border-radius: 4px;
+    box-shadow: 0 0 10px var(--shadow-color);
+    background-color: var(--bg-color-operate);
+    z-index: 100;
+    min-width: 120px;
+  }
+
+  &__h5__container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--bg-color-operate);
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 0 10px var(--shadow-color);
+    z-index: 100;
+    padding: 16px;
+  }
+
+  &__item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-color-primary, #333);
+    border-bottom: 1px solid var(--stroke-color-primary, #f0f0f0);
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+      background-color: var(--dropdown-color-active, #f8f9fa);
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &--delete {
+      color: var(--text-color-error, #dc3545);
+    }
+
+    .action-icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+  }
+} 

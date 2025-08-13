@@ -1,0 +1,42 @@
+const MessageList = {
+
+  // GroupTipMessage
+  administrator: 'Administrator',
+  enabled_mute_all_members: 'enabled mute all members',
+  disabled_mute_all_members: 'disabled mute all members',
+  became_new_group_owner: 'became the new group owner',
+  changed_group_name_to: 'changed group name to',
+  published_new_announcement: 'published new group notification',
+  joined_group: 'joined the group',
+  group_member: 'Group member',
+  left_group: 'left the group',
+  was: 'was',
+  kicked_out_of_group: 'kicked out of the group',
+  became_admin: 'became admin',
+  admin_privileges_revoked: 'admin privileges revoked',
+  was_muted: 'was muted',
+  was_unmuted: 'was unmuted',
+  group_tip_message: 'Group tip message',
+
+  // TUIChat
+  download_failed: 'Download failed',
+  create_group: 'Create Group',
+  unread: 'Unread',
+  all_read: 'All Read',
+  read: 'Read',
+  you: 'You',
+  recalled_a_message: 'recalled a message',
+  reedit: 'Re-edit',
+  origin_message_has_been_recalled: 'Original message has been recalled',
+  forward: 'Forward',
+  max_count_exceed: 'Max Count Exceed',
+  read_receipt_detail: 'Read Receipt Detail',
+  read_count: 'Read Count',
+  unread_count: 'Unread Count',
+  loading: 'Loading',
+  no_read_members: 'No Read Members',
+  no_more: 'No More',
+  no_unread_members: 'No Unread Members',
+};
+
+export default MessageList;

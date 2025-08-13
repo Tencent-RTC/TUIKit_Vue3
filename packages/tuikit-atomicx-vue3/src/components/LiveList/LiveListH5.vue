@@ -1,6 +1,12 @@
 <template>
   <div class="live-list-panel-h5" v-if="loginUserInfo">
-    <div v-if="liveList.length > 0" class="live-list" @scroll="handleScroll" @wheel="handleWheel" ref="scrollContainerRef">
+    <div
+      v-if="liveList.length > 0"
+      class="live-list"
+      @scroll="handleScroll"
+      @wheel="handleWheel"
+      ref="scrollContainerRef"
+    >
       <div class="live-list-items">
         <div class="live-item" v-for="item in liveList" :key="item.liveId" @click="liveRoomClick(item)">
           <div class="live-room-cover">
@@ -22,7 +28,7 @@
         <span>{{ t('No More') }}</span>
       </div>
     </div>
-    <div v-else-if="!isLoadingLiveList" class="no-live">
+    <div v-else-if="!isLoadingMore" class="no-live">
       <IconNoLiveRoom :size="60" />
       <span>{{ t('No Live') }}</span>
     </div>
@@ -41,18 +47,21 @@ import { LiveInfo } from '../../types';
 import { useLoginState } from '../../states/LoginState';
 import { Avatar } from '../Avatar';
 
-const { liveList, hasMoreLive, isLoadingLiveList, isLoadingMore, fetchLiveList } = useLiveState();
+const { liveList, currentCursor, fetchLiveList } = useLiveState();
 const { loginUserInfo } = useLoginState();
 const { t } = useUIKit();
 
 const DEFAULT_COVER = 'https://liteav-test-1252463788.cos.ap-guangzhou.myqcloud.com/voice_room/voice_room_cover1.png';
 const scrollContainerRef = ref<HTMLElement | null>(null);
 
+const isLoadingMore = ref(false);
+const hasMoreLive = computed(() => currentCursor.value !== '');
+
 const liveItemWidth = ref('168px');
 const liveItemHeight = ref('262px');
 
 const shouldFetchMoreLiveList = computed(() => {
-  return hasMoreLive.value && !isLoadingMore.value && !isLoadingLiveList.value;
+  return hasMoreLive.value && !isLoadingMore.value;
 });
 
 const isShowMoreVisible = computed(() => {
@@ -65,9 +74,11 @@ const emit = defineEmits<{
 
 watch(
   loginUserInfo,
-  user => {
+  async user => {
     if (user && user.userId) {
-      fetchLiveList({});
+      isLoadingMore.value = true;
+      await fetchLiveList({});
+      isLoadingMore.value = false;
     }
   },
   { immediate: true }
@@ -106,7 +117,7 @@ function handleWheel(event: WheelEvent) {
   }
 
   if (event.deltaY > 0 && isScrollAtBottom() && shouldFetchMoreLiveList.value) {
-    fetchLiveList({ append: true });
+    fetchMoreLives();
   }
 }
 
@@ -116,7 +127,17 @@ function handleScroll() {
   }
 
   if (isScrollAtBottom() && shouldFetchMoreLiveList.value) {
-    fetchLiveList({ append: true });
+    fetchMoreLives();
+  }
+}
+
+async function fetchMoreLives() {
+  if (!hasMoreLive.value || isLoadingMore.value) return;
+  try {
+    isLoadingMore.value = true;
+    await fetchLiveList({ cursor: currentCursor.value });
+  } finally {
+    isLoadingMore.value = false;
   }
 }
 
@@ -138,7 +159,6 @@ onUnmounted(() => {
     scrollContainerRef.value.removeEventListener('scroll', handleScroll);
   }
 });
-
 </script>
 
 <style lang="scss" scoped>

@@ -262,7 +262,7 @@ watch(() => [unreadUsers.value.length, unreadLoading.value], () => {
         @click="handleClose"
       />
       <View class="read-receipt-info__title">
-        {{ t('TUIChat.Read Receipt Detail') }}
+        {{ t('MessageList.read_receipt_detail') }}
       </View>
     </View>
 
@@ -274,7 +274,7 @@ watch(() => [unreadUsers.value.length, unreadLoading.value], () => {
         ]"
         @click="setActiveTab('read')"
       >
-        {{ t('TUIChat.Read') }} ({{ readCount }})
+        {{ t('MessageList.read') }} ({{ readCount }})
       </button>
       <button
         :class="[
@@ -283,7 +283,7 @@ watch(() => [unreadUsers.value.length, unreadLoading.value], () => {
         ]"
         @click="setActiveTab('unread')"
       >
-        {{ t('TUIChat.Unread') }} ({{ unreadCount }})
+        {{ t('MessageList.unread') }} ({{ unreadCount }})
       </button>
     </View>
 
@@ -301,14 +301,14 @@ watch(() => [unreadUsers.value.length, unreadLoading.value], () => {
           >
             <IconLoading class="read-receipt-info__loading-icon" />
             <View class="read-receipt-info__loading-text">
-              {{ t('TUIChat.Loading') }}
+              {{ t('MessageList.loading') }}
             </View>
           </View>
           <View
             v-else
             class="read-receipt-info__empty"
           >
-            {{ t('TUIChat.No Read Members') }}
+            {{ t('MessageList.no_read_members') }}
           </View>
         </template>
         <template v-else>
@@ -339,14 +339,14 @@ watch(() => [unreadUsers.value.length, unreadLoading.value], () => {
             >
               <IconLoading class="read-receipt-info__loading-icon" />
               <View class="read-receipt-info__loading-text">
-                {{ t('TUIChat.Loading') }}
+                {{ t('MessageList.loading') }}
               </View>
             </View>
             <View
               v-if="readCompleted"
               class="read-receipt-info__list-end"
             >
-              {{ t('TUIChat.No More') }}
+              {{ t('MessageList.no_more') }}
             </View>
           </div>
         </template>
@@ -365,14 +365,14 @@ watch(() => [unreadUsers.value.length, unreadLoading.value], () => {
           >
             <IconLoading class="read-receipt-info__loading-icon" />
             <View class="read-receipt-info__loading-text">
-              {{ t('TUIChat.Loading') }}
+              {{ t('MessageList.loading') }}
             </View>
           </View>
           <View
             v-else
             class="read-receipt-info__empty"
           >
-            {{ t('TUIChat.No Unread Members') }}
+            {{ t('MessageList.no_unread_members') }}
           </View>
         </template>
         <template v-else>
@@ -403,14 +403,14 @@ watch(() => [unreadUsers.value.length, unreadLoading.value], () => {
             >
               <IconLoading class="read-receipt-info__loading-icon" />
               <View class="read-receipt-info__loading-text">
-                {{ t('TUIChat.Loading') }}
+                {{ t('MessageList.loading') }}
               </View>
             </View>
             <View
               v-if="unreadCompleted"
               class="read-receipt-info__list-end"
             >
-              {{ t('TUIChat.No More') }}
+              {{ t('MessageList.no_more') }}
             </View>
           </div>
         </template>

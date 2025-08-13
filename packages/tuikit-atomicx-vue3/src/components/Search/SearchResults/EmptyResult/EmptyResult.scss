@@ -1,0 +1,27 @@
+@use "sass:map";
+@use "@tencentcloud/uikit-base-component-vue3/src/providers/UIKitProvider/styles/variables.scss" as *;
+
+.SearchEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 0;
+  background-color: var(--bg-color-operate);
+  color: var(--text-color-primary);
+}
+
+.SearchEmpty__icon {
+  margin-bottom: 24px;
+  opacity: 0.8;
+  color: var(--text-color-primary);
+}
+
+.SearchEmpty__text {
+  text-align: center;
+}
+
+.SearchEmpty__title {
+  font-size: 16px;
+  color: var(--text-color-secondary);
+} 

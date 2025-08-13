@@ -60,19 +60,19 @@ const calculateReferenceContent = (message: IMessageModel | undefined): string =
     case TencentCloudChat.TYPES.MSG_TEXT:
       return message.payload?.text;
     case TencentCloudChat.TYPES.MSG_IMAGE:
-      return t('TUIChat.Image');
+      return t('MessageInput.image');
     case TencentCloudChat.TYPES.MSG_AUDIO:
-      return t('TUIChat.Audio');
+      return t('MessageInput.audio');
     case TencentCloudChat.TYPES.MSG_VIDEO:
-      return t('TUIChat.Video');
+      return t('MessageInput.video');
     case TencentCloudChat.TYPES.MSG_FILE:
-      return t('TUIChat.File');
+      return t('MessageInput.file');
     case TencentCloudChat.TYPES.MSG_LOCATION:
-      return t('TUIChat.Location');
+      return t('MessageInput.location');
     case TencentCloudChat.TYPES.MSG_CUSTOM:
-      return t('TUIChat.Custom message');
+      return t('MessageInput.custom_message');
     default:
-      return t('TUIChat.Unknown');
+      return t('MessageInput.unknown');
   }
 };
 </script>
