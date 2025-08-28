@@ -1,7 +1,11 @@
 <!-- eslint-disable import/extensions -->
 <template>
   <div :class="$style.SearchAdvanced">
-    <SearchTab v-if="variant === VariantType.STANDARD" :active-tab="searchType" @tab-change="handleTabChange" />
+    <SearchTab
+      v-if="variant === VariantType.STANDARD"
+      :active-tab="searchType"
+      @tab-change="handleTabChange"
+    />
     <MessageAdvanced
       v-if="variant === VariantType.STANDARD && searchType === SearchType.MESSAGE"
       :variant="variant"
@@ -19,13 +23,13 @@
 
 <script lang="ts" setup>
 import { defineProps, withDefaults } from 'vue';
-import { VariantType } from '../../../types/search';
-import { SearchType } from '../../../types/engine';
 import { useSearchState } from '../../../states/SearchState';
-import type { SearchAdvancedProps, SearchTabType } from '../../../types/search';
-import { SearchTab } from './SearchTab';
+import { SearchType } from '../../../types/engine';
+import { VariantType } from '../../../types/search';
 import { MessageAdvanced } from './MessageAdvanced';
+import { SearchTab } from './SearchTab';
 import { UserAdvanced } from './UserAdvanced';
+import type { SearchAdvancedProps, SearchTabType } from '../../../types/search';
 
 const props = withDefaults(defineProps<SearchAdvancedProps>(), {
   variant: VariantType.STANDARD,
@@ -38,7 +42,6 @@ const handleTabChange = (tab: SearchTabType) => {
   setSelectedType(tab);
 };
 
-// 处理 MessageAdvanced 组件的回调
 const handleMessageAdvancedChange = (params: Map<SearchType, any>) => {
   const messageParams = params.get(SearchType.MESSAGE);
   if (messageParams) {
@@ -46,7 +49,6 @@ const handleMessageAdvancedChange = (params: Map<SearchType, any>) => {
   }
 };
 
-// 处理 UserAdvanced 组件的回调
 const handleUserAdvancedChange = (params: Map<SearchType, any>) => {
   const userParams = params.get(SearchType.USER);
   if (userParams) {

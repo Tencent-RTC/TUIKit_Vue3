@@ -1,29 +1,24 @@
 import { ref, onUnmounted } from 'vue';
 
 interface UseLongPressOptions {
-  // 长按触发延迟（毫秒），默认500ms
   delay?: number;
-  // 是否阻止默认事件，默认true
   preventDefault?: boolean;
-  // 是否在指针离开元素时取消长按，默认true
   cancelOutsideElement?: boolean;
-  // 是否在指针移动超过阈值时取消长按，默认true
   cancelOnMove?: boolean | number;
   onContextMenu?: (event: PointerEvent) => void;
 }
 
-// 空操作函数
 const noop = () => {};
 
 /**
- * Vue3长按事件hook
- * @param onLongPress - 长按触发时的回调函数
- * @param options - 长按配置选项
- * @returns 事件处理器对象
+ * Vue3 long press hook
+ * @param onLongPress - long press callback function
+ * @param options - configuration options for long press behavior
+ * @returns event handlers and state for long press
  */
 export function useLongPress(
   onLongPress: ((event: PointerEvent) => void) | null,
-  options?: UseLongPressOptions
+  options?: UseLongPressOptions,
 ) {
   const effectiveCallback = onLongPress ?? noop;
 
@@ -35,7 +30,7 @@ export function useLongPress(
     onContextMenu,
   } = options || {};
 
-  let fixedThreshold = 5; // 移动阈值（像素）
+  let fixedThreshold = 5; // Default threshold for cancelOnMove
   if (typeof cancelOnMove === 'number') {
     fixedThreshold = cancelOnMove;
   }
@@ -44,7 +39,6 @@ export function useLongPress(
   let timer: ReturnType<typeof setTimeout> | null = null;
   let startCoords: { x: number; y: number } | null = null;
 
-  // 清除定时器和重置状态
   const clear = (event: PointerEvent) => {
     if (timer) {
       clearTimeout(timer);
@@ -54,7 +48,6 @@ export function useLongPress(
     isLongPressActive.value = false;
   };
 
-  // 开始处理：记录起始位置并开始定时器
   const start = (event: PointerEvent) => {
     clear(event);
     if (preventDefault) {
@@ -68,7 +61,6 @@ export function useLongPress(
     }, delay);
   };
 
-  // 移动处理：如果指针移动超过阈值则取消长按
   const move = (event: PointerEvent) => {
     if (!startCoords || !cancelOnMove) {
       return;
@@ -80,19 +72,16 @@ export function useLongPress(
     }
   };
 
-  // 结束处理：指针抬起，取消长按
   const end = (event: PointerEvent) => {
     clear(event);
   };
 
-  // 组件卸载时清理定时器
   onUnmounted(() => {
     if (timer) {
       clearTimeout(timer);
     }
   });
 
-  // 返回事件处理器
   const getEventHandlers = () => {
     if (onLongPress === null) {
       return {};

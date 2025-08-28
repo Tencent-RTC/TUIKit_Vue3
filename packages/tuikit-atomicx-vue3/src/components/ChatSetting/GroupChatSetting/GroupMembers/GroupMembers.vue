@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { IconArrowStrokeRight, IconMinus, IconAdd, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { IconArrowStrokeRight, IconMinus, IconPlus, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import {
   useGroupSettingState,
   GroupPermission,
@@ -13,7 +13,7 @@ interface GroupMembersProps {
   showAddButton: boolean; // Whether to show add button
   showRemoveButton: boolean; // Whether to show remove button
   // Basic configuration
-  title?: string; // Title, default "群成员"
+  title?: string; // Title
   members?: GroupMember[] | undefined; // Member list
   memberCount?: number; // Total member count
   maxDisplayCount?: number; // Mini version display count, default 6
@@ -239,7 +239,7 @@ onUnmounted(() => {
         @click="handleAddMember"
       >
         <div class="group-members__action-btn__icon">
-          <IconAdd />
+          <IconPlus />
         </div>
         <div class="group-members__action-btn__label">
           {{ t('ChatSetting.add') }}

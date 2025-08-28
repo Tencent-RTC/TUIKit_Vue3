@@ -11,7 +11,7 @@ import { GroupManagement } from './GroupManagement';
 import { GroupManagementEntry } from './GroupManagementEntry';
 import { GroupMembers } from './GroupMembers';
 import { PersonalSettings } from './PersonalSettings';
-import type { IUserPickerRow, IUserPickerRef } from '../../UserPicker';
+import type { UserPickerRow, UserPickerRef } from '../../UserPicker';
 
 enum ViewMode {
   MAIN = 'main',
@@ -42,11 +42,11 @@ const loading = ref(false);
 const hasMore = ref(true);
 const currentView = ref<ViewMode>(ViewMode.MAIN);
 const isShowUserPickerDialog = ref(false);
-const memberDataSource = ref<IUserPickerRow[]>([]);
-const userPickerLockedItems = ref<IUserPickerRow[]>([]);
+const memberDataSource = ref<UserPickerRow[]>([]);
+const userPickerLockedItems = ref<UserPickerRow[]>([]);
 const memberActionType = ref<'remove' | 'add' | null>(null);
 
-const userPickerRef = ref<IUserPickerRef>();
+const userPickerRef = ref<UserPickerRef>();
 
 // Initialize member list when component mounts
 onMounted(() => {
@@ -260,6 +260,7 @@ const userPickerDialogTitle = computed(() => {
       <PersonalSettings />
       <GroupActions />
       <TUIDialog
+        appendTo="body"
         :visible="isShowUserPickerDialog"
         :title="userPickerDialogTitle"
         :custom-classes="['user-picker-dialog']"

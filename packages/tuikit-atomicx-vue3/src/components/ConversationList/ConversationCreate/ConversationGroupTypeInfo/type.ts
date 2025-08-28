@@ -1,10 +1,4 @@
-export enum GroupType {
-  WORK = 'Private',
-  PUBLIC = 'Public',
-  MEETING = 'ChatRoom',
-  AVCHATROOM = 'AVChatRoom',
-  COMMUNITY = 'Community',
-}
+import { GroupType } from '../../../../types';
 
 export interface ConversationGroupTypeInfoItem {
   type: GroupType;

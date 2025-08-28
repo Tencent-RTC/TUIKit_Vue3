@@ -1,9 +1,10 @@
 <!-- eslint-disable import/extensions -->
 <template>
   <div :class="$style.SearchTab">
-    <button
+    <TUIButton
       v-for="tab in tabs"
       :key="tab.key"
+      type="text"
       :class="[
         $style['SearchTab__item'],
         {
@@ -13,15 +14,15 @@
       @click="handleTabClick(tab.key)"
     >
       {{ tab.label }}
-    </button>
+    </TUIButton>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { computed, defineProps, defineEmits } from 'vue';
+import { TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { SearchType } from '../../../../types/engine';
 import type { SearchTabType } from '../../../../types/search';
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 
 interface SearchTabItem {
   key: SearchTabType;

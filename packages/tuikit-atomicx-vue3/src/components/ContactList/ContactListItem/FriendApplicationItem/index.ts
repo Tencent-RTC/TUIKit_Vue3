@@ -1,0 +1,1 @@
+export { default as FriendApplicationItem } from './FriendApplicationItem.vue';

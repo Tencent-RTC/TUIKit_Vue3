@@ -3,17 +3,16 @@
     <component
       :is="Preview"
       :conversation="conversation"
-      :is-selected="isSelected"
-      :enable-actions="enableActions"
-      :highlight-match-string="highlightMatchString"
-      :avatar="Avatar"
-      :conversation-actions="ConversationActions"
-      :title="Title"
-      :last-message-timestamp="LastMessageTimestamp"
-      :last-message-abstract="LastMessageAbstract"
-      :unread="Unread"
-      :actions-config="actionsConfig"
-      :class-name="className"
+      :isSelected="isSelected"
+      :enableActions="enableActions"
+      :Avatar="Avatar"
+      :ConversationActions="ConversationActions"
+      :Title="Title"
+      :LastMessageTimestamp="LastMessageTimestamp"
+      :LastMessageAbstract="LastMessageAbstract"
+      :Unread="Unread"
+      :actionsConfig="actionsConfig"
+      :className="className"
       :style="style"
       @select="handleSelectConversation"
     >
@@ -49,20 +48,19 @@ const emit = defineEmits<{
   selectConversation: [conversation: ConversationModel];
 }>();
 
-const Title = computed(() => h(ConversationPreviewTitle, {
-  conversation: props.conversation,
-  highlightMatchString: props.highlightMatchString,
-}));
-
-const LastMessageTimestamp = computed(() => h(ConversationPreviewTimestamp, {
+const Title = computed(() => h(props.Title || ConversationPreviewTitle, {
   conversation: props.conversation,
 }));
 
-const LastMessageAbstract = computed(() => h(ConversationPreviewAbstract, {
+const LastMessageTimestamp = computed(() => h(props.LastMessageTimestamp || ConversationPreviewTimestamp, {
   conversation: props.conversation,
 }));
 
-const Unread = computed(() => h(ConversationPreviewUnread, {
+const LastMessageAbstract = computed(() => h(props.LastMessageAbstract || ConversationPreviewAbstract, {
+  conversation: props.conversation,
+}));
+
+const Unread = computed(() => h(props.Unread || ConversationPreviewUnread, {
   conversation: props.conversation,
 }));
 

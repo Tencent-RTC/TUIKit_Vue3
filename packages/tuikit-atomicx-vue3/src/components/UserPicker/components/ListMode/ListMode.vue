@@ -27,10 +27,7 @@
         <!-- Checkbox -->
         <div :class="$style['list__checkbox-wrapper']">
           <div :class="[$style.list__checkbox, { [$style['list__checkbox--checked']]: isSelected(item.key) }]">
-            <IconCheckSm
-              v-if="isSelected(item.key)"
-              name="check"
-            />
+            <IconCheckSm v-if="isSelected(item.key)" />
           </div>
         </div>
 
@@ -61,10 +58,10 @@
 import { defineProps } from 'vue';
 import { useUIKit, IconCheckSm } from '@tencentcloud/uikit-base-component-vue3';
 import { Avatar } from '../../../Avatar';
-import type { IUserPickerRow } from '../../type';
+import type { UserPickerRow } from '../../type';
 
 interface ListModeProps<T = unknown> {
-  dataSource: IUserPickerRow<T>[];
+  dataSource: UserPickerRow<T>[];
   selectedKeys: Set<string>;
   lockedKeys: Set<string>;
   onItemClick: (key: string) => void;
@@ -150,7 +147,6 @@ const handleScroll = (e: Event) => {
     align-items: center;
     justify-content: center;
     transition: all 0.3s;
-    color: #fff;
     border: 2px solid #d9d9d9;
 
     &--checked {

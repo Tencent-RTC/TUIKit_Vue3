@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <View>
     <template v-if="label">
       <button
         :class="[styles['attachment-picker__item'], className]"
@@ -27,13 +27,14 @@
       hidden
       @change="handleFileInput"
     >
-  </div>
+  </View>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { IconVideo } from '@tencentcloud/uikit-base-component-vue3';
 import { MessageContentType, useMessageInputState } from '../../../states/MessageInputState';
+import { View } from '../../../baseComp/View';
 import styles from './AttachmentPicker.module.scss';
 
 const PICKER_CONSTANTS = {

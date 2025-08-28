@@ -105,7 +105,6 @@
     color: var(--text-color-disabled);
   }
 
-  // 隐藏数字输入框的上下箭头
   &::-webkit-inner-spin-button,
   &::-webkit-outer-spin-button {
     -webkit-appearance: none;

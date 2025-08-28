@@ -14,7 +14,11 @@
           ▼
         </span>
       </div>
-      <div v-if="!isH5 && isGenderOpen" :class="$style.SearchUserAdvanced__dropdown" ref="genderRef">
+      <div
+        v-if="!isH5 && isGenderOpen"
+        ref="genderRef"
+        :class="$style.SearchUserAdvanced__dropdown"
+      >
         <div
           v-for="item in genderList"
           :key="item.value"
@@ -25,7 +29,10 @@
         </div>
       </div>
     </div>
-    <div :class="$style['SearchUserAdvanced__filter-row']" ref="ageRef">
+    <div
+      ref="ageRef"
+      :class="$style['SearchUserAdvanced__filter-row']"
+    >
       <div
         :class="$style['SearchUserAdvanced__filter-select']"
         @click="isH5 ? toggleFilter() : setIsAgeOpen(!isAgeOpen)"
@@ -41,7 +48,10 @@
           ▼
         </span>
       </div>
-      <div v-if="!isH5 && isAgeOpen" :class="$style.SearchUserAdvanced__dropdown">
+      <div
+        v-if="!isH5 && isAgeOpen"
+        :class="$style.SearchUserAdvanced__dropdown"
+      >
         <div :class="$style['SearchUserAdvanced__age-inputs']">
           <input
             type="number"
@@ -49,9 +59,9 @@
             max="99"
             :value="tempAge.min ?? ''"
             placeholder="0"
-            @input="e => handleAgeInputChange('min', (e.target as HTMLInputElement).value)"
             :class="$style['SearchUserAdvanced__age-input']"
-          />
+            @input="e => handleAgeInputChange('min', (e.target as HTMLInputElement).value)"
+          >
           <span>-</span>
           <input
             type="number"
@@ -59,27 +69,42 @@
             max="99"
             :value="tempAge.max ?? ''"
             placeholder="99"
-            @input="e => handleAgeInputChange('max', (e.target as HTMLInputElement).value)"
             :class="$style['SearchUserAdvanced__age-input']"
-          />
+            @input="e => handleAgeInputChange('max', (e.target as HTMLInputElement).value)"
+          >
           <span>{{ t('Search.filter.age.yearsOld') }}</span>
-          <TUIButton :class="$style['SearchUserAdvanced__confirm-button']" @click="handleAgeConfirm">
+          <TUIButton
+            :class="$style['SearchUserAdvanced__confirm-button']"
+            @click="handleAgeConfirm"
+          >
             {{ t('Search.action.confirm') }}
           </TUIButton>
         </div>
       </div>
     </div>
-    <div v-if="isH5" :class="$style['SearchUserAdvanced__filter-row-right']" @click="toggleFilter">
+    <div
+      v-if="isH5"
+      :class="$style['SearchUserAdvanced__filter-row-right']"
+      @click="toggleFilter"
+    >
       <IconSetting :class="$style['SearchUserAdvanced__filter-icon']" />
       <span :class="$style['SearchUserAdvanced__filter-text']">{{ t('Search.filter.title') }}</span>
     </div>
 
-    <div v-if="isFilterPage" :class="$style['SearchUserAdvanced__filter-page']">
+    <div
+      v-if="isFilterPage"
+      :class="$style['SearchUserAdvanced__filter-page']"
+    >
       <div :class="$style['SearchUserAdvanced__filter-page-header']">
-        <div :class="$style['SearchUserAdvanced__back-button']" @click="toggleFilter">
+        <div
+          :class="$style['SearchUserAdvanced__back-button']"
+          @click="toggleFilter"
+        >
           <IconBack size="24" />
         </div>
-        <div :class="$style['SearchUserAdvanced__header-title']">{{ t('Search.filter.title') }}</div>
+        <div :class="$style['SearchUserAdvanced__header-title']">
+          {{ t('Search.filter.title') }}
+        </div>
       </div>
 
       <div :class="$style['SearchUserAdvanced__filter-page-main']">
@@ -93,8 +118,14 @@
             <span :class="$style.SearchUserAdvanced__arrow">&gt;</span>
           </div>
         </div>
-        <div v-if="isGenderOpen" :class="$style['SearchUserAdvanced__action-sheet-mask']">
-          <div :class="$style['SearchUserAdvanced__action-sheet-panel']" ref="genderRef">
+        <div
+          v-if="isGenderOpen"
+          :class="$style['SearchUserAdvanced__action-sheet-mask']"
+        >
+          <div
+            ref="genderRef"
+            :class="$style['SearchUserAdvanced__action-sheet-panel']"
+          >
             <div
               v-for="item in genderList"
               :key="item.value"
@@ -103,7 +134,10 @@
             >
               {{ item.label }}
             </div>
-            <div :class="$style['SearchUserAdvanced__action-sheet-cancel']" @click="setIsGenderOpen(false)">
+            <div
+              :class="$style['SearchUserAdvanced__action-sheet-cancel']"
+              @click="setIsGenderOpen(false)"
+            >
               {{ t('Search.action.cancel') }}
             </div>
           </div>
@@ -123,7 +157,10 @@
       </div>
 
       <div :class="$style['SearchUserAdvanced__filter-page-footer']">
-        <TUIButton :class="$style['SearchUserAdvanced__filter-confirm-button']" @click="handleFilterChange">
+        <TUIButton
+          :class="$style['SearchUserAdvanced__filter-confirm-button']"
+          @click="handleFilterChange"
+        >
           {{ t('Search.action.confirm') }}
         </TUIButton>
       </div>
@@ -148,7 +185,6 @@ const props = defineProps<IUserAdvancedProps>();
 
 const { t } = useUIKit();
 
-// 临时工具函数
 const birthdayToAge = (birthday: number) => {
   const today = new Date();
   const birthDate = new Date(Math.floor(birthday / 10000), Math.floor((birthday % 10000) / 100) - 1, birthday % 100);
@@ -196,7 +232,6 @@ const genderList = [
   },
 ];
 
-// 点击外部关闭下拉框
 const handleClickOutside = (event: MouseEvent) => {
   if (genderRef.value && !genderRef.value.contains(event.target as Node)) {
     isGenderOpen.value = false;
@@ -214,10 +249,9 @@ onUnmounted(() => {
   document.removeEventListener('mousedown', handleClickOutside);
 });
 
-// 监听高级参数变化
 watch(
   () => props.advancedParams,
-  newParams => {
+  (newParams) => {
     const userParams = newParams?.get(SearchType.USER) || {};
     userAdvanced.value = {
       ...userAdvanced.value,
@@ -229,7 +263,7 @@ watch(
       max: userParams?.miniBirthday ? birthdayToAge(userParams?.miniBirthday) : undefined,
     };
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const handleGenderChange = (gender: string) => {
@@ -325,10 +359,10 @@ const setTempAge = (value: { min: number | undefined; max: number | undefined })
 };
 
 const minAge = computed(() =>
-  userAdvanced.value?.maxBirthday ? birthdayToAge(userAdvanced.value.maxBirthday) : undefined
+  userAdvanced.value?.maxBirthday ? birthdayToAge(userAdvanced.value.maxBirthday) : undefined,
 );
 const maxAge = computed(() =>
-  userAdvanced.value?.miniBirthday ? birthdayToAge(userAdvanced.value.miniBirthday) : undefined
+  userAdvanced.value?.miniBirthday ? birthdayToAge(userAdvanced.value.miniBirthday) : undefined,
 );
 
 const getGenderText = (gender: string) => {

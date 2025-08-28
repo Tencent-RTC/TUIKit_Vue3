@@ -1,5 +1,5 @@
 export const Search = {
-  // 基础操作
+  // actions
   'action.search': 'Search',
   'action.cancel': 'Cancel',
   'action.confirm': 'Confirm',
@@ -8,39 +8,39 @@ export const Search = {
   'action.readMore': 'Read More',
   'action.filter': 'Filter',
 
-  // 搜索类型
+  // types
   'type.all': 'All',
   'type.messages': 'Messages',
   'type.users': 'Users',
   'type.groups': 'Groups',
 
-  // 输入提示
+  // input
   'input.placeholder.keywords': 'Please enter keywords to search',
   'input.selectTime': 'Select Time',
 
-  // 加载状态
+  // status
   'status.loading': 'Loading...',
   'status.noContent': 'No Content',
 
-  // 加载更多
+  // loading
   'loadMore.default': 'Load More',
   'loadMore.messages': 'Load More Messages',
   'loadMore.users': 'Load More Users',
   'loadMore.groups': 'Load More Groups',
 
-  // 搜索结果
+  // results
   'results.title': 'Search Messages',
   'results.relatedTo': '{{count}} texts related to',
   'results.relatedToSuffix': 'related texts',
   'results.foundMessages': 'Found {{count}} messages',
 
-  // 消息类型
+  // message types
   'messageType.image': 'Image Message',
   'messageType.videoCover': 'Video Cover',
   'messageType.custom': 'Custom Message',
   'messageType.unsupported': 'Unsupported Message Type',
 
-  // 用户筛选
+  // filter
   'filter.title': 'Filter Users',
   'filter.gender': 'Gender',
   'filter.age': 'Age',
@@ -50,7 +50,7 @@ export const Search = {
   'filter.gender.secret': 'Secret',
   'filter.age.yearsOld': 'years old',
 
-  // 时间筛选
+  // time filter
   'timeFilter.allTime': 'All Time',
   'timeFilter.today': 'Today',
   'timeFilter.last3Days': 'Last 3 Days',

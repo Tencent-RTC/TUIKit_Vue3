@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import { ref, nextTick } from 'vue';
+import { ref, nextTick, useCssModule } from 'vue';
 import { IconEditNameCard, TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import cs from 'classnames';
 
 // Base props shared by all types
 interface BaseSettingItemProps {
@@ -59,6 +60,7 @@ const SettingItemType = {
 } as const;
 
 const { t } = useUIKit();
+const classes = useCssModule();
 
 // Edit state management
 const isEditing = ref(false);
@@ -152,46 +154,46 @@ function handleSwitchChange(event: Event) {
 <template>
   <div
     :class="[
-      'setting-item',
+      classes['setting-item'],
       {
-        [`setting-item--${type}`]: !!type,
-        'setting-item--disabled': disabled,
-        'setting-item--editing': isEditing,
-        'setting-item--error': !!errorMessage,
+        [classes[`setting-item--${type}`]]: !!type,
+        [classes['setting-item--disabled']]: disabled,
+        [classes['setting-item--editing']]: isEditing,
+        [classes['setting-item--error']]: !!errorMessage,
       }
     ]"
   >
-    <div class="setting-item__label">
+    <div :class="classes['setting-item__label']">
       {{ label }}
     </div>
-    <div class="setting-item__content-wrapper">
+    <div :class="classes['setting-item__content-wrapper']">
       <!-- Switch type content -->
       <label
         v-if="type === SettingItemType.SWITCH"
-        class="setting-item__switch"
+        :class="classes['setting-item__switch']"
       >
         <input
-          class="setting-item__switch-input"
+          :class="classes['setting-item__switch-input']"
           type="checkbox"
           :checked="value"
           :disabled="disabled"
           @change="handleSwitchChange"
         >
-        <span class="setting-item__switch-slider" />
+        <span :class="classes['setting-item__switch-slider']" />
       </label>
 
       <!-- Input type content -->
       <template v-else-if="type === SettingItemType.INPUT">
         <div
           v-if="isEditing && editable"
-          class="setting-item__edit-container"
+          :class="classes['setting-item__edit-container']"
         >
           <div>
             <input
               ref="inputRef"
               :class="[
-                'setting-item__input',
-                { 'setting-item__input--error': !!errorMessage }
+                classes['setting-item__input'],
+                { [classes['setting-item__input--error']]: !!errorMessage }
               ]"
               type="text"
               :value="editValue"
@@ -202,14 +204,14 @@ function handleSwitchChange(event: Event) {
             >
             <div
               v-if="errorMessage"
-              class="setting-item__error"
+              :class="classes['setting-item__error']"
             >
               {{ errorMessage }}
             </div>
           </div>
-          <div class="setting-item__actions">
+          <div :class="classes['setting-item__actions']">
             <TUIButton
-              class="setting-item__btn--cancel"
+              :class="classes['setting-item__btn--cancel']"
               color="gray"
               radius="rect"
               :disabled="disabled"
@@ -218,7 +220,7 @@ function handleSwitchChange(event: Event) {
               {{ t('ChatSetting.cancel') }}
             </TUIButton>
             <TUIButton
-              class="setting-item__btn--confirm"
+              :class="classes['setting-item__btn--confirm']"
               color="blue"
               radius="rect"
               :disabled="disabled || !!errorMessage || props.value === editValue"
@@ -230,14 +232,14 @@ function handleSwitchChange(event: Event) {
         </div>
         <div
           v-else
-          class="setting-item__content"
+          :class="classes['setting-item__content']"
         >
-          <span class="setting-item__value">
+          <span :class="[classes['setting-item__value'], { [classes['setting-item__value--placeholder']]: !value }]">
             {{ value || placeholder || t('ChatSetting.not_set') }}
           </span>
           <IconEditNameCard
             v-if="editable"
-            class="setting-item__edit-btn unique-icon-btn"
+            :class="cs(classes['setting-item__edit-btn'], 'unique-icon-btn')"
             :style="{ cursor: disabled ? 'not-allowed' : 'pointer' }"
             @click="startEdit"
           />
@@ -248,14 +250,14 @@ function handleSwitchChange(event: Event) {
       <template v-else-if="type === SettingItemType.TEXTAREA">
         <div
           v-if="isEditing && editable"
-          class="setting-item__edit-container"
+          :class="classes['setting-item__edit-container']"
         >
           <div>
             <textarea
               ref="textareaRef"
               :class="[
-                'setting-item__textarea',
-                { 'setting-item__textarea--error': !!errorMessage }
+                classes['setting-item__textarea'],
+                { [classes['setting-item__textarea--error']]: !!errorMessage }
               ]"
               :value="editValue"
               :rows="rows || 3"
@@ -266,14 +268,14 @@ function handleSwitchChange(event: Event) {
             />
             <div
               v-if="errorMessage"
-              class="setting-item__error"
+              :class="classes['setting-item__error']"
             >
               {{ errorMessage }}
             </div>
           </div>
-          <div class="setting-item__actions">
+          <div :class="classes['setting-item__actions']">
             <TUIButton
-              class="setting-item__btn--cancel"
+              :class="classes['setting-item__btn--cancel']"
               color="gray"
               radius="rect"
               :disabled="disabled"
@@ -282,7 +284,7 @@ function handleSwitchChange(event: Event) {
               {{ t('ChatSetting.cancel') }}
             </TUIButton>
             <TUIButton
-              class="setting-item__btn--confirm"
+              :class="classes['setting-item__btn--confirm']"
               color="blue"
               radius="rect"
               :disabled="disabled || !!errorMessage || props.value === editValue"
@@ -294,14 +296,14 @@ function handleSwitchChange(event: Event) {
         </div>
         <div
           v-else
-          class="setting-item__content"
+          :class="classes['setting-item__content']"
         >
-          <span class="setting-item__value">
+          <span :class="[classes['setting-item__value'], { [classes['setting-item__value--placeholder']]: !value }]">
             {{ value || placeholder || t('ChatSetting.not_set') }}
           </span>
           <IconEditNameCard
             v-if="editable"
-            class="setting-item__edit-btn unique-icon-btn"
+            :class="cs(classes['setting-item__edit-btn'], 'unique-icon-btn')"
             :style="{ cursor: disabled ? 'not-allowed' : 'pointer' }"
             @click="startEdit"
           />
@@ -311,7 +313,7 @@ function handleSwitchChange(event: Event) {
       <!-- Display type content -->
       <span
         v-else-if="type === SettingItemType.DISPLAY"
-        class="setting-item__value"
+        :class="classes['setting-item__value']"
       >
         {{ value || placeholder || t('ChatSetting.not_set') }}
       </span>
@@ -319,7 +321,7 @@ function handleSwitchChange(event: Event) {
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss" module>
 .setting-item {
   display: flex;
   flex: 1;
@@ -376,10 +378,11 @@ function handleSwitchChange(event: Event) {
     word-break: break-word;
 
     color: var(--text-color-secondary);
-  }
 
-  &__placeholder {
-    color: var(--text-color-placeholder);
+    &--placeholder {
+      font-style: italic;
+      color: var(--text-color-tertiary);
+    }
   }
 
   // Switch styles
@@ -460,15 +463,19 @@ function handleSwitchChange(event: Event) {
     &:focus {
       outline: none;
 
-      border-color: var(--primary-color);
+      border-color: var(--text-color-link);
     }
 
     &::placeholder {
-      color: var(--text-color-placeholder);
+      color: var(--text-color-secondary);
     }
 
     &--error {
-      border-color: var(--error-color);
+      border-color: var(--text-color-error);
+
+      &:focus {
+        border-color: var(--text-color-error);
+      }
     }
   }
 
@@ -481,7 +488,7 @@ function handleSwitchChange(event: Event) {
     font-size: 12px;
     margin-top: 4px;
 
-    color: var(--error-color);
+    color: var(--text-color-error);
   }
 
   &__actions {
@@ -500,7 +507,7 @@ function handleSwitchChange(event: Event) {
 </style>
 
 <style lang="scss">
-.unique-icon-btn {
+span.unique-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;

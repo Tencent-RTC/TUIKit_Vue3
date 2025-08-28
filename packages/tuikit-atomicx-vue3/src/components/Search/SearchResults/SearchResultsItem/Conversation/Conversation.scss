@@ -1,6 +1,4 @@
-@use "sass:map";
-@use "@tencentcloud/uikit-base-component-vue3/src/providers/UIKitProvider/styles/variables.scss" as *;
-
+@use '../../../../../styles/mixins' as mixins;
 .conversationItem {
   display: flex;
   align-items: flex-start;
@@ -28,28 +26,16 @@
 .name {
   font-weight: 500;
   font-size: 14px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   color: var(--text-color-primary);
+
+  @include mixins.text-ellipsis();
 }
 
 .showText {
   font-size: 12px;
   line-height: 1.5;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
   word-break: break-word;
   color: var(--text-color-secondary);
-}
 
-:global(.highlight) {
-  background-color: var(--bg-color-operate);
-  color: var(--text-color-link);
-  padding: 0 2px;
-  border-radius: 2px;
-  font-weight: 500;
-} 
+  @include mixins.multi-line-ellipsis(3);
+}

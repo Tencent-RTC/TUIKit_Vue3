@@ -1,13 +1,6 @@
 <!-- eslint-disable import/extensions -->
 <template>
-  <div
-    v-if="error"
-    :class="$style['SearchResults__error']"
-  >
-    {{ error.message }}
-  </div>
-
-  <div v-else-if="!keyword">
+  <div v-if="!keyword">
     <component
       :is="SearchResultsPresearch"
       v-if="SearchResultsPresearch"
@@ -18,20 +11,26 @@
       :text="t('Search.input.placeholder.keywords')"
     />
   </div>
+  <div
+    v-else-if="error"
+    :class="$style['SearchResults__error']"
+  >
+    {{ error.message }}
+  </div>
 
-  <div v-else-if="keyword && isLoading">
+  <div v-else-if="!results?.size && isLoading">
     <component :is="SearchResultsLoading" />
   </div>
 
-  <div v-else-if="keyword && !results?.size && !isLoading">
+  <div v-else-if="!results?.size && !isLoading">
     <component :is="SearchResultsEmpty" />
   </div>
 
-  <div v-else-if="results && results.size > 0 && allZero">
+  <div v-else-if="results.size > 0 && allZero">
     <component :is="SearchResultsEmpty" />
   </div>
 
-  <div v-else-if="keyword && searchType !== 'all' && results?.get(searchType)?.totalCount === 0">
+  <div v-else-if="searchType !== 'all' && results?.get(searchType)?.totalCount === 0">
     <component :is="SearchResultsEmpty" />
   </div>
 
@@ -52,12 +51,7 @@
         v-if="variant !== VariantType.EMBEDDED"
         :class="$style['SearchResults__message-detail-header']"
       >
-        <button
-          :class="$style['SearchResults__back-button']"
-          @click="handleBack"
-        >
-          <IconBack />
-        </button>
+        <IconBack @click="handleBack" />
         <span :class="$style['SearchResults__message-detail-title']">
           {{ t('Search.results.relatedTo', { count: results?.get(SearchType.CHAT_MESSAGE)?.totalCount || 0 }) }}
           {{ t('Search.results.relatedToSuffix') }}
@@ -81,13 +75,14 @@
           v-if="results?.get(SearchType.CHAT_MESSAGE)?.hasMore"
           :class="$style['SearchResults__section-footer']"
         >
-          <button
+          <TUIButton
             :class="$style['SearchResults__load-more-button']"
+            type="text"
             :disabled="isLoading"
             @click="() => onLoadMore?.(SearchType.CHAT_MESSAGE)"
           >
             {{ isLoading ? t('Search.status.loading') : getLoadMoreText(SearchType.CHAT_MESSAGE) }}
-          </button>
+          </TUIButton>
         </div>
       </div>
     </div>
@@ -133,13 +128,14 @@
             v-if="currentResults.get(type).hasMore"
             :class="$style['SearchResults__section-footer']"
           >
-            <button
+            <TUIButton
               :class="$style['SearchResults__load-more-button']"
+              type="text"
               :disabled="loadingType === type"
               @click="() => handleLoadMore(type)"
             >
               {{ loadingType === type ? t('Search.status.loading') : getLoadMoreText(type) }}
-            </button>
+            </TUIButton>
           </div>
         </div>
       </div>
@@ -163,13 +159,14 @@
             <span :class="$style.SearchResults__highlight">  {{ keyword }}  </span>
             {{ t('Search.results.relatedToSuffix') }}
           </span>
-          <button
+          <TUIButton
             :class="$style['SearchResults__section-header-action']"
+            type="text"
             @click="() => handleClickItem(chatMessageResult, SearchType.CHAT_MESSAGE)"
           >
             {{ t('Search.action.enterChat') }}
             <IconChevronRight :class="$style.SearchResults__highlight" />
-          </button>
+          </TUIButton>
         </div>
         <div :class="$style['SearchResults__result-items']">
           <div
@@ -189,13 +186,14 @@
           v-if="results?.get(SearchType.CHAT_MESSAGE)?.hasMore"
           :class="$style['SearchResults__section-footer']"
         >
-          <button
+          <TUIButton
             :class="$style['SearchResults__load-more-button']"
+            type="text"
             :disabled="isLoading"
             @click="() => onLoadMore?.(SearchType.CHAT_MESSAGE)"
           >
             {{ isLoading ? t('Search.status.loading') : getLoadMoreText(SearchType.CHAT_MESSAGE) }}
-          </button>
+          </TUIButton>
         </div>
       </div>
     </div>
@@ -204,7 +202,7 @@
 
 <script lang="ts" setup>
 import { ref, computed, watch, useCssModule, withDefaults, defineProps } from 'vue';
-import { IconBack, IconChevronRight, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { IconBack, IconChevronRight, TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { SearchType } from '../../../types/engine';
 import { VariantType, defaultTypeLabels } from '../../../types/search';
 import { isH5 } from '../../../utils';
@@ -267,7 +265,6 @@ function updateActiveConversation() {
 
 watch([() => props.results, () => props.searchType, () => props.variant], updateActiveConversation, { deep: true });
 
-// 监听关键词变化
 watch(
   () => props.keyword,
   () => {
@@ -277,7 +274,6 @@ watch(
   },
 );
 
-// 监听加载状态变化
 watch(
   () => props.isLoading,
   (newIsLoading) => {

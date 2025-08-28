@@ -26,6 +26,7 @@
         :is="context.slots['user-badge']"
         :message="message"
       />
+      <span class="user-badge" v-if="message.from === currentLive?.liveOwner.userId && !context.slots['user-badge']">{{ t('Anchor') }}</span>
       <span
         class="text-message__content__nick"
         @click="handleNickClick"
@@ -62,11 +63,13 @@ import { useUIKit, TUIToast } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { useScroll } from '../../../../hooks/useScroll';
 import { useBarrageListState } from '../../../../states/BarrageListState';
+import { useLiveState } from '../../../../states/LiveState';
 import { safeJSONParse } from '../../../../utils/json';
 import { useMessageListContext } from '../../MessageListContext';
 import type { ICloudCustomData } from '../../../../types/message';
 import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
 
+const { currentLive } = useLiveState();
 const context: {
   slots: Record<string, () => VueElement>;
   nickClick: (payload: { message: IMessageModel; event: MouseEvent }) => void;
@@ -217,14 +220,21 @@ const handleNickClick = (event: MouseEvent) => {
     word-spacing: 0.2em;
     letter-spacing: 0.1em;
 
+    .user-badge {
+      background-color: var(--uikit-color-theme-6);
+      border-radius: 12px;
+      padding: 0px 8px;
+      margin-right: 6px;
+    }
+
     &__nick {
-      color: var(--text-color-link);
+      color: var(--uikit-color-theme-8);
       cursor: pointer;
     }
 
     &__nick:hover {
-      color: var(--text-color-link-active);
-      font-weight: 600;
+      // color: var(--text-color-link-active);
+      // font-weight: 600;
     }
 
     &__text {

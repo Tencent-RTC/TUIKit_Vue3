@@ -1,5 +1,5 @@
 // List item data structure
-export interface IUserPickerRow<T = unknown> {
+export interface UserPickerRow<T = unknown> {
   key: string; // Unique identifier
   label: string; // Display name
   avatarUrl?: string | undefined; // Avatar URL
@@ -7,21 +7,21 @@ export interface IUserPickerRow<T = unknown> {
 }
 
 // Tree node data structure
-export interface IUserPickerNode<T = unknown> {
+export interface UserPickerNode<T = unknown> {
   key: string; // Unique identifier
   label: string; // Display name
   isLeafNode: boolean; // Whether is leaf node
   avatarUrl?: string | undefined; // Avatar URL
   lazyLoad?: boolean; // Whether supports lazy loading
-  children?: Array<IUserPickerNode<T>>; // Child nodes
+  children?: Array<UserPickerNode<T>>; // Child nodes
   extraData?: T | undefined; // Extended data
 }
 
 // Data source type
-export type IUserPickerDataSource<T = unknown> = Array<IUserPickerRow<T>> | Array<IUserPickerNode<T>>;
+export type UserPickerDataSource<T = unknown> = Array<UserPickerRow<T>> | Array<UserPickerNode<T>>;
 
 // Selection result item type
-export interface IUserPickerResultItem<T = unknown> {
+export interface UserPickerResultItem<T = unknown> {
   key: string;
   label: string;
   avatarUrl?: string | undefined;
@@ -31,18 +31,18 @@ export interface IUserPickerResultItem<T = unknown> {
 }
 
 // Selection result type
-export type IUserPickerResult<T = unknown> = Array<IUserPickerResultItem<T>>;
+export type UserPickerResult<T = unknown> = Array<UserPickerResultItem<T>>;
 
 // Component props interface
-export interface IUserPickerProps<T = unknown> {
+export interface UserPickerProps<T = unknown> {
   // Basic properties
   displayMode: 'list' | 'tree'; // Display mode
-  dataSource: IUserPickerDataSource<T>; // Data source
+  dataSource: UserPickerDataSource<T>; // Data source
   defaultSelectedItems?: Array<{ key: string; [key: string]: any }>;
   lockedItems?: Array<{ key: string; [key: string]: any }>;
   maxCount?: number | undefined;
   minCount?: number | undefined;
-  onMaxCountExceed?: (selectedItems: IUserPickerResult<T>) => void;
+  onMaxCountExceed?: (selectedItems: UserPickerResult<T>) => void;
 
   // Search related
   enableSearch?: boolean; // Whether to enable search
@@ -50,31 +50,31 @@ export interface IUserPickerProps<T = unknown> {
   onSearch?: (value: string) => void; // Search callback
 
   // Custom rendering
-  renderItem?: (data: IUserPickerRow<T> | IUserPickerNode<T>) => any; // Vue render function or component
+  renderItem?: (data: UserPickerRow<T> | UserPickerNode<T>) => any; // Vue render function or component
 
   // Event callbacks
-  onSelectedChange?: (selectedItems: IUserPickerResult<T>) => void; // Selection change callback
+  onSelectedChange?: (selectedItems: UserPickerResult<T>) => void; // Selection change callback
   onReachEnd?: () => void; // List scroll to bottom callback (list mode)
 
   // Tree mode specific properties
-  onExpand?: (node: IUserPickerNode<T>) => void; // Expand callback for lazy loading child items
+  onExpand?: (node: UserPickerNode<T>) => void; // Expand callback for lazy loading child items
 }
 
 // Component ref interface
-export interface IUserPickerRef<T = unknown> {
-  getSelectedItems: () => IUserPickerResult<T>; // Get currently selected items
-  updateListData: (newDataSource: Array<IUserPickerRow<T>>) => void; // Update list data
-  updateTreeData: (key: string, partialNewNode: Partial<IUserPickerNode<T>>) => void; // Update tree data
+export interface UserPickerRef<T = unknown> {
+  getSelectedItems: () => UserPickerResult<T>; // Get currently selected items
+  updateListData: (newDataSource: Array<UserPickerRow<T>>) => void; // Update list data
+  updateTreeData: (key: string, partialNewNode: Partial<UserPickerNode<T>>) => void; // Update tree data
 }
 
 // Selection state type (for internal state management)
-export interface ISelectionState {
+export interface SelectionState {
   selectedKeys: Set<string>;
   halfSelectedKeys?: Set<string>; // Only valid in tree mode
 }
 
 // Tree node state type (for internal state management)
-export interface ITreeState {
+export interface TreeState {
   expandedKeys: Set<string>;
   loadingKeys: Set<string>;
 }

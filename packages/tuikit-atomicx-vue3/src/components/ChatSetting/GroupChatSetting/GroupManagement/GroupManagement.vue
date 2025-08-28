@@ -63,6 +63,7 @@
 
     <!-- User Picker Dialog -->
     <TUIDialog
+      appendTo="body"
       :custom-classes="['user-picker-dialog']"
       :visible="isShowUserPickerDialog"
       :title="userPickerTitle"
@@ -92,7 +93,7 @@ import {
 import { UserPicker } from '../../../UserPicker';
 import { SettingItem } from '../../SettingItem';
 import { GroupMembers } from '../GroupMembers';
-import type { IUserPickerRow, IUserPickerRef } from '../../../UserPicker';
+import type { UserPickerRow, UserPickerRef } from '../../../UserPicker';
 
 const emit = defineEmits<{
   back: [];
@@ -119,7 +120,7 @@ const isShowUserPickerDialog = ref(false);
 const userPickerTitle = ref('');
 const userPickerLockedItems = ref<any[]>([]);
 
-const userPickerRef = ref<IUserPickerRef>();
+const userPickerRef = ref<UserPickerRef>();
 const memberActionRef = ref<'promote_admin' | 'demote_admin' | 'mute' | 'unmute' | null>(null);
 
 // Filter muted members

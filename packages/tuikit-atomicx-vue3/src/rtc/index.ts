@@ -6,10 +6,10 @@ import { BarrageList as BarrageListComponent } from '../components/BarrageList';
 import { CameraButton as CameraButtonComponent } from '../components/CameraButton';
 import { CoGuestPanel as CoGuestPanelComponent } from '../components/CoGuestPanel';
 import { LiveAudienceList as LiveAudienceListComponent } from '../components/LiveAudienceList';
+import { LiveCoreView as LiveCoreViewComponent } from '../components/LiveCoreView';
 import { LiveList as LiveListComponent } from '../components/LiveList';
 import { LiveMonitorView as LiveMonitorViewComponent } from '../components/LiveMonitorView';
 import { LiveScenePanel as LiveScenePanelComponent } from '../components/LiveScenePanel';
-import { LiveStreamView as LiveStreamViewComponent } from '../components/LiveStreamView';
 import { MicButton as MicButtonComponent } from '../components/MicButton';
 import { StreamMixer as StreamMixerComponent } from '../components/StreamMixer';
 import { StreamView as StreamViewComponent } from '../components/StreamView';
@@ -26,6 +26,7 @@ import { useLiveState as LiveState } from '../states/LiveState';
 import { useRoomState as RoomState } from '../states/RoomState';
 import { useUserState as UserState } from '../states/UserState';
 import { useVideoMixerState as VideoMixerState } from '../states/VideoMixerState';
+import { useRoomEngine as RoomEngine } from '../hooks/useRoomEngine';
 
 import RTCLoginServer from './server';
 
@@ -33,7 +34,7 @@ RTCLoginServer.getInstance().init();
 
 const BarrageList = BarrageListComponent;
 const BarrageInput = BarrageInputComponent;
-const LiveStreamView = LiveStreamViewComponent;
+const LiveCoreView = LiveCoreViewComponent;
 const StreamMixer = StreamMixerComponent;
 const LiveScenePanel = LiveScenePanelComponent;
 const LiveAudienceList = LiveAudienceListComponent;
@@ -59,12 +60,13 @@ const useDeviceState = DeviceState;
 const useLiveAudienceState = LiveAudienceState;
 const useRoomState = RoomState;
 const useVideoMixerState = VideoMixerState;
+const useRoomEngine = RoomEngine;
 
 export {
   // Components
   BarrageList,
   BarrageInput,
-  LiveStreamView,
+  LiveCoreView,
   StreamMixer,
   LiveScenePanel,
   LiveAudienceList,
@@ -80,6 +82,7 @@ export {
   VideoSetting,
 
   // States
+  useRoomEngine,
   useLiveState,
   useRoomState,
   useUserState,

@@ -25,7 +25,6 @@
   &__input {
     flex: 1;
 
-    // 自定义 TUIInput 样式
     .tui-input {
       width: 100%;
       
@@ -115,7 +114,6 @@
     gap: 8px;
   }
 
-  // H5 模式
   &--h5 {
     padding: 10px;
   }

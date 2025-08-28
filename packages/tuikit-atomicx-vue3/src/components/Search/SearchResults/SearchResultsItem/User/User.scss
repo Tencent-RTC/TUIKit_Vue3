@@ -1,6 +1,4 @@
-@use "sass:map";
-@use "@tencentcloud/uikit-base-component-vue3/src/providers/UIKitProvider/styles/variables.scss" as *;
-
+@use '../../../../../styles/mixins' as mixins;
 .SearchUser {
   display: flex;
   align-items: flex-start;
@@ -26,10 +24,9 @@
   font-weight: 500;
   font-size: 14px;
   margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   color: var(--text-color-primary);
+
+  @include mixins.text-ellipsis();
 }
 
 .SearchUser__signature {
@@ -42,6 +39,8 @@
   -webkit-box-orient: vertical;
   word-break: break-word;
   color: var(--text-color-secondary);
+
+  @include mixins.multi-line-ellipsis(3);
 }
 
 :global(.SearchUser__highlight) {

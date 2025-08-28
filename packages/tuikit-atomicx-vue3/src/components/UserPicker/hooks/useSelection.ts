@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import { ref, computed, watch, type Ref } from 'vue';
-import type { IUserPickerNode, IUserPickerRow, IUserPickerDataSource, IUserPickerResult } from '../type';
+import type { UserPickerNode, UserPickerRow, UserPickerDataSource, UserPickerResult } from '../type';
 
 interface UseSelectionOptions<T = unknown> {
   defaultSelectedKeys?: string[];
@@ -8,9 +8,9 @@ interface UseSelectionOptions<T = unknown> {
   maxCount?: number;
   minCount?: number;
   isTreeMode?: boolean;
-  dataSource: Ref<IUserPickerDataSource<T>>;
-  onSelectedChange?: (selectedItems: IUserPickerResult<T>) => void;
-  onMaxCountExceed?: (selectedItems: IUserPickerResult<T>) => void;
+  dataSource: Ref<UserPickerDataSource<T>>;
+  onSelectedChange?: (selectedItems: UserPickerResult<T>) => void;
+  onMaxCountExceed?: (selectedItems: UserPickerResult<T>) => void;
 }
 
 interface UseSelectionReturn<T = unknown> {
@@ -21,18 +21,18 @@ interface UseSelectionReturn<T = unknown> {
   isHalfSelected: (key: string) => boolean;
   isLocked: (key: string) => boolean;
   toggle: (key: string) => void;
-  getSelectedItems: () => IUserPickerResult<T>;
-  getNodeChildKeys: (node: IUserPickerNode<T>) => string[];
+  getSelectedItems: () => UserPickerResult<T>;
+  getNodeChildKeys: (node: UserPickerNode<T>) => string[];
   getNodeParentChildrenMap: () => Map<string, string[]>;
   canSelectMore: Ref<boolean>;
   reachMaxCount: Ref<boolean>;
   allSelectedCount: Ref<number>;
-  getSelectableLeafNodes: (nodeKey: string) => IUserPickerNode<T>[];
-  getCancelableLeafNodes: (nodeKey: string) => IUserPickerNode<T>[];
+  getSelectableLeafNodes: (nodeKey: string) => UserPickerNode<T>[];
+  getCancelableLeafNodes: (nodeKey: string) => UserPickerNode<T>[];
 }
 
 // Check if it's tree data structure
-function isTreeDataSource<T>(data: IUserPickerDataSource<T>): data is IUserPickerNode<T>[] {
+function isTreeDataSource<T>(data: UserPickerDataSource<T>): data is UserPickerNode<T>[] {
   if (data.length === 0) {
     return false;
   }
@@ -44,9 +44,9 @@ function isTreeDataSource<T>(data: IUserPickerDataSource<T>): data is IUserPicke
  * @param nodes
  * @returns
  */
-function buildAllNodesMap<T>(nodes: IUserPickerNode<T>[]): Map<string, IUserPickerNode<T>> {
-  const map = new Map<string, IUserPickerNode<T>>();
-  const traverse = (nodesToScan: IUserPickerNode<T>[]) => {
+function buildAllNodesMap<T>(nodes: UserPickerNode<T>[]): Map<string, UserPickerNode<T>> {
+  const map = new Map<string, UserPickerNode<T>>();
+  const traverse = (nodesToScan: UserPickerNode<T>[]) => {
     nodesToScan.forEach(node => {
       map.set(node.key, node);
       if (node.children && node.children.length) {
@@ -59,10 +59,10 @@ function buildAllNodesMap<T>(nodes: IUserPickerNode<T>[]): Map<string, IUserPick
 }
 
 // Build parent-children mapping relationship
-function buildParentChildrenMap<T>(nodes: IUserPickerNode<T>[]): Map<string, string[]> {
+function buildParentChildrenMap<T>(nodes: UserPickerNode<T>[]): Map<string, string[]> {
   const map = new Map<string, string[]>();
 
-  const traverse = (nodesList: IUserPickerNode<T>[], parentKey?: string) => {
+  const traverse = (nodesList: UserPickerNode<T>[], parentKey?: string) => {
     nodesList.forEach(node => {
       if (parentKey) {
         if (!map.has(parentKey)) {
@@ -82,10 +82,10 @@ function buildParentChildrenMap<T>(nodes: IUserPickerNode<T>[]): Map<string, str
 }
 
 // Build child-parent mapping relationship
-function buildChildParentMap<T>(nodes: IUserPickerNode<T>[]): Map<string, string> {
+function buildChildParentMap<T>(nodes: UserPickerNode<T>[]): Map<string, string> {
   const map = new Map<string, string>();
 
-  const traverse = (nodesList: IUserPickerNode<T>[], parentKey?: string) => {
+  const traverse = (nodesList: UserPickerNode<T>[], parentKey?: string) => {
     nodesList.forEach(node => {
       if (parentKey) {
         map.set(node.key, parentKey);
@@ -127,23 +127,23 @@ export function useSelection<T = unknown>({
   // Tree node relationships
   const parentChildrenMap = computed(() => {
     if (isTreeMode && isTreeDataSource(dataSource.value)) {
-      return buildParentChildrenMap(dataSource.value as IUserPickerNode<T>[]);
+      return buildParentChildrenMap(dataSource.value as UserPickerNode<T>[]);
     }
     return new Map<string, string[]>();
   });
 
   const childParentMap = computed(() => {
     if (isTreeMode && isTreeDataSource(dataSource.value)) {
-      return buildChildParentMap(dataSource.value as IUserPickerNode<T>[]);
+      return buildChildParentMap(dataSource.value as UserPickerNode<T>[]);
     }
     return new Map<string, string>();
   });
 
   const nodeEntitiesMap = computed(() => {
     if (isTreeMode && isTreeDataSource(dataSource.value)) {
-      return buildAllNodesMap(dataSource.value as IUserPickerNode<T>[]);
+      return buildAllNodesMap(dataSource.value as UserPickerNode<T>[]);
     }
-    return new Map<string, IUserPickerNode<T>>();
+    return new Map<string, UserPickerNode<T>>();
   });
 
   // Check if maximum selection count is reached
@@ -156,7 +156,7 @@ export function useSelection<T = unknown>({
    * @param node - The node to get the child keys of
    * @returns The child keys of the node
    */
-  const getNodeChildKeys = (node: IUserPickerNode<T>): string[] => {
+  const getNodeChildKeys = (node: UserPickerNode<T>): string[] => {
     const result: string[] = [];
 
     const traverse = (nodeKey: string) => {
@@ -178,7 +178,7 @@ export function useSelection<T = unknown>({
    * @param nodeKey - The key of the node to select
    * @returns The number of leaf nodes that would be selected when selecting this node (excluding already selected or locked nodes)
    */
-  const getSelectableLeafNodes = (nodeKey: string): IUserPickerNode<T>[] => {
+  const getSelectableLeafNodes = (nodeKey: string): UserPickerNode<T>[] => {
     // If the node itself is a leaf node and not selected or locked, return 1
     const nodeEntity = nodeEntitiesMap.value.get(nodeKey);
     if (nodeEntity?.isLeafNode && !selectedKeys.value.has(nodeKey) && !lockedKeysSet.value.has(nodeKey)) {
@@ -186,29 +186,29 @@ export function useSelection<T = unknown>({
     }
 
     // Get all child node keys
-    const childKeys = getNodeChildKeys({ key: nodeKey } as IUserPickerNode<T>);
+    const childKeys = getNodeChildKeys({ key: nodeKey } as UserPickerNode<T>);
 
     // Filter out unselected and unlocked leaf nodes
     const selectableLeafNodes = childKeys
       .filter(key => !selectedKeys.value.has(key) && !lockedKeysSet.value.has(key))
       .map(key => nodeEntitiesMap.value.get(key))
-      .filter(childNode => childNode?.isLeafNode) as IUserPickerNode<T>[];
+      .filter(childNode => childNode?.isLeafNode) as UserPickerNode<T>[];
 
     return selectableLeafNodes;
   };
 
-  const getCancelableLeafNodes = (nodeKey: string): IUserPickerNode<T>[] => {
+  const getCancelableLeafNodes = (nodeKey: string): UserPickerNode<T>[] => {
     const nodeEntity = nodeEntitiesMap.value.get(nodeKey);
     if (nodeEntity?.isLeafNode && selectedKeys.value.has(nodeKey)) {
       return [nodeEntity];
     }
 
-    const childKeys = getNodeChildKeys({ key: nodeKey } as IUserPickerNode<T>);
+    const childKeys = getNodeChildKeys({ key: nodeKey } as UserPickerNode<T>);
 
     const cancelableLeafNodes = childKeys
       .filter(key => selectedKeys.value.has(key) && !lockedKeysSet.value.has(key))
       .map(key => nodeEntitiesMap.value.get(key))
-      .filter(childNode => childNode?.isLeafNode) as IUserPickerNode<T>[];
+      .filter(childNode => childNode?.isLeafNode) as UserPickerNode<T>[];
 
     return cancelableLeafNodes;
   };
@@ -427,14 +427,14 @@ export function useSelection<T = unknown>({
   };
 
   // Get selected items
-  const getSelectedItems = (): IUserPickerResult<T> => {
-    const result: IUserPickerResult<T> = [];
+  const getSelectedItems = (): UserPickerResult<T> => {
+    const result: UserPickerResult<T> = [];
 
     if (isTreeMode && isTreeDataSource(dataSource.value)) {
-      const treeData = dataSource.value as IUserPickerNode<T>[];
+      const treeData = dataSource.value as UserPickerNode<T>[];
 
       // Helper function: find node - use array iteration instead of for...of loop
-      const findNode = (key: string, nodes: IUserPickerNode<T>[]): IUserPickerNode<T> | null => {
+      const findNode = (key: string, nodes: UserPickerNode<T>[]): UserPickerNode<T> | null => {
         const found = nodes.find(node => node.key === key);
         if (found) {
           return found;
@@ -471,7 +471,7 @@ export function useSelection<T = unknown>({
       });
     } else {
       // List mode
-      const listData = dataSource.value as IUserPickerRow<T>[];
+      const listData = dataSource.value as UserPickerRow<T>[];
       selectedKeys.value.forEach(key => {
         const item = listData.find(listItem => listItem.key === key);
         if (item) {

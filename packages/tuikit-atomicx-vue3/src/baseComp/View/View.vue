@@ -20,7 +20,7 @@ defineOptions({
 
 interface ViewProps {
   gap?: number;
-  // 方向：row | column
+  // dir: row | column
   dir?: 'row' | 'column';
   // main aix：flex-start | flex-end | center | space-between | space-around | space-evenly
   justify?: 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
@@ -35,7 +35,6 @@ const props = withDefaults(defineProps<ViewProps>(), {
   align: undefined,
 });
 
-// 计算最终的 class
 const computedClass = computed(() => cs(
   'view__v',
   {

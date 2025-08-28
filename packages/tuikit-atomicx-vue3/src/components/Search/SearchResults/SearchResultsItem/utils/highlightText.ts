@@ -1,16 +1,16 @@
 /**
- * 转义正则表达式中的特殊字符
- * @param string - 需要转义的字符串
- * @returns 转义后的字符串
+ * trims and escapes a string for use in a regular expression
+ * @param string - string to trim and escape
+ * @returns string with trimmed and escaped characters
  */
 function escapeRegExp(string: string): string {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /**
- * 转义HTML特殊字符，防止XSS攻击
- * @param text - 需要转义的文本
- * @returns 转义后的文本
+ * Escape HTML special characters to prevent XSS attacks
+ * @param text - string to escape
+ * @returns escaped string
  */
 function sanitizeInput(text: string): string {
   if (!text || typeof text !== 'string') {
@@ -23,25 +23,24 @@ function sanitizeInput(text: string): string {
 }
 
 /**
- * 文本高亮工具函数
- * 用于在搜索结果中高亮显示关键词
- * @param text - 原始文本
- * @param keyword - 要高亮的关键词
- * @param className - 高亮元素的CSS类名，默认为'highlight'
- * @returns 包含高亮标记的HTML字符串
+ * Highlights a keyword in a given text
+ * @param text - text to highlight
+ * @param keyword - keyword to highlight
+ * @param className - CSS class name for the highlight, default is 'highlight'
+ * @returns HTML string with highlighted text
  */
 export const highlightText = (
   text: string,
   keyword: string,
-  className: string = 'highlight'
+  className = 'highlight',
 ): string => {
   const safeText = sanitizeInput(text);
   const safeKeyword = sanitizeInput(keyword);
-  
+
   if (!text || typeof text !== 'string') {
     return safeText;
   }
-  
+
   if (!safeKeyword || typeof safeKeyword !== 'string') {
     return safeText;
   }

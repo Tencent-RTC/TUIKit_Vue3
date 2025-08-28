@@ -1,6 +1,4 @@
-@use "sass:map";
-@use "@tencentcloud/uikit-base-component-vue3/src/providers/UIKitProvider/styles/variables.scss" as *;
-
+@use '../../../../../styles/mixins' as mixins;
 .SearchMessage {
   display: flex;
   align-items: flex-start;
@@ -35,10 +33,9 @@
 .SearchMessage__name {
   font-weight: 500;
   font-size: 14px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   color: var(--text-color-primary);
+
+  @include mixins.text-ellipsis();
 }
 
 .SearchMessage__time {
@@ -85,13 +82,10 @@
 .SearchMessage__text {
   font-size: 12px;
   line-height: 1.5;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
   word-break: break-word;
   color: var(--text-color-primary);
+
+  @include mixins.multi-line-ellipsis(3);
 }
 
 .SearchMessage__emoji-img {

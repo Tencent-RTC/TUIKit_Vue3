@@ -384,7 +384,16 @@ const handleDisconnect = async (userId: string) => {
         font-size: 16px;
         font-weight: 500;
         color: var(--text-color-primary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 200px;
       }
+    }
+
+    .user-actions {
+      display: flex;
+      gap: 6px;
     }
   }
 }

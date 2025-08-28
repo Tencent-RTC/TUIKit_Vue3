@@ -39,7 +39,7 @@ import TUIRoomEngine, {
 } from '@tencentcloud/tuiroom-engine-js';
 import LiveSceneSelect from './LiveSceneSelect.vue';
 import { TUIToast, TOAST_TYPE, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { onUnmounted, ref, computed } from 'vue';
+import { onBeforeUnmount, ref, computed } from 'vue';
 import CameraSettingDialog from './CameraSettingDialog.vue';
 import MaterialRenameDialog from './MaterialRenameDialog.vue';
 import MaterialItem from './MaterialItem.vue';
@@ -241,7 +241,7 @@ const updateCameraSetting = (material: MediaSource) => {
   showCameraSettingDialog.value = true;
 };
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   clearMediaSource();
 })
 </script>

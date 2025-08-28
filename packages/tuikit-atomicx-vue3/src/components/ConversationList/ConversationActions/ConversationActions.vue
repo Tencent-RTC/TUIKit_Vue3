@@ -1,23 +1,14 @@
 <template>
   <div
     :class="[$style.conversationActions, {
-      [$style.conversationActions__H5]: isH5,
+      [$style.conversationActions__h5]: isH5,
     }, className]"
     :style="style"
     @click="handleMaskClick"
   >
     <div
-      :class="$style.conversationActions__popupIcon"
-      @click="toggleClick"
-    >
-      <slot name="popupIcon">
-        <IconEllipsis />
-      </slot>
-    </div>
-
-    <div
-      v-if="PopupElements || isH5"
-      :class="$style.conversationActions__H5__container"
+      v-if="isH5"
+      :class="$style.conversationActions__h5__container"
       @click.stop
     >
       <div
@@ -31,22 +22,18 @@
         {{ action.label }}
       </div>
     </div>
-
-    <Popup
+    <TUIDropdown
       v-else
-      :open="Boolean(anchor)"
-      :anchor="anchor"
+      trigger="click"
       placement="bottom-end"
-      disable-portal
-      :slot-props="{
-        root: {
-          style: {
-            zIndex: 5,
-          },
-        },
-      }"
     >
-      <div :class="$style.conversationActions__container">
+      <div
+        :class="$style['conversationActions__popup-icon']"
+        @click="toggleClick"
+      >
+        <IconEllipsis size="18px" />
+      </div>
+      <template #dropdown>
         <div
           v-for="(action, key) in enabledActions"
           :key="key"
@@ -57,16 +44,15 @@
         >
           {{ action.label }}
         </div>
-      </div>
-    </Popup>
+      </template>
+    </TUIDropdown>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
 import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
-import { IconEllipsis, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { Popup } from '../../../baseComp';
+import { IconEllipsis, useUIKit, TUIDropdown } from '@tencentcloud/uikit-base-component-vue3';
 import { useConversationListState } from '../../../states/ConversationListState';
 import { isH5 } from '../../../utils';
 import type {

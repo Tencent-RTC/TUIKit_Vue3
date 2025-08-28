@@ -2,17 +2,27 @@
 import { View as ViewComponent } from '../baseComp/View';
 import { ChatSetting as ChatSettingComponent } from '../components/ChatSetting';
 import {
+  ContactList as ContactListComponent,
+  ContactListItem as ContactListItemComponent,
+  ContactInfo as ContactInfoComponent,
+} from '../components/ContactList';
+import {
   ConversationList as ConversationListComponent,
   ConversationActions as ConversationActionsComponent,
   ConversationListHeader as ConversationListHeaderComponent,
   ConversationListContent as ConversationListContentComponent,
   ConversationPreview as ConversationPreviewComponent,
+  ConversationPreviewUI as ConversationPreviewUIComponent,
+  ConversationSearch as ConversationSearchComponent,
 } from '../components/ConversationList';
 import {
   MessageInput as MessageInputComponent,
   EmojiPicker as EmojiPickerComponent,
 } from '../components/MessageInput';
-import { MessageList as MessageListComponent } from '../components/MessageList';
+import {
+  MessageList as MessageListComponent,
+  Message as MessageComponent,
+} from '../components/MessageList';
 import {
   Search as SearchComponent,
   SearchAdvanced as SearchAdvancedComponent,
@@ -28,7 +38,6 @@ import { useMessageActionState as messageActionState } from '../states/MessageAc
 import { useMessageInputState as messageInputState } from '../states/MessageInputState';
 import { useMessageListState as messageListState } from '../states/MessageListState';
 import { useSearchState as searchState } from '../states/SearchState';
-import { useUIOpenControlState as uiOpenControlState } from '../states/UIOpenControlState';
 
 import ChatLoginServer from './server';
 
@@ -47,8 +56,14 @@ const ConversationActions = ConversationActionsComponent;
 const ConversationListHeader = ConversationListHeaderComponent;
 const ConversationListContent = ConversationListContentComponent;
 const ConversationPreview = ConversationPreviewComponent;
+const ConversationPreviewUI = ConversationPreviewUIComponent;
+const ConversationSearch = ConversationSearchComponent;
+const ContactList = ContactListComponent;
+const ContactListItem = ContactListItemComponent;
+const ContactInfo = ContactInfoComponent;
 
 const MessageList = MessageListComponent;
+const Message = MessageComponent;
 const MessageInput = MessageInputComponent;
 const EmojiPicker = EmojiPickerComponent;
 const ChatSetting = ChatSettingComponent;
@@ -63,7 +78,6 @@ const useMessageActionState = messageActionState;
 const useMessageInputState = messageInputState;
 const useMessageListState = messageListState;
 const useSearchState = searchState;
-const useUIOpenControlState = uiOpenControlState;
 
 export {
   // component
@@ -79,11 +93,17 @@ export {
   ConversationListHeader,
   ConversationListContent,
   ConversationPreview,
+  ConversationPreviewUI,
+  ConversationSearch,
   MessageList,
+  Message,
   MessageInput,
   EmojiPicker,
   ChatSetting,
   View,
+  ContactList,
+  ContactListItem,
+  ContactInfo,
 
   // Hooks
   useMessageActions,
@@ -94,5 +114,4 @@ export {
   useMessageActionState,
   useConversationListState,
   useSearchState,
-  useUIOpenControlState,
 };

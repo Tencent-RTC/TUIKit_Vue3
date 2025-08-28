@@ -1,7 +1,5 @@
 // Import from local types
-import { TUISeatMode } from './types';
-import { TUISeatLayoutTemplate } from '@tencentcloud/tuiroom-engine-js';
-import type { TUILoginUserInfo, TUIVideoStreamType } from './types';
+import type { TUISeatMode, TUILoginUserInfo, TUIVideoStreamType } from './types';
 
 export type LiveInfo = {
   liveId: string;
@@ -21,7 +19,7 @@ export type LiveInfo = {
   isSeatEnabled: boolean;
   seatMode: TUISeatMode;
   maxSeatCount: number;
-  layoutTemplate: TUISeatLayoutTemplate;
+  layoutTemplate: number;
   customInfo: Record<string, any>;
 };
 
@@ -104,5 +102,5 @@ export interface UpdateLiveInfoParams {
   coverUrl?: string;
   backgroundUrl?: string;
   isPublicVisible?: boolean;
-  layoutTemplate?: TUISeatLayoutTemplate;
+  layoutTemplate?: number;
 }

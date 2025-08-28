@@ -197,7 +197,6 @@ $message-avatar-gap: 8px;
     &.message-layout__wrapper--left {
       padding-left: calc(#{$message-avatar-size} + #{$message-avatar-gap});
     }
-    // 右侧聚合时反转 padding
     &.message-layout__wrapper--right {
       padding-right: calc(#{$message-avatar-size} + #{$message-avatar-gap});
     }

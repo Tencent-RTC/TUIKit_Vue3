@@ -2,29 +2,25 @@
 import { computed } from 'vue';
 import { TUIChatEngine } from '@tencentcloud/chat-uikit-engine';
 import { useConversationListState } from '../../states/ConversationListState';
-import { useUIOpenControlState } from '../../states/UIOpenControlState';
 import { C2CChatSetting } from './C2CChatSetting';
 import { GroupChatSetting } from './GroupChatSetting';
 
-const { currentConversation: activeConversation } = useConversationListState();
-const { isChatSettingOpen } = useUIOpenControlState();
-// Constants for conversation types
-const { TYPES } = TUIChatEngine;
-const { CONV_C2C, CONV_GROUP } = TYPES;
+const { activeConversation } = useConversationListState();
 
-const chatType = computed(() => activeConversation?.value?.type);
+const chatType = computed(() => activeConversation.value?.type);
 </script>
 
 <template>
   <div
-    v-if="activeConversation && isChatSettingOpen"
+    v-if="Boolean(activeConversation)"
     class="chat-setting"
   >
     <!-- C2C Chat Setting -->
-    <C2CChatSetting v-if="chatType === CONV_C2C" />
+    <C2CChatSetting v-if="chatType === TUIChatEngine.TYPES.CONV_C2C" />
     <!-- Group Chat Setting -->
-    <GroupChatSetting v-else-if="chatType === CONV_GROUP" />
+    <GroupChatSetting v-else-if="chatType === TUIChatEngine.TYPES.CONV_GROUP" />
   </div>
+  <div v-else>没渲染</div>
 </template>
 
 <style lang="scss" scoped>

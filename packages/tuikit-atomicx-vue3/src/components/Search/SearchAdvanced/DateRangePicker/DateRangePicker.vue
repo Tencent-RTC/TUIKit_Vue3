@@ -1,27 +1,54 @@
 <!-- eslint-disable import/extensions -->
 <template>
-  <!-- H5 版本 -->
-  <div v-if="isH5" :class="$style['SearchDateRangePicker__h5-mask']" @click="handleH5Cancel">
-    <div :class="$style['SearchDateRangePicker__h5-panel']" @click.stop>
-      <div :class="$style['SearchDateRangePicker__h5-header']">{{ t('DateRangePicker.Time') }}</div>
+  <div
+    v-if="isH5"
+    :class="$style['SearchDateRangePicker__h5-mask']"
+    @click="handleH5Cancel"
+  >
+    <div
+      :class="$style['SearchDateRangePicker__h5-panel']"
+      @click.stop
+    >
+      <div :class="$style['SearchDateRangePicker__h5-header']">
+        {{ t('DateRangePicker.Time') }}
+      </div>
       <div :class="$style.SearchDateRangePicker__calendar">
         <div :class="$style['SearchDateRangePicker__calendar-header']">
-          <button :class="$style['SearchDateRangePicker__nav-button']" @click="handleYearChange(true, false)">
+          <button
+            :class="$style['SearchDateRangePicker__nav-button']"
+            @click="handleYearChange(true, false)"
+          >
             &lt;&lt;
           </button>
-          <button :class="$style['SearchDateRangePicker__nav-button']" @click="handleMonthChange(true, false)">
+          <button
+            :class="$style['SearchDateRangePicker__nav-button']"
+            @click="handleMonthChange(true, false)"
+          >
             &lt;
           </button>
-          <span :class="$style['SearchDateRangePicker__current-month-year']" @click="handlePickerToggle(true)">
+          <span
+            :class="$style['SearchDateRangePicker__current-month-year']"
+            @click="handlePickerToggle(true)"
+          >
             {{ leftDate.getFullYear() }} {{ MONTH_NAMES[leftDate.getMonth()] }}
           </span>
-          <button :class="$style['SearchDateRangePicker__nav-button']" @click="handleMonthChange(true, true)">
+          <button
+            :class="$style['SearchDateRangePicker__nav-button']"
+            @click="handleMonthChange(true, true)"
+          >
             &gt;
           </button>
-          <button :class="$style['SearchDateRangePicker__nav-button']" @click="handleYearChange(true, true)">
+          <button
+            :class="$style['SearchDateRangePicker__nav-button']"
+            @click="handleYearChange(true, true)"
+          >
             &gt;&gt;
           </button>
-          <div v-if="isPickerOpenLeft" :class="$style['SearchDateRangePicker__picker-dropdown']" ref="pickerRefLeft">
+          <div
+            v-if="isPickerOpenLeft"
+            ref="pickerRefLeft"
+            :class="$style['SearchDateRangePicker__picker-dropdown']"
+          >
             <div :class="$style['SearchDateRangePicker__picker-header']">
               <button
                 :class="$style['SearchDateRangePicker__picker-nav-button']"
@@ -50,7 +77,13 @@
           </div>
         </div>
         <div :class="$style['SearchDateRangePicker__week-days']">
-          <div v-for="day in WEEK_DAYS" :key="day" :class="$style['SearchDateRangePicker__week-day']">{{ day }}</div>
+          <div
+            v-for="day in WEEK_DAYS"
+            :key="day"
+            :class="$style['SearchDateRangePicker__week-day']"
+          >
+            {{ day }}
+          </div>
         </div>
         <div :class="$style.SearchDateRangePicker__days">
           <div
@@ -75,28 +108,48 @@
     </div>
   </div>
 
-  <!-- PC 版本 -->
-  <div v-else :class="[$style.SearchDateRangePicker, className]">
+  <div
+    v-else
+    :class="[$style.SearchDateRangePicker, className]"
+  >
     <div :class="$style.SearchDateRangePicker__calendars">
-      <!-- 左侧日历 -->
       <div :class="$style.SearchDateRangePicker__calendar">
         <div :class="$style['SearchDateRangePicker__calendar-header']">
-          <button :class="$style['SearchDateRangePicker__nav-button']" @click="handleYearChange(true, false)">
+          <button
+            :class="$style['SearchDateRangePicker__nav-button']"
+            @click="handleYearChange(true, false)"
+          >
             &lt;&lt;
           </button>
-          <button :class="$style['SearchDateRangePicker__nav-button']" @click="handleMonthChange(true, false)">
+          <button
+            :class="$style['SearchDateRangePicker__nav-button']"
+            @click="handleMonthChange(true, false)"
+          >
             &lt;
           </button>
-          <span :class="$style['SearchDateRangePicker__current-month-year']" @click="handlePickerToggle(true)">
+          <span
+            :class="$style['SearchDateRangePicker__current-month-year']"
+            @click="handlePickerToggle(true)"
+          >
             {{ leftDate.getFullYear() }} {{ MONTH_NAMES[leftDate.getMonth()] }}
           </span>
-          <button :class="$style['SearchDateRangePicker__nav-button']" @click="handleMonthChange(true, true)">
+          <button
+            :class="$style['SearchDateRangePicker__nav-button']"
+            @click="handleMonthChange(true, true)"
+          >
             &gt;
           </button>
-          <button :class="$style['SearchDateRangePicker__nav-button']" @click="handleYearChange(true, true)">
+          <button
+            :class="$style['SearchDateRangePicker__nav-button']"
+            @click="handleYearChange(true, true)"
+          >
             &gt;&gt;
           </button>
-          <div v-if="isPickerOpenLeft" :class="$style['SearchDateRangePicker__picker-dropdown']" ref="pickerRefLeft">
+          <div
+            v-if="isPickerOpenLeft"
+            ref="pickerRefLeft"
+            :class="$style['SearchDateRangePicker__picker-dropdown']"
+          >
             <div :class="$style['SearchDateRangePicker__picker-header']">
               <button
                 :class="$style['SearchDateRangePicker__picker-nav-button']"
@@ -125,7 +178,13 @@
           </div>
         </div>
         <div :class="$style['SearchDateRangePicker__week-days']">
-          <div v-for="day in WEEK_DAYS" :key="day" :class="$style['SearchDateRangePicker__week-day']">{{ day }}</div>
+          <div
+            v-for="day in WEEK_DAYS"
+            :key="day"
+            :class="$style['SearchDateRangePicker__week-day']"
+          >
+            {{ day }}
+          </div>
         </div>
         <div :class="$style.SearchDateRangePicker__days">
           <div
@@ -148,25 +207,43 @@
         </div>
       </div>
 
-      <!-- 右侧日历 -->
       <div :class="$style.SearchDateRangePicker__calendar">
         <div :class="$style['SearchDateRangePicker__calendar-header']">
-          <button :class="$style['SearchDateRangePicker__nav-button']" @click="handleYearChange(false, false)">
+          <button
+            :class="$style['SearchDateRangePicker__nav-button']"
+            @click="handleYearChange(false, false)"
+          >
             &lt;&lt;
           </button>
-          <button :class="$style['SearchDateRangePicker__nav-button']" @click="handleMonthChange(false, false)">
+          <button
+            :class="$style['SearchDateRangePicker__nav-button']"
+            @click="handleMonthChange(false, false)"
+          >
             &lt;
           </button>
-          <span :class="$style['SearchDateRangePicker__current-month-year']" @click="handlePickerToggle(false)">
+          <span
+            :class="$style['SearchDateRangePicker__current-month-year']"
+            @click="handlePickerToggle(false)"
+          >
             {{ rightDate.getFullYear() }} {{ MONTH_NAMES[rightDate.getMonth()] }}
           </span>
-          <button :class="$style['SearchDateRangePicker__nav-button']" @click="handleMonthChange(false, true)">
+          <button
+            :class="$style['SearchDateRangePicker__nav-button']"
+            @click="handleMonthChange(false, true)"
+          >
             &gt;
           </button>
-          <button :class="$style['SearchDateRangePicker__nav-button']" @click="handleYearChange(false, true)">
+          <button
+            :class="$style['SearchDateRangePicker__nav-button']"
+            @click="handleYearChange(false, true)"
+          >
             &gt;&gt;
           </button>
-          <div v-if="isPickerOpenRight" :class="$style['SearchDateRangePicker__picker-dropdown']" ref="pickerRefRight">
+          <div
+            v-if="isPickerOpenRight"
+            ref="pickerRefRight"
+            :class="$style['SearchDateRangePicker__picker-dropdown']"
+          >
             <div :class="$style['SearchDateRangePicker__picker-header']">
               <button
                 :class="$style['SearchDateRangePicker__picker-nav-button']"
@@ -195,7 +272,13 @@
           </div>
         </div>
         <div :class="$style['SearchDateRangePicker__week-days']">
-          <div v-for="day in WEEK_DAYS" :key="day" :class="$style['SearchDateRangePicker__week-day']">{{ day }}</div>
+          <div
+            v-for="day in WEEK_DAYS"
+            :key="day"
+            :class="$style['SearchDateRangePicker__week-day']"
+          >
+            {{ day }}
+          </div>
         </div>
         <div :class="$style.SearchDateRangePicker__days">
           <div
@@ -223,8 +306,8 @@
 
 <script lang="ts" setup>
 import { ref, watch, onMounted, onUnmounted, defineProps } from 'vue';
-import { isH5 } from '../../../../utils';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { isH5 } from '../../../../utils';
 
 interface DateRangePickerProps {
   value?: [Date | null, Date | null];
@@ -242,7 +325,7 @@ const rightDate = ref(
     const date = new Date();
     date.setMonth(date.getMonth() + 1);
     return date;
-  })()
+  })(),
 );
 const internalDates = ref<[Date | null, Date | null]>([null, null]);
 const isPickerOpenLeft = ref(false);
@@ -290,16 +373,14 @@ const setEndOfDay = (date: Date): Date => {
   return newDate;
 };
 
-// 监听外部值变化
 watch(
   () => props.value,
-  newValue => {
+  (newValue) => {
     internalDates.value = newValue || [null, null];
   },
-  { immediate: true }
+  { immediate: true },
 );
 
-// 点击外部关闭选择器
 const handleClickOutside = (event: MouseEvent) => {
   if (pickerRefLeft.value && !pickerRefLeft.value.contains(event.target as Node)) {
     isPickerOpenLeft.value = false;
@@ -431,7 +512,9 @@ const handlePickerMonthSelect = (isLeft: boolean, month: number) => {
 
 const isDateSelected = (date: Date): boolean => {
   const [start, end] = internalDates.value;
-  if (!start || !end) return false;
+  if (!start || !end) {
+    return false;
+  }
   const dayTime = date.setHours(0, 0, 0, 0);
   const startTime = new Date(start).setHours(0, 0, 0, 0);
   const endTime = new Date(end).setHours(0, 0, 0, 0);
@@ -440,7 +523,9 @@ const isDateSelected = (date: Date): boolean => {
 
 const isStartDate = (date: Date): boolean => {
   const [start] = internalDates.value;
-  if (!start) return false;
+  if (!start) {
+    return false;
+  }
   const dayTime = date.setHours(0, 0, 0, 0);
   const startTime = new Date(start).setHours(0, 0, 0, 0);
   return startTime === dayTime;
@@ -448,7 +533,9 @@ const isStartDate = (date: Date): boolean => {
 
 const isEndDate = (date: Date): boolean => {
   const [, end] = internalDates.value;
-  if (!end) return false;
+  if (!end) {
+    return false;
+  }
   const dayTime = date.setHours(0, 0, 0, 0);
   const endTime = new Date(end).setHours(0, 0, 0, 0);
   return endTime === dayTime;
