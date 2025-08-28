@@ -1,9 +1,8 @@
-import type { Component } from 'vue';
-import type { CSSProperties } from 'vue';
-import type { CreateGroupParams } from '@tencentcloud/chat-uikit-engine';
+import type { Component, CSSProperties } from 'vue';
+import type { Friend } from './contact';
 import type { ConversationModel } from './engine';
 import type { AvatarProps } from '../components/Avatar';
-import type { Friend, UserProfile } from './contact';
+import type { CreateGroupParams } from '@tencentcloud/chat-uikit-engine';
 
 export interface ConversationListProps {
   /** Determines whether the conversation search input appears on the conversation list view. */
@@ -27,11 +26,11 @@ export interface ConversationListProps {
   /** Specifies a vue component to customize the conversation actions in conversation preview. */
   ConversationActions?: Component<ConversationActionsProps>;
   /** Specifies a vue component to display when the chat list is empty. */
-  PlaceholderEmptyList?: any;
+  PlaceholderEmptyList?: Component;
   /** Specifies a vue component to display while the chat list is loading. */
-  PlaceholderLoading?: any;
+  PlaceholderLoading?: Component;
   /** Specifies a vue component to display when there is an error loading the chat list. */
-  PlaceholderLoadError?: any;
+  PlaceholderLoadError?: Component;
   /** Specifies a vue component to customize the avatar in list. */
   Avatar?: Component<AvatarProps>;
   /** Specifies a function to filter conversations in the conversation list. */
@@ -75,11 +74,11 @@ export interface ConversationListContentProps {
   /** Indicates whether there was an error loading the chat list */
   error?: boolean;
   /** A custom component to display when the chat list is empty */
-  PlaceholderEmptyList?: any;
+  PlaceholderEmptyList?: Component;
   /** A custom component to display while the chat list is loading */
-  PlaceholderLoading?: any;
+  PlaceholderLoading?: Component;
   /** A custom component to display when there is an error loading the chat list */
-  PlaceholderLoadError?: any;
+  PlaceholderLoadError?: Component;
   /** The custom class name */
   className?: string;
   /** The custom class style */
@@ -93,18 +92,16 @@ export interface ConversationPreviewUIProps {
   isSelected?: boolean;
   /** Whether to show the ConversationActions */
   enableActions?: boolean;
-  /** The string to be highlighted in the title */
-  highlightMatchString?: string;
   /** The custom Avatar component */
   Avatar?: Component<AvatarProps>;
   /** The custom Title component */
-  Title?: string | any;
+  Title?: string | Component;
   /** The custom last message abstract component */
-  LastMessageAbstract?: string | any;
+  LastMessageAbstract?: string | Component;
   /** The custom last message abstract component */
-  LastMessageTimestamp?: string | any;
+  LastMessageTimestamp?: string | Component;
   /** The custom Unread component */
-  Unread?: string | any;
+  Unread?: string | Component;
   /** The custom ConversationActions component */
   ConversationActions?: Component<ConversationActionsProps>;
   /** Callback when the user click a conversation from conversation list */
@@ -163,9 +160,9 @@ export interface ConversationActionsConfig extends ConversationActionsBaseConfig
    */
   customConversationActions?: Record<string, ConversationActionItem>;
   /** The icon vue element to be displayed in the action popup. */
-  PopupIcon?: any;
+  PopupIcon?: Component;
   /** An array of vue elements to be displayed in the action popup. */
-  PopupElements?: any[];
+  PopupElements?: Component[];
   /** The function to be called when the action popup is clicked. */
   onClick?: (e: Event, key?: string, conversation?: ConversationModel) => void;
   /** Function to be called when the actions modal is closed (H5 only). */
@@ -182,23 +179,16 @@ export interface ConversationActionsProps extends ConversationActionsConfig {
 }
 
 export interface ConversationCreateProps {
-  visible?: boolean;
-  className?: string;
-  style?: CSSProperties;
   onBeforeCreateConversation?: (
     (params: string | CreateGroupParams) => string | CreateGroupParams
   );
   onConversationCreated?: ((conversation: ConversationModel) => void);
-  'onUpdate:visible'?: ((visible: boolean) => void);
   conversationList?: ConversationModel[];
 }
 
 export interface ConversationCreateButtonProps {
-  visible?: boolean;
-  onClick?: (event: Event) => void;
-  height?: number;
-  width?: number;
-  className?: string;
+  onClick?: (value: CreateConvTypes) => void;
+  size?: number;
 }
 
 export enum PageStateTypes {
@@ -208,37 +198,34 @@ export enum PageStateTypes {
 }
 
 export interface ConversationCreateGroupDetailProps {
-  profileList: UserProfile[];
+  profileList: Friend[];
   pageState: PageStateTypes;
+  groupInfo: CreateGroupInfo;
+  onUpdateGroupInfo: (info: CreateGroupInfo) => void;
   setPageState: (state: PageStateTypes) => void;
-  onBeforeCreateConversation?: ((params: CreateGroupParams) => void);
-  onConversationCreated?: ((conversation: ConversationModel) => void);
 }
 
-export interface ConversationCreateSelectViewProps {
-  selectList: UserProfile[];
-  setSelectList: (list: UserProfile[]) => void;
-}
-
-export interface ConversationCreateUsers {
-  [key: string]: Friend[] | UserProfile[];
-}
-
-export interface ConversationCreateUserSelectListProps extends ConversationCreateSelectViewProps {
+export interface ConversationCreateUserSelectListProps {
   isCreateGroup: boolean;
-  setIsCreateGroup: (value: boolean) => void;
-  conversationList: ConversationModel[];
-  setPageState: (state: PageStateTypes) => void;
-  onBeforeCreateConversation?: ((userID: string) => void);
-  onConversationCreated?: ((conversation: ConversationModel) => void);
-  className?: string;
+  selectList: Friend[];
+  setSelectList: (list: Friend[]) => void;
+}
+
+export interface ConversationGroupTypeInfoProps {
+  groupType: GroupType;
+  setGroupType: (type: GroupType) => void;
 }
 
 export enum PlaceHolderTypes {
   LOADING = 'LOADING',
   NO_CONVERSATIONS = 'NO_CONVERSATIONS',
   WRONG = 'WRONG',
-};
+}
+
+export enum CreateConvTypes {
+  C2C = 'createC2C',
+  GROUP = 'createGroup',
+}
 
 export interface ConversationPlaceHolderProps {
   type: PlaceHolderTypes;
@@ -246,4 +233,25 @@ export interface ConversationPlaceHolderProps {
   iconSize?: number;
   searchString?: string;
   retry?: () => void;
+}
+
+export enum GroupLabelTypes {
+  NAME = 'name',
+  GROUP_ID = 'groupID',
+  TYPE = 'type',
+}
+
+export enum GroupType {
+  WORK = 'Private',
+  PUBLIC = 'Public',
+  MEETING = 'ChatRoom',
+  AVCHATROOM = 'AVChatRoom',
+  COMMUNITY = 'Community',
+}
+
+export interface CreateGroupInfo {
+  avatar?: string;
+  name: string;
+  groupID: string;
+  type: GroupType;
 }

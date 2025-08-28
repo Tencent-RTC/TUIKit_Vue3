@@ -1,7 +1,7 @@
 <template>
   <TUIButton
     type="primary"
-    shape="round"
+    radius="round"
     size="medium"
     :disabled="disabled"
     @click="onSendButtonClick"

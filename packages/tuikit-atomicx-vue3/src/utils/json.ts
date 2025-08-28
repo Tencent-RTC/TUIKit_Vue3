@@ -43,7 +43,6 @@ export function safeJSONParse<T>(
   }
 
   try {
-    // 处理一些常见的错误输入
     const trimmed = text.trim();
     if (!trimmed) {
       return defaultValue;
@@ -55,17 +54,14 @@ export function safeJSONParse<T>(
       return null as T;
     }
 
-    // 尝试解析 JSON
     const parsed = JSON.parse(trimmed, reviver);
 
-    // 验证解析结果是否为有效值
     if (parsed === undefined || parsed === null) {
       return defaultValue;
     }
 
     return parsed;
   } catch (error) {
-    console.warn('JSON parse failed:', error);
     return defaultValue;
   }
 }

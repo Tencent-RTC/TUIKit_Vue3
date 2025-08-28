@@ -8,7 +8,7 @@ import { View } from '../../../baseComp/View';
 import { useConversationListState } from '../../../states/ConversationListState';
 import { useMessageActionState } from '../../../states/MessageActionState';
 import { UserPicker } from '../../UserPicker';
-import type { IUserPickerRef, IUserPickerRow } from '../../UserPicker/type';
+import type { UserPickerRef, UserPickerRow } from '../../UserPicker/type';
 import type { IConversationModel } from '@tencentcloud/chat-uikit-engine';
 
 const { t } = useUIKit();
@@ -24,7 +24,7 @@ const {
 } = useConversationListState();
 
 // UserPicker ref
-const userPickerRef = ref<IUserPickerRef<undefined> | null>(null);
+const userPickerRef = ref<UserPickerRef<undefined> | null>(null);
 
 // Convert conversation list to UserPicker data format
 const forwardListDataSource = computed((): any[] => {
@@ -34,7 +34,7 @@ const forwardListDataSource = computed((): any[] => {
 
   return conversationList.value.map((conversation: IConversationModel) => {
     const { type, remark, groupProfile, userProfile } = conversation;
-    const userPickerRow: IUserPickerRow<undefined> = {
+    const userPickerRow: UserPickerRow<undefined> = {
       key: conversation.conversationID,
       label: '',
       avatarUrl: conversation.getAvatar() || '',
@@ -125,7 +125,7 @@ function closeMessageForward() {
 
     <View class="forward-footer">
       <TUIButton
-        shape="rect"
+        radius="rect"
         color="blue"
         type="primary"
         :disabled="isDisableConfirm"
@@ -202,7 +202,7 @@ $animationDuration: 200ms;
   }
 
   &__placeholder {
-    width: $icon-size; // 与关闭按钮同宽，保持视觉平衡
+    width: $icon-size;
     height: $icon-size;
   }
 }

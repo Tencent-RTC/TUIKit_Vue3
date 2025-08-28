@@ -6,26 +6,24 @@
     <slot v-if="!error && !loading && !empty" />
 
     <component
-      :is="PlaceholderLoadError.component"
+      :is="PlaceholderLoadError"
       v-else-if="error"
-      v-bind="PlaceholderLoadError.props"
     />
 
     <component
-      :is="PlaceholderLoading.component"
+      :is="PlaceholderLoading"
       v-else-if="loading"
-      v-bind="PlaceholderLoading.props"
     />
 
     <component
-      :is="PlaceholderEmptyList.component"
+      :is="PlaceholderEmptyList"
       v-else-if="empty"
-      v-bind="PlaceholderEmptyList.props"
     />
   </div>
 </template>
 
 <script lang="ts" setup>
+import { h } from 'vue';
 import { PlaceHolderTypes } from '../../../types';
 import PlaceHolder from '../ConversationPlaceHolder';
 import type { ConversationListContentProps } from '../../../types';
@@ -34,18 +32,15 @@ const props = withDefaults(defineProps<ConversationListContentProps>(), {
   empty: false,
   loading: false,
   error: false,
-  PlaceholderEmptyList: () => ({
-    component: PlaceHolder,
-    props: { type: PlaceHolderTypes.NO_CONVERSATIONS },
-  }),
-  PlaceholderLoading: () => ({
-    component: PlaceHolder,
-    props: { type: PlaceHolderTypes.LOADING },
-  }),
-  PlaceholderLoadError: () => ({
-    component: PlaceHolder,
-    props: { type: PlaceHolderTypes.WRONG },
-  }),
+  PlaceholderEmptyList: () => (h(PlaceHolder, {
+    type: PlaceHolderTypes.NO_CONVERSATIONS
+  })),
+  PlaceholderLoading: () => (h(PlaceHolder, {
+    type: PlaceHolderTypes.LOADING
+  })),
+  PlaceholderLoadError: () => (h(PlaceHolder, {
+    type: PlaceHolderTypes.WRONG
+  }))
 });
 
 </script>

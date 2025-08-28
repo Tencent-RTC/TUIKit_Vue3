@@ -28,6 +28,10 @@ const MessageList = {
   reedit: '重新编辑',
   origin_message_has_been_recalled: '原消息已被撤回',
   forward: '转发',
+  copy: '复制',
+  recall: '撤回',
+  quote: '引用',
+  delete: '删除',
   max_count_exceed: '超过最大数量限制',
   read_receipt_detail: '已读详情',
   read_count: '已读人数',
@@ -36,6 +40,7 @@ const MessageList = {
   no_read_members: '暂无已读成员',
   no_more: '已加载全部',
   no_unread_members: '暂无未读成员',
+  yesterday: '昨天',
 };
 
 export default MessageList;

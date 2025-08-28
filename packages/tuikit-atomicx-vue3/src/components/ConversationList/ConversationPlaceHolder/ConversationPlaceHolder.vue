@@ -1,7 +1,7 @@
 <template>
   <div :class="[$style.conversationPlaceHolder, className]">
     <div :class="$style.conversationPlaceHolder__icon">
-      <IconLoading
+      <IconLiveLoading
         v-if="type === PlaceHolderTypes.LOADING"
         :class="$style.conversationPlaceHolder__loading"
       />
@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 import { computed, withDefaults, defineProps } from 'vue';
-import { TUIButton, useUIKit, IconLoading } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIButton, useUIKit, IconLiveLoading } from '@tencentcloud/uikit-base-component-vue3';
 import { PlaceHolderTypes } from '../../../types/conversation';
 import type { ConversationPlaceHolderProps } from '../../../types/conversation';
 

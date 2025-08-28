@@ -3,7 +3,9 @@
   <div :class="$style.SearchEmpty">
     <IconSearchDefault size="88px" />
     <div :class="$style['SearchEmpty__text']">
-      <p :class="$style['SearchEmpty__title']">{{ text }}</p>
+      <p :class="$style['SearchEmpty__title']">
+        {{ text }}
+      </p>
     </div>
   </div>
 </template>
@@ -17,7 +19,7 @@ interface IEmptyResultProps {
 }
 
 const props = withDefaults(defineProps<IEmptyResultProps>(), {
-  text: '暂无内容',
+  text: '',
 });
 
 const { t } = useUIKit();

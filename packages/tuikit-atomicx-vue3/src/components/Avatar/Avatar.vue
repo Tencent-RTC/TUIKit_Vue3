@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, useSlots, h } from 'vue';
+import { computed, ref, useSlots, h, useCssModule } from 'vue';
 import type { CSSProperties } from 'vue';
 import { Badge } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
@@ -94,6 +94,7 @@ const props = withDefaults(defineProps<AvatarProps>(), {
 });
 
 const slots = useSlots();
+const classes = useCssModule();
 
 // State management
 const imageError = ref(false);
@@ -174,9 +175,9 @@ const fontSizeStyle = computed(() => {
 });
 
 const avatarClasses = computed(() => cs(
-  'avatar',
-  `avatar--shape-${props.shape}`,
-  typeof props.size !== 'number' && `size-${props.size}`,
+  classes['avatar'],
+  classes[`avatar--shape-${props.shape}`],
+  typeof props.size !== 'number' && classes[`size-${props.size}`],
   props.className,
 ));
 
@@ -195,11 +196,11 @@ const baseAvatar = computed(() => h(
     // Render avatar content
     (() => {
       if (children.value) {
-        return h('div', { class: 'avatar__fallback' }, children.value);
+        return h('div', { class: classes['avatar__fallback'] }, children.value);
       }
       if (props.src && !imageError.value) {
         return h('img', {
-          class: cs('avatar__image'),
+          class: classes['avatar__image'],
           src: props.src,
           alt: props.alt || 'avatar',
           onLoad: handleImageLoad,
@@ -207,10 +208,10 @@ const baseAvatar = computed(() => h(
         });
       }
       if (props.alt) {
-        return h('div', { class: 'avatar__fallback' }, getAltText());
+        return h('div', { class: classes['avatar__fallback'] }, getAltText());
       }
       return h('img', {
-        class: 'avatar__image',
+        class: classes['avatar__image'],
         src: DEFAULT_USER_AVATAR,
         alt: 'default avatar',
         onLoad: () => setIsLoading(false),
@@ -219,7 +220,7 @@ const baseAvatar = computed(() => h(
     })(),
 
     // Loading skeleton
-    isLoading.value && h('div', { class: 'avatar__skeleton' }),
+    isLoading.value && h('div', { class: classes['avatar__skeleton'] }),
   ],
 ));
 
@@ -258,10 +259,10 @@ defineOptions({
 export type { AvatarSize, AvatarShape, BaseAvatarProps, AvatarProps };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss" module>
 .avatar {
   position: relative;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;

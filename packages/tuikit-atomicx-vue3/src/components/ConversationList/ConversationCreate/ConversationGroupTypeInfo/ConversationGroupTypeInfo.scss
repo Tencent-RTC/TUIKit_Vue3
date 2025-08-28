@@ -1,14 +1,14 @@
+@use '../../../../styles/mixins/_scrollbar.scss' as scrollbar;
+
 .conversationGroupTypeInfo {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0 10px;
+  gap: 10px;
   overflow-y: scroll;
   color: var(--text-color-primary);
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
+
+  @include scrollbar.scrollbar-hidden();
 
   &__box {
     display: flex;
@@ -16,7 +16,6 @@
     gap: 8px;
     border-radius: 16px;
     padding: 12px 16px;
-    margin-top: 12px;
     cursor: pointer;
     background-color: var(--bg-color-operate);
     border: 1px solid var(--stroke-color-primary);
@@ -28,6 +27,12 @@
     &--active {
       border: 1px solid var(--text-color-link);
     }
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 
   &__title {
@@ -45,10 +50,9 @@
   }
 
   &__document {
-    font-size: 16px;
-    text-align: justify;
+    font-size: 12px;
+    line-height: 16px;
     text-decoration: none;
-    margin: 1rem auto;
 
     &:link,
     &:active,
@@ -58,6 +62,6 @@
   }
 
   &__activeIcon {
-    fill: var(--text-color-link) !important;
+    color: var(--checkbox-color-selected);
   }
 }

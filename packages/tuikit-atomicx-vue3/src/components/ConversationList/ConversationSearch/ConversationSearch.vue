@@ -37,6 +37,7 @@
       </div>
 
       <TUIDialog
+        appendTo="body"
         :customClasses="[$style.conversationSearch__advanced]"
         :visible="isShowStandard"
         :show-close="false"

@@ -1,25 +1,25 @@
 <script lang="ts" setup>
 import { h, computed, Fragment } from 'vue';
 import { getTimeStampAuto } from '../../../utils/time';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { MessageModel } from '../../../types';
 
-interface IMessageTimeDividerProps {
-  previousMessage: IMessageModel | undefined;
-  message: IMessageModel;
+interface MessageTimeDividerProps {
+  previousMessage: MessageModel | undefined;
+  currentMessage: MessageModel;
 }
 
-const props = withDefaults(defineProps<IMessageTimeDividerProps>(), {
+const props = withDefaults(defineProps<MessageTimeDividerProps>(), {
   previousMessage: undefined,
-  message: () => ({}) as IMessageModel,
+  currentMessage: () => ({}) as MessageModel,
 });
 
 const shouldShowTimeDivider = computed(() => {
-  if (!props.message?.time) {
+  if (!props.currentMessage?.time) {
     return false;
   }
 
   const prevTime = props.previousMessage?.time || 0;
-  const currentTime = props.message.time;
+  const currentTime = props.currentMessage.time;
 
   return currentTime - prevTime > 5 * 60;
 });
@@ -29,7 +29,7 @@ const renderDefaultContent = () => {
     return h(Fragment, null, []);
   }
 
-  const currentTime = props.message.time;
+  const currentTime = props.currentMessage.time;
 
   return h('div', { class: 'message-time-divider' }, [
     h('span', {}, getTimeStampAuto(currentTime * 1000)),

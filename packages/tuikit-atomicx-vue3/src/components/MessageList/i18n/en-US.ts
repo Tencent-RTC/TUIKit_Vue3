@@ -29,6 +29,10 @@ const MessageList = {
   reedit: 'Re-edit',
   origin_message_has_been_recalled: 'Original message has been recalled',
   forward: 'Forward',
+  copy: 'Copy',
+  recall: 'Recall',
+  quote: 'Quote',
+  delete: 'Delete',
   max_count_exceed: 'Max Count Exceed',
   read_receipt_detail: 'Read Receipt Detail',
   read_count: 'Read Count',
@@ -37,6 +41,7 @@ const MessageList = {
   no_read_members: 'No Read Members',
   no_more: 'No More',
   no_unread_members: 'No Unread Members',
+  yesterday: 'Yesterday',
 };
 
 export default MessageList;

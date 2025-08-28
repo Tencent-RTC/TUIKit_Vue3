@@ -244,7 +244,7 @@ onUnmounted(() => {
       </ObserverView>
 
       <div class="message-chunk">
-        <template v-for="message in messageList" :key="message.ID + message.isRevoked">
+        <template v-for="message in messageList" :key="message.ID + message.isRevoked + message.status">
           <component
             :style="props.itemStyle"
             :is="props.Message || DefaultMessage"
@@ -365,7 +365,7 @@ onUnmounted(() => {
   letter-spacing: 0.1em;
 
   .message-group-tip-name {
-    color: var(--text-color-link);
+    color: var(--uikit-color-theme-8);
   }
   .message-group-tip-action {
   }

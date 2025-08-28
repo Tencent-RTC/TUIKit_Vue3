@@ -1,7 +1,7 @@
 <template>
   <div :class="$style.conversationPreview__abstract">
     <template v-if="draftTextAbstract">
-      <label :class="$style.conversationPreview__drafts">{{ t('TUIChat.[Drafts]') }}</label>
+      <label :class="$style.conversationPreview__drafts">[{{ t('TUIConversation.Drafts') }}]</label>
       {{ ' ' }}
       {{ draftTextAbstract }}
     </template>

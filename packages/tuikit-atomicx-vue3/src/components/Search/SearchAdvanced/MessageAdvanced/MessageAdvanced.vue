@@ -1,8 +1,14 @@
 <!-- eslint-disable import/extensions -->
 <template>
   <div :class="$style.SearchMessageAdvanced">
-    <div :class="$style['SearchMessageAdvanced__filter-row']" ref="datePickerRef">
-      <div :class="$style['SearchMessageAdvanced__filter-select']" @click="toggleDatePicker">
+    <div
+      ref="datePickerRef"
+      :class="$style['SearchMessageAdvanced__filter-row']"
+    >
+      <div
+        :class="$style['SearchMessageAdvanced__filter-select']"
+        @click="toggleDatePicker"
+      >
         <span :class="$style['SearchMessageAdvanced__filter-label']"> {{ t('Search.input.selectTime') }}： </span>
         <span :class="$style['SearchMessageAdvanced__filter-value']">
           {{ getDateRangeText() }}
@@ -17,9 +23,10 @@
         </span>
       </div>
       <div :class="$style['SearchMessageAdvanced__quick-options']">
-        <button
+        <TUIButton
           v-for="option in quickOptions"
           :key="option.value"
+          type="text"
           :class="[
             $style['SearchMessageAdvanced__quick-option'],
             { [$style['SearchMessageAdvanced__quick-option--active']]: activeQuickOption === option.value },
@@ -27,10 +34,16 @@
           @click="handleQuickOptionClick(option.value)"
         >
           {{ option.label }}
-        </button>
+        </TUIButton>
       </div>
-      <div v-if="isDatePickerOpen" :class="$style['SearchMessageAdvanced__date-picker-dropdown']">
-        <DateRangePicker :value="dateRange" @change="onDateRangeChange" />
+      <div
+        v-if="isDatePickerOpen"
+        :class="$style['SearchMessageAdvanced__date-picker-dropdown']"
+      >
+        <DateRangePicker
+          :value="dateRange"
+          @change="onDateRangeChange"
+        />
       </div>
     </div>
   </div>
@@ -38,9 +51,9 @@
 
 <script lang="ts" setup>
 import { ref, watch, onMounted, onUnmounted, defineProps } from 'vue';
+import { TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { SearchType } from '../../../../types/engine';
 import { DateRangePicker } from '../DateRangePicker';
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 
 interface IMessageAdvancedProps {
   advancedParams?: Map<SearchType, any>;
@@ -62,7 +75,6 @@ const quickOptions = [
   { label: t('Search.timeFilter.last7Days'), value: 'last7days' },
 ];
 
-// 点击外部关闭日期选择器
 const handleClickOutside = (event: MouseEvent) => {
   if (datePickerRef.value && !datePickerRef.value.contains(event.target as Node)) {
     isDatePickerOpen.value = false;
@@ -89,10 +101,9 @@ const setEndOfDay = (date: Date): Date => {
   return newDate;
 };
 
-// 监听高级参数变化
 watch(
   () => props.advancedParams,
-  newParams => {
+  (newParams) => {
     const messageParams = newParams?.get(SearchType.MESSAGE);
     let newDateRange: [Date | null, Date | null] = [null, null];
     if (messageParams?.timePosition && messageParams?.timePeriod) {
@@ -102,7 +113,7 @@ watch(
     }
     dateRange.value = newDateRange;
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const dateRangeMatch = (startTime: number | undefined, endTime: number | undefined, daysAgo: number): boolean => {
@@ -129,11 +140,9 @@ function matchQuickOptionByDateRange([start, end]: [Date | null, Date | null]): 
   return matchedOption?.option || '';
 }
 
-// 监听日期范围变化，更新快速选项
 watch(
   dateRange,
-  newDateRange => {
-    // 只有在没有手动激活时才自动匹配
+  (newDateRange) => {
     if (!activeQuickOption.value) {
       const startTimes = newDateRange[0]?.getTime();
       const endTimes = newDateRange[1]?.getTime();
@@ -149,7 +158,7 @@ watch(
       activeQuickOption.value = matchedOption?.option || '';
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const getDateRangeText = () => {
@@ -172,7 +181,6 @@ const handleDateRange = (dates: [Date | null, Date | null], quickOption?: string
   };
 
   if (startDate && endDate) {
-    // 指定时间范围
     const startTimestamp = Math.floor(startDate.getTime() / 1000);
     options.timePosition = Math.floor(endDate.getTime() / 1000);
     options.timePeriod = options.timePosition - startTimestamp;

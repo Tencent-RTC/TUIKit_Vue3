@@ -12,16 +12,16 @@ import {
 import { useMessageActions } from '../../../../../hooks/useMessageActions';
 import classes from './MessageActionDropdown.module.scss';
 import type { MessageAction } from '../../../../../hooks/useMessageActions';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
 
-interface IMessageActionDropdownProps {
-  message: IMessageModel;
+interface MessageActionDropdownProps {
+  message: MessageModel;
   messageActionList?: MessageAction[] | undefined;
 }
 
-const props = withDefaults(defineProps<IMessageActionDropdownProps>(), {
+const props = withDefaults(defineProps<MessageActionDropdownProps>(), {
   messageActionList: undefined,
-  message: () => ({}) as IMessageModel,
+  message: () => ({}) as MessageModel,
 });
 
 const { t } = useUIKit();
@@ -74,7 +74,7 @@ const bodyElement = document.body;
             :message="message"
           />
           <template v-else-if="action.visible">
-            <span>{{ t(`TUIChat.${action.label}`, { defaultValue: action.label }) }}</span>
+            <span>{{ t(`MessageList.${action.label}`, { defaultValue: action.label }) }}</span>
             <template v-if="action.icon">
               <span v-if="typeof action.icon === 'string'">{{ action.icon }}</span>
               <component

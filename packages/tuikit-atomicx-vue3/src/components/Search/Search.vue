@@ -84,10 +84,8 @@ const {
 
 const searchValue = ref(keyword.value);
 
-// 用于区分内部更新和外部更新
 const isExternalUpdate = ref(false);
 
-// 防抖搜索函数
 const debouncedSearch = debounce(async (searchKeyword: string) => {
   try {
     isExternalUpdate.value = true;
@@ -97,7 +95,6 @@ const debouncedSearch = debounce(async (searchKeyword: string) => {
   }
 }, props.debounceTime);
 
-// 监听 searchValue 变化
 watch(
   searchValue,
   (newValue) => {
@@ -108,7 +105,6 @@ watch(
   { immediate: false },
 );
 
-// 监听 keyword 变化
 watch(keyword, (newKeyword) => {
   if (isExternalUpdate.value) {
     isExternalUpdate.value = false;

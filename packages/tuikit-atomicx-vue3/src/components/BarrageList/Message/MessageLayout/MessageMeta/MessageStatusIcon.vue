@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { IconLoading, IconSuccess } from '@tencentcloud/uikit-base-component-vue3';
+import { IconErrorToast, IconLoading, IconSuccess } from '@tencentcloud/uikit-base-component-vue3';
 
 defineProps<{
   status: string;
@@ -10,12 +10,16 @@ defineProps<{
   <IconLoading
     v-if="status === 'unSend'"
     class="message-meta__status--unSend"
-    :size="16"
+    :size="14"
   />
   <IconSuccess
     v-else-if="status === 'success'"
     name="&#xe60a;"
-    :size="16"
+    :size="14"
+  />
+  <IconErrorToast
+    v-else-if="status === 'fail'"
+    :size="14"
   />
 </template>
 

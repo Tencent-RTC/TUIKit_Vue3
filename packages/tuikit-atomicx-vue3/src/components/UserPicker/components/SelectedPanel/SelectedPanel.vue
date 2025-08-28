@@ -48,13 +48,13 @@
 import { defineProps, computed, withDefaults } from 'vue';
 import { IconClose, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { Avatar } from '../../../Avatar';
-import type { IUserPickerResult } from '../../type';
+import type { UserPickerResult } from '../../type';
 
 const { t } = useUIKit();
 
 interface SelectedPanelProps {
   displayMode: 'list' | 'tree';
-  selectedItems: IUserPickerResult;
+  selectedItems: UserPickerResult;
   lockedKeys: Set<string>;
   onRemove: (key: string) => void;
   maxCount?: number;

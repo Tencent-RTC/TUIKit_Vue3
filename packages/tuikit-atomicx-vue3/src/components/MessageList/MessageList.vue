@@ -20,17 +20,18 @@ import { Message as DefaultMessage } from './Message';
 import { MessageForward } from './MessageForward';
 import { MessageListContextSymbol } from './MessageListContext';
 import { MessageTimeDivider as DefaultMessageTimeDivider } from './MessageTimeDivider';
+import { ScrollToBottom } from './ScrollToBottom';
 import type { MessageAction } from '../../hooks/useMessageActions';
 import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
 
 // Define message chunk interface
-interface IMessageChunk {
+interface MessageChunk {
   timestamp: number;
   messages: MessageModel[];
   key: string;
 }
 
-interface IMessageListProps {
+interface MessageListProps {
   alignment?: 'left' | 'right' | 'two-sided';
   /** max time between message group */
   messageAggregationTime?: number | undefined;
@@ -46,7 +47,7 @@ interface IMessageListProps {
   MessageTimeDivider?: Component | undefined;
 }
 
-const props = withDefaults(defineProps<IMessageListProps>(), {
+const props = withDefaults(defineProps<MessageListProps>(), {
   /** props */
   alignment: 'two-sided',
   messageAggregationTime: 5 * 60,
@@ -66,6 +67,7 @@ const isFinishFirstRender = ref<boolean>(false);
 const distanceToBottom = ref<number>(0);
 const isLoadingHistory = ref<boolean>(false);
 const scrollContainer = ref<HTMLElement | null>(null);
+const isScrollToBottomVisible = ref<boolean>(false);
 
 const storeDistanceToBottom = ref<number>(0);
 
@@ -75,6 +77,7 @@ const {
   activeConversationID,
   isDisableScroll,
   setIsDisableScroll,
+  setEnableReadReceipt,
 } = useMessageListState();
 
 const { scrollToBottom } = useScroll();
@@ -102,18 +105,23 @@ const messageChunks = computed(() => {
   }
 
   // Perform message aggregation
-  const chunks: IMessageChunk[] = [];
+  const chunks: MessageChunk[] = [];
   const MAX_TIME_BETWEEN_MESSAGE_GROUP = props.messageAggregationTime;
 
   filteredMessageList.forEach((message, index, messages) => {
     const messageTime = message.time;
-    const lastChunk = chunks[chunks.length - 1];
+    const lastChunk = chunks.length > 0 ? chunks[chunks.length - 1] : undefined;
+    const lastMessage = index > 0 ? messages[index - 1] : undefined;
 
     const shouldCreateNewChunk = !lastChunk
       || messageTime - lastChunk.timestamp > MAX_TIME_BETWEEN_MESSAGE_GROUP
       || lastChunk.messages[0].from !== message.from
       || message.isRevoked
-      || (index > 0 && messages[index - 1].isRevoked);
+      || (lastMessage && lastMessage.isRevoked)
+      || message.status === 'fail'
+      || (lastMessage && lastMessage.status === 'fail')
+      || message.hasRiskContent
+      || (lastMessage && lastMessage.hasRiskContent);
 
     if (shouldCreateNewChunk) {
       chunks.push({
@@ -142,11 +150,13 @@ const handleScroll = throttle(() => {
 
   if (distanceToBottom.value > autoScrollThreshold) {
     setIsDisableScroll(true);
+    isScrollToBottomVisible.value = true;
   }
 
   // Reset user scroll state if scrolled near bottom
   if (distanceToBottom.value < autoScrollThreshold) {
     setIsDisableScroll(false);
+    isScrollToBottomVisible.value = false;
   }
 }, 100);
 
@@ -154,6 +164,7 @@ const handleScroll = throttle(() => {
 const initializeMessageList = async () => {
   isFinishFirstRender.value = false;
   setIsDisableScroll(false);
+  isScrollToBottomVisible.value = false;
 };
 
 // Load more history messages
@@ -234,6 +245,12 @@ watch(messageList, (newMessages, oldMessages) => {
   }
 });
 
+watch(() => props.enableReadReceipt, (newEnableReadReceipt) => {
+  setEnableReadReceipt(newEnableReadReceipt);
+}, {
+  immediate: true,
+});
+
 onMounted(() => {
   if (scrollContainer.value) {
     scrollContainer.value.addEventListener('scroll', handleScroll);
@@ -272,8 +289,8 @@ onUnmounted(() => {
         <!-- Time Divider -->
         <component
           :is="props.MessageTimeDivider || DefaultMessageTimeDivider"
-          :previous-message="chunkIndex > 0 ? messageChunks[chunkIndex-1].messages[0] : undefined"
-          :message="chunk.messages[0]"
+          :previousMessage="chunkIndex > 0 ? messageChunks[chunkIndex-1].messages[0] : undefined"
+          :currentMessage="chunk.messages[0]"
         />
 
         <!-- Message Chunk -->
@@ -307,8 +324,13 @@ onUnmounted(() => {
         </div>
       </View>
     </div>
+    <MessageForward />
+    <ScrollToBottom
+      v-if="isScrollToBottomVisible"
+      :class="cs('scroll-to-bottom')"
+      @click="scrollToBottom({ behavior: 'smooth' })"
+    />
   </div>
-  <MessageForward />
 </template>
 
 <style lang="scss" scoped>
@@ -378,5 +400,11 @@ onUnmounted(() => {
   &:hover {
     background-color: var(--primary-color-hover, #0057cc);
   }
+}
+
+.scroll-to-bottom {
+  position: absolute;
+  bottom: 95px;
+  right: 8px;
 }
 </style>

@@ -1,8 +1,24 @@
 <template>
-  <div class="live-list-panel" v-if="loginUserInfo">
-    <div v-if="liveList.length > 0" class="live-list" @wheel="handleWheel" ref="scrollContainerRef">
-      <div class="live-list-items">
-        <div class="live-item" v-for="item in liveList" :key="item.liveId" @click="liveRoomClick(item)">
+  <div
+    v-if="loginUserInfo"
+    class="live-list-panel"
+  >
+    <div
+      v-if="liveList.length > 0"
+      ref="scrollContainerRef"
+      class="live-list"
+      @wheel="handleWheel"
+    >
+      <div
+        ref="liveListItemsRef"
+        class="live-list-items"
+      >
+        <div
+          v-for="item in liveList"
+          :key="item.liveId"
+          class="live-item"
+          @click="liveRoomClick(item)"
+        >
           <div class="live-room-cover">
             <div class="header">
               <div class="left">
@@ -14,26 +30,49 @@
                 <span> {{ t('people have watched the live') }} </span>
               </div>
             </div>
-            <img :src="item.coverUrl || DEFAULT_COVER" alt="" @error="handleCoverImageError" />
+            <img
+              :src="item.coverUrl || DEFAULT_COVER"
+              alt=""
+              @error="handleCoverImageError"
+            >
           </div>
           <span class="live-name">{{ item.liveName }} </span>
           <div class="owner-info">
-            <Avatar :src="item.liveOwner.avatarUrl" :size="24" />
+            <Avatar
+              :src="item.liveOwner.avatarUrl"
+              :size="24"
+              :style="{ border: '1px solid var(--uikit-color-white-7)' }"
+            />
             <span class="owner-name">{{ item.liveOwner.userName || item.liveOwner.userId }} </span>
           </div>
         </div>
       </div>
-      <div class="bottom-text-no-more" v-if="!hasMoreLive">
+      <div
+        v-if="!hasMoreLive"
+        class="bottom-text-no-more"
+      >
         <span>{{ t('No More') }}</span>
       </div>
     </div>
-    <div v-else-if="!isLoadingMore" class="no-live">
+    <div
+      v-else-if="!isLoadingMore"
+      class="no-live"
+    >
       <IconNoLiveRoom :size="60" />
       <span>{{ t('No Live') }}</span>
     </div>
-    <div class="bottom-text" v-if="liveList.length > 0 && (isShowMoreVisible || isLoadingMore)">
-      <span class="load-more-lives" v-if="isShowMoreVisible">{{ t('Load More') }}</span>
-      <span class="loading" v-if="isLoadingMore">{{ t('Loading...') }}</span>
+    <div
+      v-if="liveList.length > 0 && (isShowMoreVisible || isLoadingMore)"
+      class="bottom-text"
+    >
+      <span
+        v-if="isShowMoreVisible"
+        class="load-more-lives"
+      >{{ t('Load More') }}</span>
+      <span
+        v-if="isLoadingMore"
+        class="loading"
+      >{{ t('Loading...') }}</span>
     </div>
   </div>
 </template>
@@ -42,9 +81,9 @@
 import { ref, computed, defineEmits, watch } from 'vue';
 import { useUIKit, IconLiveCoverHeader, IconNoLiveRoom } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveState } from '../../states/LiveState';
-import { LiveInfo } from '../../types';
 import { useLoginState } from '../../states/LoginState';
 import { Avatar } from '../Avatar';
+import type { LiveInfo } from '../../types';
 
 const { liveList, currentCursor, fetchLiveList } = useLiveState();
 const { loginUserInfo } = useLoginState();
@@ -52,29 +91,49 @@ const { t } = useUIKit();
 
 const DEFAULT_COVER = 'https://liteav-test-1252463788.cos.ap-guangzhou.myqcloud.com/voice_room/voice_room_cover1.png';
 const scrollContainerRef = ref<HTMLElement | null>(null);
+const liveListItemsRef = ref<HTMLElement | null>(null);
 
 const isLoadingMore = ref(false);
 const hasMoreLive = computed(() => currentCursor.value !== '');
 
-const shouldFetchMoreLiveList = computed(() => {
-  return hasMoreLive.value && !isLoadingMore.value;
-});
+const liveItemWidth = ref('356px');
+const liveItemHeight = ref('270px');
+const coverWidth = ref('356px');
+const coverHeight = ref('210px');
+const columnCount = 5;
 
-const isShowMoreVisible = computed(() => {
-  return shouldFetchMoreLiveList.value && !scrollContainerRef.value;
-});
+const shouldFetchMoreLiveList = computed(() => hasMoreLive.value && !isLoadingMore.value);
+
+const isShowMoreVisible = computed(() => shouldFetchMoreLiveList.value && !scrollContainerRef.value);
 
 watch(
   loginUserInfo,
-  async user => {
+  async (user) => {
     if (user && user.userId) {
       isLoadingMore.value = true;
+      currentCursor.value = '';
+      liveList.value.length = 0;
       await fetchLiveList({});
       isLoadingMore.value = false;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
+
+watch(liveListItemsRef, () => {
+  if (liveListItemsRef.value && screen.width > screen.height) {
+    const { width } = liveListItemsRef.value.getBoundingClientRect();
+    const gapWidth = 20 * (columnCount - 1);
+    const newItemWidth = (width - gapWidth) / columnCount;
+    const newItemHeight = newItemWidth * 0.75;
+
+    liveItemWidth.value = `${newItemWidth}px`;
+    liveItemHeight.value = `${newItemHeight}px`;
+
+    coverWidth.value = `${newItemWidth}px`;
+    coverHeight.value = `${newItemHeight - 52}px`;
+  }
+});
 
 const emit = defineEmits<{
   (e: 'live-room-click', liveInfo: LiveInfo): void;
@@ -90,8 +149,8 @@ function isScrollAtBottom(threshold = 50) {
     return false;
   }
   return (
-    scrollContainerRef.value.scrollTop + scrollContainerRef.value.clientHeight >=
-    scrollContainerRef.value.scrollHeight - threshold
+    scrollContainerRef.value.scrollTop + scrollContainerRef.value.clientHeight
+    >= scrollContainerRef.value.scrollHeight - threshold
   );
 }
 
@@ -106,7 +165,9 @@ function handleWheel(event: WheelEvent) {
 }
 
 async function fetchMoreLives() {
-  if (!hasMoreLive.value || isLoadingMore.value) return;
+  if (!hasMoreLive.value || isLoadingMore.value) {
+    return;
+  }
   try {
     isLoadingMore.value = true;
     await fetchLiveList({ cursor: currentCursor.value });
@@ -126,6 +187,7 @@ function handleCoverImageError(event: Event) {
 <style lang="scss" scoped>
 $text-color1: var(--text-color-primary);
 $text-color2: var(--text-color-secondary);
+$text-color3: var(--text-color-tertiary);
 
 @mixin text-size-12 {
   font-size: 12px;
@@ -164,7 +226,8 @@ $text-color2: var(--text-color-secondary);
   flex-direction: column;
   overflow: hidden;
   align-items: center;
-  width: 100%;
+  margin: 0px 16px;
+  width: calc(100% - 32px);
   height: 100%;
 }
 
@@ -181,7 +244,7 @@ $text-color2: var(--text-color-secondary);
 .live-list-items {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fill, 356px);
+  grid-template-columns: repeat(auto-fill, v-bind(liveItemWidth));
   flex-wrap: wrap;
   justify-content: center;
   gap: 20px;
@@ -191,8 +254,8 @@ $text-color2: var(--text-color-secondary);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  width: 356px;
-  height: 270px;
+  width: v-bind(liveItemWidth);
+  height: v-bind(liveItemHeight);
   white-space: nowrap;
   text-overflow: ellipsis;
   gap: 5px;
@@ -204,8 +267,8 @@ $text-color2: var(--text-color-secondary);
 
   .live-room-cover {
     position: relative;
-    width: 356px;
-    height: 210px;
+    width: v-bind(coverWidth);
+    height: v-bind(coverHeight);
     overflow: hidden;
 
     img {
@@ -235,6 +298,7 @@ $text-color2: var(--text-color-secondary);
 
       .right {
         display: flex;
+        align-items: center;
         float: right;
         margin-right: 10px;
         gap: 2px;
@@ -244,11 +308,12 @@ $text-color2: var(--text-color-secondary);
 
   .live-name {
     margin: 5px 0px;
+    height: 18px;
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
     color: $text-color1;
-    @include text-size-12;
+    @include text-size-14;
   }
 
   .owner-info {
@@ -257,18 +322,12 @@ $text-color2: var(--text-color-secondary);
     align-items: center;
     gap: 10px;
     color: $text-color2;
-    @include text-size-12;
+    @include text-size-14;
 
     .owner-name {
       max-width: 200px;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-
-    img {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
     }
   }
 }
@@ -284,7 +343,7 @@ $text-color2: var(--text-color-secondary);
     bottom: 5px;
     text-align: center;
     transform: translate(-50%, 0);
-    color: $text-color1;
+    color: $text-color3;
     @include text-size-14;
   }
 }

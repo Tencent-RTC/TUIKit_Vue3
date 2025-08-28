@@ -21,7 +21,7 @@
       </div>
       <ListMode
         v-else-if="!isTreeMode"
-        :data-source="searchManager.filteredData.value as IUserPickerRow<any>[]"
+        :data-source="searchManager.filteredData.value as UserPickerRow<any>[]"
         :selected-keys="selectionManager.selectedKeys.value"
         :locked-keys="selectionManager.lockedKeys.value"
         :on-item-click="selectionManager.toggle"
@@ -30,7 +30,7 @@
       />
       <TreeMode
         v-else
-        :data-source="searchManager.filteredData.value as IUserPickerNode<any>[]"
+        :data-source="searchManager.filteredData.value as UserPickerNode<any>[]"
         :selected-keys="selectionManager.selectedKeys.value"
         :half-selected-keys="selectionManager.halfSelectedKeys.value"
         :locked-keys="selectionManager.lockedKeys.value"
@@ -64,10 +64,7 @@ import TreeMode from './components/TreeMode';
 import { useSearchFilter } from './hooks/useSearchFilter';
 import { useSelection } from './hooks/useSelection';
 import { useTreeState } from './hooks/useTreeState';
-import type { IUserPickerProps, IUserPickerRef, IUserPickerNode, IUserPickerRow } from './type';
-
-// Define type for props (without generics for Vue3 compatibility)
-type UserPickerProps = IUserPickerProps<any>;
+import type { UserPickerProps, UserPickerRef, UserPickerNode, UserPickerRow } from './type';
 
 const props = withDefaults(defineProps<UserPickerProps>(), {
   dataSource: () => [],
@@ -129,7 +126,7 @@ watch(
 );
 
 // Generic node update function - can update any properties of a node
-const updateNodeByKey = (nodeKey: string, partialNode: Partial<IUserPickerNode<any>>) => {
+const updateNodeByKey = (nodeKey: string, partialNode: Partial<UserPickerNode<any>>) => {
   if (!isTreeMode.value) {
     return;
   }
@@ -187,7 +184,7 @@ const updateNodeByKey = (nodeKey: string, partialNode: Partial<IUserPickerNode<a
 };
 
 // Implement methods exposed by ref
-const refMethods: IUserPickerRef<any> = {
+const refMethods: UserPickerRef<any> = {
   getSelectedItems: () => selectionManager.getSelectedItems(),
   updateListData: (newDataSource: any[]) => {
     // Update list data
@@ -195,7 +192,7 @@ const refMethods: IUserPickerRef<any> = {
       internalDataSource.value = newDataSource;
     }
   },
-  updateTreeData: (nodeKey: string, partialNode: Partial<IUserPickerNode<any>>) => {
+  updateTreeData: (nodeKey: string, partialNode: Partial<UserPickerNode<any>>) => {
     // Use generic update function
     updateNodeByKey(nodeKey, partialNode);
   },

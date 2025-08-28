@@ -4,4 +4,4 @@ export { default as ConversationPreviewTitle } from './ConversationPreviewTitle.
 export { default as ConversationPreviewTimestamp } from './ConversationPreviewTimestamp.vue';
 export { default as ConversationPreviewAbstract } from './ConversationPreviewAbstract.vue';
 export { default as ConversationPreviewUnread } from './ConversationPreviewUnread.vue';
-export { generateHighlightTitle, getLatestMessagePreview } from './utils';
+export { getLatestMessagePreview } from './utils';

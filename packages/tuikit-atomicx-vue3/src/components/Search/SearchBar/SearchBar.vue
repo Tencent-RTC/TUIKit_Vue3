@@ -52,7 +52,13 @@
       :class="$style['SearchBar__right']"
       @click="handleClear"
     >
-      <IconBack :size="24" />
+      <component
+        :is="ClearIcon"
+        v-if="ClearIcon"
+      />
+      <span
+        v-else
+      >{{ t('Search.action.cancel') }}</span>
     </div>
   </div>
 </template>
@@ -74,7 +80,6 @@ const props = withDefaults(defineProps<SearchBarProps>(), {
 
 const inputValue = ref(props.value);
 
-// 监听 value 变化，同步到 inputValue
 watch(
   () => props.value,
   (newValue) => {
@@ -86,7 +91,6 @@ const { t } = useUIKit();
 
 const isHasBack = computed(() => props.variant !== VariantType.MINI && props.variant !== VariantType.EXACT && isH5);
 
-// 替换 searchPlaceholderMap 里的 t('xxx') 为 t('xxx')
 const searchPlaceholderMap = {
   [VariantType.EXACT]: t('Search.action.search'),
   [VariantType.STANDARD]: t('Search.action.search'),
@@ -96,7 +100,6 @@ const searchPlaceholderMap = {
 
 const handleInput = (value: string | number) => {
   const stringValue = String(value);
-  // 创建一个模拟的 Event 对象
   const event = {
     target: { value: stringValue },
   } as unknown as Event;
@@ -112,7 +115,6 @@ const handleBlur = (e: FocusEvent) => {
 };
 
 const handleDone = (element: HTMLInputElement | null) => {
-  // 当用户按下回车键时触发
   if (element) {
     const event = new KeyboardEvent('keydown', { key: 'Enter' });
     props.onKeyDown?.(event);

@@ -22,9 +22,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch, withDefaults, defineProps, nextTick, defineEmits } from 'vue';
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useConversationListState } from '../../../states/ConversationListState';
 import { useMessageInputState } from '../../../states/MessageInputState';
+import { ERROR_MESSAGE } from '../constants';
 import { createEditor } from './EditorCore';
 import styles from './TextEditor.module.scss';
 import type { Editor } from './EditorCore';
@@ -48,7 +49,7 @@ const emit = defineEmits<{
 }>();
 const { t } = useUIKit();
 const { activeConversation } = useConversationListState();
-const { updateRawValue, sendMessage, setEditorInstance, setContent } = useMessageInputState();
+const { inputRawValue, updateRawValue, sendMessage, setEditorInstance, setContent } = useMessageInputState();
 
 const editorRef = ref<HTMLDivElement | null>(null);
 const isFocused = ref(props.autoFocus);
@@ -72,16 +73,29 @@ const createEditorInstance = (p: ITextEditorProps) => {
       onUpdate: (content) => {
         updateRawValue(content);
       },
-      onEnter: () => {
-        sendMessage();
-        setContent('');
+      onEnter: async () => {
+        try {
+          const inputValue = inputRawValue.value;
+          setContent('');
+          await sendMessage(inputValue);
+        } catch (err: any) {
+          TUIToast.error({
+            message: t(ERROR_MESSAGE[err.code as keyof typeof ERROR_MESSAGE] || 'send message failed'),
+          });
+        }
       },
       onFocus: () => {
         isFocused.value = true;
+        if (navigator && "virtualKeyboard" in navigator) {
+          (navigator?.virtualKeyboard as any)?.show()
+        }
         emit('focus');
       },
       onBlur: () => {
         isFocused.value = false;
+        if (navigator && "virtualKeyboard" in navigator) {
+          (navigator?.virtualKeyboard as any)?.hide()
+        }
         emit('blur');
       },
     });

@@ -39,6 +39,7 @@
 
     <!-- Transfer Group Owner Dialog -->
     <TUIDialog
+      appendTo="body"
       :visible="isShowTransferDialog"
       :title="t('ChatSetting.transfer_group_owner')"
       :custom-classes="['user-picker-dialog']"
@@ -62,6 +63,7 @@
 
     <!-- Dismiss Group Dialog -->
     <TUIDialog
+      appendTo="body"
       :visible="isShowDismissDialog"
       :title="t('ChatSetting.dismiss_group')"
       @close="() => isShowDismissDialog = false"
@@ -71,6 +73,7 @@
 
     <!-- Quit Group Dialog -->
     <TUIDialog
+      appendTo="body"
       :visible="isShowQuitDialog"
       :title="t('ChatSetting.quit_group')"
       @close="() => isShowQuitDialog = false"
@@ -89,7 +92,7 @@ import { ref, computed } from 'vue';
 import { TUIButton, TUIDialog, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useGroupSettingState, GroupPermission } from '../../../../states/GroupSettingState';
 import { UserPicker } from '../../../UserPicker';
-import type { IUserPickerRef } from '../../../UserPicker';
+import type { UserPickerRef } from '../../../UserPicker';
 
 const { t } = useUIKit();
 
@@ -107,7 +110,7 @@ const isShowDismissDialog = ref(false);
 const isShowQuitDialog = ref(false);
 const loading = ref(false);
 
-const userPickerRef = ref<IUserPickerRef>();
+const userPickerRef = ref<UserPickerRef>();
 
 // Check permissions for different actions
 const canDismissGroup = computed(() => hasPermission(GroupPermission.DISMISS_GROUP));

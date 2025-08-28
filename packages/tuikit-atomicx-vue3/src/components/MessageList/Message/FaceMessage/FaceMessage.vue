@@ -9,13 +9,13 @@
 
 <script lang="ts" setup>
 import cs from 'classnames';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { MessageModel } from '../../../../types/engine';
 
-interface IFaceMessageProps {
-  message: IMessageModel;
+interface FaceMessageProps {
+  message: MessageModel;
 }
 
-interface IFaceMessageContent {
+interface FaceMessageContent {
   /** sender show name */
   showName: string;
   /** face image name [yz00@2x] */
@@ -26,11 +26,14 @@ interface IFaceMessageContent {
   url: string;
 }
 
-const props = withDefaults(defineProps<IFaceMessageProps>(), {
-  message: () => ({} as IMessageModel),
+const props = withDefaults(defineProps<FaceMessageProps>(), {
+  message: () => ({} as MessageModel),
 });
 
-const messageContent = props.message.getMessageContent() as IFaceMessageContent;
+const messageContent = {
+  url: 'https://web.sdk.qcloud.com/im/assets/face-elem/yz13@2x.png',
+  name: 'yz13@2x',
+};
 </script>
 
 <style lang="scss" scoped>

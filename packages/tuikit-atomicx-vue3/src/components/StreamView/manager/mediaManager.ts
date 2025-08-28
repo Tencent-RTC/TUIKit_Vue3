@@ -250,7 +250,7 @@ export class MediaManager {
       if (streamType === TUIVideoStreamType.kCameraStream) {
         if (isVideoMixerEnabled.value) {
           const mediaSourceManager = roomEngine.instance?.getTRTCCloud().getMediaMixingManager();
-          mediaSourceManager.setDisplayParams(document.getElementById(viewIdList[0]) as HTMLElement);
+          mediaSourceManager.bindPreviewArea(document.getElementById(viewIdList[0]) as HTMLElement);
           // const publishParams = {
           //   videoEncoderParams: {
           //     videoResolution: TRTCVideoResolution.TRTCVideoResolution_1280_720,

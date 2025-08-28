@@ -1,14 +1,14 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 
 /**
- * Vue3鼠标悬停检测hook
- * @param elementRef - 目标元素的ref
- * @returns 是否悬停的状态
+ * Vue3 mouse hover hook
+ * @param elementRef - ref of the target element to monitor hover state
+ * @returns isHovered - reactive state indicating whether the mouse is hovering over the element
  */
 export function useMouseHover<T extends HTMLElement = HTMLElement>(
-  elementRef: { value: T | null }
+  elementRef: { value: T | undefined },
 ) {
-  const isHovered = ref(false);
+  const isHovered = ref<boolean>(false);
 
   const handleMouseEnter = () => {
     isHovered.value = true;
@@ -34,7 +34,9 @@ export function useMouseHover<T extends HTMLElement = HTMLElement>(
     }
   });
 
-  return isHovered;
+  return {
+    isHovered,
+  };
 }
 
 export default useMouseHover;

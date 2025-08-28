@@ -8,7 +8,7 @@
       class="message-meta__time"
     >{{ getTimeStampAuto(props.timestamp) }}</span>
     <div
-      v-if="props.status && props.isShowSendStatus"
+      v-if="showStatus"
       class="message-meta__status"
     >
       <MessageStatusIcon :status="props.status" />
@@ -17,6 +17,7 @@
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue';
 import cs from 'classnames';
 import { getTimeStampAuto } from '../../../../../utils/time';
 import MessageStatusIcon from './MessageStatusIcon.vue';
@@ -40,10 +41,12 @@ const props = withDefaults(defineProps<IMessageMetaProps>(), {
   isShowSendStatus: false,
   isShowReadStatus: false,
   isShowTime: false,
-  status: undefined,
+  status: '',
   class: undefined,
   style: undefined,
 });
+
+const showStatus = computed(() => (props.status && props.isShowSendStatus) || props.status === 'fail');
 </script>
 
 <style lang="scss" scoped>

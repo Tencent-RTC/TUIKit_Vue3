@@ -1,5 +1,3 @@
-import { i18next } from '@tencentcloud/uikit-base-component-vue3';
-
 import enUS from './en-US';
 import zhCN from './zh-CN';
 
@@ -8,6 +6,6 @@ const resources = {
   'zh-CN': zhCN,
 };
 
-Object.entries(resources).forEach(([lng, resource]) => {
-  i18next.addResourceBundle(lng, 'translation', { ChatSetting: resource }, true, false);
-});
+export {
+  resources,
+}

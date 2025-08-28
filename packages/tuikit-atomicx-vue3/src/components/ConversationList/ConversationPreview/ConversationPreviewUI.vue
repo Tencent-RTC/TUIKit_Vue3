@@ -12,11 +12,8 @@
                conversation?.isMuted && [$style['conversationPreview--mute']],
       ]"
       :style="style"
+      v-bind="longPressEvents"
       @click="handleClick"
-      @touchstart="handleTouchStart"
-      @touchend="handleTouchEnd"
-      @mouseenter="handleMouseEnter"
-      @mouseleave="handleMouseLeave"
     >
       <slot>
         <div :class="$style['conversationPreview__avatar']">
@@ -107,14 +104,16 @@ const { activeConversation, setActiveConversation } = useConversationListState()
 const conversationPreviewRef = ref<HTMLElement>();
 const isActionMenuActive = ref(false);
 
-const { isHovering } = useMouseHover(conversationPreviewRef);
-const { handleTouchStart, handleTouchEnd } = useLongPress(() => {
+const { isHovered } = useMouseHover(conversationPreviewRef);
+const { getEventHandlers } = useLongPress(() => {
   if (isH5) {
     isActionMenuActive.value = true;
   }
 });
 
-watch(isHovering, (newValue) => {
+const longPressEvents = getEventHandlers();
+
+watch(isHovered, (newValue) => {
   if (!isH5) {
     isActionMenuActive.value = newValue;
   }
@@ -123,18 +122,6 @@ watch(isHovering, (newValue) => {
 const handleClick = () => {
   emit('select', props.conversation);
   setActiveConversation(props.conversation.conversationID);
-};
-
-const handleMouseEnter = () => {
-  if (!isH5) {
-    isActionMenuActive.value = true;
-  }
-};
-
-const handleMouseLeave = () => {
-  if (!isH5) {
-    isActionMenuActive.value = false;
-  }
 };
 
 const handleCloseActionsModal = () => {

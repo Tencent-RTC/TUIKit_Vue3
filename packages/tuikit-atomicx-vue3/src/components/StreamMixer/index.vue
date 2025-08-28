@@ -1,14 +1,14 @@
 <template>
-  <live-stream-view :ignore-local-video="true">
+  <live-core-view :ignore-local-video="true">
     <template #localVideo="{ style }">
       <local-mixer :style="style" />
     </template>
-  </live-stream-view>
+  </live-core-view>
 </template>
 
 <script setup lang="ts">
+import { LiveCoreView } from '../LiveCoreView';
 import LocalMixer from './LocalMixer/index.vue';
-import { LiveStreamView } from '../LiveStreamView';
 </script>
 
 <style scoped lang="scss"></style>

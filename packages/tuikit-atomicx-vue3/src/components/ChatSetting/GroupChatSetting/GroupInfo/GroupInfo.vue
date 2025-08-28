@@ -25,7 +25,7 @@ const {
   updateGroupProfile,
 } = useGroupSettingState();
 
-const { currentConversation: activeConversation } = useConversationListState();
+const { activeConversation } = useConversationListState();
 
 // Get group type display text
 const getGroupTypeText = () => {
@@ -51,7 +51,7 @@ const validateGroupName = (value: string, originalValue?: string) => {
   if (value.length === 0) {
     return t('ChatSetting.group_name_required');
   }
-  if (value.length > 25) {
+  if (value.length > 30) {
     return t('ChatSetting.group_name_max_length');
   }
   if (value === (originalValue || '')) {
@@ -65,7 +65,7 @@ const validateNotification = (value: string, originalValue?: string) => {
   if (typeof value !== 'string') {
     return t('ChatSetting.group_notification_required_string');
   }
-  if (value.length > 100) {
+  if (value.length > 130) {
     return t('ChatSetting.group_notification_max_length');
   }
   if (value === (originalValue || '')) {

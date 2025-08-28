@@ -1,8 +1,6 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
-import type { CSSProperties } from 'vue';
+import { computed, useCssModule } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import cs from 'classnames';
 import { View } from '../../../../../baseComp/View';
 import { getTimeStampAuto } from '../../../../../utils/time';
 
@@ -19,23 +17,20 @@ interface MessageMetaProps {
     isPeerRead: boolean;
   };
   status?: 'unSend' | 'success' | 'fail' | string;
-  class?: string;
-  style?: CSSProperties;
 }
 
 const props = withDefaults(defineProps<MessageMetaProps>(), {
   timestamp: 0,
-  flow: '',
+  flow: 'in',
   needReadReceipt: false,
   readReceiptInfo: undefined,
   status: undefined,
-  class: undefined,
-  style: undefined,
 });
 
 const emits = defineEmits(['onReadReceiptTextClick']);
 
 const { t } = useUIKit();
+const classes = useCssModule();
 
 const displayTime = computed(() => getTimeStampAuto(props.timestamp));
 
@@ -50,7 +45,12 @@ const shouldShowStatusIcon = computed(() => (
     || props.status === 'fail')));
 
 const readReceiptText = computed(() => {
-  if (!props.needReadReceipt || props.status !== 'success' || !props.readReceiptInfo) {
+  if (
+    !props.needReadReceipt
+    || props.status !== 'success'
+    || !props.readReceiptInfo
+    || props.flow === 'in'
+  ) {
     return '';
   }
 
@@ -69,10 +69,9 @@ const readReceiptText = computed(() => {
 
 <template>
   <View
-    :class="cs('message-meta', props.class)"
+    :class="classes['message-meta']"
     dir="row"
     align="center"
-    :style="props.style"
   >
     <!-- Show status icon case -->
     <template v-if="shouldShowStatusIcon">
@@ -83,23 +82,23 @@ const readReceiptText = computed(() => {
     </template>
 
     <!-- Show read receipt text case -->
-    <template v-else>
+    <template v-else-if="Boolean(readReceiptText)">
       <span
         v-if="readReceiptText && !props.isGroup"
-        class="message-meta__read-status"
+        :class="classes['message-meta__read-status']"
       >
         {{ readReceiptText }}
       </span>
       <span
         v-else-if="readReceiptText && props.isGroup && props.readReceiptInfo && props.readReceiptInfo.unreadCount > 0"
-        class="message-meta__group-unread"
+        :class="classes['message-meta__group-unread']"
         @click="handleGroupUnreadClick"
       >
         {{ readReceiptText }}
       </span>
       <span
         v-else-if="readReceiptText && props.isGroup"
-        class="message-meta__group-all-read"
+        :class="classes['message-meta__group-all-read']"
       >
         {{ readReceiptText }}
       </span>
@@ -108,14 +107,14 @@ const readReceiptText = computed(() => {
     <!-- Time display -->
     <span
       v-if="displayTime"
-      class="message-meta__time"
+      :class="classes['message-meta__time']"
     >
       {{ displayTime }}
     </span>
   </View>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss" module>
 .message-meta {
   gap: 4px;
   font-size: 12px;

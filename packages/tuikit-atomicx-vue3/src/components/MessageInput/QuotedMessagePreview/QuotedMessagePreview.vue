@@ -32,7 +32,7 @@ import styles from './QuotedMessagePreview.module.scss';
 import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
 
 const { t } = useUIKit();
-const { currentConversation } = useConversationListState();
+const { activeConversation } = useConversationListState();
 const { focusEditor } = useMessageInputState();
 const { quotedMessage, clearQuotedMessage } = useMessageActionState();
 
@@ -44,7 +44,7 @@ watch(quotedMessage, (newVal) => {
 });
 
 // Watch conversation changes
-watch(currentConversation, () => {
+watch(activeConversation, () => {
   clearQuotedMessage();
 });
 

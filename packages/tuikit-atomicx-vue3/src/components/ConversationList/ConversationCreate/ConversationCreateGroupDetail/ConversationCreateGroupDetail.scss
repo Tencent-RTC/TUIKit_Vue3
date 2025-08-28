@@ -1,4 +1,11 @@
+@use '../../../../styles/mixins/_scrollbar.scss' as scrollbar;
 .conversationCreateGroupDetail {
+  flex: 1;
+  height: 640px;
+  display: flex;
+  &--h5 {
+    height: 100%;
+  }
   &__nextContainer {
     width: 100%;
     display: flex;
@@ -21,82 +28,29 @@
     padding: 0 10px;
     overflow-y: auto;
     color: var(--text-color-primary);
+
+    @include scrollbar.scrollbar-hidden();
   }
 
   &__box {
     padding: 10px 0;
     position: relative;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+    align-items: center;
   }
 
   &__inputText {
-    font-weight: 600;
-    font-size: 16px !important;
+    flex: 1;
     border-bottom: 1px solid var(--stroke-color-primary);
     color: var(--text-color-primary);
-
-    &::placeholder {
-      font-weight: 400;
-      font-size: 16px;
-      color: var(--text-color-tertiary) 40%;
-    }
   }
+}
 
-  &__inputReadonly {
-    position: absolute;
-    z-index: 1;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-  }
-
-  &__inputTitle {
-    font-weight: 400;
-    font-size: 16px;
-    padding: 0 10px 0 6px;
-    color: var(--text-color-tertiary) 40%;
-  }
-
-  &__illustrate {
-    font-size: 12px;
-    line-height: 16px;
-    text-align: justify;
-    padding: 0 14px;
-    hyphens: auto;
-    color: var(--text-color-tertiary) 40%;
-  }
-
-  &__portrait {
-    &Title {
-      font-weight: 600;
-      font-size: 14px;
-      padding: 12px 0 12px 10px;
-      color: var(--text-color-primary);
-    }
-
-    &InfoContainer {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-start;
-      margin-bottom: 10px;
-      padding: 0 10px;
-    }
-
-    &Info {
-      align-items: center;
-      display: flex;
-      flex-direction: column;
-      padding: 6px;
-      box-sizing: border-box;
-
-      &Nick {
-        font-size: 12px;
-        margin-top: 6px;
-        max-width: 48px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-    }
-  }
+.from__label {
+  min-width: 85px;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--text-color-primary);
 }

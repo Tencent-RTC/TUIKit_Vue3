@@ -1,14 +1,15 @@
 <template>
   <div :class="[styles['input-wrapper'], props.disabled && styles.disabled]">
     <div :class="styles['input-prefix']">
-      <slot name="prefix" />
+      <slot name="inputPrefix" />
     </div>
     <div
-      ref="editorRef"
+      ref="editorDomRef"
+      :key="props.disabled ? 'disabled' : 'enabled'"
       :class="styles['editor']"
     />
     <div :class="styles['input-suffix']">
-      <slot name="suffix" />
+      <slot name="inputSuffix" />
     </div>
   </div>
 </template>
@@ -38,7 +39,7 @@ const { t } = useUIKit();
 const { activeConversation } = useConversationListState();
 const { updateRawValue, sendMessage, setEditorInstance, setContent } = useMessageInputState();
 
-const editorRef = ref<HTMLDivElement | null>(null);
+const editorDomRef = ref<HTMLDivElement | null>(null);
 const isFocused = ref(props.autoFocus);
 
 const placeholderText = computed(() => (props.disabled ? '' : props.placeholder || t('MessageInput.enter_a_message')));
@@ -46,10 +47,12 @@ const placeholderText = computed(() => (props.disabled ? '' : props.placeholder 
 let editorInstance: Editor | null = null;
 
 onMounted(() => {
-  const element = editorRef.value;
+  const element = editorDomRef.value;
   if (!element) {
     return;
   }
+
+  element.classList.add('message-input');
 
   if (!element.dataset.editorCreated) {
     editorInstance = createEditor({
@@ -77,7 +80,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  const element = editorRef.value;
+  const element = editorDomRef.value;
   if (editorInstance && element) {
     editorInstance.destroy();
     element.removeAttribute('data-editor-created');
@@ -88,6 +91,15 @@ onUnmounted(() => {
 watch(activeConversation, (newConversation, oldConversation) => {
   if (newConversation?.conversationID !== oldConversation?.conversationID) {
     setContent('');
+  }
+});
+
+watch(() => props.disabled, (newDisabled) => {
+  if (editorInstance) {
+    editorInstance.setEditable(!newDisabled);
+    if (newDisabled) {
+      setContent('');
+    }
   }
 });
 </script>

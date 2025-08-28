@@ -1,6 +1,4 @@
-@use "sass:map";
-@use "@tencentcloud/uikit-base-component-vue3/src/providers/UIKitProvider/styles/variables.scss" as *;
-
+@use '../../../styles/mixins' as mixins;
 .SearchResults {
   flex: 1;
   overflow: hidden;
@@ -64,11 +62,8 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
+
+  @include mixins.scrollbar-hidden();
 }
 
 .SearchResults__error {
@@ -148,17 +143,6 @@
   z-index: 1;
 }
 
-.SearchResults__back-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-color-primary);
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .SearchResults__message-detail-title {
   flex: 1;
   font-size: 14px;
@@ -166,19 +150,15 @@
   text-align: center;
   margin: 0;
   padding: 0 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+
+  @include mixins.text-ellipsis();
 }
 
 .SearchResults__message-detail-content {
   flex: 1;
   overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
+  
+  @include mixins.scrollbar-hidden();
 }
 
 .SearchResults__result-section {
@@ -194,4 +174,9 @@
 .SearchResults__section-footer {
   display: flex;
   padding: 10px 0;
+} 
+
+:global(.highlight) {
+  color: var(--text-color-link);
+  font-weight: 500;
 } 

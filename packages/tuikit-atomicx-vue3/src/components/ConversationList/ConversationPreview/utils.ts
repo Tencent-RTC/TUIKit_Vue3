@@ -12,8 +12,8 @@ export const generateHighlightTitle = (
 
   const regex = new RegExp(`(${highlightMatchString})`, 'gi');
   const parts = title.split(regex);
-  
-  return parts.map((part) => ({
+
+  return parts.map(part => ({
     text: part,
     isHighlight: part.toLowerCase() === highlightMatchString.toLowerCase(),
   }));
@@ -34,21 +34,21 @@ export const getLatestMessagePreview = (conversation: ConversationModel, t: (key
     case TUIChatEngine.TYPES.MSG_TEXT:
       return payload.text || '';
     case TUIChatEngine.TYPES.MSG_IMAGE:
-      return `[${t('TUIChat.Image')}]`;
+      return `[${t('TUIConversation.Image')}]`;
     case TUIChatEngine.TYPES.MSG_AUDIO:
-      return `[${t('TUIChat.Audio')}]`;
+      return `[${t('TUIConversation.Audio')}]`;
     case TUIChatEngine.TYPES.MSG_VIDEO:
-      return `[${t('TUIChat.Video')}]`;
+      return `[${t('TUIConversation.Video')}]`;
     case TUIChatEngine.TYPES.MSG_FILE:
-      return `[${t('TUIChat.File')}]`;
+      return `[${t('TUIConversation.File')}]`;
     case TUIChatEngine.TYPES.MSG_CUSTOM:
-      return `[${t('TUIChat.Custom')}]`;
+      return `[${t('TUIConversation.Custom')}]`;
     case TUIChatEngine.TYPES.MSG_LOCATION:
-      return `[${t('TUIChat.Location')}]`;
+      return `[${t('TUIConversation.Location')}]`;
     case TUIChatEngine.TYPES.MSG_FACE:
-      return `[${t('TUIChat.Emoji')}]`;
+      return `[${t('TUIConversation.Emoji')}]`;
     case TUIChatEngine.TYPES.MSG_MERGER:
-      return `[${t('TUIChat.Chat History')}]`;
+      return `[${t('TUIConversation.Chat History')}]`;
     default:
       return senderName ? `${senderName}: ${payload?.text || ''}` : payload?.text || '';
   }

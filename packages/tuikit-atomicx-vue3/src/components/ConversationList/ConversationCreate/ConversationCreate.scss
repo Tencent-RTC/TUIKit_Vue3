@@ -5,43 +5,17 @@
     justify-content: center;
   }
 
-  &__main {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--bg-color-operate);
-    color: var(--text-color-primary);
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-  }
-
-  &__header {
-    display: flex;
-    align-items: center;
-    padding: 12px;
-    background-color: var(--bg-color-topbar, #f5f5f5);
-  }
-
-  &__icon {
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-    transition: background-color 0.2s;
-    color: var(--text-color-link, #e0e0e0);
-  }
-
-  &__title {
-    margin-left: 12px;
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--text-color-primary, #333);
-  }
-
-  &__content {
+  &__detail {
     flex: 1;
-    overflow: hidden;
   }
 } 
+
+:deep(.conversationCreate__dialog) {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  border-radius: 0;
+  .dialog-body {
+    height: 0;
+  }
+}
