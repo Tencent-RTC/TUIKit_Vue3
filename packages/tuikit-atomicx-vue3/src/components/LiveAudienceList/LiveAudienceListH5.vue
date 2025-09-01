@@ -77,7 +77,7 @@ $text-color2: var(--text-color-secondary);
 
 .viewers-panel {
   box-sizing: border-box;
-  height: 500px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   color: $text-color1;
@@ -147,7 +147,7 @@ $text-color2: var(--text-color-secondary);
     &:hover {
       background-color: var(--uikit-color-gray-3);
     }
-    
+
     .viewer-info {
       display: flex;
       align-items: center;
