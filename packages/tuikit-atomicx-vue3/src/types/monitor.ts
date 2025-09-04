@@ -6,11 +6,10 @@ export type MonitorLiveInfo = {
   categoryList?: Array<number>;
   coverUrl: string;
   backgroundUrl: string;
-  liveOwner: string;                      // readonly
-  currentViewerCount: number;             // readonly
-  createTime: number;                     // readonly
-  totalViewerCount: number;               // readonly
-  orientation: 'landscape' | 'portrait';  // readonly
+  liveOwner: string;              // readonly
+  currentViewerCount: number;     // readonly
+  createTime: number;             // readonly
+  totalViewerCount: number;       // readonly
   customInfo?: Record<string, any>;
 };
 

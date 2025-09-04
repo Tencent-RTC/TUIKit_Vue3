@@ -1,1 +1,0 @@
-export { default as FriendApplicationInfo } from './FriendApplicationInfo.vue';

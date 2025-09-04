@@ -185,6 +185,7 @@ $message-bubble-border-radius: 8px;
 
   &__meta {
     flex: 0 0 auto;
+    align-self: flex-end;
   }
 
   &__failed {

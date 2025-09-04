@@ -1,20 +1,20 @@
 <script lang="ts" setup>
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
-import { resolveGroupTipMessage } from './resolveGroupTipMessage';
-import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
+import { View } from '../../../../baseComp/View';
+import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
 
-interface GroupTipMessageProps {
-  message: MessageModel;
+interface IGroupTipMessageProps {
+  message: IMessageModel;
 }
 
-interface GroupTipMessageContent {
+interface IGroupTipMessageContent {
   text: string;
   businessID?: string;
   showName?: string;
 }
 
-interface CustomMessageContent {
+interface ICustomMessageContent {
   businessID?: string;
   showName?: string;
   custom?: string;
@@ -24,18 +24,18 @@ enum CustomMessageAsGroupTipEnum {
   GROUP_CREATE = 'group_create',
 }
 
-const props = defineProps<GroupTipMessageProps>();
+const props = defineProps<IGroupTipMessageProps>();
 
 const { t } = useUIKit();
 
-const messageContent = props.message.getMessageContent() as GroupTipMessageContent & CustomMessageContent;
+const messageContent = props.message.getMessageContent() as IGroupTipMessageContent & ICustomMessageContent;
 
 const renderText = () => {
   switch (messageContent.businessID) {
     case CustomMessageAsGroupTipEnum.GROUP_CREATE:
-      return `${messageContent.showName || ''} ${t('MessageList.create_group')}`;
+      return `${messageContent.showName || ''} ${t('TUIChat.create group')}`;
     default:
-      return resolveGroupTipMessage(props.message).text;
+      return messageContent.text;
   }
 };
 </script>

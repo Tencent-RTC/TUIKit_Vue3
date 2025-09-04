@@ -44,6 +44,4 @@ export const resource = {
   'External Devices': 'External Devices',
   Multimedia: 'Multimedia',
   'Screen Capture': 'Screen Capture',
-  'Save as new name': 'Save as new name',
-  'Please check the current browser camera permission': 'Please check the current browser camera permission',
 };

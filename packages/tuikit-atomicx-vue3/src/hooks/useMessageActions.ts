@@ -42,13 +42,13 @@ interface MessageAction {
 const DEFAULT_ACTIONS: Record<string, MessageAction> = {
   copy: {
     key: 'copy',
-    label: 'copy',
+    label: 'Copy',
     visible: (message: MessageModel) => message.type === ChatEngine.TYPES.MSG_TEXT,
     icon: IconCopy,
   },
   recall: {
     key: 'recall',
-    label: 'recall',
+    label: 'Recall',
     visible: (message: MessageModel) =>
       !isCallMessage(message) && message.flow === 'out'
       && message.status === 'success'
@@ -57,19 +57,19 @@ const DEFAULT_ACTIONS: Record<string, MessageAction> = {
   },
   quote: {
     key: 'quote',
-    label: 'quote',
+    label: 'Quote',
     visible: (message: MessageModel) => !isCallMessage(message),
     icon: IconMsgQuote,
   },
   forward: {
     key: 'forward',
-    label: 'forward',
+    label: 'Forward',
     visible: (message: MessageModel) => !isCallMessage(message),
     icon: IconMsgForward,
   },
   delete: {
     key: 'delete',
-    label: 'delete',
+    label: 'Delete',
     icon: IconMsgDel,
     visible: true,
     style: {

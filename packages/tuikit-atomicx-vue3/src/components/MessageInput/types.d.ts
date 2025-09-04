@@ -20,11 +20,13 @@ export type MessageInputActions = Array<BuiltInAction | CustomAction>;
 
 export type MessageInputAttachmentPickerMode = 'collapsed' | 'expanded';
 
-export interface MessageInputProps {
+export interface IMessageInputProps {
   autoFocus?: boolean;
   disabled?: boolean;
   hideSendButton?: boolean;
   placeholder?: string;
+  className?: string;
+  style?: CSSProperties;
   attachmentPickerMode?: MessageInputAttachmentPickerMode;
   actions?: MessageInputActions;
   slots?: MessageInputSlots;
@@ -37,5 +39,4 @@ export interface MessageInputSlots {
   rightInline?: () => VNode[];
   inputPrefix?: () => VNode[];
   inputSuffix?: () => VNode[];
-  textEditor?: () => VNode[];
 }

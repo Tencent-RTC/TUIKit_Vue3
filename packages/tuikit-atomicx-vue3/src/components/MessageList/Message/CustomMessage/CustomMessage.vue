@@ -3,5 +3,5 @@
 </script>
 
 <template>
-  <div>undefined custom Message</div>
+  [Custom Message]
 </template>

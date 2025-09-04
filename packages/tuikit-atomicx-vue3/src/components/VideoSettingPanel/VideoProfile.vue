@@ -16,13 +16,13 @@
 </template>
 
 <script setup lang="ts">
-import { watch, computed } from 'vue';
-import type { ComputedRef } from 'vue';
+import { watch, computed, ComputedRef } from 'vue';
+import { TUISelect, TUIOption } from '@tencentcloud/uikit-base-component-vue3';
+import { useI18n } from '../../locales';
 import { TUIVideoQuality } from '@tencentcloud/tuiroom-engine-js';
-import { TUISelect, TUIOption, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useDeviceState } from '../../states/DeviceState';
+import useDeviceState from '../../states/DeviceState';
 
-const { t } = useUIKit();
+const { t } = useI18n();
 
 const videoQualityList: ComputedRef<
   { label: string; value: TUIVideoQuality }[]

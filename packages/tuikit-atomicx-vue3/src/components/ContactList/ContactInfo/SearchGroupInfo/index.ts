@@ -1,1 +1,0 @@
-export { default as SearchGroupInfo } from './SearchGroupInfo.vue';

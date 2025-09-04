@@ -4,7 +4,6 @@
 
   &__icon {
     cursor: pointer;
-    display: flex;
   }
 
   &__popup {
@@ -21,15 +20,12 @@
   &--expanded {
     display: flex;
     flex-direction: row;
-    gap: 8px;
-
     .attachment-picker__item {
       padding: 4px;
     }
   }
 
   &__item {
-    outline: none !important;
     border: none;
     display: flex;
     flex-direction: row;

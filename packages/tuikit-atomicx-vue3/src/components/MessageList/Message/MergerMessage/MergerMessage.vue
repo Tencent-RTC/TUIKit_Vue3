@@ -2,5 +2,5 @@
 </script>
 
 <template>
-  <div>undefined merger Message</div>
+  [Merger Message]
 </template>

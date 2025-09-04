@@ -2,19 +2,19 @@
 import { defineProps } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
-import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
 
-interface GroupTipMessageProps {
-  message: MessageModel;
+interface IGroupTipMessageProps {
+  message: IMessageModel;
 }
 
-interface GroupTipMessageContent {
+interface IGroupTipMessageContent {
   text: string;
   businessID?: string;
   showName?: string;
 }
 
-interface CustomMessageContent {
+interface ICustomMessageContent {
   businessID?: string;
   showName?: string;
   custom?: string;
@@ -24,11 +24,11 @@ enum CustomMessageAsGroupTipEnum {
   GROUP_CREATE = 'group_create',
 }
 
-const props = defineProps<GroupTipMessageProps>();
+const props = defineProps<IGroupTipMessageProps>();
 
 const { t } = useUIKit();
 
-const messageContent = props.message.getMessageContent() as GroupTipMessageContent & CustomMessageContent;
+const messageContent = props.message.getMessageContent() as IGroupTipMessageContent & ICustomMessageContent;
 
 const renderText = () => {
   switch (messageContent.businessID) {
@@ -50,6 +50,6 @@ const renderText = () => {
 .group-tip-message {
   color: var(--text-color-secondary);
   text-align: center;
-  font-size: 12px;
+  font-size: 14px;
 }
 </style>

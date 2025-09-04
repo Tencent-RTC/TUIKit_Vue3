@@ -129,7 +129,6 @@ function handleReadReceiptClose() {
         v-if="!isHiddenMessageMeta"
         :class="metaClasses"
         :status="message.status"
-        :flow="message.flow"
         :timestamp="message.time * 1000"
         :need-read-receipt="message.needReadReceipt"
         :read-receipt-info="message.readReceiptInfo"
@@ -197,6 +196,7 @@ $message-avatar-gap: 8px;
     &.message-layout__wrapper--left {
       padding-left: calc(#{$message-avatar-size} + #{$message-avatar-gap});
     }
+    // 右侧聚合时反转 padding
     &.message-layout__wrapper--right {
       padding-right: calc(#{$message-avatar-size} + #{$message-avatar-gap});
     }

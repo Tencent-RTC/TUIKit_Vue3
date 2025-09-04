@@ -1,9 +1,8 @@
-import { ref, computed } from 'vue';
-import type { Ref } from 'vue';
-import type { UserPickerDataSource, UserPickerNode, UserPickerRow } from '../type';
+import { ref, computed, type Ref } from 'vue';
+import type { IUserPickerDataSource, IUserPickerNode, IUserPickerRow } from '../type';
 
 interface UseSearchFilterOptions<T = unknown> {
-  dataSource: Ref<UserPickerDataSource<T>>;
+  dataSource: Ref<IUserPickerDataSource<T>>;
   isTreeMode?: boolean;
   onSearch?: (value: string) => void;
   debounceTime?: number;
@@ -12,7 +11,7 @@ interface UseSearchFilterOptions<T = unknown> {
 interface UseSearchFilterReturn<T = unknown> {
   searchValue: Ref<string>;
   setSearchValue: (value: string) => void;
-  filteredData: Ref<UserPickerDataSource<T>>;
+  filteredData: Ref<IUserPickerDataSource<T>>;
   isSearching: Ref<boolean>;
   handleSearch: (value: string) => void;
   clearSearch: () => void;
@@ -20,7 +19,7 @@ interface UseSearchFilterReturn<T = unknown> {
 }
 
 // Check if it's tree data structure
-function isTreeDataSource<T>(data: UserPickerDataSource<T>): data is Array<UserPickerNode<T>> {
+function isTreeDataSource<T>(data: IUserPickerDataSource<T>): data is Array<IUserPickerNode<T>> {
   if (data.length === 0) {
     return false;
   }
@@ -28,22 +27,22 @@ function isTreeDataSource<T>(data: UserPickerDataSource<T>): data is Array<UserP
 }
 
 // Search tree structure
-function searchTreeNodes<T>(nodes: Array<UserPickerNode<T>>, searchValue: string): Array<UserPickerNode<T>> {
+function searchTreeNodes<T>(nodes: Array<IUserPickerNode<T>>, searchValue: string): Array<IUserPickerNode<T>> {
   if (!searchValue.trim()) {
     return nodes;
   }
 
   // Helper function: check if node matches
-  const isNodeMatched = (node: UserPickerNode<T>): boolean =>
+  const isNodeMatched = (node: IUserPickerNode<T>): boolean =>
     node.label.toLowerCase().includes(searchValue.toLowerCase());
 
   // Helper function: recursively search nodes
-  const searchNodes = (nodesList: Array<UserPickerNode<T>>): Array<UserPickerNode<T>> => {
-    const matchedNodes: Array<UserPickerNode<T>> = [];
+  const searchNodes = (nodesList: Array<IUserPickerNode<T>>): Array<IUserPickerNode<T>> => {
+    const matchedNodes: Array<IUserPickerNode<T>> = [];
 
     nodesList.forEach(node => {
       const isMatched = isNodeMatched(node);
-      let matchedChildren: Array<UserPickerNode<T>> = [];
+      let matchedChildren: Array<IUserPickerNode<T>> = [];
 
       if (node.children && node.children.length) {
         matchedChildren = searchNodes(node.children);
@@ -54,7 +53,7 @@ function searchTreeNodes<T>(nodes: Array<UserPickerNode<T>>, searchValue: string
         matchedNodes.push({
           ...node,
           children: matchedChildren.length > 0 ? matchedChildren : node.children,
-        } as UserPickerNode<T>);
+        } as IUserPickerNode<T>);
       }
     });
 
@@ -65,7 +64,7 @@ function searchTreeNodes<T>(nodes: Array<UserPickerNode<T>>, searchValue: string
 }
 
 // Search list structure
-function searchListItems<T>(items: Array<UserPickerRow<T>>, searchValue: string): Array<UserPickerRow<T>> {
+function searchListItems<T>(items: Array<IUserPickerRow<T>>, searchValue: string): Array<IUserPickerRow<T>> {
   if (!searchValue.trim()) {
     return items;
   }
@@ -90,9 +89,9 @@ export function useSearchFilter<T = unknown>({
     }
 
     if (isTreeMode && isTreeDataSource(dataSource.value)) {
-      return searchTreeNodes(dataSource.value as Array<UserPickerNode<T>>, searchValue.value);
+      return searchTreeNodes(dataSource.value as Array<IUserPickerNode<T>>, searchValue.value);
     }
-    return searchListItems(dataSource.value as Array<UserPickerRow<T>>, searchValue.value);
+    return searchListItems(dataSource.value as Array<IUserPickerRow<T>>, searchValue.value);
   });
 
   // Handle search input

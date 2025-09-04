@@ -1,6 +1,7 @@
 <template>
   <div
-    :class="[styles['message-input']]"
+    :class="[styles['message-input'], className]"
+    :style="style"
   >
     <slot name="headerToolbar">
       <div :class="styles['message-input__toolbar']">
@@ -17,21 +18,13 @@
       <div :class="styles['message-input__leftInline']">
         <slot name="leftInline" />
       </div>
-      <slot name="textEditor">
-        <DefaultTextEditor
-          :autoFocus="autoFocus"
-          :disabled="disabled"
-          :placeholder="placeholder"
-          :key="disabled ? 'disabled-editor' : 'enabled-editor'"
-        >
-          <template #inputPrefix>
-            <slot name="inputPrefix" />
-          </template>
-          <template #inputSuffix>
-            <slot name="inputSuffix" />
-          </template>
-        </DefaultTextEditor>
-      </slot>
+      <TextEditor
+        :autoFocus="autoFocus"
+        :disabled="disabled"
+        :placeholder="placeholder"
+        :prefix="slots?.inputPrefix"
+        :suffix="slots?.inputSuffix"
+      />
       <div :class="styles['message-input__rightInline']">
         <slot name="rightInline" />
       </div>
@@ -41,7 +34,7 @@
         <SendButton
           v-if="!hideSendButton"
           :class="styles['message-input__send-button']"
-          :disabled="props.disabled"
+          :disabled="!inputRawValue"
           @click="sendInputMessage"
         />
       </div>
@@ -57,8 +50,8 @@ import { EmojiPicker } from './EmojiPicker';
 import styles from './MessageInput.module.scss';
 import { QuotedMessagePreview } from './QuotedMessagePreview';
 import { SendButton } from './SendButton';
-import { TextEditor as DefaultTextEditor } from './TextEditor';
-import type { CustomAction, MessageInputProps } from './types';
+import { TextEditor } from './TextEditor';
+import type { CustomAction, IMessageInputProps } from './types';
 
 const DEFAULT_ACTIONS = [
   { key: 'EmojiPicker', component: EmojiPicker },
@@ -68,15 +61,16 @@ const DEFAULT_ACTIONS = [
   { key: 'VideoPicker', component: VideoPicker },
 ];
 
-const props = withDefaults(defineProps<MessageInputProps>(), {
+const props = withDefaults(defineProps<IMessageInputProps>(), {
   autoFocus: true,
   disabled: false,
   hideSendButton: false,
   placeholder: '',
+  className: '',
+  style: () => ({}),
   attachmentPickerMode: 'collapsed',
   actions: () => ['EmojiPicker', 'ImagePicker', 'FilePicker', 'VideoPicker'],
 });
-
 const { inputRawValue, setContent, sendMessage } = useMessageInputState();
 
 const pickProps = <T extends object, K extends keyof T>(

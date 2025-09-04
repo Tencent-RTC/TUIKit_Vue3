@@ -2,18 +2,18 @@
   <div class="panel-content">
     <div class="panel-header">
       <div class="tabs">
-        <span
+        <button
           :class="['tab-item', { active: activeTab === 'applications' }]"
           @click="activeTab = 'applications'"
         >
           {{ t('Application for live') }}
-        </span>
-        <span
+        </button>
+        <button
           :class="['tab-item', { active: activeTab === 'invitations' }]"
           @click="activeTab = 'invitations'"
         >
-          {{ t('Co-guest management') }}
-        </span>
+          {{ t('Invite for live') }}
+        </button>
       </div>
     </div>
     <div class="panel-body">
@@ -32,22 +32,19 @@
               class="user-item"
             >
               <div class="user-item-left">
-                <Avatar
-                  :src="user.avatarUrl"
-                  :size="40"
-                />
+                <Avatar :src="user.avatarUrl" :size="40" />
               </div>
               <div class="user-item-right">
                 <div class="user-info">
                   <span class="user-name">{{ user.userName || user.userId }}</span>
                 </div>
                 <div class="user-actions">
-                  <TUIButton @click="handleAcceptCoGuestRequest(user.userId)">
+                  <TUIButton @click="acceptCoGuestRequest({ userId: user.userId })">
                     {{ t('Accept') }}
                   </TUIButton>
                   <TUIButton
                     color="red"
-                    @click="handleRejectCoGuestRequest(user.userId)"
+                    @click="rejectCoGuestRequest({ userId: user.userId })"
                   >
                     {{
                       t('Reject')
@@ -83,10 +80,7 @@
               class="user-item"
             >
               <div class="user-item-left">
-                <Avatar
-                  :src="user.avatarUrl"
-                  :size="40"
-                />
+                <Avatar :src="user.avatarUrl" :size="40" />
               </div>
               <div class="user-item-right">
                 <div class="user-info">
@@ -102,7 +96,7 @@
                 >
                   <TUIButton
                     color="gray"
-                    @click="handleDisconnect(user.userId)"
+                    @click="disconnect(user.userId)"
                   >
                     {{ t('Disconnect') }}
                   </TUIButton>
@@ -117,7 +111,7 @@
             <span>{{ t('Seat is empty') }}</span>
           </div>
         </div>
-        <!-- <div
+        <div
           v-if="sentCoGuestUserList.length > 0"
           class="user-list-container"
         >
@@ -187,7 +181,7 @@
           >
             <span>{{ t('No invited users yet') }}</span>
           </div>
-        </div> -->
+        </div>
       </div>
     </div>
   </div>
@@ -195,12 +189,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { TUIButton, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useCoGuestState } from '../../states/CoGuestState';
 import { useLoginState } from '../../states/LoginState';
 import { useSeatStore } from '../../states/SeatStore';
 import { Avatar } from '../Avatar';
-import { ERROR_MESSAGE } from './constants';
 
 const { t } = useUIKit();
 
@@ -220,37 +213,6 @@ const {
 } = useCoGuestState();
 
 const activeTab = ref('applications');
-
-const handleAcceptCoGuestRequest = async (userId: string) => {
-  try {
-    await acceptCoGuestRequest({ userId });
-  } catch (error: any) {
-    const message = t(ERROR_MESSAGE[error.code as keyof typeof ERROR_MESSAGE] || 'Accept co-guest request failed');
-    TUIToast.error({ message });
-  }
-};
-
-const handleRejectCoGuestRequest = async (userId: string) => {
-  try {
-    await rejectCoGuestRequest({ userId });
-  } catch (error) {
-    console.error('[CoGuestPanel] handleRejectCoGuestRequest error', error);
-    TUIToast.error({
-      message: t('Reject co-guest request failed'),
-    });
-  }
-};
-
-const handleDisconnect = async (userId: string) => {
-  try {
-    await disconnect(userId);
-  } catch (error) {
-    console.error('[CoGuestPanel] handleDisconnect error', error);
-    TUIToast.error({
-      message: t('Disconnect co-guest failed'),
-    });
-  }
-};
 </script>
 
 <style lang="scss" scoped>
@@ -282,7 +244,6 @@ const handleDisconnect = async (userId: string) => {
         cursor: pointer;
         position: relative;
         transition: color 0.3s ease;
-        user-select: none;
 
         &.active {
           color: var(--text-color-link);
@@ -384,16 +345,7 @@ const handleDisconnect = async (userId: string) => {
         font-size: 16px;
         font-weight: 500;
         color: var(--text-color-primary);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 200px;
       }
-    }
-
-    .user-actions {
-      display: flex;
-      gap: 6px;
     }
   }
 }

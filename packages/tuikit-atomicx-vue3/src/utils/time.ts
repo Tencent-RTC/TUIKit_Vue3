@@ -1,4 +1,4 @@
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { useUIKit, i18next } from '@tencentcloud/uikit-base-component-vue3';
 import {
   format,
   isSameWeek,
@@ -6,23 +6,26 @@ import {
   isToday,
   isYesterday,
 } from 'date-fns';
-import { zhCN, enUS } from 'date-fns/locale';
+import { zhCN, ja, ko, zhTW, enUS } from 'date-fns/locale';
 
-interface GetTimeStampOptions {
+interface IGetTimeStampOptions {
   time: number;
   language?: 'zh-CN' | 'zh-TW' | 'en-US' | 'ja-JP' | 'ko-KR' | string;
 }
 
-function getTimeStamp({ time, language = 'en-US' }: GetTimeStampOptions) {
-  const { t } = useUIKit();
+function getTimeStamp({ time, language = 'en-US' }: IGetTimeStampOptions) {
   const locales: Record<string, any> = {
     'zh-CN': zhCN,
+    'zh-TW': zhTW,
     'en-US': enUS,
+    'ja-JP': ja,
+    'ko-KR': ko,
   };
   const timeFormat = 'HH:mm';
   const locale = locales[language] || locales['en-US'];
+  const { t } = useUIKit();
 
-  const yesterdayText = t('MessageList.yesterday', {
+  const yesterdayText = t('TUIChat.Yesterday', {
     defaultValue: 'Yesterday',
   });
 
@@ -75,8 +78,7 @@ function getTimeStamp({ time, language = 'en-US' }: GetTimeStampOptions) {
  * @returns Formatted time string
  */
 function getTimeStampAuto(time: number) {
-  const { language } = useUIKit();
-  return getTimeStamp({ time, language });
+  return getTimeStamp({ time, language: i18next.language });
 }
 
 export {

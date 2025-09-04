@@ -32,7 +32,7 @@ import styles from './QuotedMessagePreview.module.scss';
 import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
 
 const { t } = useUIKit();
-const { activeConversation } = useConversationListState();
+const { currentConversation } = useConversationListState();
 const { focusEditor } = useMessageInputState();
 const { quotedMessage, clearQuotedMessage } = useMessageActionState();
 
@@ -44,7 +44,7 @@ watch(quotedMessage, (newVal) => {
 });
 
 // Watch conversation changes
-watch(activeConversation, () => {
+watch(currentConversation, () => {
   clearQuotedMessage();
 });
 
@@ -60,19 +60,19 @@ const calculateReferenceContent = (message: IMessageModel | undefined): string =
     case TencentCloudChat.TYPES.MSG_TEXT:
       return message.payload?.text;
     case TencentCloudChat.TYPES.MSG_IMAGE:
-      return t('MessageInput.image');
+      return t('TUIChat.Image');
     case TencentCloudChat.TYPES.MSG_AUDIO:
-      return t('MessageInput.audio');
+      return t('TUIChat.Audio');
     case TencentCloudChat.TYPES.MSG_VIDEO:
-      return t('MessageInput.video');
+      return t('TUIChat.Video');
     case TencentCloudChat.TYPES.MSG_FILE:
-      return t('MessageInput.file');
+      return t('TUIChat.File');
     case TencentCloudChat.TYPES.MSG_LOCATION:
-      return t('MessageInput.location');
+      return t('TUIChat.Location');
     case TencentCloudChat.TYPES.MSG_CUSTOM:
-      return t('MessageInput.custom_message');
+      return t('TUIChat.Custom message');
     default:
-      return t('MessageInput.unknown');
+      return t('TUIChat.Unknown');
   }
 };
 </script>
