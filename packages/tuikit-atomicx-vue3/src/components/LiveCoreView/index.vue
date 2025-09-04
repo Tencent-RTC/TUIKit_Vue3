@@ -1,6 +1,7 @@
 <template>
   <div
     ref="liveCoreViewContainerRef"
+    id="live-core-view-container"
     class="live-core-view-container"
     :class="{ 'align-center': isAlignCenter }"
   >
@@ -44,20 +45,27 @@
         v-bind="{ style: localStreamViewInfo?.region }"
       />
     </div>
+    <Teleport to="body" v-if="!isFullscreen" :disabled="!isMobile">
+      <PlayerControl :isLandscapeStyleMode="isLandscapeStyleMode" v-if="isShowPlayerControl" />
+    </Teleport>
+    <PlayerControl :isLandscapeStyleMode="isLandscapeStyleMode" v-if="isShowPlayerControl && isFullscreen" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount, useSlots } from 'vue';
-import type { ComputedRef } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount, useSlots, type ComputedRef, Teleport } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveSeatState } from '../../states/LiveSeatState';
 import { useLiveState } from '../../states/LiveState';
 import { useLoginState } from '../../states/LoginState';
 import { getContentSize } from '../../utils/domOperation';
 import DefaultStreamViewUI from './DefaultStreamViewUI.vue';
+import PlayerControl from './PlayerControl/PlayerControl.vue';
 import type { SeatInfo, SeatUserInfo } from '../../types';
+import { isMobile } from '../../utils';
+import { usePlayerControlState } from './PlayerControl';
 
+const { isFullscreen, isLandscapeStyleMode } = usePlayerControlState();
 const { t } = useUIKit();
 const { seatList, canvas, startPlayStream, stopPlayStream } = useLiveSeatState();
 const { currentLive } = useLiveState();
@@ -74,6 +82,9 @@ const isAlignCenter = computed(() => {
     return false;
   }
   return true;
+});
+const isShowPlayerControl = computed(() => {
+  return currentLive.value?.liveId && !seatList.value.some(item => item.userInfo?.userId === loginUserInfo.value?.userId);
 });
 
 onMounted(async () => {
@@ -293,7 +304,7 @@ watch(() => [canvas.value, seatList.value], () => {
     fillMode.value = StreamFillMode.Fit;
   }
   handleStreamRegionSize();
-});
+}, { deep: true });
 
 function handleStreamRegionSize() {
   if (!liveCoreViewContainerRef.value) {

@@ -1,4 +1,13 @@
 export const resource = {
   'No video': '暂无画面',
   'Waiting for connection': '等待连线',
+  'Play': '播放',
+  'Pause': '暂停',
+  'Picture in Picture': '画中画',
+  'Exit Picture in Picture': '退出画中画',
+  'Fullscreen': '全屏',
+  'Exit Fullscreen': '退出全屏',
+  'Mute': '静音',
+  'Unmute': '取消静音',
+  'The system does not support picture-in-picture mode': '系统不支持画中画模式',
 };
