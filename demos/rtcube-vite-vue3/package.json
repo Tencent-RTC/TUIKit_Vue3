@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tencentcloud/chat-uikit-vue3": "3.3.0",
-    "@tencentcloud/uikit-base-component-vue3": "1.0.0",
+    "@tencentcloud/chat-uikit-vue3": "3.3.4",
+    "@tencentcloud/uikit-base-component-vue3": "1.0.2",
     "@tencentcloud/uikit-base-widget-vue3": "0.0.1",
     "@tencentcloud/universal-api": "2.4.0",
     "vue": "^3.5.18",

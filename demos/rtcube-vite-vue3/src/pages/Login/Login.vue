@@ -170,6 +170,7 @@ const handleLogin = async () => {
       userSig: userInfo.userSig,
       useUploadPlugin: true,
     });
+    localStorage.setItem('userInfo', JSON.stringify(userInfo));
     router.push({ name: 'Stages', params: { sceneId: route.params.sceneId } });
   } catch (error) {
     TUIToast.error({
