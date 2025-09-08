@@ -42,6 +42,14 @@ const MessageList = {
   no_more: 'No More',
   no_unread_members: 'No Unread Members',
   yesterday: 'Yesterday',
+
+  copy_success: 'Copied',
+  copy_failed: 'Copy Failed',
+  recall_success: 'Message recalled',
+  recall_failed: 'Recall Failed',
+  recall_time_limit_exceeded: 'Recall time limit exceeded',
+  delete_success: 'Deleted',
+  delete_failed: 'Delete Failed',
 };
 
 export default MessageList;

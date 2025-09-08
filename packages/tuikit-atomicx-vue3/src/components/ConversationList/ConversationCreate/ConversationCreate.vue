@@ -194,7 +194,7 @@ const handleCreateGroupConversation = async () => {
 
 const generateGroupName = (userList: Friend[]) => {
   const selfName = loginUserInfo.value?.userName || loginUserInfo.value?.userId || '';
-  const name = selfName + userList.map(item => item?.remark || item?.nick || item?.userID).join('、');
+  const name = `${selfName}、` + userList.map(item => item?.remark || item?.nick || item?.userID).join('、');
   return name.length >= GROUP_NAME_LIMIT ? name.slice(0, GROUP_NAME_LIMIT) : name;
 };
 

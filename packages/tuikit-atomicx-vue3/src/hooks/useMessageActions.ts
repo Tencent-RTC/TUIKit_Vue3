@@ -97,19 +97,19 @@ function useMessageActions(propsActionList?: Array<MessageAction['key'] | Messag
     copy: (message) => {
       state.copyTextMessage(message)
         .then(() => TUIToast.success({
-          message: i18next.t('TUIChat.Copied'),
+          message: i18next.t('MessageList.copy_success'),
         }))
         .catch(() => TUIToast.error({
-          message: i18next.t('TUIChat.Copy Failed'),
+          message: i18next.t('MessageList.copy_failed'),
         }));
     },
     recall: (message) => {
       state.recallMessage(message)
         .then(() => TUIToast.success({
-          message: i18next.t('TUIChat.Recall Succeed'),
+          message: i18next.t('MessageList.recall_success'),
         }))
         .catch(err => TUIToast.error({
-          message: err.code === 20016 ? i18next.t('TUIChat.Recall Time Limit Exceeded') : i18next.t('TUIChat.Recall Failed'),
+          message: err.code === 20016 ? i18next.t('MessageList.recall_time_limit_exceeded') : i18next.t('MessageList.recall_failed'),
         }));
     },
     quote: state.quoteMessage,
@@ -120,10 +120,10 @@ function useMessageActions(propsActionList?: Array<MessageAction['key'] | Messag
     delete: (message) => {
       state.deleteMessage(message)
         .then(() => TUIToast.success({
-          message: i18next.t('TUIChat.Deleted'),
+          message: i18next.t('MessageList.delete_success'),
         }))
         .catch(() => TUIToast.error({
-          message: i18next.t('TUIChat.Delete Failed'),
+          message: i18next.t('MessageList.delete_failed'),
         }));
     },
   };

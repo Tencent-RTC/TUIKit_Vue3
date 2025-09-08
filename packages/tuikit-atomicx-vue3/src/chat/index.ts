@@ -38,6 +38,9 @@ import { useMessageActionState as messageActionState } from '../states/MessageAc
 import { useMessageInputState as messageInputState } from '../states/MessageInputState';
 import { useMessageListState as messageListState } from '../states/MessageListState';
 import { useSearchState as searchState } from '../states/SearchState';
+import { useContactListState as contactListState } from "../states/ContactListState";
+import { useC2CSettingState as c2cSettingState } from '../states/C2CSettingState';
+import { useGroupSettingState as groupSettingState } from '../states/GroupSettingState';
 
 import ChatLoginServer from './server';
 
@@ -78,6 +81,9 @@ const useMessageActionState = messageActionState;
 const useMessageInputState = messageInputState;
 const useMessageListState = messageListState;
 const useSearchState = searchState;
+const useContactListState = contactListState;
+const useC2CSettingState = c2cSettingState;
+const useGroupSettingState = groupSettingState;
 
 export {
   // component
@@ -114,4 +120,7 @@ export {
   useMessageActionState,
   useConversationListState,
   useSearchState,
+  useContactListState,
+  useC2CSettingState,
+  useGroupSettingState,
 };

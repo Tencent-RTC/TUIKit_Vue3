@@ -15,3 +15,4 @@ export * from './engine';
 export * from './login';
 export * from './conversation';
 export * from './contact';
+export * from './chatSetting';
