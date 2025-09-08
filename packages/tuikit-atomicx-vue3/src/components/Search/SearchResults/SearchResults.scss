@@ -67,6 +67,7 @@
 }
 
 .SearchResults__error {
+  word-break: break-all;
   padding: 16px;
   text-align: center;
   color: var(--text-color-error);

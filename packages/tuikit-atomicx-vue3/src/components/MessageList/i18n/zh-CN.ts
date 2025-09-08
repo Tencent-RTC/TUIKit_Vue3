@@ -41,6 +41,14 @@ const MessageList = {
   no_more: '已加载全部',
   no_unread_members: '暂无未读成员',
   yesterday: '昨天',
+
+  copy_success: '已复制',
+  copy_failed: '复制失败',
+  recall_success: '消息已撤回',
+  recall_failed: '撤回失败',
+  recall_time_limit_exceeded: '撤回时间限制已过期',
+  delete_success: '删除成功',
+  delete_failed: '删除失败',
 };
 
 export default MessageList;
