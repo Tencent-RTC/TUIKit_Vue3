@@ -52,4 +52,27 @@ const MessageList = {
   delete_failed: 'Delete Failed',
 };
 
-export default MessageList;
+const CallMessage = {
+  start_call: '{{messageSender}} start call',
+  call_ended: 'Call ended',
+  call_duration: 'Call duration',
+  switch_to_audio_call: 'Switch to audio call',
+  switch_to_video_call: 'Switch to video call',
+  cancel_call: 'Cancel call',
+  canceled: 'Canceled',
+  canceled_by_recipient: 'Call canceled by caller',
+  answered: 'Answered',
+  decline_call: 'Decline call',
+  declined: 'Declined',
+  line_busy: 'Line busy',
+  missed_due_to_busy: 'Missed due to busy line',
+  declined_by_recipient: 'Call declined by user',
+  no_answer: 'No answer',
+  no_answer_from_recipient: 'Call wasn\'t answered',
+  no_answer_timeout: 'Call not answered (timeout)',
+};
+
+export {
+  MessageList,
+  CallMessage,
+};

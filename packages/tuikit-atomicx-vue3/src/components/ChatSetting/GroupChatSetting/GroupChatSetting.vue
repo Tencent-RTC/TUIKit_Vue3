@@ -260,6 +260,7 @@ const userPickerDialogTitle = computed(() => {
       <PersonalSettings />
       <GroupActions />
       <TUIDialog
+        appendTo="body"
         :visible="isShowUserPickerDialog"
         :title="userPickerDialogTitle"
         :custom-classes="['user-picker-dialog']"

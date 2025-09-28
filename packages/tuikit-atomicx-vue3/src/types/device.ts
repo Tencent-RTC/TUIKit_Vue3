@@ -51,3 +51,8 @@ export enum DeviceStatus {
   AdminInviting = "AdminInviting",   // 关闭状态且正在被主持人/管理员被邀请中
   UserApplying = "UserApplying", // 关闭状态且用户正在申请打开中
 }
+
+export enum DeviceStatusReason {
+  ChangedBySelf = 0,
+  ChangedByAdmin = 1,
+}

@@ -22,7 +22,7 @@
               <div class="header">
                 <IconLiveCoverHeader :size="10" />
                 <span class="viewer-count"> {{ item.currentViewerCount || 0 }} </span>
-                <span> {{ t('people have watched the live') }} </span>
+                <span> {{ t('people watched') }} </span>
               </div>
               <img :src="item.coverUrl || DEFAULT_COVER" alt="" @error="handleCoverImageError" />
             </div>
