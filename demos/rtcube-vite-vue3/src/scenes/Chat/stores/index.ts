@@ -1,21 +1,25 @@
 import { ref } from "vue";
-import { getPlatform } from '@tencentcloud/universal-api';
 
-const isH5 = ref(getPlatform() === 'h5');
 const isChatSettingOpen = ref(false);
+const isSearchOpen = ref(false);
 
-function setIsSettingOpen(isOpen: boolean) {
+function setIsChatSettingOpen(isOpen: boolean) {
   isChatSettingOpen.value = isOpen;
 }
 
-function useCoreStore() {
+function setIsSearchOpen(isOpen: boolean) {
+  isSearchOpen.value = isOpen;
+}
+
+function useComponentOpenStore() {
   return {
-    isH5,
     isChatSettingOpen,
-    setIsSettingOpen,
+    setIsChatSettingOpen,
+    isSearchOpen,
+    setIsSearchOpen,
   }
 }
 
 export {
-  useCoreStore,
+  useComponentOpenStore,
 };
