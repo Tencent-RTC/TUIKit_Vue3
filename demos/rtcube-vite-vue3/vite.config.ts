@@ -10,6 +10,7 @@ export default defineConfig({
     dedupe: ['vue'],
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      pinia: path.resolve(__dirname, './node_modules/pinia'),
     }
   },
   plugins: [vue(), vueDevTools()],

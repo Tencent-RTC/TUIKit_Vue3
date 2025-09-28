@@ -32,21 +32,6 @@ const availableLanguages = [
   { code: 'en-US', name: 'English', nativeName: 'English' },
 ];
 
-// SDKAppID 相关状态
-const currentSDKAppID = ref(parseInt(localStorage.getItem('currentSDKAppID') || '1400187352', 10));
-const sdkOptions = [
-  {
-    id: 1400187352,
-    name: t('login.chatEnvironment'),
-    description: t('login.chatEnvironmentDesc'),
-  },
-  {
-    id: 1400704311,
-    name: t('login.avEnvironment'),
-    description: t('login.avEnvironmentDesc'),
-  },
-];
-
 function toggleSidebar() {
   isCollapsed.value = !isCollapsed.value;
 }
@@ -57,20 +42,6 @@ function toggleUserMenu() {
 
 function closeUserMenu() {
   showUserMenu.value = false;
-}
-
-function getSDKDescription(sdkAppID: number) {
-  const option = sdkOptions.find(opt => opt.id === sdkAppID);
-  return option ? option.name : t('stages.unknownEnvironment');
-}
-
-function handleSDKSwitch(newSDKAppID: number) {
-  if (newSDKAppID === currentSDKAppID.value) {
-    showSDKSwitcher.value = false;
-    return;
-  }
-  localStorage.setItem('currentSDKAppID', newSDKAppID.toString());
-  logout(true);
 }
 
 function switchScene(key: string) {
@@ -108,13 +79,6 @@ function logout(isToggleSDKAppID?: boolean) {
 }
 
 async function init() {
-  const fromLogin = localStorage.getItem('fromLogin');
-  if (fromLogin === 'true') {
-    localStorage.removeItem('fromLogin');
-    window.location.reload();
-    return;
-  }
-
   try {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
     if (userInfo.userID && !loginUserInfo.value?.userId) {
@@ -159,17 +123,6 @@ onUnmounted(() => {
         <span class="brand-text">All in one</span>
       </div>
       <div class="stage-header__right">
-        <div class="sdk-info">
-          <div class="sdk-display">
-            <span class="sdk-label">SDKAppID:</span>
-            <span class="sdk-value">{{ currentSDKAppID }}</span>
-            <span class="sdk-desc">({{ getSDKDescription(currentSDKAppID) }})</span>
-          </div>
-          <button class="switch-sdk-btn" @click="showSDKSwitcher = true">
-            {{ t('stages.switchSDK') }}
-          </button>
-        </div>
-
         <div class="language-switcher" @click.stop>
           <button class="language-btn" @click="showLanguageSwitcher = !showLanguageSwitcher">
             <IconLanguage />
@@ -228,56 +181,6 @@ onUnmounted(() => {
         </div>
       </div>
     </header>
-
-    <div
-      v-if="showSDKSwitcher"
-      class="sdk-switcher-overlay"
-      @click="showSDKSwitcher = false"
-    >
-      <div class="sdk-switcher-modal" @click.stop>
-        <div class="modal-header">
-          <h3>{{ t('stages.switchSDKTitle') }}</h3>
-          <button class="close-btn" @click="showSDKSwitcher = false">
-            ×
-          </button>
-        </div>
-        <div class="modal-content">
-          <p class="modal-desc">
-            {{ t('stages.switchSDKDesc') }}
-          </p>
-          <div class="sdk-options">
-            <div
-              v-for="option in sdkOptions"
-              :key="option.id"
-              class="sdk-option"
-              :class="{ active: option.id === currentSDKAppID, disabled: option.id === currentSDKAppID }"
-              @click="handleSDKSwitch(option.id)"
-            >
-              <div class="option-info">
-                <div class="option-id">
-                  {{ option.id }}
-                </div>
-                <div class="option-name">
-                  {{ option.name }}
-                </div>
-                <div class="option-desc">
-                  {{ option.description }}
-                </div>
-              </div>
-              <div class="option-status">
-                <span v-if="option.id === currentSDKAppID" class="current-tag">{{ t('stages.current') }}</span>
-                <span v-else class="switch-tag">{{ t('stages.switch') }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="cancel-btn" @click="showSDKSwitcher = false">
-            {{ t('cancel') }}
-          </button>
-        </div>
-      </div>
-    </div>
 
     <div class="stage-main">
       <aside class="stage-sidebar" :class="{ collapsed: isCollapsed }">
@@ -553,224 +456,6 @@ onUnmounted(() => {
   box-shadow: 0 10px 24px rgba(64,160,120,0.25), inset 0 1px 0 rgba(255,255,255,0.85);
 }
 
-.sdk-info {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-right: 24px;
-  padding: 8px 16px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-
-  .sdk-display {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-
-    .sdk-label {
-      color: #64748b;
-      font-weight: 500;
-    }
-
-    .sdk-value {
-      color: #1e293b;
-      font-weight: 600;
-      font-family: 'Monaco', 'Menlo', monospace;
-    }
-
-    .sdk-desc {
-      color: #64748b;
-      font-size: 12px;
-    }
-  }
-
-  .switch-sdk-btn {
-    padding: 4px 12px;
-    background: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-      background: #2563eb;
-      transform: translateY(-1px);
-    }
-  }
-}
-
-.sdk-switcher-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.sdk-switcher-modal {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  overflow: hidden;
-
-  .modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 24px;
-    border-bottom: 1px solid #e2e8f0;
-
-    h3 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #1e293b;
-    }
-
-    .close-btn {
-      background: none;
-      border: none;
-      font-size: 24px;
-      color: #64748b;
-      cursor: pointer;
-      padding: 0;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 6px;
-      transition: all 0.2s ease;
-
-      &:hover {
-        background: #f1f5f9;
-        color: #334155;
-      }
-    }
-  }
-
-  .modal-content {
-    padding: 24px;
-
-    .modal-desc {
-      margin: 0 0 20px 0;
-      color: #64748b;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .sdk-options {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .sdk-option {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      &:hover:not(.disabled) {
-        border-color: #3b82f6;
-        background: #f8fafc;
-      }
-
-      &.active {
-        border-color: #10b981;
-        background: #f0fdf4;
-      }
-
-      &.disabled {
-        cursor: not-allowed;
-        opacity: 0.6;
-      }
-
-      .option-info {
-        flex: 1;
-
-        .option-id {
-          font-family: 'Monaco', 'Menlo', monospace;
-          font-size: 16px;
-          font-weight: 600;
-          color: #1e293b;
-          margin-bottom: 4px;
-        }
-
-        .option-name {
-          font-size: 14px;
-          font-weight: 500;
-          color: #374151;
-          margin-bottom: 2px;
-        }
-
-        .option-desc {
-          font-size: 12px;
-          color: #64748b;
-        }
-      }
-
-      .option-status {
-        .current-tag {
-          background: #10b981;
-          color: white;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 500;
-        }
-
-        .switch-tag {
-          background: #3b82f6;
-          color: white;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 500;
-        }
-      }
-    }
-  }
-
-  .modal-footer {
-    padding: 16px 24px;
-    border-top: 1px solid #e2e8f0;
-    display: flex;
-    justify-content: flex-end;
-
-    .cancel-btn {
-      padding: 8px 16px;
-      background: #f1f5f9;
-      color: #64748b;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      &:hover {
-        background: #e2e8f0;
-        color: #334155;
-      }
-    }
-  }
-}
-
 .user-info-container {
   position: relative;
 }
@@ -878,6 +563,11 @@ onUnmounted(() => {
     &:hover {
       background: #f1f5f9;
       border-color: #cbd5e1;
+    }
+
+    .language-icon {
+      font-size: 16px;
+      line-height: 1;
     }
 
     .dropdown-icon {
