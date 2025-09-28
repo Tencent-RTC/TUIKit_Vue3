@@ -1,15 +1,15 @@
-import { DeviceStatus } from './device';
+import { DeviceStatus, DeviceStatusReason } from './device';
 
 export type SeatUserInfo = {
-  roomId: string;
+  liveId: string;
   userId: string;
   userName: string;
   avatarUrl: string;
   microphoneStatus: DeviceStatus;
+  microphoneStatusReason: DeviceStatusReason;
   cameraStatus: DeviceStatus;
-  onSeatTimestamp: number;
-  customInfo: Record<string, any>;
-};
+  cameraStatusReason: DeviceStatusReason;
+}
 
 export type RegionInfo = {
   x: number;

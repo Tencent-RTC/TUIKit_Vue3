@@ -1,6 +1,6 @@
 export const resource = {
   LIVE: 'LIVE',
-  'people have watched the live': '人看过',
+  'people watched': '人看过',
   'Load More': '加载更多',
   'Loading...': '加载中...',
   'Loading': '正在加载...',

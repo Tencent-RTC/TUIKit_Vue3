@@ -5,7 +5,9 @@ type BuiltInAction =
   | 'ImagePicker'
   | 'FilePicker'
   | 'VideoPicker'
-  | 'AttachmentPicker';
+  | 'AttachmentPicker'
+  | 'AudioCallPicker'
+  | 'VideoCallPicker';
 
 export type CustomAction = {
   key: string;

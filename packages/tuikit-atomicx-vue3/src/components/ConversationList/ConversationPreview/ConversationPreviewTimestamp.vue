@@ -17,7 +17,7 @@ const { language } = useUIKit();
 
 const time = getTimeStamp({
   time: Number(props.conversation?.lastMessage?.lastTime || 0) * 1000,
-  language,
+  language: language.value,
 }) || '';
 
 </script>

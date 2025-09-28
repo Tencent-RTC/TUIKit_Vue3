@@ -2,17 +2,19 @@
   <div :class="[styles['attachment-picker']]">
     <template v-if="isCollapsed">
       <PopoverRoot>
-        <PopoverTrigger as="span">
-          <IconPlus
-            :class="styles['attachment-picker__icon']"
-            size="20"
-          />
+        <PopoverTrigger as="div">
+          <slot>
+            <IconPlus
+              :class="styles['attachment-picker__icon']"
+              size="20"
+            />
+          </slot>
         </PopoverTrigger>
         <PopoverPortal>
           <PopoverContent
-          side="top"
-          align="start"
-          :side-offset="5"
+            side="top"
+            align="start"
+            :side-offset="5"
           >
             <div :class="styles['attachment-picker__popup']">
               <component
