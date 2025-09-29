@@ -19,10 +19,10 @@
       </div>
       <slot name="textEditor">
         <DefaultTextEditor
-          :key="disabled ? 'disabled-editor' : 'enabled-editor'"
           :autoFocus="autoFocus"
           :disabled="disabled"
           :placeholder="placeholder"
+          :key="disabled ? 'disabled-editor' : 'enabled-editor'"
         >
           <template #inputPrefix>
             <slot name="inputPrefix" />
@@ -53,13 +53,11 @@
 import { computed } from 'vue';
 import { useMessageInputState } from '../../states/MessageInputState';
 import { AttachmentPicker, FilePicker, ImagePicker, VideoPicker } from './AttachmentPicker';
-import { AudioCallPicker } from './AudioCallPicker';
 import { EmojiPicker } from './EmojiPicker';
 import styles from './MessageInput.module.scss';
 import { QuotedMessagePreview } from './QuotedMessagePreview';
 import { SendButton } from './SendButton';
 import { TextEditor as DefaultTextEditor } from './TextEditor';
-import { VideoCallPicker } from './VideoCallPicker';
 import type { CustomAction, MessageInputProps } from './types';
 
 const DEFAULT_ACTIONS = [
@@ -68,8 +66,6 @@ const DEFAULT_ACTIONS = [
   { key: 'FilePicker', component: FilePicker },
   { key: 'ImagePicker', component: ImagePicker },
   { key: 'VideoPicker', component: VideoPicker },
-  { key: 'AudioCallPicker', component: AudioCallPicker },
-  { key: 'VideoCallPicker', component: VideoCallPicker },
 ];
 
 const props = withDefaults(defineProps<MessageInputProps>(), {
@@ -95,7 +91,7 @@ const pickProps = <T extends object, K extends keyof T>(
 
 const resolveStringAction = (actionKey: string) => {
   const { component = () => null } = DEFAULT_ACTIONS.find(({ key }) => key === actionKey) ?? {};
-  return { Component: component, props: { disabled: props.disabled } };
+  return { Component: component, props: {} };
 };
 
 const resolveObjectAction = (action: CustomAction) => {

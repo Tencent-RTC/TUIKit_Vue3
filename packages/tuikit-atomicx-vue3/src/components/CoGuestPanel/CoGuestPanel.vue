@@ -73,8 +73,7 @@
           <div class="user-list-title">
             <span class="user-list-title-text">{{ t('Current seat') }}</span>
             <span class="user-list-title-count">
-              {{ `(${userListInCoGuest.length})` }}
-              <!-- {{ `(${userListInCoGuest.length}/${ seatList.length})` }} -->
+              {{ `(${userListInCoGuest.length}/${ seatList.length})` }}
             </span>
           </div>
           <div class="user-list">

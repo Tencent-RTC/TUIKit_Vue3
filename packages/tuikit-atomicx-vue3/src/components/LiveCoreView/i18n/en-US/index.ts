@@ -10,10 +10,4 @@ export const resource = {
   'Mute': 'Mute',
   'Unmute': 'Unmute',
   'The system does not support picture-in-picture mode': 'The system does not support picture-in-picture mode',
-  'co-Hosting': 'co-Hosting',
-  'In battle': 'In battle',
-  '360P': '360P',
-  '540P': '540P',
-  '720P': '720P',
-  '1080P': '1080P',
 };

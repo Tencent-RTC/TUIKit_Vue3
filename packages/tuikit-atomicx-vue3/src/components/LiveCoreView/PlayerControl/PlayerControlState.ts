@@ -1,9 +1,9 @@
 import type { Ref } from 'vue';
 import { computed, ref, watch } from 'vue';
-import { TRTCCloud, TUIVideoQuality } from '@tencentcloud/tuiroom-engine-js';
 import useRoomEngine from '../../../hooks/useRoomEngine';
 import useLiveState from '../../../states/LiveState';
 import { useLiveSeatState } from '../../../states/LiveSeatState';
+import { TRTCCloud } from '@tencentcloud/tuiroom-engine-js';
 // Import utility modules
 import { 
   getDeviceType, 
@@ -31,14 +31,6 @@ export enum FillMode {
   FILL = 'fill',
 }
 
-// Resolution enum
-export enum Resolution {
-  R360P = TUIVideoQuality.kVideoQuality_360p,
-  R540P = TUIVideoQuality.kVideoQuality_540p,
-  R720P = TUIVideoQuality.kVideoQuality_720p,
-  R1080P = TUIVideoQuality.kVideoQuality_1080p,
-}
-
 // Player control state interface
 export interface PlayerControlState {
   // State properties
@@ -48,10 +40,6 @@ export interface PlayerControlState {
   isLandscapeStyleMode: Ref<boolean>;
   isPictureInPicture: Ref<boolean>;
   currentVolume: Ref<number>;
-  
-  // Resolution state properties
-  resolutionList: Ref<Resolution[]>;
-  currentResolution: Ref<Resolution | undefined>;
 
   // Basic control methods
   resume: () => Promise<boolean>;
@@ -64,11 +52,6 @@ export interface PlayerControlState {
   // Picture-in-picture control methods
   requestPictureInPicture: () => Promise<boolean>;
   exitPictureInPicture: () => Promise<boolean>;
-
-  // Resolution control methods
-  switchResolution: (resolution: Resolution) => Promise<boolean>;
-  getResolutionList: (roomId: string) => Promise<Resolution[]>;
-  initializeResolution: (roomId: string, applyResolution?: boolean) => Promise<void>;
 
   // Other control methods
   setVolume: (volume: number) => Promise<boolean>;
@@ -85,12 +68,6 @@ const isFullscreen = ref(false);
 const isLandscapeStyleMode = ref(false);
 const isPictureInPicture = ref(false);
 const currentVolume = ref(1.0); // Default volume is 1.0 (100%)
-
-// Resolution state management
-const resolutionList = ref<Resolution[]>([]);
-const currentResolution = ref<Resolution | undefined>();
-const RESOLUTION_INITIALIZED_PREFIX = '[LiveCoreView]ResolutionInitialized';
-
 const roomEngine = useRoomEngine();
 
 /**
@@ -357,92 +334,6 @@ export function usePlayerControlState(): PlayerControlState {
   };
 
   /**
-   * Resolution control methods
-   */
-  const switchResolution = async (resolution: Resolution): Promise<boolean> => {
-    return withErrorHandling(async () => {
-      if (!roomEngine.instance) {
-        throw new Error('Room engine instance not available');
-      }
-      await roomEngine.instance.callExperimentalAPI(
-        JSON.stringify({
-          api: 'switchPlaybackQuality',
-          params: {
-            quality: resolution,
-            autoSwitch: false,
-          },
-        }),
-      );
-      if (!isPlaying.value) {
-        isPlaying.value = true;
-      }
-      currentResolution.value = resolution;
-      console.log(`Resolution switched to: ${resolution}`);
-      return true;
-    }, 'Switch resolution', false);
-  };
-
-  const getResolutionList = async (roomId: string): Promise<Resolution[]> => {
-    return withErrorHandling(async () => {
-      if (!roomEngine.instance) {
-        throw new Error('Room engine instance not available');
-      }
-      
-      const resolutions = await roomEngine.instance.callExperimentalAPI(
-        JSON.stringify({
-          api: 'queryPlaybackQualityList',
-          params: {
-            roomId: roomId,
-          },
-        }),
-      );
-      
-      console.log(`Retrieved resolution list for room ${roomId}:`, resolutions);
-      return (resolutions || []) as Resolution[];
-    }, 'Get resolution list', []);
-  };
-
-
-  const initializeResolution = async (roomId: string, applyResolution: boolean = true): Promise<void> => {
-    try {
-      // Check if resolution has been initialized for this room
-      const initializedKey = `${RESOLUTION_INITIALIZED_PREFIX}_${roomId}`;
-      const hasInitialized = localStorage.getItem(initializedKey) === 'true';
-      
-      // Get available resolutionList
-      const availableResolutions = await getResolutionList(roomId);
-      resolutionList.value = availableResolutions;
-      
-      if (availableResolutions.length === 0) {
-        console.warn('No resolutions available for room:', roomId);
-        return;
-      }
-      
-      // Always set current resolution if it's not set or if it's not in the available list
-      if (!currentResolution.value || !availableResolutions.includes(currentResolution.value)) {
-        currentResolution.value = availableResolutions[0];
-      }
-      
-      // Only apply resolution if it hasn't been initialized for this room or explicitly requested
-      const shouldApplyResolution = applyResolution && !hasInitialized && currentResolution.value !== undefined;
-      if (shouldApplyResolution) {
-        await switchResolution(currentResolution.value!);
-        // Mark as initialized for this room
-        localStorage.setItem(initializedKey, 'true');
-      }
-      
-      console.log(`Resolution initialized for room ${roomId}:`, {
-        availableResolutions: availableResolutions,
-        currentResolution: currentResolution.value,
-        applied: shouldApplyResolution,
-        hasInitialized,
-      });
-    } catch (error) {
-      console.error('Failed to initialize resolution:', error);
-    }
-  };
-
-  /**
    * Other control methods
    */
   const setVolume = async (volume: number): Promise<boolean> => {
@@ -694,10 +585,6 @@ export function usePlayerControlState(): PlayerControlState {
     isLandscapeStyleMode,
     isPictureInPicture,
     currentVolume,
-    
-    // Resolution state
-    resolutionList,
-    currentResolution,
 
     // Methods
     resume,
@@ -706,9 +593,6 @@ export function usePlayerControlState(): PlayerControlState {
     exitFullscreen,
     requestPictureInPicture,
     exitPictureInPicture,
-    switchResolution,
-    getResolutionList,
-    initializeResolution,
     setVolume,
     changeFillMode,
     

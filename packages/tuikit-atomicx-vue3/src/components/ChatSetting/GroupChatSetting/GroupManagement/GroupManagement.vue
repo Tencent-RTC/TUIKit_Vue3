@@ -63,7 +63,6 @@
 
     <!-- User Picker Dialog -->
     <TUIDialog
-      appendTo="body"
       :custom-classes="['user-picker-dialog']"
       :visible="isShowUserPickerDialog"
       :title="userPickerTitle"

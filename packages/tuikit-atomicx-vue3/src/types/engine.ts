@@ -1,43 +1,10 @@
-import ChatEngine from '@tencentcloud/chat-uikit-engine';
-import type { IConversationModel, IMessageModel } from '@tencentcloud/chat-uikit-engine';
-
-enum ConversationType {
-  C2C = ChatEngine.TYPES.CONV_C2C,
-  GROUP = ChatEngine.TYPES.CONV_GROUP,
-  SYSTEM = ChatEngine.TYPES.CONV_SYSTEM,
-}
-
-enum MessageType {
-  TEXT = ChatEngine.TYPES.MSG_TEXT,
-  IMAGE = ChatEngine.TYPES.MSG_IMAGE,
-  AUDIO = ChatEngine.TYPES.MSG_AUDIO,
-  VIDEO = ChatEngine.TYPES.MSG_VIDEO,
-  FILE = ChatEngine.TYPES.MSG_FILE,
-  FACE = ChatEngine.TYPES.MSG_FACE,
-  LOCATION = ChatEngine.TYPES.MSG_LOCATION,
-  GRP_TIP = ChatEngine.TYPES.MSG_GRP_TIP,
-  CUSTOM = ChatEngine.TYPES.MSG_CUSTOM,
-  MERGER = ChatEngine.TYPES.MSG_MERGER,
-}
-
-enum SearchType {
-  MESSAGE = 'message',
-  CHAT_MESSAGE = 'chat_message',
-  USER = 'user',
-  GROUP = 'group',
-}
-interface ConversationModel extends Omit<IConversationModel, 'type'> {
-  type: ConversationType;
-}
-
-interface MessageModel extends Omit<IMessageModel, 'type' | 'conversationType'> {
-  type: MessageType;
-  conversationType: ConversationType;
-}
+import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
 
 export type {
+  IConversationModel as ConversationModel,
   ISearchResult as SearchResult,
   ISearchParamsMap as SearchParamsMap,
+  IMessageModel as MessageModel,
   IGroupModel as GroupModel,
   ISearchCloudMessagesResultItem as SearchCloudMessagesResultItem,
   ISearchCloudUsersResultItem as SearchCloudUsersResultItem,
@@ -45,13 +12,22 @@ export type {
   CreateGroupParams,
 } from '@tencentcloud/chat-uikit-engine';
 
-export type {
-  ConversationModel,
-  MessageModel,
-};
+export enum SearchType {
+  MESSAGE = 'message',
+  CHAT_MESSAGE = 'chat_message',
+  USER = 'user',
+  GROUP = 'group',
+}
 
-export {
-  ConversationType,
-  MessageType,
-  SearchType,
-};
+export enum MessageType {
+  TEXT = TUIChatEngine.TYPES.MSG_TEXT,
+  IMAGE = TUIChatEngine.TYPES.MSG_IMAGE,
+  AUDIO = TUIChatEngine.TYPES.MSG_AUDIO,
+  VIDEO = TUIChatEngine.TYPES.MSG_VIDEO,
+  FILE = TUIChatEngine.TYPES.MSG_FILE,
+  FACE = TUIChatEngine.TYPES.MSG_FACE,
+  LOCATION = TUIChatEngine.TYPES.MSG_LOCATION,
+  GRP_TIP = TUIChatEngine.TYPES.MSG_GRP_TIP,
+  CUSTOM = TUIChatEngine.TYPES.MSG_CUSTOM,
+  MERGER = TUIChatEngine.TYPES.MSG_MERGER,
+}

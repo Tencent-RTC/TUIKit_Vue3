@@ -5,7 +5,6 @@ import { BarrageInput as BarrageInputComponent } from '../components/BarrageInpu
 import { BarrageList as BarrageListComponent } from '../components/BarrageList';
 import { CameraButton as CameraButtonComponent } from '../components/CameraButton';
 import { CoGuestPanel as CoGuestPanelComponent } from '../components/CoGuestPanel';
-import { CoHostPanel as CoHostPanelComponent } from '../components/CoHostPanel';
 import { LiveAudienceList as LiveAudienceListComponent } from '../components/LiveAudienceList';
 import { LiveCoreView as LiveCoreViewComponent } from '../components/LiveCoreView';
 import { LiveList as LiveListComponent } from '../components/LiveList';
@@ -27,7 +26,6 @@ import { useLiveState as LiveState } from '../states/LiveState';
 import { useRoomState as RoomState } from '../states/RoomState';
 import { useUserState as UserState } from '../states/UserState';
 import { useVideoMixerState as VideoMixerState } from '../states/VideoMixerState';
-import { useBattleState  } from '../states/BattleState';
 import { useRoomEngine as RoomEngine } from '../hooks/useRoomEngine';
 
 import RTCLoginServer from './server';
@@ -41,7 +39,6 @@ const StreamMixer = StreamMixerComponent;
 const LiveScenePanel = LiveScenePanelComponent;
 const LiveAudienceList = LiveAudienceListComponent;
 const CoGuestPanel = CoGuestPanelComponent;
-const CoHostPanel = CoHostPanelComponent;
 const AudioSettingPanel = AudioSettingPanelComponent;
 const VideoSettingPanel = VideoSettingPanelComponent;
 const MicButton = MicButtonComponent;
@@ -74,7 +71,6 @@ export {
   LiveScenePanel,
   LiveAudienceList,
   CoGuestPanel,
-  CoHostPanel,
   AudioSettingPanel,
   VideoSettingPanel,
   MicButton,
@@ -98,5 +94,4 @@ export {
   useLiveAudienceState,
   useLiveMonitorState,
   useBarrageListState,
-  useBattleState,
 };

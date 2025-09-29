@@ -16,7 +16,6 @@
         </span>
         <div class="center-controls"></div>
         <div class="right-controls">
-          <MultiResolution />
           <span class="control-btn audio-control-btn">
             <AudioControl
               class="audio-control-icon"
@@ -59,7 +58,6 @@ import {
 } from '@tencentcloud/uikit-base-component-vue3';
 import { usePlayerControlState } from './PlayerControlState';
 import AudioControl from './AudioControl.vue';
-import MultiResolution from './MultiResolution.vue';
 import { isMobile } from '../../../utils';
 import { isFirefoxBrowser, isSafariBrowser } from './utils/deviceDetection';
 
@@ -161,31 +159,31 @@ const stopAutoHideControl = () => {
   }
 };
 
-const onMouseOver = () => {
+const handleMouseEnter = () => {
   stopAutoHideControl();
   showControls.value = true;
 };
 
-const onMouseOut = () => {
+const handleMouseLeave = () => {
   startAutoHideControl();
 };
 
 const setupParentMouseListener = () => {
   if (!isMobile && playerControlRef.value) {
-    const { parentElement } = playerControlRef.value;
+    const parentElement = playerControlRef.value.parentElement;
     if (parentElement) {
-      parentElement.addEventListener('mouseover', onMouseOver);
-      parentElement.addEventListener('mouseout', onMouseOut);
+      parentElement.addEventListener('mouseenter', handleMouseEnter);
+      parentElement.addEventListener('mouseleave', handleMouseLeave);
     }
   }
 };
 
 const removeParentMouseListener = () => {
   if (!isMobile && playerControlRef.value) {
-    const { parentElement } = playerControlRef.value;
+    const parentElement = playerControlRef.value.parentElement;
     if (parentElement) {
-      parentElement.removeEventListener('mouseover', onMouseOver);
-      parentElement.removeEventListener('mouseout', onMouseOut);
+      parentElement.removeEventListener('mouseenter', handleMouseEnter);
+      parentElement.removeEventListener('mouseleave', handleMouseLeave);
     }
   }
 };

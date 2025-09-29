@@ -12,7 +12,7 @@ import {
 import { useMessageActions } from '../../../../../hooks/useMessageActions';
 import classes from './MessageActionDropdown.module.scss';
 import type { MessageAction } from '../../../../../hooks/useMessageActions';
-import type { MessageModel } from '../../../../../types/engine';
+import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
 
 interface MessageActionDropdownProps {
   message: MessageModel;
