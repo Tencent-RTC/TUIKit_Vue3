@@ -1,6 +1,6 @@
 import { TUIChatEngine } from '@tencentcloud/chat-uikit-engine';
 import { i18next } from '@tencentcloud/uikit-base-component-vue3';
-import type { MessageModel } from '../../../../types/engine';
+import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
 
 function substringByLength(str: string, len = 12) {
   return str.length > len ? `${str.slice(0, len)}...` : str;

@@ -1,10 +1,8 @@
 <script lang="ts" setup>
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
-import { ConversationType } from '../../../../types/engine';
-import { isCallMessage, parseCallMessageText } from '../../../../utils/call';
 import { resolveGroupTipMessage } from './resolveGroupTipMessage';
-import type { MessageModel } from '../../../../types/engine';
+import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
 
 interface GroupTipMessageProps {
   message: MessageModel;
@@ -22,6 +20,10 @@ interface CustomMessageContent {
   custom?: string;
 }
 
+enum CustomMessageAsGroupTipEnum {
+  GROUP_CREATE = 'group_create',
+}
+
 const props = defineProps<GroupTipMessageProps>();
 
 const { t } = useUIKit();
@@ -29,13 +31,12 @@ const { t } = useUIKit();
 const messageContent = props.message.getMessageContent() as GroupTipMessageContent & CustomMessageContent;
 
 const renderText = () => {
-  if (messageContent.businessID === 'group_create') {
-    return `${messageContent.showName || ''} ${t('MessageList.create_group')}`;
+  switch (messageContent.businessID) {
+    case CustomMessageAsGroupTipEnum.GROUP_CREATE:
+      return `${messageContent.showName || ''} ${t('MessageList.create_group')}`;
+    default:
+      return resolveGroupTipMessage(props.message).text;
   }
-  if (isCallMessage(props.message) && props.message.conversationType === ConversationType.GROUP) {
-    return parseCallMessageText(props.message);
-  }
-  return resolveGroupTipMessage(props.message).text;
 };
 </script>
 

@@ -5,7 +5,6 @@
     <ConversationCreateButton @click="openCreateConversation" />
 
     <TUIDialog
-      appendTo="body"
       :visible="showCreateConversation"
       :title="dialogTitles"
       :confirm-text="dialogConfirmText"

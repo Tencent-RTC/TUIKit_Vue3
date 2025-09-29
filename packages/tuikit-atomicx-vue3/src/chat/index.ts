@@ -18,12 +18,6 @@ import {
 import {
   MessageInput as MessageInputComponent,
   EmojiPicker as EmojiPickerComponent,
-  AttachmentPicker as AttachmentPickerComponent,
-  FilePicker as FilePickerComponent,
-  ImagePicker as ImagePickerComponent,
-  VideoPicker as VideoPickerComponent,
-  AudioCallPicker as AudioCallPickerComponent,
-  VideoCallPicker as VideoCallPickerComponent,
 } from '../components/MessageInput';
 import {
   MessageList as MessageListComponent,
@@ -75,12 +69,6 @@ const MessageList = MessageListComponent;
 const Message = MessageComponent;
 const MessageInput = MessageInputComponent;
 const EmojiPicker = EmojiPickerComponent;
-const AttachmentPicker = AttachmentPickerComponent;
-const FilePicker = FilePickerComponent;
-const ImagePicker = ImagePickerComponent;
-const VideoPicker = VideoPickerComponent;
-const AudioCallPicker = AudioCallPickerComponent;
-const VideoCallPicker = VideoCallPickerComponent;
 const ChatSetting = ChatSettingComponent;
 const View = ViewComponent;
 
@@ -117,12 +105,6 @@ export {
   Message,
   MessageInput,
   EmojiPicker,
-  AttachmentPicker,
-  FilePicker,
-  ImagePicker,
-  VideoPicker,
-  AudioCallPicker,
-  VideoCallPicker,
   ChatSetting,
   View,
   ContactList,

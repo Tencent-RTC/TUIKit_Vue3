@@ -10,10 +10,4 @@ export const resource = {
   'Mute': '静音',
   'Unmute': '取消静音',
   'The system does not support picture-in-picture mode': '系统不支持画中画模式',
-  'co-Hosting': '连线中',
-  'In battle': 'PK中',
-  '360P': '低清',
-  '540P': '标清',
-  '720P': '高清',
-  '1080P': '超清',
 };

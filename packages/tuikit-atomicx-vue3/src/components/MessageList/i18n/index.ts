@@ -1,9 +1,9 @@
-import { MessageList as MessageListEn, CallMessage as CallMessageEn } from './en-US';
-import { MessageList as MessageListZh, CallMessage as CallMessageZh } from './zh-CN';
+import enUS from './en-US';
+import zhCN from './zh-CN';
 
 const resources = {
-  'en-US': { MessageList: MessageListEn, CallMessage: CallMessageEn },
-  'zh-CN': { MessageList: MessageListZh, CallMessage: CallMessageZh },
+  'en-US': enUS,
+  'zh-CN': zhCN,
 };
 
 export { resources };

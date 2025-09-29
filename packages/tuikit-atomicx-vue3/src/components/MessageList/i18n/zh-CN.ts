@@ -51,27 +51,4 @@ const MessageList = {
   delete_failed: '删除失败',
 };
 
-const CallMessage = {
-  start_call: '{{messageSender}} 发起通话',
-  call_ended: '通话结束',
-  call_duration: '通话时长',
-  switch_to_audio_call: '切换语音通话',
-  switch_to_video_call: '切换视频通话',
-  cancel_call: '取消通话',
-  canceled: '已取消',
-  canceled_by_recipient: '对方已取消',
-  answered: '已接听',
-  decline_call: '拒绝通话',
-  declined: '已拒绝',
-  line_busy: '对方忙线中',
-  missed_due_to_busy: '忙线未接听',
-  declined_by_recipient: '对方已拒绝',
-  no_answer: '无应答',
-  no_answer_from_recipient: '对方无应答',
-  no_answer_timeout: '超时无应答',
-};
-
-export {
-  MessageList,
-  CallMessage,
-}
+export default MessageList;

@@ -44,7 +44,6 @@
         name="localVideo"
         v-bind="{ style: localStreamViewInfo?.region }"
       />
-      <LiveCoreDecorate :seatListWithRealSize="seatListWithRealSize" />
     </div>
     <Teleport to="body" v-if="!isFullscreen" :disabled="!isMobile">
       <PlayerControl :isLandscapeStyleMode="isLandscapeStyleMode" v-if="isShowPlayerControl" />
@@ -62,7 +61,6 @@ import { useLoginState } from '../../states/LoginState';
 import { getContentSize } from '../../utils/domOperation';
 import DefaultStreamViewUI from './DefaultStreamViewUI.vue';
 import PlayerControl from './PlayerControl/PlayerControl.vue';
-import LiveCoreDecorate from './CoreViewDecorate/LiveCoreDecorate.vue';
 import type { SeatInfo, SeatUserInfo } from '../../types';
 import { isMobile } from '../../utils';
 import { usePlayerControlState } from './PlayerControl';
@@ -163,7 +161,7 @@ const seatListWithRealSize = computed(() => seatList.value.map((item: SeatInfo, 
       position: 'absolute' as const,
       left: `${streamViewSize.value.width * ratioLayout.x}px`,
       top: `${streamViewSize.value.width * ratioLayout.y}px`,
-      width: `${Math.ceil(streamViewSize.value.width * ratioLayout.width)}px`,
+      width: `${streamViewSize.value.width * ratioLayout.width}px`,
       height:
           ratioLayout.height === -1
             ? `${streamViewSize.value.height}px`
@@ -383,7 +381,6 @@ onBeforeUnmount(() => {
 .live-core-view-container {
   width: 100%;
   height: 100%;
-  position: relative;
   display: flex;
   justify-content: center;
   overflow: hidden;

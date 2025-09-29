@@ -1,6 +1,6 @@
 export const resource = {
   LIVE: 'LIVE',
-  'people watched': 'viewers',
+  'people have watched the live': 'people have watched the live',
   'Load More': 'Load More',
   'Loading...': 'Loading...',
   'Loading': 'Loading',

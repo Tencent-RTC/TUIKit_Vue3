@@ -1,32 +1,12 @@
 <template>
   <div>
-    <PopoverRoot :open="isOpen" @update:open="handleOpenChange">
-      <PopoverTrigger
-        as="div"
-        :disabled="props.disabled"
-      >
-        <div
-          data-test="test"
-          :class="cs(
-            styles['emoji-picker__button'],
-            {
-              [styles['disabled']]: props.disabled,
-            }
-          )"
-          v-bind="$attrs"
-        >
-          <slot>
-            <IconEmoji :class="styles['emoji-picker__icon']" :size="props.iconSize" />
-          </slot>
-        </div>
+    <PopoverRoot>
+      <PopoverTrigger as="span" :style="triggerStyle" :class="[props.disabled && 'disabled']">
+        <IconEmoji :class="styles['emoji-picker__icon']" size="24" />
       </PopoverTrigger>
       <PopoverPortal>
-        <PopoverContent
-          side="top"
-          align="start"
-          :side-offset="5"
-        >
-          <div>
+        <PopoverContent side="top" align="start" :side-offset="5">
+          <div class="flex flex-col gap-2.5">
             <div :class="styles['emoji-picker__list']">
               <div
                 v-for="emojiKey in Object.keys(emojiUrlMap)"
@@ -38,7 +18,7 @@
                   :class="styles['emoji-picker__list-item']"
                   :src="emojiBaseUrl + emojiUrlMap[emojiKey]"
                   :alt="t(`Emoji.${emojiKey}`)"
-                >
+                />
               </div>
             </div>
           </div>
@@ -49,51 +29,28 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, defineProps, useCssModule, ref } from 'vue';
+import { onMounted, defineProps } from 'vue';
 import { useUIKit, IconEmoji } from '@tencentcloud/uikit-base-component-vue3';
-import cs from 'classnames';
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui';
 import { emojiUrlMap, emojiBaseUrl } from '../../../constants/emoji';
-import { useMessageInputState, MessageContentType } from '../../../states/MessageInputState';
 import { transformTextWithEmojiKeyToName } from '../../../utils/emoji';
+import { useMessageInputState, MessageContentType } from '../../../states/MessageInputState';
+import styles from './EmojiPicker.module.scss';
 
-defineOptions({
-  name: 'EmojiPicker',
-  inheritAttrs: false,
-});
-
-interface EmojiPickerProps {
-  label?: string;
-  iconSize?: number;
+const props = defineProps<{
+  triggerStyle?: Record<string, any>;
   disabled?: boolean;
-}
-
-const props = withDefaults(defineProps<EmojiPickerProps>(), {
-  label: '',
-  iconSize: 20,
-  disabled: false,
-});
-
-const isOpen = ref(false);
-
-const styles = useCssModule();
+}>();
 const { t } = useUIKit();
 const { insertContent } = useMessageInputState();
 
 // Image preload
 onMounted(() => {
-  Object.values(emojiUrlMap).forEach((url) => {
+  Object.values(emojiUrlMap).forEach(url => {
     const img = new Image();
     img.src = emojiBaseUrl + url;
   });
 });
-
-const handleOpenChange = (open: boolean) => {
-  // only allow to change the state when the component is not disabled
-  if (!props.disabled) {
-    isOpen.value = open;
-  }
-};
 
 function insertEmojiToInput(emojiKey: string) {
   if (emojiKey) {
@@ -111,56 +68,10 @@ function insertEmojiToInput(emojiKey: string) {
 }
 </script>
 
-<style lang="scss" module>
-.emoji-picker {
-  &__button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    padding: 4px 6px;
-    transition: background-color 0.5s ease;
-    border-radius: 4px;
-
-    &:hover {
-      background-color: var(--button-color-secondary-hover);
-    }
-
-    &:active {
-      background-color: var(--button-color-secondary-active);
-    }
-
-    &.disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      user-select: none;
-      pointer-events: none;
-    }
-  }
-
-  &__icon {
-    color: var(--text-color-primary);
-  }
-
-  &__list {
-    display: flex;
-    flex-flow: row wrap;
-    gap: 8px;
-    width: 310px;
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 10px;
-    background-color: var(--dropdown-color-default);
-    box-shadow: 0 0 10px 0 var(--shadow-color);
-
-    &-item {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-    }
-  }
+<style lang="scss" scoped>
+.disabled {
+  cursor: not-allowed;
+  user-select: none;
+  pointer-events: none;
 }
 </style>
