@@ -5,8 +5,7 @@ $breakpoints: (
   mobile: 0,
   tablet: 768px,
   desktop: 1024px,
-  large-desktop: 1440px,
-  xl-desktop: 1920px,
+  large-desktop: 1440px
 );
 
 // Mobile-first responsive mixin
@@ -53,12 +52,6 @@ $breakpoints: (
   }
 }
 
-@mixin xl-desktop {
-  @include respond-to(xl-desktop) {
-    @content;
-  }
-}
-
 // Range breakpoint mixin (for specific ranges)
 @mixin respond-between($min, $max) {
   @if map.has-key($breakpoints, $min) and map.has-key($breakpoints, $max) {
@@ -100,13 +93,6 @@ $breakpoints: (
   }
 }
 
-// XL desktop only
-@mixin xl-desktop-only {
-  @include respond-between(xl-desktop, large-desktop) {
-    @content;
-  }
-}
-
 // Tablet and up
 @mixin tablet-and-up {
   @include respond-to(tablet) {
@@ -124,13 +110,6 @@ $breakpoints: (
 // Large desktop and up
 @mixin large-desktop-and-up {
   @include respond-to(large-desktop) {
-    @content;
-  }
-}
-
-// XL desktop and up
-@mixin xl-desktop-and-up {
-  @include respond-to(xl-desktop) {
     @content;
   }
 }

@@ -7,10 +7,10 @@
           RTCube
         </div>
         <h1 class="title">
-          {{ t('login') }}
+          {{ '登录' }}
         </h1>
         <p class="subtitle">
-          {{ t('login.subtitle') }}
+          填写信息开始体验
         </p>
       </div>
 
@@ -23,7 +23,7 @@
             v-model="formData.sdkAppID"
             type="number"
             class="input"
-            :placeholder="t('login.sdkAppIdPlaceholder')"
+            placeholder="请输入 SDK App ID"
             required
           >
         </div>
@@ -35,7 +35,7 @@
             v-model="formData.userID"
             type="text"
             class="input"
-            :placeholder="t('login.userIdPlaceholder')"
+            placeholder="请输入用户 ID"
             required
           >
         </div>
@@ -47,7 +47,7 @@
             v-model="formData.secretKey"
             type="password"
             class="input"
-            :placeholder="t('login.secretKeyPlaceholder')"
+            placeholder="请输入 Secret Key"
             required
           >
         </div>
@@ -62,18 +62,18 @@
             >
             <span class="checkmark" />
             <span class="agreement-text">
-              {{ t('login.agreeToTerms') }}
+              我已阅读并同意
               <a
                 :href="link.privacy.url"
                 target="_blank"
                 class="link"
-              >{{ t('login.privacyPolicy') }}</a>
-              {{ t('login.and') }}
+              >{{ link.privacy.label }}</a>
+              和
               <a
                 :href="link.agreement.url"
                 target="_blank"
                 class="link"
-              >{{ t('login.userAgreement') }}</a>
+              >{{ link.agreement.label }}</a>
             </span>
           </label>
         </div>
@@ -85,14 +85,14 @@
           block
           @click="handleLogin"
         >
-          <span v-if="!isLoading">{{ t('login') }}</span>
-          <span v-else class="loading-text">{{ t('login.loggingIn') }}</span>
+          <span v-if="!isLoading">登录</span>
+          <span v-else class="loading-text">登录中...</span>
         </TUIButton>
       </form>
 
       <!-- Back Button -->
       <TUIButton type="text" @click="goBack">
-        👈 {{ t('login.backToHome') }}
+        👈 返回首页
       </TUIButton>
     </div>
   </div>
@@ -101,12 +101,11 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import { useLoginState } from '@tencentcloud/chat-uikit-vue3';
-import { TUIButton, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIButton, TUIToast } from '@tencentcloud/uikit-base-component-vue3';
 import { useRoute, useRouter } from 'vue-router';
 import { genTestUserSig } from '../../debug';
 
 const { login } = useLoginState();
-const { t } = useUIKit();
 const route = useRoute();
 const router = useRouter();
 
@@ -124,9 +123,11 @@ const showError = ref(false);
 
 const link = {
   privacy: {
+    label: '隐私条例',
     url: 'https://web.sdk.qcloud.com/document/Tencent-IM-Privacy-Protection-Guidelines.html',
   },
   agreement: {
+    label: '用户协议',
     url: 'https://web.sdk.qcloud.com/document/Tencent-IM-User-Agreement.html',
   },
 };
@@ -143,12 +144,12 @@ const showErrorMessage = (message: string) => {
 // 处理登录
 const handleLogin = async () => {
   if (!agreed.value) {
-    showErrorMessage(t('login.pleaseAgreeToTerms'));
+    showErrorMessage('请先同意用户协议和隐私条例');
     return;
   }
 
   if (!formData.value.sdkAppID || !formData.value.userID || !formData.value.secretKey) {
-    showErrorMessage(t('login.pleaseCompleteInfo'));
+    showErrorMessage('请填写完整的登录信息');
     return;
   }
 
@@ -170,10 +171,10 @@ const handleLogin = async () => {
       useUploadPlugin: true,
     });
     localStorage.setItem('userInfo', JSON.stringify(userInfo));
-    router.push({ name: route.params.sceneId as string });
+    router.push({ name: 'Stages', params: { sceneId: route.params.sceneId } });
   } catch (error) {
     TUIToast.error({
-      message: t('login.loginFailed'),
+      message: '登录失败，请检查输入信息',
     });
     console.error(error);
   } finally {
