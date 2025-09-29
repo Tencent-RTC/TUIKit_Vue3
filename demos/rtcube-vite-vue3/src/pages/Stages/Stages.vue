@@ -1,149 +1,59 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, onUnmounted } from 'vue';
-import {
-  IconLogout,
-  IconArrowLeftNew,
-  IconArrowRight,
-  IconArrowStrokeSelectDown,
-  IconLanguage,
-  useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useLoginState, Avatar } from 'tuikit-atomicx-vue3';
+import { computed, onMounted } from 'vue';
+import { useLoginState } from '@tencentcloud/chat-uikit-vue3';
+import { TUIButton } from '@tencentcloud/uikit-base-component-vue3';
 import { useRoute, useRouter } from 'vue-router';
 import Logo from '@/assets/RTCubeLogo.png';
-import { getEnabledScenes, getDefaultScene } from '@/config';
+import Chat from '@/scenes/Chat/Chat.vue';
 
-const { login, logout: _logout, loginUserInfo } = useLoginState();
-const { t, setLanguage, language } = useUIKit();
+const { login, logout: _logout } = useLoginState();
 
 const route = useRoute();
 const router = useRouter();
 
-const scenes = getEnabledScenes();
+type Scene = {
+  key: string;
+  label: string;
+  desc: string;
+};
 
-const currentKey = computed<string>(() => (route.name as string) || getDefaultScene().key);
-
-const isCollapsed = ref(false);
-const showUserMenu = ref(false);
-const isSceneReady = ref(false);
-const showSDKSwitcher = ref(false);
-const showLanguageSwitcher = ref(false);
-const availableLanguages = [
-  { code: 'zh-CN', name: '中文', nativeName: '中文' },
-  { code: 'en-US', name: 'English', nativeName: 'English' },
+const scenes: Scene[] = [
+  { key: 'chat', label: 'Chat', desc: '即时聊天场景 Demo' },
 ];
 
-// SDKAppID 相关状态
-const currentSDKAppID = ref(parseInt(localStorage.getItem('currentSDKAppID') || '1400187352', 10));
-const sdkOptions = [
-  {
-    id: 1400187352,
-    name: t('login.chatEnvironment'),
-    description: t('login.chatEnvironmentDesc'),
-  },
-  {
-    id: 1400704311,
-    name: t('login.avEnvironment'),
-    description: t('login.avEnvironmentDesc'),
-  },
-];
-
-function toggleSidebar() {
-  isCollapsed.value = !isCollapsed.value;
-}
-
-function toggleUserMenu() {
-  showUserMenu.value = !showUserMenu.value;
-}
-
-function closeUserMenu() {
-  showUserMenu.value = false;
-}
-
-function getSDKDescription(sdkAppID: number) {
-  const option = sdkOptions.find(opt => opt.id === sdkAppID);
-  return option ? option.name : t('stages.unknownEnvironment');
-}
-
-function handleSDKSwitch(newSDKAppID: number) {
-  if (newSDKAppID === currentSDKAppID.value) {
-    showSDKSwitcher.value = false;
-    return;
-  }
-  localStorage.setItem('currentSDKAppID', newSDKAppID.toString());
-  logout(true);
-}
+const currentKey = computed<string>(() => (route.params.sceneId as string) || 'chat');
 
 function switchScene(key: string) {
   if (key === currentKey.value) {
     return;
   }
-  router.replace({ name: key });
-}
-
-function handleClickOutside() {
-  if (showUserMenu.value) {
-    showUserMenu.value = false;
-  }
-  if (showLanguageSwitcher.value) {
-    showLanguageSwitcher.value = false;
-  }
-}
-
-function getCurrentLanguageName() {
-  const lang = availableLanguages.find(l => l.code === language.value);
-  return lang ? lang.nativeName : 'Unknown';
-}
-
-function logout(isToggleSDKAppID?: boolean) {
-  closeUserMenu();
-  _logout();
-  isSceneReady.value = false;
-  localStorage.removeItem('userInfo');
-  if (isToggleSDKAppID) {
-    showSDKSwitcher.value = false;
-    router.replace({ name: 'Login', params: { sceneId: currentKey.value } });
-  } else {
-    router.replace({ name: 'Home' });
-  }
-}
-
-async function init() {
-  const fromLogin = localStorage.getItem('fromLogin');
-  if (fromLogin === 'true') {
-    localStorage.removeItem('fromLogin');
-    window.location.reload();
-    return;
-  }
-
-  try {
-    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-    if (userInfo.userID && !loginUserInfo.value?.userId) {
-      const { SDKAppID, userID, userSig } = userInfo;
-      await login({
-        sdkAppId: SDKAppID,
-        userId: userID,
-        userSig,
-        useUploadPlugin: true,
-      });
-    }
-    if (!userInfo.userID && !loginUserInfo.value?.userId) {
-      throw new Error('No user info found');
-    }
-    isSceneReady.value = true;
-  } catch (error) {
-    console.error('Login failed:', error);
-    logout();
-  }
+  router.replace({ name: 'Stages', params: { sceneId: key } });
 }
 
 onMounted(() => {
-  init();
-  document.addEventListener('click', handleClickOutside);
+  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+  if (userInfo.userID) {
+    const { SDKAppID, userID, userSig } = userInfo;
+    login({
+      sdkAppId: SDKAppID,
+      userId: userID,
+      userSig,
+      useUploadPlugin: true,
+    }).then(() => []).catch((error) => {
+      console.error('Login failed:', error);
+      logout();
+    });
+  } else {
+    router.replace({ name: 'Home' });
+  }
 });
 
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
-});
+function logout() {
+  _logout();
+  localStorage.removeItem('userInfo');
+  router.replace({ name: 'Home' });
+}
+
 </script>
 
 <template>
@@ -156,372 +66,81 @@ onUnmounted(() => {
           class="stage-header__logo"
           @click="router.replace('/')"
         >
-        <span class="brand-text">All in one</span>
+        <button
+          v-for="s in scenes"
+          :key="s.key"
+          class="pill"
+          :class="{ active: s.key === currentKey }"
+          @click="switchScene(s.key)"
+        >
+          {{ s.label }}
+        </button>
       </div>
       <div class="stage-header__right">
-        <div class="sdk-info">
-          <div class="sdk-display">
-            <span class="sdk-label">SDKAppID:</span>
-            <span class="sdk-value">{{ currentSDKAppID }}</span>
-            <span class="sdk-desc">({{ getSDKDescription(currentSDKAppID) }})</span>
-          </div>
-          <button class="switch-sdk-btn" @click="showSDKSwitcher = true">
-            {{ t('stages.switchSDK') }}
-          </button>
-        </div>
-
-        <div class="language-switcher" @click.stop>
-          <button class="language-btn" @click="showLanguageSwitcher = !showLanguageSwitcher">
-            <IconLanguage />
-            <span>{{ getCurrentLanguageName() }}</span>
-            <IconArrowStrokeSelectDown :class="{ 'dropdown-icon': true, active: showLanguageSwitcher }" />
-          </button>
-
-          <div
-            v-if="showLanguageSwitcher"
-            class="language-menu"
-            @click.stop
-          >
-            <div class="language-menu-header">
-              {{ t('language.switch') }}
-            </div>
-            <div
-              v-for="lang in availableLanguages"
-              :key="lang.code"
-              class="language-menu-item"
-              :class="{ active: lang.code === language }"
-              @click="setLanguage(lang.code)"
-            >
-              <span class="language-name">{{ lang.nativeName }}</span>
-              <span v-if="lang.code === language" class="current-indicator">{{ t('language.current') }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="user-info-container" @click.stop>
-          <div class="user-info" @click="toggleUserMenu">
-            <Avatar
-              :src="loginUserInfo?.avatarUrl"
-              :alt="loginUserInfo?.userName || loginUserInfo?.userId"
-            />
-            <div class="user-details">
-              <div class="user-name">
-                {{ loginUserInfo?.userName || loginUserInfo?.userId || 'Unknown User' }}
-              </div>
-              <div class="user-id">
-                userID: {{ loginUserInfo?.userId || 'N/A' }}
-              </div>
-            </div>
-            <IconArrowStrokeSelectDown :class="{ 'dropdown-icon': true, active: showUserMenu }" />
-          </div>
-
-          <div
-            v-if="showUserMenu"
-            class="user-menu"
-            @click.stop
-          >
-            <div class="user-menu-item logout" @click="logout()">
-              <IconLogout />
-              {{ t('logout') }}
-            </div>
-          </div>
-        </div>
+        <TUIButton @click="logout">
+          Logout
+        </TUIButton>
       </div>
     </header>
 
-    <div
-      v-if="showSDKSwitcher"
-      class="sdk-switcher-overlay"
-      @click="showSDKSwitcher = false"
-    >
-      <div class="sdk-switcher-modal" @click.stop>
-        <div class="modal-header">
-          <h3>{{ t('stages.switchSDKTitle') }}</h3>
-          <button class="close-btn" @click="showSDKSwitcher = false">
-            ×
-          </button>
-        </div>
-        <div class="modal-content">
-          <p class="modal-desc">
-            {{ t('stages.switchSDKDesc') }}
-          </p>
-          <div class="sdk-options">
-            <div
-              v-for="option in sdkOptions"
-              :key="option.id"
-              class="sdk-option"
-              :class="{ active: option.id === currentSDKAppID, disabled: option.id === currentSDKAppID }"
-              @click="handleSDKSwitch(option.id)"
-            >
-              <div class="option-info">
-                <div class="option-id">
-                  {{ option.id }}
-                </div>
-                <div class="option-name">
-                  {{ option.name }}
-                </div>
-                <div class="option-desc">
-                  {{ option.description }}
-                </div>
-              </div>
-              <div class="option-status">
-                <span v-if="option.id === currentSDKAppID" class="current-tag">{{ t('stages.current') }}</span>
-                <span v-else class="switch-tag">{{ t('stages.switch') }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="cancel-btn" @click="showSDKSwitcher = false">
-            {{ t('cancel') }}
-          </button>
-        </div>
+    <div class="stage-content">
+      <Chat v-if="currentKey === 'chat'" class="scene" />
+      <div v-else-if="currentKey === 'live'" class="scene">
+        Live Scene
       </div>
-    </div>
-
-    <div class="stage-main">
-      <aside class="stage-sidebar" :class="{ collapsed: isCollapsed }">
-        <div class="sidebar-header">
-          <div v-if="!isCollapsed" class="sidebar-title">
-            {{ t('stages.sceneSelection') }}
-          </div>
-          <button class="collapse-btn" @click="toggleSidebar">
-            <IconArrowLeftNew v-if="!isCollapsed" />
-            <IconArrowRight v-else />
-          </button>
-        </div>
-        <nav class="scene-nav">
-          <button
-            v-for="scene in scenes"
-            :key="scene.key"
-            class="scene-tab"
-            :class="{
-              active: scene.key === currentKey ||
-                (scene.children && scene.children.some(child => child.key === currentKey))
-            }"
-            :title="isCollapsed ? scene.title : ''"
-            @click="switchScene(scene.key)"
-          >
-            <div class="scene-tab__icon" :style="{ backgroundColor: scene.accent || '#64748b' }">
-              <span v-if="!scene.icon" class="scene-tab__initial">{{ scene.title.charAt(0) }}</span>
-              <span
-                v-else
-                class="scene-tab__initial"
-                v-html="scene.icon"
-              />
-            </div>
-            <div v-if="!isCollapsed" class="scene-tab__content">
-              <div class="scene-tab__title">
-                {{ scene.title }}
-              </div>
-              <div class="scene-tab__desc">
-                {{ scene.description }}
-              </div>
-            </div>
-          </button>
-        </nav>
-      </aside>
-
-      <main class="stage-content">
-        <router-view />
-      </main>
+      <div v-else class="scene">
+        Placeholder Scene
+      </div>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .stage-page {
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  background: #f8fafc;
 }
 
 .stage-header {
-  height: 64px;
+  position: sticky;
+  top: 0;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-  &__left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+  padding: 0 16px;
+  gap: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.12) 100%);
+  backdrop-filter: saturate(160%) blur(12px);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08), inset 0 -1px 0 rgba(255,255,255,0.05);
 
   &__logo {
     height: 32px;
+    margin: 0 12px;
     cursor: pointer;
   }
 
-  .brand-text {
-    font-size: 20px;
-    font-weight: 700;
-    color: #1e293b;
-    letter-spacing: 1px;
+  &__left {
+    display: flex;
+    gap: 12px;
   }
 
   &__right {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    position: relative;
-  }
-}
-
-.stage-main {
-  flex: 1;
-  display: flex;
-  min-height: 0;
-}
-
-.stage-sidebar {
-  width: 320px;
-  background: #ffffff;
-  border-right: 1px solid #e2e8f0;
-  padding: 24px 0;
-  overflow-y: auto;
-  transition: width 0.3s ease;
-
-  &.collapsed {
-    width: 80px;
-  }
-
-  .sidebar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 24px 16px;
-
-    .sidebar-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .collapse-btn {
-      background: none;
-      border: none;
-      color: #64748b;
-      cursor: pointer;
-      padding: 4px;
-      border-radius: 4px;
-      transition: all 0.2s ease;
-
-      &:hover {
-        background: #f1f5f9;
-        color: #334155;
-      }
-    }
-  }
-
-  &.collapsed .sidebar-header {
-    padding: 0 16px 16px;
-    justify-content: center;
-  }
-}
-
-.scene-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 16px;
-
-  .stage-sidebar.collapsed & {
-    padding: 0 8px;
-  }
-}
-
-.scene-tab {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  border: none;
-  border-radius: 12px;
-  background: transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
-
-  &:hover {
-    background: #f1f5f9;
-    transform: translateX(4px);
-  }
-
-  &.active {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border: 1px solid #0ea5e9;
-    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
-  }
-
-  &__initial {
-    display: inline-block;
-    width: 100%;
-  }
-
-  .stage-sidebar.collapsed & {
-    padding: 12px;
-    justify-content: center;
-    gap: 0;
-
-    &:hover {
-      transform: none;
-    }
-  }
-
-  &__icon {
-    width: 48px;
-    height: 48px;
-    padding: 10px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-
-  &__content {
-    flex: 1;
-    min-width: 0;
-  }
-
-  &__title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1e293b;
-    margin-bottom: 4px;
-  }
-
-  &__desc {
-    font-size: 13px;
-    color: #64748b;
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    min-width: 140px;
   }
 }
 
 .stage-content {
   flex: 1;
   display: flex;
-  background: #ffffff;
+  flex-direction: row;
   min-height: 0;
-  position: relative;
-
-  .scene {
-    flex: 1;
-  }
 }
 
 .pill {
@@ -551,407 +170,5 @@ onUnmounted(() => {
   color: #0b121f;
   border: 2px solid #4172ea;
   box-shadow: 0 10px 24px rgba(64,160,120,0.25), inset 0 1px 0 rgba(255,255,255,0.85);
-}
-
-.sdk-info {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-right: 24px;
-  padding: 8px 16px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-
-  .sdk-display {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-
-    .sdk-label {
-      color: #64748b;
-      font-weight: 500;
-    }
-
-    .sdk-value {
-      color: #1e293b;
-      font-weight: 600;
-      font-family: 'Monaco', 'Menlo', monospace;
-    }
-
-    .sdk-desc {
-      color: #64748b;
-      font-size: 12px;
-    }
-  }
-
-  .switch-sdk-btn {
-    padding: 4px 12px;
-    background: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-      background: #2563eb;
-      transform: translateY(-1px);
-    }
-  }
-}
-
-.sdk-switcher-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.sdk-switcher-modal {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  overflow: hidden;
-
-  .modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 24px;
-    border-bottom: 1px solid #e2e8f0;
-
-    h3 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #1e293b;
-    }
-
-    .close-btn {
-      background: none;
-      border: none;
-      font-size: 24px;
-      color: #64748b;
-      cursor: pointer;
-      padding: 0;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 6px;
-      transition: all 0.2s ease;
-
-      &:hover {
-        background: #f1f5f9;
-        color: #334155;
-      }
-    }
-  }
-
-  .modal-content {
-    padding: 24px;
-
-    .modal-desc {
-      margin: 0 0 20px 0;
-      color: #64748b;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .sdk-options {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .sdk-option {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      &:hover:not(.disabled) {
-        border-color: #3b82f6;
-        background: #f8fafc;
-      }
-
-      &.active {
-        border-color: #10b981;
-        background: #f0fdf4;
-      }
-
-      &.disabled {
-        cursor: not-allowed;
-        opacity: 0.6;
-      }
-
-      .option-info {
-        flex: 1;
-
-        .option-id {
-          font-family: 'Monaco', 'Menlo', monospace;
-          font-size: 16px;
-          font-weight: 600;
-          color: #1e293b;
-          margin-bottom: 4px;
-        }
-
-        .option-name {
-          font-size: 14px;
-          font-weight: 500;
-          color: #374151;
-          margin-bottom: 2px;
-        }
-
-        .option-desc {
-          font-size: 12px;
-          color: #64748b;
-        }
-      }
-
-      .option-status {
-        .current-tag {
-          background: #10b981;
-          color: white;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 500;
-        }
-
-        .switch-tag {
-          background: #3b82f6;
-          color: white;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 500;
-        }
-      }
-    }
-  }
-
-  .modal-footer {
-    padding: 16px 24px;
-    border-top: 1px solid #e2e8f0;
-    display: flex;
-    justify-content: flex-end;
-
-    .cancel-btn {
-      padding: 8px 16px;
-      background: #f1f5f9;
-      color: #64748b;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      &:hover {
-        background: #e2e8f0;
-        color: #334155;
-      }
-    }
-  }
-}
-
-.user-info-container {
-  position: relative;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: #f8fafc;
-  }
-
-  .user-details {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-
-    .user-name {
-      font-size: 14px;
-      font-weight: 600;
-      color: #1e293b;
-      line-height: 1.2;
-    }
-
-    .user-id {
-      font-size: 12px;
-      color: #64748b;
-      line-height: 1.2;
-    }
-  }
-
-  .dropdown-icon {
-    color: #64748b;
-    transition: transform 0.2s ease;
-
-    &.active {
-      transform: rotate(180deg);
-    }
-  }
-}
-
-.user-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 8px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  min-width: 180px;
-  z-index: 1000;
-  overflow: hidden;
-
-  .user-menu-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    font-size: 14px;
-    color: #374151;
-
-    &:hover {
-      background: #f9fafb;
-    }
-
-    &.logout {
-      color: #dc2626;
-
-      &:hover {
-        background: #fef2f2;
-      }
-    }
-
-    svg {
-      flex-shrink: 0;
-    }
-  }
-}
-
-.language-switcher {
-  position: relative;
-  margin-right: 16px;
-
-  .language-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 13px;
-    color: #374151;
-
-    &:hover {
-      background: #f1f5f9;
-      border-color: #cbd5e1;
-    }
-
-    .dropdown-icon {
-      color: #64748b;
-      transition: transform 0.2s ease;
-      font-size: 12px;
-
-      &.active {
-        transform: rotate(180deg);
-      }
-    }
-  }
-
-  .language-menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    margin-top: 8px;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    min-width: 160px;
-    z-index: 1000;
-    overflow: hidden;
-
-    .language-menu-header {
-      padding: 12px 16px;
-      background: #f8fafc;
-      border-bottom: 1px solid #e2e8f0;
-      font-size: 12px;
-      font-weight: 600;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .language-menu-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-      font-size: 14px;
-      color: #374151;
-
-      &:hover {
-        background: #f9fafb;
-      }
-
-      &.active {
-        background: #f0f9ff;
-        color: #0369a1;
-
-        .current-indicator {
-          background: #0ea5e9;
-          color: white;
-          padding: 2px 8px;
-          border-radius: 12px;
-          font-size: 11px;
-          font-weight: 500;
-        }
-      }
-
-      .language-name {
-        font-weight: 500;
-      }
-
-      .current-indicator {
-        font-size: 11px;
-        color: #64748b;
-      }
-    }
-  }
 }
 </style>
