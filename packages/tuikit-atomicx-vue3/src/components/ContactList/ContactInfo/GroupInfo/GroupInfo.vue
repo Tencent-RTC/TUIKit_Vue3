@@ -54,6 +54,7 @@
         {{ t('TUIContact.Enter group chat') }}
       </TUIButton>
       <TUIDialog
+        appendTo="body"
         :visible="visible"
         :title="canDismissGroup ? t('TUIContact.Confirm dismiss group'): t('TUIContact.Confirm quit group')"
         :confirm-text="t('TUIContact.Submit')"

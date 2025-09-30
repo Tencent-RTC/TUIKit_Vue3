@@ -228,7 +228,7 @@ const handleNickClick = (event: MouseEvent) => {
     }
 
     &__nick {
-      color: var(--uikit-color-theme-8);
+      color: var(--text-color-secondary);
       cursor: pointer;
     }
 

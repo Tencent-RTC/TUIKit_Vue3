@@ -20,7 +20,9 @@ const chatType = computed(() => activeConversation.value?.type);
     <!-- Group Chat Setting -->
     <GroupChatSetting v-else-if="chatType === TUIChatEngine.TYPES.CONV_GROUP" />
   </div>
-  <div v-else>没渲染</div>
+  <div v-else>
+    [null active conversation]
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -30,9 +32,7 @@ const chatType = computed(() => activeConversation.value?.type);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-
   background-color: var(--bg-color-operate);
-  border-left: 1px solid var(--stroke-color-primary);
 
   @include mixins.scrollbar-hidden();
 }

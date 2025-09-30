@@ -39,6 +39,7 @@
 
     <!-- Transfer Group Owner Dialog -->
     <TUIDialog
+      appendTo="body"
       :visible="isShowTransferDialog"
       :title="t('ChatSetting.transfer_group_owner')"
       :custom-classes="['user-picker-dialog']"
@@ -62,6 +63,7 @@
 
     <!-- Dismiss Group Dialog -->
     <TUIDialog
+      appendTo="body"
       :visible="isShowDismissDialog"
       :title="t('ChatSetting.dismiss_group')"
       @close="() => isShowDismissDialog = false"
@@ -71,6 +73,7 @@
 
     <!-- Quit Group Dialog -->
     <TUIDialog
+      appendTo="body"
       :visible="isShowQuitDialog"
       :title="t('ChatSetting.quit_group')"
       @close="() => isShowQuitDialog = false"

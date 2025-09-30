@@ -76,7 +76,7 @@ function getTimeStamp({ time, language = 'en-US' }: GetTimeStampOptions) {
  */
 function getTimeStampAuto(time: number) {
   const { language } = useUIKit();
-  return getTimeStamp({ time, language });
+  return getTimeStamp({ time, language: language.value });
 }
 
 export {
