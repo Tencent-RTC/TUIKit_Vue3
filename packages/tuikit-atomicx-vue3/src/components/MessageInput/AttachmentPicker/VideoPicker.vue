@@ -1,25 +1,19 @@
 <template>
   <View>
-    <template v-if="label">
-      <button
-        :class="[styles['attachment-picker__item'], className]"
-        :style="style"
-        @click="handleButtonClick"
-      >
-        <IconVideo
-          :size="iconSize"
-          :class="styles['attachment-picker__item-icon']"
-        />
-        <div>{{ label }}</div>
-      </button>
-    </template>
-    <template v-else>
-      <IconVideo
-        :size="iconSize"
-        :class="styles['attachment-picker__item-icon']"
-        @click="handleButtonClick"
-      />
-    </template>
+    <div @click="handleButtonClick">
+      <slot>
+        <div
+          :class="cs(styles['video-picker__button'], {
+            [styles['disabled']]: props.disabled,
+          })"
+        >
+          <IconVideo
+            :size="props.iconSize"
+            :class="cs(styles['video-picker__icon'])"
+          />
+        </div>
+      </slot>
+    </div>
     <input
       ref="fileInputRef"
       type="file"
@@ -31,11 +25,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, useCssModule } from 'vue';
 import { IconVideo } from '@tencentcloud/uikit-base-component-vue3';
-import { MessageContentType, useMessageInputState } from '../../../states/MessageInputState';
+import cs from 'classnames';
 import { View } from '../../../baseComp/View';
-import styles from './AttachmentPicker.module.scss';
+import { MessageContentType, useMessageInputState } from '../../../states/MessageInputState';
 
 const PICKER_CONSTANTS = {
   ACCEPT_TYPE: '.mp4,.mov,.qt',
@@ -44,23 +38,24 @@ const PICKER_CONSTANTS = {
 interface Props {
   label?: string;
   iconSize?: number;
-  onClose?: () => void;
-  className?: string;
-  style?: Record<string, string>;
+  disabled?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   label: '',
-  className: '',
-  style: undefined,
-  onClose: () => {},
-  iconSize: 24,
+  disabled: false,
+  iconSize: 20,
 });
 
+const styles = useCssModule();
 const { sendMessage } = useMessageInputState();
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
 function handleButtonClick() {
+  if (props.disabled) {
+    return;
+  }
+
   fileInputRef.value?.click();
 }
 
@@ -73,6 +68,38 @@ function handleFileInput(e: Event) {
 
   sendMessage([{ type: MessageContentType.VIDEO, content: file }]);
   target.value = '';
-  props.onClose?.();
 }
 </script>
+
+<style lang="scss" module>
+.video-picker {
+  &__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 4px 6px;
+    transition: background-color 0.5s ease;
+    border-radius: 4px;
+
+    &:hover {
+      background-color: var(--button-color-secondary-hover);
+    }
+
+    &:active {
+      background-color: var(--button-color-secondary-active);
+    }
+
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      user-select: none;
+      pointer-events: none;
+    }
+  }
+
+  &__icon {
+    color: var(--text-color-primary);
+  }
+}
+</style>

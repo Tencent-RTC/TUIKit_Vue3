@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { LiveCoreView } from '../LiveCoreView';
+import { LiveCoreView } from '../LiveView';
 import LocalMixer from './LocalMixer/index.vue';
 </script>
 

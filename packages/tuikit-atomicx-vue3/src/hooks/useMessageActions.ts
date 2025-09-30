@@ -1,6 +1,5 @@
 import type { Component } from 'vue';
 import { computed } from 'vue';
-import ChatEngine from '@tencentcloud/chat-uikit-engine';
 import {
   IconCopy,
   IconMsgRevoke,
@@ -12,7 +11,8 @@ import {
 } from '@tencentcloud/uikit-base-component-vue3';
 import { useMessageActionState } from '../states/MessageActionState';
 import { isCallMessage } from '../utils/call';
-import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
+import { MessageType } from '../types/engine';
+import type { MessageModel } from '../types/engine';
 
 /**
  * Message action interface
@@ -43,7 +43,7 @@ const DEFAULT_ACTIONS: Record<string, MessageAction> = {
   copy: {
     key: 'copy',
     label: 'copy',
-    visible: (message: MessageModel) => message.type === ChatEngine.TYPES.MSG_TEXT,
+    visible: (message: MessageModel) => message.type === MessageType.TEXT,
     icon: IconCopy,
   },
   recall: {
