@@ -1,18 +1,27 @@
 <script lang="ts" setup>
+import {
+  IconMessageSelected,
+  IconMessage,
+  IconContacts,
+  IconContactsSelected,
+  useUIKit,
+} from '@tencentcloud/uikit-base-component-vue3';
+import {
+  useLoginState,
+  Avatar,
+} from 'tuikit-atomicx-vue3';
 
 type TabKey = 'conversation' | 'contact';
 
-const props = defineProps<{
+defineProps<{
   activeTab: TabKey;
   labels?: Partial<Record<TabKey, string>>;
 }>();
 
 const emit = defineEmits(['update:activeTab', 'change']);
 
-const resolvedLabels = {
-  conversation: props.labels?.conversation ?? '会话',
-  contact: props.labels?.contact ?? '通讯录',
-};
+const { loginUserInfo } = useLoginState();
+const { t } = useUIKit();
 
 const onClick = (tab: TabKey) => {
   emit('update:activeTab', tab);
@@ -24,28 +33,25 @@ const onClick = (tab: TabKey) => {
   <div
     class="tab-navigation"
     role="tablist"
-    aria-label="聊天视图切换"
+    :aria-label="t('chat.viewSwitch')"
   >
-    <button
-      class="tab-button"
-      :class="{ active: activeTab === 'conversation' }"
-      role="tab"
-      :aria-selected="activeTab === 'conversation'"
-      aria-label="切换到会话"
-      @click="onClick('conversation')"
-    >
-      {{ resolvedLabels.conversation }}
-    </button>
-    <button
-      class="tab-button"
-      :class="{ active: activeTab === 'contact' }"
-      role="tab"
-      :aria-selected="activeTab === 'contact'"
-      aria-label="切换到通讯录"
-      @click="onClick('contact')"
-    >
-      {{ resolvedLabels.contact }}
-    </button>
+    <Avatar
+      shape="rounded"
+      :src="loginUserInfo?.avatarUrl"
+      :alt="loginUserInfo?.userName || loginUserInfo?.userId"
+    />
+
+    <div class="tab-buttons">
+      <IconMessageSelected v-if="activeTab === 'conversation'" />
+      <IconMessage v-else @click="onClick('conversation')" />
+      <IconContactsSelected v-if="activeTab === 'contact'" size="24px" />
+      <IconContacts
+        v-else
+        size="24px"
+        style="color: #999;"
+        @click="onClick('contact')"
+      />
+    </div>
   </div>
 </template>
 
@@ -55,40 +61,17 @@ const onClick = (tab: TabKey) => {
 .tab-navigation {
   display: flex;
   flex-direction: column;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(0, 0, 0, 0.02);
-
-  @include mixins.mobile-only {
-    flex-direction: row;
-  }
+  align-items: center;
+  width: 60px;
+  height: 100%;
+  background: #F8FAFB;
+  padding: 40px 0;
+  gap: 24px;
 }
 
-.tab-button {
-  padding: 12px 16px;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-color-primary);
-  transition: all 0.2s ease;
-  outline: none;
-  background-color: var(--list-color-default);
-
-  @include mixins.mobile-only {
-    flex: 1;
-    text-align: center;
-  }
-}
-
-.tab-button:hover {
-  background-color: var(--list-color-hover);
-  color: var(--text-color-secondary);
-}
-
-.tab-button.active {
-  background: var(--list-color-focused);
-  color: var(--text-color-link);
+.tab-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 </style>

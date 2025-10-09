@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
-import { getPlatform } from '@tencentcloud/universal-api';
+import { h, ref } from 'vue';
+import { TUICallKit } from '@tencentcloud/call-uikit-vue';
 import {
   ConversationList,
   Chat,
@@ -8,25 +8,32 @@ import {
   MessageInput,
   ContactList,
   ContactInfo,
-  useConversationListState,
   ChatSetting,
+  Search,
+  VariantType,
+  EmojiPicker,
+  ImagePicker,
+  FilePicker,
+  VideoPicker,
+  AudioCallPicker,
+  VideoCallPicker,
 } from '@tencentcloud/chat-uikit-vue3';
+import { TUIDrawer, IconHistory3, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { ChatHeader } from './components/ChatHeader';
-import { Drawer } from './components/Drawer';
+import { PlaceholderEmpty } from './components/PlaceholderEmpty';
 import { TabList } from './components/TabList';
-import { useCoreStore } from './stores';
+import { useComponentOpenStore } from './stores';
 
 const activeContact = ref();
-const enableFirstScreen = ref(true);
-const isH5 = ref(getPlatform() === 'h5');
 const activeTab = ref<'conversation' | 'contact'>('conversation');
+const { t } = useUIKit();
 
-const { activeConversation } = useConversationListState();
-const { isChatSettingOpen, setIsSettingOpen } = useCoreStore();
-
-watch(activeConversation, (conversation) => {
-  enableFirstScreen.value = (isH5.value && !conversation) || !isH5.value;
-});
+const {
+  isChatSettingOpen,
+  setIsChatSettingOpen,
+  isSearchOpen,
+  setIsSearchOpen,
+} = useComponentOpenStore();
 
 const handleTabChange = (tab: 'conversation' | 'contact') => {
   activeTab.value = tab;
@@ -34,21 +41,14 @@ const handleTabChange = (tab: 'conversation' | 'contact') => {
 
 const enterChat = () => {
   activeTab.value = 'conversation';
-  enableFirstScreen.value = false;
-};
-
-const handleContactItem = () => {
-  if (isH5.value) {
-    enableFirstScreen.value = false;
-  }
 };
 
 </script>
 
 <template>
   <div class="all-chat-container">
+    <TUICallKit class="floating-window" />
     <div
-      v-if="enableFirstScreen"
       :class="{
         'first-screen': true,
       }"
@@ -62,28 +62,63 @@ const handleContactItem = () => {
           v-if="activeTab === 'conversation'"
           enable-create
         />
-        <ContactList v-else @contact-item-click="handleContactItem" />
+        <ContactList v-else />
       </div>
     </div>
-    <Chat v-if="activeTab === 'conversation'" class="inner-chat-container">
+    <Chat
+      v-if="activeTab === 'conversation'"
+      :PlaceholderEmpty="() => h(
+        PlaceholderEmpty,
+        { type: 'chat' })
+      "
+      style="flex: 1;"
+    >
       <ChatHeader />
       <MessageList />
-      <MessageInput class="message-input" />
+      <MessageInput class="message-input">
+        <template #headerToolbar>
+          <div class="header-toolbar">
+            <div class="header-toolbar-left">
+              <EmojiPicker />
+              <ImagePicker />
+              <FilePicker />
+              <VideoPicker />
+              <AudioCallPicker />
+              <VideoCallPicker />
+            </div>
+            <div class="header-toolbar-right">
+              <IconHistory3 size="20" @click="setIsSearchOpen(true)" />
+            </div>
+          </div>
+        </template>
+      </MessageInput>
     </Chat>
-    <div v-else class="inner-chat-container">
-      <ContactInfo
-        :active-contact-item="activeContact"
-        @send-message="enterChat"
-        @enter-group="enterChat"
-        @close="enableFirstScreen = true"
-      />
-    </div>
-    <Drawer
-      :open="isChatSettingOpen"
-      @close="setIsSettingOpen(false)"
+    <ContactInfo
+      v-else
+      :active-contact-item="activeContact"
+      :PlaceholderEmpty="() => h(
+        PlaceholderEmpty,
+        { type: 'contact' })
+      "
+      @send-message="enterChat"
+      @enter-group="enterChat"
+    />
+    <TUIDrawer
+      :model-value="isChatSettingOpen"
+      :title="t('chat.Setting')"
+      @close="setIsChatSettingOpen(false)"
     >
       <ChatSetting style="flex: 1;" />
-    </Drawer>
+    </TUIDrawer>
+    <TUIDrawer
+      :model-value="isSearchOpen"
+      :title="t('chat.Search')"
+      @close="setIsSearchOpen(false)"
+    >
+      <Search
+        :variant="VariantType.EMBEDDED"
+      />
+    </TUIDrawer>
   </div>
 </template>
 
@@ -93,35 +128,30 @@ const handleContactItem = () => {
 .all-chat-container {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   overflow: hidden;
   background-color: var(--bg-color-operate);
   color: var(--text-color-primary);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08), inset 0 -1px 0 rgba(255,255,255,0.05);
+  border-radius: 24px;
 
   @include mixins.tablet {
-    margin: 10vh 20vw;
-    flex-direction: row;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.08), inset 0 -1px 0 rgba(255,255,255,0.05);
-    border-radius: 16px;
+    margin: 10vh 10vw;
   }
-}
 
-.inner-chat-container {
-  flex: 1;
-  min-height: 0;
+  @include mixins.xl-desktop {
+    flex-direction: row;
+    margin: 10vh 20vw;
+  }
 }
 
 .first-screen {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   height: 100%;
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
-
-  @include mixins.tablet {
-    max-width: 300px;
-    flex-direction: row;
-  }
+  border-right: 1px solid #F4F5F9;
+  max-width: 300px;
 
   @include mixins.desktop {
     max-width: 350px;
@@ -135,6 +165,31 @@ const handleContactItem = () => {
 }
 
 .message-input {
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid #F4F5F9;
+}
+
+.floating-window {
+  position: fixed;
+  width: 800px;
+  height: 600px;
+  top: 50%;
+  left: 50%;
+  z-index: 999;
+  transform: translate(-50%, -50%);
+}
+
+.header-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.header-toolbar-right {
+  padding: 0 10px;
 }
 </style>
