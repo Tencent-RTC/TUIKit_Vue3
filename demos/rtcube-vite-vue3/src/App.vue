@@ -1,9 +1,21 @@
 <script setup lang="ts">
-import { UIKitProvider } from '@tencentcloud/chat-uikit-vue3';
+import { onBeforeMount } from 'vue';
+import { UIKitProvider, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+
+const { language, setLanguage } = useUIKit();
+
+onBeforeMount(() => {
+  setLanguage('zh-CN');
+});
+
 </script>
 
 <template>
-  <UIKitProvider language="zh-CN" theme="light">
+  <UIKitProvider
+    :key="language"
+    :language="language"
+    theme="light"
+  >
     <router-view />
   </UIKitProvider>
 </template>

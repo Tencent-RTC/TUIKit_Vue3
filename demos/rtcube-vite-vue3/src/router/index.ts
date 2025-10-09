@@ -12,10 +12,42 @@ const routes = [
     component: () => import('../pages/Login/Login.vue'),
   },
   {
-    path: '/stages/:sceneId?',
+    path: '/stages',
     name: 'Stages',
-    props: true,
+    redirect: { name: 'chat' },
     component: () => import('../pages/Stages/Stages.vue'),
+    children: [
+      {
+        path: '/stages/chat',
+        name: 'chat',
+        component: () => import('../scenes/Chat/Chat.vue'),
+      },
+      {
+        path: '/stages/call',
+        name: 'call',
+        component: () => import('../scenes/Call/Call.vue'),
+      },
+      {
+        path: '/stages/live',
+        name: 'live',
+        component: () => import('../scenes/Live/Live.vue'),
+      },
+      {
+        path: '/stages/live-list',
+        name: 'live-list',
+        component: () => import('../scenes/Live/LiveList'),
+      },
+      {
+        path: '/stages/live-player',
+        name: 'live-player',
+        component: () => import('../scenes/Live/LivePlayer'),
+      },
+      {
+        path: '/stages/live-pusher',
+        name: 'live-pusher',
+        component: () => import('../scenes/Live/LivePusher'),
+      },
+    ]
   },
 ];
 

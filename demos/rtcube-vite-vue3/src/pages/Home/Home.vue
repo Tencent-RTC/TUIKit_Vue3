@@ -1,25 +1,19 @@
 <script setup lang="ts">
 import { useLoginState } from '@tencentcloud/chat-uikit-vue3';
+import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useRouter } from 'vue-router';
+import { getEnabledScenes } from '@/config';
 
 const { loginUserInfo } = useLoginState();
+const { t } = useUIKit();
 
 const router = useRouter();
 
-type Product = {
-  key: string;
-  title: string;
-  description: string;
-  accent: string;
-};
-
-const products: Product[] = [
-  { key: 'chat', title: 'Chat', description: '企业级聊天 UI 组件与引擎，一键集成 IM 体验', accent: '#4F8EF7' },
-];
+const products = getEnabledScenes();
 
 function goStages(sceneId: string) {
   if (loginUserInfo.value?.userId) {
-    router.push({ name: 'Stages', params: { sceneId } });
+    router.push({ name: sceneId });
   } else {
     router.push({ name: 'Login', params: { sceneId } });
   }
@@ -30,22 +24,14 @@ function goStages(sceneId: string) {
   <div class="home">
     <header class="hero">
       <div class="brand">
-        RTCube
+        {{ t('home.brand') }}
       </div>
       <h1 class="headline">
-        下一代实时互动体验
+        {{ t('home.headline') }}
       </h1>
       <p class="sub">
-        用 RTCube 组件 搭建高端 Demo · 开箱即用
+        {{ t('home.subtitle') }}
       </p>
-      <div class="cta">
-        <!-- <button class="primary" @click="goStages('chat')">
-          立即体验 Chat
-        </button> -->
-        <!-- <button class="ghost" @click="goStages('live')">
-          看看 Live
-        </button> -->
-      </div>
     </header>
 
     <section class="grid">
@@ -59,7 +45,7 @@ function goStages(sceneId: string) {
         <h3>{{ item.title }}</h3>
         <p>{{ item.description }}</p>
         <button class="enter" @click="goStages(item.key)">
-          进入体验
+          {{ t('home.enterExperience') }}
         </button>
       </article>
     </section>
@@ -99,7 +85,7 @@ function goStages(sceneId: string) {
   color: #e8ebff; cursor: pointer;
 }
 .grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 20px;
   padding: 24px; max-width: 1100px; margin: 0 auto 60px;
 }
 .card {
