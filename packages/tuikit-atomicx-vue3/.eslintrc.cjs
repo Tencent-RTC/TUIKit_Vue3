@@ -28,6 +28,7 @@ module.exports = {
     ],
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': 'error',
+    '@typescript-eslint/no-duplicate-enum-values': 0,
   },
   ignorePatterns: ['node_modules', 'public', 'dist', '*.d.ts', '!.*.cjs', '!.storybook', '*.cjs'],
 };

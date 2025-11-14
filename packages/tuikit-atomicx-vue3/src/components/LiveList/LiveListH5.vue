@@ -55,13 +55,13 @@
 <script lang="ts" setup>
 import { ref, watch, computed, defineEmits, onMounted, onUnmounted } from 'vue';
 import { useUIKit, IconLiveCoverHeader, IconNoLiveRoom } from '@tencentcloud/uikit-base-component-vue3';
-import { useLiveState } from '../../states/LiveState';
+import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
 import { Avatar } from '../Avatar';
 import type { LiveInfo } from '../../types';
 import PullToRefresh from './pullToRefresh.vue';
 
-const { liveList, currentCursor, fetchLiveList } = useLiveState();
+const { liveList, liveListCursor, fetchLiveList } = useLiveListState();
 const { loginUserInfo } = useLoginState();
 const { t } = useUIKit();
 const showLiveList = ref<LiveInfo[]>([]);
@@ -70,7 +70,7 @@ const DEFAULT_COVER = 'https://liteav-test-1252463788.cos.ap-guangzhou.myqcloud.
 const scrollContainerRef = ref<HTMLElement | null>(null);
 
 const isLoadingMore = ref(false);
-const hasMoreLive = computed(() => currentCursor.value !== '');
+const hasMoreLive = computed(() => liveListCursor.value !== '');
 
 const liveItemWidth = ref('168px');
 const liveItemHeight = ref('262px');
@@ -84,7 +84,7 @@ watch(
   async user => {
     if (user && user.userId) {
       isLoadingMore.value = true;
-      currentCursor.value = '';
+      liveListCursor.value = '';
       liveList.value.length = 0;
       await fetchLiveList({});
       showLiveList.value = liveList.value.slice();
@@ -109,7 +109,7 @@ watch(scrollContainerRef, () => {
 async function handleRefresh(completeRefresh: (success?: boolean) => void) {
   try {
     isLoadingMore.value = true;
-    currentCursor.value = '';
+    liveListCursor.value = '';
     liveList.value.length = 0;
     await fetchLiveList({});
     showLiveList.value = liveList.value.slice();
@@ -131,7 +131,7 @@ async function fetchMoreLives() {
   }
   try {
     isLoadingMore.value = true;
-    await fetchLiveList({ cursor: currentCursor.value });
+    await fetchLiveList({ cursor: liveListCursor.value });
     showLiveList.value = liveList.value.slice();
   } finally {
     isLoadingMore.value = false;

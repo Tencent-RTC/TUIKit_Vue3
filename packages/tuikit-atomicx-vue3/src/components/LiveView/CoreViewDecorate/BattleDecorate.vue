@@ -11,7 +11,7 @@
     <div :class="['battle-time-container', { 'more-top': showPkBar }]">
       <div class="battle-time-background"></div>
       <div class="battle-time-content">
-        <span class="battle-status">{{ t('In battle') }}</span>
+        <IconTime size="16" />
         <span class="battle-time">{{ time }}</span>
       </div>
     </div>
@@ -28,13 +28,12 @@
 </template>
 
 <script setup lang="ts">
-import { IconPK, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { TUILiveBattleManagerEvents, TUIBattleStoppedReason } from '@tencentcloud/tuiroom-engine-js';
-import { ref, computed, watch, Ref, onMounted, onUnmounted, nextTick } from 'vue';
-import { CoHostLayoutTemplate } from '../../../types';
+import { IconPK, IconTime, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { ref, computed, watch, Ref, onMounted, onUnmounted } from 'vue';
+import { BattleEndedReason, BattleEvent, BattleInfo, CoHostLayoutTemplate } from '../../../types';
 import { useBattleState } from '../../../states/BattleState';
 import { useLiveSeatState } from '../../../states/LiveSeatState';
-import { useLiveState } from '../../../states/LiveState';
+import { useLiveListState } from '../../../states/LiveListState';
 import { convertSecondsToHMS } from '../../../utils/utils';
 import defeatResult from '../assets/img/defeat.png';
 import victoryResult from '../assets/img/victory.png';
@@ -44,7 +43,7 @@ import blueBkgSvg from '../assets/svg/blueBkg.svg';
 import vSvg from '../assets/svg/v.svg';
 import sSvg from '../assets/svg/s.svg';
 
-const { currentLive } = useLiveState();
+const { currentLive } = useLiveListState();
 const { currentBattleInfo, battleUsers, battleScore, subscribeEvent, unsubscribeEvent} = useBattleState();
 const { seatList } = useLiveSeatState();
 const { t } = useUIKit();
@@ -133,7 +132,7 @@ function convertToTwoDigits(value: number) {
 const time = computed(() => {
   const { minutes, seconds } = convertSecondsToHMS(leftBattleTime.value);
   if (minutes <= 0 && seconds <= 0) {
-    return '00:00';
+    return t('Battle ended');
   }
   return `${convertToTwoDigits(minutes)}:${convertToTwoDigits(seconds)}`;
 });
@@ -141,7 +140,7 @@ const time = computed(() => {
 const showBattleResult = ref(false);
 const battleResultImg = ref(drawResult);
 
-function handleBattleEnded(eventInfo: { battleId: string; reason: TUIBattleStoppedReason }) {
+function handleBattleEnded(eventInfo: { battleInfo: BattleInfo; reason: BattleEndedReason }) {
   stopTimer();
   showBattleResult.value = true;
   const maxScore = Math.max(...[...battleScore.value.values()]);
@@ -163,11 +162,11 @@ function handleBattleEnded(eventInfo: { battleId: string; reason: TUIBattleStopp
 }
 
 onMounted(() => {
-  subscribeEvent(TUILiveBattleManagerEvents.onBattleEnded, handleBattleEnded);
+  subscribeEvent(BattleEvent.onBattleEnded, handleBattleEnded);
 });
 
 onUnmounted(() => {
-  unsubscribeEvent(TUILiveBattleManagerEvents.onBattleEnded, handleBattleEnded);
+  unsubscribeEvent(BattleEvent.onBattleEnded, handleBattleEnded);
 });
 </script>
 
@@ -252,10 +251,6 @@ onUnmounted(() => {
     line-height: 20px;
     gap: 4px;
     transform: translateY(-2px);
-
-    .battle-time {
-      width: 30px;
-    }
   }
 }
 

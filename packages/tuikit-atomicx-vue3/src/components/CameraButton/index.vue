@@ -16,7 +16,6 @@ import { DeviceStatus, DeviceError } from '../../types';
 
 const {
   cameraStatus,
-  hasPublishVideoPermission,
   cameraLastError,
   closeLocalCamera,
   openLocalCamera,

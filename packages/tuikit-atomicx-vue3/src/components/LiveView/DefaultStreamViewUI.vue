@@ -17,7 +17,7 @@
       </div>
     </template>
     <div v-if="!userInfo.userId" class="empty-position">
-      <span class="text" :title="t('Waiting for connection')" v-if="localCoGuestStatus === CoGuestStatus.Connected">{{ t('Waiting for connection') }}</span>
+      <span class="text" :title="t('Waiting for connection')" v-if="connected.some(item => item.userId === loginUserInfo?.userId)">{{ t('Waiting for connection') }}</span>
       <span class="text" :title="t('Waiting for connection')" v-else>{{ t('Waiting for connection') }}</span>
     </div>
   </div>
@@ -25,11 +25,12 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick, onUnmounted } from 'vue';
-import { DeviceStatus, SeatUserInfo, CoGuestStatus } from '../../types';
+import { DeviceStatus, SeatUserInfo } from '../../types';
 import { useCoGuestState } from '../../states/CoGuestState';
 import { Avatar } from '../Avatar';
 import AudioIcon from '../../baseComp/AudioIcon.vue';
 import { useLiveSeatState } from '../../states/LiveSeatState';
+import { useLoginState } from '../../states/LoginState';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 
 interface Props {
@@ -48,7 +49,8 @@ const props = defineProps<Props>();
 const { t } = useUIKit();
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 
-const { localCoGuestStatus } = useCoGuestState();
+const { loginUserInfo } = useLoginState();
+const { connected } = useCoGuestState();
 const { speakingUsers, seatList } = useLiveSeatState();
 
 const seatListWithUser = computed(() => {

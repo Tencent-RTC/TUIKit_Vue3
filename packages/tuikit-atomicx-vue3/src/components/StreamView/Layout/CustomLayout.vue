@@ -28,11 +28,11 @@ import useUserState from '../../../states/UserState/index';
 import { TUIVideoStreamType } from '@tencentcloud/tuiroom-engine-js';
 import { useRoomState } from '../../../states/RoomState';
 import useLoginState from '../../../states/LoginState';
-import useLiveState from '../../../states/LiveState';
+import { useLiveListState } from '../../../states/LiveListState';
 
 const { userList, localUser, userListOnSeat } = useUserState();
 const { currentRoom } = useRoomState();
-const { currentLive } = useLiveState();
+const { currentLive } = useLiveListState();
 const { loginUserInfo } = useLoginState();
 
 const emits = defineEmits(['stream-view-dblclick']);

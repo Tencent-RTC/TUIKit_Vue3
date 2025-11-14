@@ -22,12 +22,12 @@
         class="applications-content"
       >
         <div
-          v-if="receivedCoGuestUserList.length > 0"
+          v-if="applicants.length > 0"
           class="user-list-container"
         >
           <div class="user-list">
             <div
-              v-for="user in receivedCoGuestUserList"
+              v-for="user in applicants"
               :key="user.userId"
               class="user-item"
             >
@@ -73,13 +73,13 @@
           <div class="user-list-title">
             <span class="user-list-title-text">{{ t('Current seat') }}</span>
             <span class="user-list-title-count">
-              {{ `(${userListInCoGuest.length})` }}
-              <!-- {{ `(${userListInCoGuest.length}/${ seatList.length})` }} -->
+              {{ `(${connected.length})` }}
+              <!-- {{ `(${connected.length}/${ seatList.length})` }} -->
             </span>
           </div>
           <div class="user-list">
             <div
-              v-for="user in userListInCoGuest"
+              v-for="user in connected"
               :key="user.userId"
               class="user-item"
             >
@@ -112,83 +112,12 @@
             </div>
           </div>
           <div
-            v-if="userListInCoGuest.length === 0"
+            v-if="connected.length === 0"
             class="empty-state"
           >
             <span>{{ t('Seat is empty') }}</span>
           </div>
         </div>
-        <!-- <div
-          v-if="sentCoGuestUserList.length > 0"
-          class="user-list-container"
-        >
-          <div class="user-list-title">
-            <span class="user-list-title-text">{{ t('Inviting') }}</span>
-          </div>
-          <div class="user-list">
-            <div
-              v-for="user in sentCoGuestUserList"
-              :key="user.userId"
-              class="user-item"
-            >
-              <div class="user-item-left">
-                <Avatar :src="user.avatarUrl" :size="40" />
-              </div>
-              <div class="user-item-right">
-                <div class="user-info">
-                  <span class="user-name">{{ user.userName || user.userId }}</span>
-                </div>
-                <div class="user-actions">
-                  <TUIButton
-                    color="gray"
-                    @click="cancelCoGuestRequest({ userId: user.userId })"
-                  >
-                    {{
-                      t('Cancel')
-                    }}
-                  </TUIButton>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="user-list-container">
-          <div class="user-list-title">
-            <span class="user-list-title-text">{{ t('Invite more') }}</span>
-          </div>
-          <div class="user-list">
-            <div
-              v-for="user in availableCoGuestUserList"
-              :key="user.userId"
-              class="user-item"
-            >
-              <div class="user-item-left">
-                <Avatar :src="user.avatarUrl" :size="40" />
-              </div>
-              <div class="user-item-right">
-                <div class="user-info">
-                  <span class="user-name">{{ user.userName || user.userId }}</span>
-                </div>
-                <div class="user-actions">
-                  <TUIButton
-                    color="gray"
-                    @click="sendCoGuestRequest({ userId: user.userId })"
-                  >
-                    {{
-                      t('Invite')
-                    }}
-                  </TUIButton>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div
-            v-if="availableCoGuestUserList.length === 0"
-            class="empty-state"
-          >
-            <span>{{ t('No invited users yet') }}</span>
-          </div>
-        </div> -->
       </div>
     </div>
   </div>
@@ -199,32 +128,28 @@ import { ref } from 'vue';
 import { TUIButton, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useCoGuestState } from '../../states/CoGuestState';
 import { useLoginState } from '../../states/LoginState';
-import { useSeatStore } from '../../states/SeatStore';
+import { useLiveSeatState } from '../../states/LiveSeatState';
 import { Avatar } from '../Avatar';
 import { ERROR_MESSAGE } from './constants';
 
 const { t } = useUIKit();
 
 const { loginUserInfo } = useLoginState();
-const { seatList } = useSeatStore();
 
 const {
-  receivedCoGuestUserList,
-  availableCoGuestUserList,
-  sentCoGuestUserList,
-  userListInCoGuest,
-  sendCoGuestRequest,
-  acceptCoGuestRequest,
-  rejectCoGuestRequest,
-  cancelCoGuestRequest,
-  disconnect,
+  connected,
+  applicants,
+  acceptApplication,
+  rejectApplication,
 } = useCoGuestState();
+
+const { kickUserOutOfSeat } = useLiveSeatState();
 
 const activeTab = ref('applications');
 
 const handleAcceptCoGuestRequest = async (userId: string) => {
   try {
-    await acceptCoGuestRequest({ userId });
+    await acceptApplication({ userId });
   } catch (error: any) {
     const message = t(ERROR_MESSAGE[error.code as keyof typeof ERROR_MESSAGE] || 'Accept co-guest request failed');
     TUIToast.error({ message });
@@ -233,7 +158,7 @@ const handleAcceptCoGuestRequest = async (userId: string) => {
 
 const handleRejectCoGuestRequest = async (userId: string) => {
   try {
-    await rejectCoGuestRequest({ userId });
+    await rejectApplication({ userId });
   } catch (error) {
     console.error('[CoGuestPanel] handleRejectCoGuestRequest error', error);
     TUIToast.error({
@@ -244,7 +169,7 @@ const handleRejectCoGuestRequest = async (userId: string) => {
 
 const handleDisconnect = async (userId: string) => {
   try {
-    await disconnect(userId);
+    await kickUserOutOfSeat({ userId });
   } catch (error) {
     console.error('[CoGuestPanel] handleDisconnect error', error);
     TUIToast.error({

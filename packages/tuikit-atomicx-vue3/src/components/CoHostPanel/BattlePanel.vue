@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import { TUIConnectionCode, TUILiveBattleManagerEvents } from '@tencentcloud/tuiroom-engine-js';
+import { TUIConnectionCode } from '@tencentcloud/tuiroom-engine-js';
 import { TUIButton, TUIToast, useUIKit, TOAST_TYPE, TUIDialog } from '@tencentcloud/uikit-base-component-vue3';
 import { useBattleState } from '../../states/BattleState';
 import { useCoHostState } from '../../states/CoHostState';
@@ -78,7 +78,6 @@ import { CoHostLayoutTemplate, CoHostEvent } from '../../types';
 import UserList from './UserList.vue';
 import RecommendHostList from './RecommendHostList.vue';
 import type { SeatUserInfo } from '../../types';
-import type { TUIBattleUser } from '@tencentcloud/tuiroom-engine-js';
 
 const { t } = useUIKit();
 const props = defineProps<{
@@ -98,8 +97,6 @@ const {
   battleUsers,
   requestBattle,
   exitBattle,
-  subscribeEvent: subscribeBattleEvent,
-  unsubscribeEvent: unsubscribeBattleEvent,
 } = useBattleState();
 
 const showExitCoHostDialog = ref(false);

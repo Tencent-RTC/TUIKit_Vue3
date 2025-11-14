@@ -1,67 +1,49 @@
 <script lang="ts" setup>
 import { toRefs, computed, withDefaults, defineProps } from 'vue';
-import TencentCloudChat from '@tencentcloud/chat-uikit-engine';
 import cs from 'classnames';
+import { BarrageType } from '../../../../states/BarrageState';
+import { useLoginState } from '../../../../states/LoginState';
 import { CustomMessage } from '../CustomMessage';
-import { FaceMessage } from '../FaceMessage';
-import { GroupTipMessage } from '../GroupTipMessage';
-import { ImageMessage } from '../ImageMessage';
-import { MergerMessage } from '../MergerMessage';
-import { RecalledMessage } from '../RecalledMessage';
 import { TextMessage } from '../TextMessage';
 import { MessageBubble } from './MessageBubble';
-import { MessageMeta } from './MessageMeta';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { Barrage } from '../../../../states/BarrageState';
 
 interface IMessageLayoutProps {
-  message: IMessageModel;
+  message: Barrage;
   isLastInChunk?: boolean;
-  // messageActionList?: IMessageAction[];
   className?: string;
   style?: Record<string, any>;
 }
 
 const props = withDefaults(defineProps<IMessageLayoutProps>(), {
-  message: () => ({}) as IMessageModel,
+  message: () => ({}) as Barrage,
   isLastInChunk: true,
-  messageActionList: () => [],
   className: '',
   style: () => ({}),
 });
 
+const { loginUserInfo } = useLoginState();
 const {
   message,
   isLastInChunk,
-  // messageActionList,
   className,
   style,
 } = toRefs(props);
 
 const MessageComponentsFactory = {
-  [TencentCloudChat.TYPES.MSG_TEXT]: TextMessage,
-  [TencentCloudChat.TYPES.MSG_IMAGE]: ImageMessage,
-  [TencentCloudChat.TYPES.MSG_FACE]: FaceMessage,
-  [TencentCloudChat.TYPES.MSG_MERGER]: MergerMessage,
-  [TencentCloudChat.TYPES.MSG_CUSTOM]: CustomMessage,
-  [TencentCloudChat.TYPES.MSG_GRP_TIP]: GroupTipMessage,
+  [BarrageType.text]: TextMessage,
+  [BarrageType.custom]: CustomMessage,
 };
 
-const MessageComponent = computed(() => MessageComponentsFactory[message.value.type as any]);
+const MessageComponent = computed(() => MessageComponentsFactory[message.value.messageType]);
 
-const isMessageOwner = computed(() => message.value.flow === 'out');
+const isMessageOwner = computed(() => message.value.sender.userId === loginUserInfo.value?.userId);
 </script>
 
 <template>
-  <RecalledMessage v-if="message.isRevoked" class="message-recalled" :message="message" />
-  <GroupTipMessage
-    v-else-if="
-      message.type === TencentCloudChat.TYPES.MSG_GRP_TIP || message.type === TencentCloudChat.TYPES.MSG_CUSTOM
-    "
-    :message="message"
-  />
   <div
-    v-else-if="MessageComponent"
-    :data-message-id="message.ID"
+    v-if="MessageComponent"
+    :data-message-id="message.sequence"
     :class="
       cs(
         'message-layout',
@@ -83,10 +65,10 @@ const isMessageOwner = computed(() => message.value.flow === 'out');
         "
       >
         <div
-          v-if="isLastInChunk && message.type !== TencentCloudChat.TYPES.MSG_TEXT"
+          v-if="isLastInChunk && message.messageType !== BarrageType.text"
           :class="cs('message-layout__nick')"
         >
-          {{ message.nick + ': ' }}
+          {{ message.sender.nameCard || message.sender.userName || message.sender.userId + ': ' }}
         </div>
         <MessageBubble
           :class="
@@ -97,20 +79,13 @@ const isMessageOwner = computed(() => message.value.flow === 'out');
           :message="message"
           :is-last-in-chunk="isLastInChunk"
         >
-          <component :is="MessageComponent" :message="message" :is-last-in-chunk="isLastInChunk" />
+          <component
+            :is="MessageComponent"
+            :message="message"
+            :is-last-in-chunk="isLastInChunk"
+          />
         </MessageBubble>
       </div>
-      <MessageMeta
-        v-if="isLastInChunk"
-        :class="
-          cs('message-layout__meta', {
-            'message-layout__meta--self': isMessageOwner,
-          })
-        "
-        :status="message.status"
-        :is-show-read-status="true"
-        :timestamp="message.time"
-      />
     </div>
   </div>
 </template>

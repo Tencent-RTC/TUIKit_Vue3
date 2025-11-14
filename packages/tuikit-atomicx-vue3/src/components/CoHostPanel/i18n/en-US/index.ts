@@ -75,4 +75,5 @@ export const resource = {
   'Battle duration': 'Battle duration',
   'Number minutes': '{{number}} minutes',
   'Connection Layout': 'Connection Layout',
+  'there is no one valid room for battle': 'There is no one valid room for battle',
 };

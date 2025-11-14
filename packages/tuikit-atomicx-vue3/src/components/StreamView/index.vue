@@ -1,40 +1,54 @@
 <template>
-  <FloatLayout v-if="mode === 'float'" :config="config" :filter-fn="filterFn" :sort-fn="sortFn">
+  <FloatLayout
+    v-if="mode === 'float'"
+    :config="config"
+    :filter-fn="filterFn"
+    :sort-fn="sortFn"
+  >
     <template #streamViewUI="slotProps">
       <slot name="streamViewUI" v-bind="slotProps" />
     </template>
   </FloatLayout>
-  <GridLayout v-if="mode === 'grid'" :config="config" :filter-fn="filterFn" :sort-fn="sortFn">
+  <GridLayout
+    v-if="mode === 'grid'"
+    :config="config"
+    :filter-fn="filterFn"
+    :sort-fn="sortFn"
+  >
     <template #streamViewUI="slotProps">
       <slot name="streamViewUI" v-bind="slotProps" />
     </template>
   </GridLayout>
-  <CustomLayout v-if="mode === 'custom'" :config="config" :filter-fn="filterFn" :sort-fn="sortFn">
+  <CustomLayout
+    v-if="mode === 'custom'"
+    :config="config"
+    :filter-fn="filterFn"
+    :sort-fn="sortFn"
+  >
     <template #streamViewUI="slotProps">
       <slot name="streamViewUI" v-bind="slotProps" />
     </template>
   </CustomLayout>
-  <MeetingLayout v-if="mode === 'meeting'" :config="config" :filter-fn="filterFn" :sort-fn="sortFn">
+  <MeetingLayout
+    v-if="mode === 'meeting'"
+    :config="config"
+    :filter-fn="filterFn"
+    :sort-fn="sortFn"
+  >
     <template #streamViewUI="slotProps">
       <slot name="streamViewUI" v-bind="slotProps" />
     </template>
   </MeetingLayout>
-  <MixLayout v-if="mixUserInfo">
-    <template #streamViewUI="slotProps">
-      <slot name="streamViewUI" v-bind="slotProps" />
-    </template>
-  </MixLayout>
 </template>
 
 <script lang="ts" setup>
 import { defineProps, computed } from 'vue';
-import { UserInfo } from '../../types';
+import { innerUserStore } from '../../states/UserState/store';
+import CustomLayout from './Layout/CustomLayout.vue';
 import FloatLayout from './Layout/FloatLayout.vue';
 import GridLayout from './Layout/GridLayout.vue';
-import CustomLayout from './Layout/CustomLayout.vue';
-import MixLayout from './Layout/MixLayout.vue';
 import MeetingLayout from './Layout/MeetingLayout.vue';
-import { innerUserStore } from '../../states/UserState/store';
+import type { UserInfo } from '../../types';
 
 const mixUserInfo = computed(() => innerUserStore.mixUserInfo);
 
@@ -48,7 +62,7 @@ withDefaults(defineProps<Props>(), {
   mode: 'grid',
   config: '',
   filterFn: () => true,
-  sortFn: () => 0
+  sortFn: () => 0,
 });
 </script>
 

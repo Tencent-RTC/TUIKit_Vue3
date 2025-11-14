@@ -2,34 +2,21 @@
 <script lang="ts" setup>
 import { ref, onMounted, onUnmounted, nextTick, watch, provide, useSlots, withDefaults, defineProps } from 'vue';
 import type { Component, CSSProperties } from 'vue';
-import { ObserverView } from '../../baseComp/ObserverView';
-import { throttle } from '../../utils/lodash';
-import { useScroll } from '../../hooks/useScroll';
-import { useBarrageListState } from '../../states/BarrageListState';
-import { Message as DefaultMessage } from './Message';
-import { MessageForward } from './MessageForward';
-import { MessageListContextSymbol } from './MessageListContext';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import UserActionMenu from './ClickAction/UserActionMenu.vue';
+import { useScroll } from '../../hooks/useScroll';
+import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
-import { useLiveState } from '../../states/LiveState';
+import { throttle } from '../../utils/lodash';
+import { useBarrageListState } from './BarrageListState';
+import UserActionMenu from './ClickAction/UserActionMenu.vue';
+import { Message as DefaultMessage } from './Message';
+import { MessageListContextSymbol } from './MessageListContext';
+import type { Barrage } from '../../states/BarrageState';
 
 const { t } = useUIKit();
 
 interface IMessageListProps {
-  /** message actions e.g. recall, delete, etc. */
-  // messageActionList?: IMessageAction[] | undefined;
-  /** max time between message group */
-  messageAggregationTime?: number | undefined;
-  /** custom filter function */
-  filter?: ((message: IMessageModel) => boolean) | undefined;
-  /** custom message component */
   Message?: Component | undefined;
-  /** custom message timeline component */
-  MessageTimeDivider?: Component | undefined;
-  /** custom local notification message component */
-  LocalNoticeMessage?: Component | undefined;
   containerStyle?: CSSProperties | undefined;
   itemStyle?: CSSProperties | undefined;
   height?: string;
@@ -37,24 +24,26 @@ interface IMessageListProps {
 }
 
 const props = withDefaults(defineProps<IMessageListProps>(), {
-  /** props */
-  filter: undefined,
-  enableReadReceipt: false,
-  messageAggregationTime: 5 * 60,
-  /** custom components */
   Message: undefined,
-  MessageTimeDivider: undefined,
-  LocalNoticeMessage: undefined,
 });
-
+const scrollContainer = ref<HTMLElement | null>(null);
 const slots = useSlots();
 const { loginUserInfo } = useLoginState();
-const { currentLive } = useLiveState();
-const currentMessage = ref<IMessageModel>({} as IMessageModel);
+const { currentLive } = useLiveListState();
+const currentMessage = ref<Barrage>();
 const showActionMenu = ref<boolean>(false);
 const actionMenuStyle = ref<CSSProperties>({});
 
 const nickClickTarget = ref<HTMLElement | null>(null);
+
+const autoScrollThreshold = 150;
+const isFinishFirstRender = ref<boolean>(false);
+const isDisableAutoScroll = ref<boolean>(false);
+const distanceToBottom = ref<number>(0);
+
+const { messageList, messageGroupTip } = useBarrageListState();
+
+const { scrollToBottom } = useScroll();
 
 // Calculate action menu position to prevent overflow beyond scrollContainer boundaries
 const calculateActionMenuPosition = (targetRect: DOMRect) => {
@@ -96,10 +85,10 @@ const calculateActionMenuPosition = (targetRect: DOMRect) => {
 
 provide(MessageListContextSymbol, {
   slots,
-  nickClick: (payload: { message: IMessageModel; event: MouseEvent }) => {
-    const { message, event } = payload;
+  nickClick: (data: { message: Barrage; event: MouseEvent }) => {
+    const { message, event } = data;
     const isOwner = loginUserInfo.value?.userId === currentLive.value?.liveOwner.userId;
-    const isMe = loginUserInfo.value?.userId === message.from;
+    const isMe = loginUserInfo.value?.userId === message.sender.userId;
     if (!isOwner || isMe) {
       return;
     }
@@ -111,25 +100,14 @@ provide(MessageListContextSymbol, {
   },
 });
 
-const autoScrollThreshold = 150;
-const isFinishFirstRender = ref<boolean>(false);
-const isDisableAutoScroll = ref<boolean>(false);
-const distanceToBottom = ref<number>(0);
-const isLoadingHistory = ref<boolean>(false);
-const scrollContainer = ref<HTMLElement | null>(null);
-
-const { messageGroupTip, messageList, loadMoreMessage, currentConversationID } = useBarrageListState();
-
-const { scrollToBottom } = useScroll();
-
 // Monitor scroll events
 const handleScroll = throttle(() => {
   if (!scrollContainer.value) {
     return;
   }
 
-  distanceToBottom.value =
-    scrollContainer.value.scrollHeight - scrollContainer.value.scrollTop - scrollContainer.value.clientHeight;
+  distanceToBottom.value
+    = scrollContainer.value.scrollHeight - scrollContainer.value.scrollTop - scrollContainer.value.clientHeight;
 
   if (distanceToBottom.value > autoScrollThreshold) {
     isDisableAutoScroll.value = true;
@@ -147,52 +125,15 @@ const initializeMessageList = async () => {
   isDisableAutoScroll.value = false;
 };
 
-// Load more history messages
-const loadMoreHistory = async () => {
-  // Skip if initial loading or already loading
-  if (!isFinishFirstRender.value || isLoadingHistory.value || !messageList.value?.length) {
-    return;
-  }
-
-  isLoadingHistory.value = true;
-
-  // Record current distance from bottom
-  if (!scrollContainer.value) {
-    isLoadingHistory.value = false;
-    return;
-  }
-
-  // Calculate distance from bottom before loading
-  const distanceFromBottom =
-    scrollContainer.value.scrollHeight - scrollContainer.value.scrollTop - scrollContainer.value.clientHeight;
-
-  // Load more messages
-  await loadMoreMessage();
-
-  // Wait for DOM update
-  await nextTick();
-
-  // Restore scroll position to maintain the same distance from bottom
-  if (scrollContainer.value) {
-    const newScrollTop = scrollContainer.value.scrollHeight - scrollContainer.value.clientHeight - distanceFromBottom;
-
-    // Ensure scroll position is within valid range
-    scrollContainer.value.scrollTop = Math.max(
-      0,
-      Math.min(scrollContainer.value.scrollHeight - scrollContainer.value.clientHeight, newScrollTop)
-    );
-  }
-
-  isLoadingHistory.value = false;
-};
-
-watch(currentConversationID, () => {
+watch(() => currentLive.value?.liveId, () => {
   initializeMessageList();
 });
 
-// Monitor message list changes
-watch(messageList, (newMessages, oldMessages) => {
-  if (oldMessages === undefined && newMessages && !isFinishFirstRender.value) {
+watch(() => messageList.value?.length, (length) => {
+  const newMessage = messageList.value[length - 1];
+  const oldMessage = messageList.value[length - 2];
+
+  if (oldMessage === undefined && newMessage && !isFinishFirstRender.value) {
     // Switch to a new conversation
     nextTick(() => {
       scrollToBottom({ behavior: 'instant' });
@@ -200,15 +141,13 @@ watch(messageList, (newMessages, oldMessages) => {
     });
   }
 
-  if (!oldMessages || !newMessages || !newMessages.length) {
+  if (!oldMessage || !newMessage || !length) {
     return;
   }
 
-  const newLastMessage = newMessages[newMessages.length - 1];
-  const oldLastMessage = oldMessages[oldMessages.length - 1];
-  if (newLastMessage?.ID !== oldLastMessage?.ID) {
-    const shouldAutoScroll =
-      newLastMessage.flow === 'out' || (!isDisableAutoScroll.value && distanceToBottom.value < autoScrollThreshold);
+  if (newMessage?.sequence !== oldMessage?.sequence) {
+    const shouldAutoScroll
+      = newMessage.sender.userId === loginUserInfo.value?.userId || (!isDisableAutoScroll.value && distanceToBottom.value < autoScrollThreshold);
     if (shouldAutoScroll) {
       scrollToBottom({ behavior: 'smooth' });
     } else {
@@ -233,41 +172,40 @@ onUnmounted(() => {
 
 <template>
   <div class="message-list" :style="{ height: props.height, ...props.style }">
-    <div id="messageScrollList" ref="scrollContainer" class="message-list-container" :style="props.containerStyle">
-      <ObserverView
-        root="#messageScrollList"
-        :rootMargin="'50px 0px 0px 0px'"
-        :threshold="0.1"
-        @on-show="loadMoreHistory"
-      >
-        <div id="loadMore"></div>
-      </ObserverView>
-
+    <div
+      id="messageScrollList"
+      ref="scrollContainer"
+      class="message-list-container"
+      :style="props.containerStyle"
+    >
       <div class="message-chunk">
-        <template v-for="message in messageList" :key="message.ID + message.isRevoked + message.status">
+        <template v-for="message in messageList" :key="message.sequence + message.timestampInSecond">
           <component
-            :style="props.itemStyle"
             :is="props.Message || DefaultMessage"
+            :style="props.itemStyle"
             :message="message"
             :is-last-in-chunk="true"
           />
         </template>
       </div>
-      <div class="empty-message" v-if="!messageList?.length">{{ t('No message yet') }}</div>
+      <div v-if="!messageList?.length" class="empty-message">
+        {{ t('No message yet') }}
+      </div>
     </div>
-    <div class="message-group-tip" v-if="messageGroupTip">
-      <div class="message-group-tip-name">{{ messageGroupTip?.nameCard || messageGroupTip?.userName || messageGroupTip?.userId }}</div>
+    <div v-if="messageGroupTip" class="message-group-tip">
+      <div class="message-group-tip-name">
+        {{ messageGroupTip?.nameCard || messageGroupTip?.userName || messageGroupTip?.userId }}
+      </div>
       <div class="message-group-tip-action">
         {{ messageGroupTip?.displayAction === 'enter' ? t('Come in') : t('Leave') }}
       </div>
     </div>
   </div>
-  <MessageForward />
   <UserActionMenu
-    v-if="showActionMenu"
-    :user-id="currentMessage.from"
-    :user-name="currentMessage.nameCard || currentMessage.nick || currentMessage.from"
-    :avatar-url="currentMessage.avatar"
+    v-if="showActionMenu && currentMessage"
+    :user-id="currentMessage?.sender.userId"
+    :user-name="currentMessage?.sender.nameCard || currentMessage?.sender.userName || currentMessage?.sender.userId"
+    :avatar-url="currentMessage?.sender.avatarUrl"
     :style="actionMenuStyle"
     :click-target="nickClickTarget"
     @close="showActionMenu = false"
@@ -286,21 +224,25 @@ onUnmounted(() => {
   overflow: hidden;
   background-color: var(--bg-color-operate);
 }
+
 .message-list-container {
   flex: 1;
   height: 100%;
   padding: 10px;
   @include scrollbar.scrollbar-thin();
 }
+
 .message-chunk--container {
   margin-top: 10px;
 }
+
 .message-chunk {
   display: flex;
   flex-direction: column;
   gap: 8px;
   height: 0;
 }
+
 .empty-message {
   text-align: center;
   color: var(--text-color-secondary);
@@ -310,12 +252,14 @@ onUnmounted(() => {
   align-items: center;
   height: 100%;
 }
+
 .message-action-mask {
   position: absolute;
   width: 100%;
   height: 100%;
   background: transparent;
 }
+
 .message-action-container {
   position: absolute;
 }
@@ -367,7 +311,7 @@ onUnmounted(() => {
   .message-group-tip-name {
     color: var(--uikit-color-theme-8);
   }
-  .message-group-tip-action {
-  }
+
+  .message-group-tip-action {}
 }
 </style>

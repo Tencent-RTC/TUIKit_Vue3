@@ -34,7 +34,7 @@ import { useUIKit, IconEmoji } from '@tencentcloud/uikit-base-component-vue3';
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui';
 import { emojiUrlMap, emojiBaseUrl } from '../../../constants/emoji';
 import { transformTextWithEmojiKeyToName } from '../../../utils/emoji';
-import { useMessageInputState, MessageContentType } from '../../../states/MessageInputState';
+import { useMessageInputState, MessageContentType } from '../MessageInputState';
 import styles from './EmojiPicker.module.scss';
 
 const props = defineProps<{

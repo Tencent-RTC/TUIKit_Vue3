@@ -4,7 +4,7 @@
         <span class="recommend-host-list-title-text">{{ coHostStatus === CoHostStatus.Connected ? t('Invite more') : t('Recommend hosts') }}</span>
         <IconRefresh :class="['refresh-icon', refreshInviteesLoading ? 'loading' : '']" @click="handleRefreshInvitees"></IconRefresh>
       </div>
-      <div class="recommend-host-list-content">
+      <div class="recommend-host-list-content" ref="recommendHostListContentRef">
         <div class="recommend-host-list">
           <div
             v-for="user in [...invitees, ...candidates]"
@@ -33,7 +33,7 @@
             <div class="loading-spinner"></div>
             <span>{{ t('Loading more users...') }}</span>
           </div>
-          <div v-else-if="!hasMoreUsers && candidates.length > 0" class="no-more-content">
+          <div v-else-if="!hasMoreLive && candidates.length > 0" class="no-more-content">
             <span>{{ t('No more users') }}</span>
           </div>
           <div v-else class="load-more-trigger-content">
@@ -53,24 +53,28 @@
 <script setup lang="ts">
 import { IconRefresh, useUIKit, TUIToast, TOAST_TYPE } from '@tencentcloud/uikit-base-component-vue3';
 import { TUIErrorCode } from '@tencentcloud/tuiroom-engine-js';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useCoHostState } from '../../states/CoHostState';
-import { useLiveState } from '../../states/LiveState';
+import { useLiveListState } from '../../states/LiveListState';
 import { Avatar } from '../Avatar';
 import { CoHostStatus } from '../../types';
 
 const { t } = useUIKit();
-const { currentCursor, liveList, fetchLiveList } = useLiveState();
+const { liveListCursor, fetchLiveList } = useLiveListState();
 const { coHostStatus, invitees, candidates } = useCoHostState();
 
+const recommendHostListContentRef = ref<HTMLElement | null>(null);
 const loadMoreRef = ref<HTMLElement | null>(null);
 let intersectionObserver: IntersectionObserver | null = null;
 
 const refreshInviteesLoading = ref(false);
 const loadMoreLoading = ref(false);
-const hasMoreUsers = ref(true);
+const hasMoreLive = computed(() => liveListCursor.value !== '');
 async function handleRefreshInvitees() {
   refreshInviteesLoading.value = true;
+  if (recommendHostListContentRef.value) {
+    recommendHostListContentRef.value.scrollTop = 0;
+  }
   Promise.all([
     new Promise((resolve) => setTimeout(resolve, 500)),
     fetchLiveList({
@@ -94,18 +98,13 @@ onMounted(() => {
   if (loadMoreRef.value) {
     intersectionObserver = new IntersectionObserver(async (changes) => {
       let item = changes[0];
-      if (item.isIntersecting && !loadMoreLoading.value && hasMoreUsers.value) {
+      if (item.isIntersecting && !loadMoreLoading.value && hasMoreLive.value) {
         loadMoreLoading.value = true;
         try {
-          const previousLength = liveList.value.length;
           await fetchLiveList({
-            cursor: currentCursor.value === '' ? liveList.value.length + '' : currentCursor.value,
+            cursor: liveListCursor.value,
             count: 20,
           });
-          const newLength = liveList.value.length;
-          if (newLength - previousLength < 20) {
-            hasMoreUsers.value = false;
-          }
         } catch (error) {
           console.error('Load more users failed:', error);
         } finally {
