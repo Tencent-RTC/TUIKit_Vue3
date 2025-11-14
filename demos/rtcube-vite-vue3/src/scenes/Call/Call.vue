@@ -143,11 +143,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { TUICallKit, TUICallKitServer, TUICallType } from '@tencentcloud/call-uikit-vue';
 import { TUIDialog, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { onBeforeRouteLeave } from 'vue-router';
-import CallInitServer from './init';
 
 const { t } = useUIKit();
 
@@ -179,31 +178,6 @@ watch(callMode, () => {
   calleeUserID.value = '';
   selectedFriends.value = [];
   clearInputError();
-});
-
-const initCallKit = async () => {
-  try {
-    isInitializing.value = true;
-
-    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-    if (!userInfo.userID) {
-      throw new Error(t('call.missingUserInfo'));
-    }
-    CallInitServer.init(userInfo);
-  } catch (error) {
-    console.error(t('call.initFailed'), error);
-  } finally {
-    isInitializing.value = false;
-  }
-};
-
-onMounted(() => {
-  nextTick(() => {
-    const timer = setTimeout(() => {
-      initCallKit();
-      clearTimeout(timer);
-    }, 300);
-  });
 });
 
 onBeforeRouteLeave((to, from, next) => {
