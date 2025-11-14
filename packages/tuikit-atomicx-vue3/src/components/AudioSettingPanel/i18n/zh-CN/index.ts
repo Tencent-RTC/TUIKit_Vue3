@@ -4,4 +4,5 @@ export const resource = {
   'Input volume': '输入音量',
   Speaker: '扬声器',
   'Output volume': '输出音量',
+  'Unrecognized device': '未识别设备',
 };

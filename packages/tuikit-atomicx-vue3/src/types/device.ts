@@ -1,21 +1,34 @@
 export enum DeviceError {
-  NoError = 'NoError',
-  NoDeviceDetected = 'NoDeviceDetected',
-  NoSystemPermission = 'NoSystemPermission',
-  NotSupportCapture = 'NotSupportCapture',
-  OccupiedError = 'OccupiedError',
-  UnknownError = 'UnknownError',
+  NoError = 0,
+  NoDeviceDetected = 1,
+  NoSystemPermission = 2,
+  NotSupportCapture = 3,
+  OccupiedError = 4,
+  UnknownError = 5,
 }
 
-export enum AudioOutput {
-  Speaker = 'speaker',
-  Earpiece = 'earpiece',
+export enum AudioRoute {
+  Speakerphone = 0,
+  Earpiece = 1,
+}
+
+export enum MirrorType {
+  Auto = 0,
+  Enable = 1,
+  Disable = 2,
 }
 
 export enum DeviceType {
   Microphone =  'Microphone',
   Camera =  'Camera',
   ScreenShare =  'ScreenShare',
+}
+
+export enum VideoQuality {
+  Quality360P = 1,
+  Quality540P = 2,
+  Quality720P = 3,
+  Quality1080P = 4,
 }
 
 export enum DevicePermission {
@@ -46,13 +59,25 @@ export interface AudioSettingProps {
 }
 
 export enum DeviceStatus {
-  On = "On",            // 媒体状态打开
-  Off = "Off",          // 媒体状态关闭
-  AdminInviting = "AdminInviting",   // 关闭状态且正在被主持人/管理员被邀请中
-  UserApplying = "UserApplying", // 关闭状态且用户正在申请打开中
+  Off = 0,
+  On = 1,
 }
 
-export enum DeviceStatusReason {
-  ChangedBySelf = 0,
-  ChangedByAdmin = 1,
+export enum NetworkQuality {
+  Unknown = 0,
+  Excellent = 1,
+  Good = 2,
+  Poor = 3,
+  Bad = 4,
+  VeryBad = 5,
+  Down = 6,
 }
+
+export interface NetworkInfo {
+  userId: string;
+  quality: NetworkQuality;
+  upLoss: number;
+  downLoss: number;
+  delay: number;
+}
+

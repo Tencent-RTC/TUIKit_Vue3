@@ -38,7 +38,7 @@ import { ref, withDefaults, defineProps, defineEmits, computed, nextTick } from 
 import { useUIKit, TUIButton, TUIToast } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveAudienceState } from '../../states/LiveAudienceState';
 import { useLoginState } from '../../states/LoginState';
-import { useMessageInputState } from '../../states/MessageInputState';
+import { useMessageInputState } from './MessageInputState';
 import BarrageInput from './BarrageInput.vue';
 import EmojiPicker from './EmojiPicker/EmojiPicker.vue';
 import { ERROR_MESSAGE } from './constants';

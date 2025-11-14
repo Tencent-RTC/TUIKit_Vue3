@@ -45,12 +45,12 @@ import MaterialRenameDialog from './MaterialRenameDialog.vue';
 import MaterialItem from './MaterialItem.vue';
 import { useVideoMixerState } from '../../states/VideoMixerState';
 import { useDeviceState } from '../../states/DeviceState';
-import { useLiveState } from '../../states/LiveState';
+import { useLiveListState } from '../../states/LiveListState';
 import { getNanoId } from '../../utils/utils';
 import { LiveOrientation, MediaSource } from '../../types';
 const { t } = useUIKit();
 
-const { currentLive } = useLiveState();
+const { currentLive } = useLiveListState();
 const { mediaSourceList, publishVideoQuality, addMediaSource, updateMediaSource, clearMediaSource } = useVideoMixerState();
 const { getCameraList } = useDeviceState();
 

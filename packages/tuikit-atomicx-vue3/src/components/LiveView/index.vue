@@ -57,7 +57,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount, useSlots, type ComputedRef, Teleport } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveSeatState } from '../../states/LiveSeatState';
-import { useLiveState } from '../../states/LiveState';
+import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
 import { getContentSize } from '../../utils/domOperation';
 import DefaultStreamViewUI from './DefaultStreamViewUI.vue';
@@ -70,7 +70,7 @@ import { usePlayerControlState } from './PlayerControl';
 const { isFullscreen, isLandscapeStyleMode } = usePlayerControlState();
 const { t } = useUIKit();
 const { seatList, canvas, startPlayStream, stopPlayStream } = useLiveSeatState();
-const { currentLive } = useLiveState();
+const { currentLive } = useLiveListState();
 
 const slots = useSlots();
 

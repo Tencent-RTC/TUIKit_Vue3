@@ -54,7 +54,7 @@ export const resource = {
   'Refresh error, please try again later': '刷新失败，请稍后再试',
   'Are you sure you want to exit the battle': '确定要退出 PK 吗？',
   'Request battle failed': '发起 PK 失败',
-  'Battle ended': 'PK 已结束',
+  'Battle ended': 'PK 结束',
   'Battle started': 'PK 已开始',
   'User joined battle': '用户{{userName}}已加入 PK',
   'User exited battle': '用户{{userName}}已退出 PK',
@@ -76,4 +76,5 @@ export const resource = {
   'Battle duration': '发起 PK 时长',
   'Number minutes': '{{number}} 分钟',
   'Connection Layout': '连线布局',
+  'there is no one valid room for battle': '发起的 PK 中无有效的房间',
 };

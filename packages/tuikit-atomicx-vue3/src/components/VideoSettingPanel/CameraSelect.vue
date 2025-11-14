@@ -21,7 +21,7 @@
 import { ref, watch, defineProps, withDefaults, onBeforeMount } from 'vue';
 import { TUISelect, TUIOption } from '@tencentcloud/uikit-base-component-vue3';
 import { TUIDeviceInfo } from '@tencentcloud/tuiroom-engine-js';
-import useDeviceState from '../../states/DeviceState';
+import { useDeviceState } from '../../states/DeviceState';
 const { cameraList, currentCamera, setCurrentCamera, getCameraList } = useDeviceState();
 
 interface Props {
@@ -72,4 +72,3 @@ onBeforeMount(async () => {
   font-size: 14px;
 }
 </style>
-../../states/DeviceState

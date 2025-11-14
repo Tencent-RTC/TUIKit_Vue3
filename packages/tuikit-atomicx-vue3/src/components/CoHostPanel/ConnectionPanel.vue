@@ -1,6 +1,5 @@
 <template>
   <div id="AtomicxCoHostPanel" class="connection-panel">
-    <!-- 当前麦位 -->
     <div
       v-if="coHostStatus === CoHostStatus.Connected"
       id="userListContainer"
@@ -42,7 +41,6 @@
       </div>
     </div>
 
-    <!-- 推荐主播 -->
     <RecommendHostList class="recommend-host-list">
       <template #host-item-actions="{ user }">
         <TUIButton
@@ -107,15 +105,16 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { TUIBattleInfo, TUIBattleStoppedReason, TUIBattleUser, TUIConnectionCode, TUILiveBattleManagerEvents } from '@tencentcloud/tuiroom-engine-js';
+import { TUIBattleInfo, TUIConnectionCode } from '@tencentcloud/tuiroom-engine-js';
 import { TUIButton, TUIToast, useUIKit, TOAST_TYPE, TUIDialog } from '@tencentcloud/uikit-base-component-vue3';
 import { useBattleState } from '../../states/BattleState';
 import { useCoHostState } from '../../states/CoHostState';
 import { useLoginState } from '../../states/LoginState';
-import { CoHostLayoutTemplate, CoHostStatus, CoHostEvent } from '../../types';
+import { CoHostLayoutTemplate, CoHostStatus, CoHostEvent, BattleEvent } from '../../types';
 import { Avatar } from '../Avatar';
 import RecommendHostList from './RecommendHostList.vue';
 import type { SeatUserInfo } from '../../types';
+import { ERROR_MESSAGE } from './constants';
 
 const props = defineProps<{
   battleDuration: number;
@@ -136,7 +135,7 @@ const {
 } = useCoHostState();
 const {
   currentBattleInfo,
-  battleUsers, 
+  battleUsers,
   requestBattle,
   cancelBattleRequest,
   subscribeEvent: subscribeBattleEvent,
@@ -219,21 +218,27 @@ const handleExitCoHost = () => {
 
 const handleBattleRequest = async () => {
   const userIdList = connected.value.filter(item => item.userId !== loginUserInfo.value?.userId).map(item => item.userId);
-  const battleRes = await requestBattle({
-    config: {
-      duration: props.battleDuration,
-      needResponse: true,
-    },
-    userIdList,
-    timeout: 10,
-  });
-  requestBattleId.value = battleRes.battleId;
-  userIdList.forEach(userId => battleRequestList.value.add(userId))
+  try {
+    const battleRes = await requestBattle({
+      config: {
+        duration: props.battleDuration,
+        needResponse: true,
+        extensionInfo: '',
+      },
+      userIdList,
+      timeout: 10,
+    });
+    requestBattleId.value = battleRes.battleId;
+    userIdList.forEach(userId => battleRequestList.value.add(userId))
+  } catch (error: any) {
+    const message = t(ERROR_MESSAGE[error.code as keyof typeof ERROR_MESSAGE] || 'Request battle failed');
+    TUIToast.error({ message });
+  }
 };
 
 const handleCancelBattleRequest = async () => {
-  await cancelBattleRequest({ 
-    battleId: requestBattleId.value, 
+  await cancelBattleRequest({
+    battleId: requestBattleId.value,
     userIdList: Array.from(battleRequestList.value)
   });
   requestBattleId.value = '';
@@ -260,31 +265,31 @@ const handleCoHostRequestTimeout = ({ inviter, invitee }: { inviter: SeatUserInf
   }
 };
 
-const onBattleRequestAccept = (eventInfo: { battleInfo: TUIBattleInfo, inviter: TUIBattleUser, invitee: TUIBattleUser }) => {
+const onBattleRequestAccept = (eventInfo: { battleId: string, inviter: SeatUserInfo, invitee: SeatUserInfo }) => {
   if (eventInfo.inviter.userId === loginUserInfo.value?.userId) {
     battleRequestList.value.delete(eventInfo.invitee.userId);
   }
 };
 
-const onBattleRequestRejected = (eventInfo: { battleInfo: TUIBattleInfo, inviter: TUIBattleUser, invitee: TUIBattleUser }) => {
+const onBattleRequestRejected = (eventInfo: { battleId: string, inviter: SeatUserInfo, invitee: SeatUserInfo }) => {
   if (eventInfo.inviter.userId === loginUserInfo.value?.userId) {
     TUIToast({ type: TOAST_TYPE.INFO, message: t('Battle request rejected by user', { userName: eventInfo.invitee.userName || eventInfo.invitee.userId }) });
     battleRequestList.value.delete(eventInfo.invitee.userId);
   }
 };
 
-const onBattleRequestTimeout = (eventInfo: { battleInfo: TUIBattleInfo, inviter: TUIBattleUser, invitee: TUIBattleUser }) => {
+const onBattleRequestTimeout = (eventInfo: { battleId: string, inviter: SeatUserInfo, invitee: SeatUserInfo }) => {
   if (eventInfo.inviter.userId === loginUserInfo.value?.userId) {
     battleRequestList.value.delete(eventInfo.invitee.userId);
   }
 };
 
-const onBattleStarted = (eventInfo: { battleInfo: TUIBattleInfo, }) => {
+const onBattleStarted = () => {
   requestBattleId.value = '';
   battleRequestList.value.clear();
 }
 
-const onBattleEnded = (eventInfo: { battleInfo: TUIBattleInfo, reason: TUIBattleStoppedReason }) => {
+const onBattleEnded = () => {
   requestBattleId.value = '';
   battleRequestList.value.clear();
 }
@@ -294,11 +299,11 @@ onMounted(() => {
   subscribeEvent(CoHostEvent.onCoHostRequestRejected, handleCoHostRequestRejected);
   subscribeEvent(CoHostEvent.onCoHostRequestTimeout, handleCoHostRequestTimeout);
 
-  subscribeBattleEvent(TUILiveBattleManagerEvents.onBattleRequestAccept, onBattleRequestAccept);
-  subscribeBattleEvent(TUILiveBattleManagerEvents.onBattleRequestReject, onBattleRequestRejected);
-  subscribeBattleEvent(TUILiveBattleManagerEvents.onBattleRequestTimeout, onBattleRequestTimeout);
-  subscribeBattleEvent(TUILiveBattleManagerEvents.onBattleStarted, onBattleStarted);
-  subscribeBattleEvent(TUILiveBattleManagerEvents.onBattleEnded, onBattleEnded);
+  subscribeBattleEvent(BattleEvent.onBattleRequestAccept, onBattleRequestAccept);
+  subscribeBattleEvent(BattleEvent.onBattleRequestReject, onBattleRequestRejected);
+  subscribeBattleEvent(BattleEvent.onBattleRequestTimeout, onBattleRequestTimeout);
+  subscribeBattleEvent(BattleEvent.onBattleStarted, onBattleStarted);
+  subscribeBattleEvent(BattleEvent.onBattleEnded, onBattleEnded);
 });
 
 onUnmounted(() => {
@@ -306,11 +311,11 @@ onUnmounted(() => {
   unsubscribeEvent(CoHostEvent.onCoHostRequestRejected, handleCoHostRequestRejected);
   unsubscribeEvent(CoHostEvent.onCoHostRequestTimeout, handleCoHostRequestTimeout);
 
-  unsubscribeBattleEvent(TUILiveBattleManagerEvents.onBattleRequestAccept, onBattleRequestAccept);
-  unsubscribeBattleEvent(TUILiveBattleManagerEvents.onBattleRequestReject, onBattleRequestRejected);
-  unsubscribeBattleEvent(TUILiveBattleManagerEvents.onBattleRequestTimeout, onBattleRequestTimeout);
-  unsubscribeBattleEvent(TUILiveBattleManagerEvents.onBattleStarted, onBattleStarted);
-  unsubscribeBattleEvent(TUILiveBattleManagerEvents.onBattleEnded, onBattleEnded);
+  unsubscribeBattleEvent(BattleEvent.onBattleRequestAccept, onBattleRequestAccept);
+  unsubscribeBattleEvent(BattleEvent.onBattleRequestReject, onBattleRequestRejected);
+  unsubscribeBattleEvent(BattleEvent.onBattleRequestTimeout, onBattleRequestTimeout);
+  unsubscribeBattleEvent(BattleEvent.onBattleStarted, onBattleStarted);
+  unsubscribeBattleEvent(BattleEvent.onBattleEnded, onBattleEnded);
 });
 </script>
 
@@ -466,7 +471,6 @@ onUnmounted(() => {
   padding: 20px 0 0 0;
 }
 
-// 布局模板选择样式
 .layout-template-container {
   padding: 16px;
   margin-bottom: 16px;

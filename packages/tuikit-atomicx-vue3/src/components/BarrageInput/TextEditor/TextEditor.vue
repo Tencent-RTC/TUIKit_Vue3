@@ -24,7 +24,7 @@
 import { ref, onMounted, onUnmounted, computed, watch, withDefaults, defineProps, nextTick, defineEmits } from 'vue';
 import { TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useConversationListState } from '../../../states/ConversationListState';
-import { useMessageInputState } from '../../../states/MessageInputState';
+import { useMessageInputState } from '../MessageInputState';
 import { ERROR_MESSAGE } from '../constants';
 import { createEditor } from './EditorCore';
 import styles from './TextEditor.module.scss';

@@ -32,15 +32,15 @@ import TUIRoomEngine, {
 } from '@tencentcloud/tuiroom-engine-js';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useRoomEngine } from '../../../hooks/useRoomEngine';
-import { useLiveState } from '../../../states/LiveState';
+import { useLiveListState } from '../../../states/LiveListState';
 import { useVideoMixerState } from '../../../states/VideoMixerState';
-import { LiveStatus, LiveOrientation } from '../../../types';
+import { LiveOrientation } from '../../../types';
 import { debounce } from '../../../utils/utils';
 import MixerControl from './MixerControl.vue';
 
 const { t } = useUIKit();
 
-const { currentLive } = useLiveState();
+const { currentLive } = useLiveListState();
 
 const mixControlRef = ref<InstanceType<typeof MixerControl> | null>(null);
 const { publishVideoQuality, activeMediaSource, enableLocalVideoMixer, mediaSourceList } = useVideoMixerState();
@@ -53,8 +53,6 @@ const currentLiveOrientation = computed(() => {
   }
   return LiveOrientation.Portrait;
 });
-
-const { localLiveStatus } = useLiveState();
 
 const roomEngine = useRoomEngine();
 const localMixerRef = ref();
@@ -217,12 +215,12 @@ onMounted(() => {
     getMixControlStyle();
   });
 
-  watch(localLiveStatus, async (newVal) => {
+  watch(() => currentLive.value?.liveId, async (newVal) => {
     const mediaSourceManager = roomEngine.instance?.getTRTCCloud().getMediaMixingManager();
-    if (newVal === LiveStatus.Live) {
+    if (newVal) {
       await mediaSourceManager?.startPublish();
     }
-    if (newVal === LiveStatus.IDLE) {
+    if (!newVal) {
       await mediaSourceManager?.stopPublish();
     }
   });

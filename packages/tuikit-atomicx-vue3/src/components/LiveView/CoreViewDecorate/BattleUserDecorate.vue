@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { SeatUserInfo, CoHostLayoutTemplate } from '../../../types';
 import { useBattleState } from '../../../states/BattleState';
-import { useLiveState } from '../../../states/LiveState';
+import { useLiveListState } from '../../../states/LiveListState';
 import { useCoHostState } from '../../../states/CoHostState';
 import { ref, computed, watch } from 'vue';
 import BattleTopBadge from '../assets/svg/BattleTopBadge.svg';
@@ -44,7 +44,7 @@ const props = defineProps<{
   }}>;
 }>();
 
-const { currentLive } = useLiveState();
+const { currentLive } = useLiveListState();
 const { connected } = useCoHostState();
 const { currentBattleInfo, battleScore } = useBattleState();
 
