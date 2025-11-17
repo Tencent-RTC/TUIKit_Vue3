@@ -143,3 +143,67 @@ export class EventListenerManager {
     return this.listeners.size;
   }
 }
+
+/**
+ * Wait for video element to be mounted in DOM
+ * @param timeout Maximum wait time in milliseconds
+ * @returns Promise that resolves with video element or null if timeout
+ */
+export const waitForVideoMounted = (timeout = 3000): Promise<HTMLVideoElement | null> => {
+  return new Promise((resolve) => {
+    const container = document.querySelector('#atomicx-live-stream-content');
+    if (!container) {
+      resolve(null);
+      return;
+    }
+
+    let timeoutId: number | null = null;
+    
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeName === 'VIDEO') {
+              const video = node as HTMLVideoElement;
+              
+              // Temporarily remove volumechange listener to prevent syncVolumeState interference
+              const originalVolumeHandler = (video as any).onvolumechange;
+              (video as any).onvolumechange = null;
+              
+              const handleLoadedData = () => {
+                if (timeoutId) clearTimeout(timeoutId);
+                observer.disconnect();
+                video.removeEventListener('loadeddata', handleLoadedData);
+                setTimeout(() => {
+                  (video as any).onvolumechange = originalVolumeHandler;
+                }, 100);
+                resolve(video);
+              };
+              
+              if (video.readyState >= 2) {
+                if (timeoutId) clearTimeout(timeoutId);
+                observer.disconnect();
+                setTimeout(() => {
+                  (video as any).onvolumechange = originalVolumeHandler;
+                }, 100);
+                resolve(video);
+              } else {
+                video.addEventListener('loadeddata', handleLoadedData, { once: true });
+              }
+            }
+          });
+        }
+      }
+    });
+
+    observer.observe(container, {
+      childList: true,
+      subtree: true,
+    });
+
+    timeoutId = window.setTimeout(() => {
+      observer.disconnect();
+      resolve(null);
+    }, timeout);
+  });
+};

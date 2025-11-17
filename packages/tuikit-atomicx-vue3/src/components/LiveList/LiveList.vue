@@ -39,11 +39,11 @@
 <script lang="ts" setup>
 import { ref, computed, defineEmits, watch } from 'vue';
 import { useUIKit, IconLiveCoverHeader, IconNoLiveRoom } from '@tencentcloud/uikit-base-component-vue3';
-import { useLiveState } from '../../states/LiveState';
+import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
 import { Avatar } from '../Avatar';
 import type { LiveInfo } from '../../types';
-const { liveList, currentCursor, fetchLiveList } = useLiveState();
+const { liveList, liveListCursor, fetchLiveList } = useLiveListState();
 const { loginUserInfo } = useLoginState();
 const { t } = useUIKit();
 const props = defineProps({
@@ -57,7 +57,7 @@ const scrollContainerRef = ref<HTMLElement | null>(null);
 const liveListItemsRef = ref<HTMLElement | null>(null);
  
 const isLoadingMore = ref(false);
-const hasMoreLive = computed(() => currentCursor.value !== '');
+const hasMoreLive = computed(() => liveListCursor.value !== '');
 
 const liveItemWidth = ref('356px');
 const liveItemHeight = ref('270px');
@@ -71,7 +71,7 @@ watch(
   async (user) => {
     if (user && user.userId) {
       isLoadingMore.value = true;
-      currentCursor.value = '';
+      liveListCursor.value = '';
       liveList.value.length = 0;
       await fetchLiveList({});
       isLoadingMore.value = false;
@@ -128,7 +128,7 @@ async function fetchMoreLives() {
   }
   try {
     isLoadingMore.value = true;
-    await fetchLiveList({ cursor: currentCursor.value });
+    await fetchLiveList({ cursor: liveListCursor.value });
   } finally {
     isLoadingMore.value = false;
   }

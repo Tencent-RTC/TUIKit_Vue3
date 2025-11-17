@@ -16,7 +16,7 @@
         </span>
         <div class="center-controls"></div>
         <div class="right-controls">
-          <MultiResolution />
+          <MultiResolution @resolution-change="handleResolutionChanged" />
           <span class="control-btn audio-control-btn">
             <AudioControl
               class="audio-control-icon"
@@ -62,11 +62,13 @@ import AudioControl from './AudioControl.vue';
 import MultiResolution from './MultiResolution.vue';
 import { isMobile } from '../../../utils';
 import { isFirefoxBrowser, isSafariBrowser } from './utils/deviceDetection';
+import { waitForVideoMounted } from './utils/domHelpers';
 
 const {
   isPlaying,
   isFullscreen,
   isPictureInPicture,
+  currentVolume,
   pause,
   resume,
   requestPictureInPicture,
@@ -82,7 +84,6 @@ const props = defineProps<{
 }>();
 
 const { t } = useUIKit();
-const currentVolume = ref(1);
 const isMuted = ref(false);
 const playerControlRef = ref<HTMLElement>();
 const showControls = ref(false);
@@ -109,6 +110,13 @@ const handlePlayPause = () => {
     pause();
   } else {
     resume();
+  }
+};
+
+const handleResolutionChanged = async () => {
+  const video = await waitForVideoMounted();
+  if (video) {
+    await setVolume(currentVolume.value);
   }
 };
 

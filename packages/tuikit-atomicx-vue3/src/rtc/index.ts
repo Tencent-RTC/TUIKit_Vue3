@@ -7,28 +7,28 @@ import { CameraButton as CameraButtonComponent } from '../components/CameraButto
 import { CoGuestPanel as CoGuestPanelComponent } from '../components/CoGuestPanel';
 import { CoHostPanel as CoHostPanelComponent } from '../components/CoHostPanel';
 import { LiveAudienceList as LiveAudienceListComponent } from '../components/LiveAudienceList';
-import { LiveCoreView, LiveView } from '../components/LiveView';
 import { LiveList as LiveListComponent } from '../components/LiveList';
 import { LiveMonitorView as LiveMonitorViewComponent } from '../components/LiveMonitorView';
 import { LiveScenePanel as LiveScenePanelComponent } from '../components/LiveScenePanel';
+import { LiveCoreView, LiveView } from '../components/LiveView';
 import { MicButton as MicButtonComponent } from '../components/MicButton';
 import { StreamMixer as StreamMixerComponent } from '../components/StreamMixer';
 import { StreamView as StreamViewComponent } from '../components/StreamView';
 import { VideoSetting as VideoSettingComponent } from '../components/VideoSetting';
 import { VideoSettingPanel as VideoSettingPanelComponent } from '../components/VideoSettingPanel';
-import { useBarrageListState as BarrageListState } from '../states/BarrageListState';
+import { useRoomEngine as RoomEngine } from '../hooks/useRoomEngine';
+import { useBarrageState } from '../states/BarrageState';
+import { useBattleState } from '../states/BattleState';
 import { useCoGuestState as CoGuestState } from '../states/CoGuestState';
 import { useCoHostState as CoHostState } from '../states/CoHostState';
 import { useDeviceState as DeviceState } from '../states/DeviceState';
 import { useLiveAudienceState as LiveAudienceState } from '../states/LiveAudienceState';
+import { useLiveListState } from '../states/LiveListState';
 import { useLiveMonitorState as LiveMonitorState } from '../states/LiveMonitorState';
 import { useLiveSeatState as LiveSeatState } from '../states/LiveSeatState';
-import { useLiveState as LiveState } from '../states/LiveState';
 import { useRoomState as RoomState } from '../states/RoomState';
 import { useUserState as UserState } from '../states/UserState';
 import { useVideoMixerState as VideoMixerState } from '../states/VideoMixerState';
-import { useBattleState  } from '../states/BattleState';
-import { useRoomEngine as RoomEngine } from '../hooks/useRoomEngine';
 
 import RTCLoginServer from './server';
 
@@ -51,10 +51,8 @@ const StreamView = StreamViewComponent;
 const AudioSetting = AudioSettingComponent;
 const VideoSetting = VideoSettingComponent;
 
-const useBarrageListState = BarrageListState;
 const useLiveMonitorState = LiveMonitorState;
 const useLiveSeatState = LiveSeatState;
-const useLiveState = LiveState;
 const useUserState = UserState;
 const useCoGuestState = CoGuestState;
 const useCoHostState = CoHostState;
@@ -87,7 +85,7 @@ export {
 
   // States
   useRoomEngine,
-  useLiveState,
+  useLiveListState,
   useRoomState,
   useUserState,
   useDeviceState,
@@ -97,6 +95,6 @@ export {
   useCoHostState,
   useLiveAudienceState,
   useLiveMonitorState,
-  useBarrageListState,
   useBattleState,
+  useBarrageState,
 };

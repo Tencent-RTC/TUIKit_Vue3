@@ -1,14 +1,21 @@
-import { DeviceStatus, DeviceStatusReason } from './device';
+import { DeviceStatus } from './device';
 
 export type SeatUserInfo = {
-  liveId: string;
   userId: string;
   userName: string;
   avatarUrl: string;
+  // role: Role;  // 暂不支持，等 roomEngine 支持
+  liveId: string;
   microphoneStatus: DeviceStatus;
-  microphoneStatusReason: DeviceStatusReason;
+  allowOpenMicrophone: boolean;
   cameraStatus: DeviceStatus;
-  cameraStatusReason: DeviceStatusReason;
+  allowOpenCamera: boolean;
+}
+
+export enum Role {
+  Owner = 0,
+  Administrator = 1,
+  GeneralUser = 2,
 }
 
 export type RegionInfo = {
@@ -30,4 +37,21 @@ export interface LiveCanvas {
   width: number;
   height: number;
   background: string;
+}
+
+export enum MoveSeatPolicy {
+  AbortWhenOccupied = 0,
+  ForceReplace = 1,
+  SwapPosition = 2,
+}
+
+export enum DeviceControlPolicy {
+  UnlockOnly = 1,
+}
+
+export enum LiveSeatEvent {
+  onLocalCameraOpenedByAdmin = 'onLocalCameraOpenedByAdmin',
+  onLocalCameraClosedByAdmin = 'onLocalCameraClosedByAdmin',
+  onLocalMicrophoneOpenedByAdmin = 'onLocalMicrophoneOpenedByAdmin',
+  onLocalMicrophoneClosedByAdmin = 'onLocalMicrophoneClosedByAdmin',
 }

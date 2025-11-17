@@ -1,6 +1,6 @@
 <template>
   <div class="audio-control" :style="iconSizeStyle" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
-    <span class="control-btn volume-btn" :title="isMuted ? t('Unmute') : t('Mute')" @click="handleVolumeIconClick">
+    <span class="control-btn volume-btn" :title="isMuted ? t('Open Speaker') : t('Close Speaker')" @click="handleVolumeIconClick">
       <IconSpeakerOff size="20" v-if="isMuted" />
       <IconSpeakerOn size="20" v-else />
     </span>

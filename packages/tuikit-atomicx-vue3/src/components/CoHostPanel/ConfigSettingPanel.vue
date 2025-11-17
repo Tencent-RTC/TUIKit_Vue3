@@ -107,7 +107,8 @@ const confirm = () => {
 
 const handleDurationChange = (event: any) => {
   templateForm.value.battleDuration = Number(event.target.value);
-}
+};
+
 watch(() => props.visible, (newVal) => {
   dialogVisible.value = newVal;
 });
@@ -121,12 +122,6 @@ const layoutOptions = computed(() => [
     icon: IconDynamicGridLayout,
     templateId: CoHostLayoutTemplate.HostDynamicGrid,
     label: t('Dynamic Grid9 Layout'),
-  },
-  {
-    id: 'PortraitFixed_1v6',
-    icon: IconDynamic1v6Layout,
-    templateId: CoHostLayoutTemplate.HostDynamic1v6,
-    label: t('Dynamic 1v6 Layout'),
   },
 ]);
 </script>
@@ -210,7 +205,6 @@ const layoutOptions = computed(() => [
     }
   }
 }
-
 
 .layout-template-options {
   display: flex;

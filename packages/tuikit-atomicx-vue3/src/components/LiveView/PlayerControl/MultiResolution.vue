@@ -25,20 +25,24 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, defineEmits } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import vClickOutside from '../../../directives/vClickOutside';
-import { useLiveState } from '../../../states/LiveState';
+import { useLiveListState } from '../../../states/LiveListState';
 import { usePlayerControlState, Resolution } from './PlayerControlState';
 
 const { t } = useUIKit();
-const { currentLive } = useLiveState();
+const { currentLive } = useLiveListState();
 const {
   resolutionList,
   currentResolution,
   switchResolution,
   initializeResolution,
 } = usePlayerControlState();
+
+const emit = defineEmits<{
+  (e: 'resolution-change', resolution: Resolution): void;
+}>();
 
 // Resolution mapping for UI display
 const resolutionMap: Record<Resolution, string> = {
@@ -69,6 +73,7 @@ const handleClickResolution = async (event: MouseEvent) => {
         return;
       }
       await switchResolution(resolutionValue);
+      emit('resolution-change', resolutionValue);
     }
   }
 };
@@ -104,6 +109,7 @@ onMounted(() => {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    min-width: 40px;
     border-radius: 4px;
     padding: 4px 8px;
     transform: translate(-12px, -110%);

@@ -18,30 +18,30 @@
 <script setup lang="ts">
 import { watch, computed } from 'vue';
 import type { ComputedRef } from 'vue';
-import { TUIVideoQuality } from '@tencentcloud/tuiroom-engine-js';
 import { TUISelect, TUIOption, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useDeviceState } from '../../states/DeviceState';
+import { VideoQuality } from '../../types';
 
 const { t } = useUIKit();
 
 const videoQualityList: ComputedRef<
-  { label: string; value: TUIVideoQuality }[]
+  { label: string; value: VideoQuality }[]
 > = computed(() => [
-  { label: t('Low Definition'), value: TUIVideoQuality.kVideoQuality_360p },
+  { label: t('Low Definition'), value: VideoQuality.Quality360P },
   {
     label: t('Standard Definition'),
-    value: TUIVideoQuality.kVideoQuality_540p,
+    value: VideoQuality.Quality540P,
   },
-  { label: t('High Definition'), value: TUIVideoQuality.kVideoQuality_720p },
+  { label: t('High Definition'), value: VideoQuality.Quality720P },
   {
     label: t('Super Definition'),
-    value: TUIVideoQuality.kVideoQuality_1080p,
+    value: VideoQuality.Quality1080P,
   },
 ]);
 
 const { localVideoQuality, updateVideoQuality } = useDeviceState();
 
-watch(localVideoQuality, (val: TUIVideoQuality) => {
+watch(localVideoQuality, (val: VideoQuality) => {
   updateVideoQuality({ quality: val });
 });
 </script>

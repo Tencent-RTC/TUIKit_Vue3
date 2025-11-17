@@ -4,11 +4,12 @@
       <div class="section-title">
         {{ t('Microphone') }}
       </div>
-      <div class="row">
+      <div class="row" v-if="microphoneList.length > 0">
         <span class="label">{{ t('Select device') }}</span>
         <TUISelect
           v-model="currentMicrophoneId"
           class="select"
+          :placeholder="t('Unrecognized device')"
         >
           <TUIOption
             v-for="item in microphoneList"
@@ -35,11 +36,12 @@
       <div class="section-title">
         {{ t('Speaker') }}
       </div>
-      <div class="row">
+      <div class="row" v-if="speakerList.length > 0">
         <span class="label">{{ t('Select device') }}</span>
         <TUISelect
           v-model="currentSpeakerId"
           class="select"
+          :placeholder="t('Unrecognized device')"
         >
           <TUIOption
             v-for="item in speakerList"

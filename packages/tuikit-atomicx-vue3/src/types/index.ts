@@ -1,5 +1,5 @@
 // common
-export * from './login';
+export type * from './login';
 // chat
 export * from './message';
 export * from './search';
@@ -15,7 +15,7 @@ export * from './types';
 export * from './live';
 export * from './stream';
 export * from './room';
-export * from './videoMixer';
+export type * from './videoMixer';
 export * from './audience';
 export * from './seat';
 export * from './monitor';
