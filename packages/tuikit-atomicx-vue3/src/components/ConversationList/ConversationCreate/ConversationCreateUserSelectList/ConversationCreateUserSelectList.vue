@@ -61,5 +61,5 @@ const handleSelectListUpdate = (list: UserPickerResult) => {
 </script>
 
 <style lang="scss" module>
-@import './ConversationCreateUserSelectList.scss';
+@use './ConversationCreateUserSelectList.scss';
 </style>

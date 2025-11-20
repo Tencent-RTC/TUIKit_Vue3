@@ -1,5 +1,5 @@
 <template>
-  <tui-select
+  <TUISelect
     v-model="currentDeviceId"
     placeholder="placeholder"
     class="select"
@@ -8,21 +8,20 @@
     :popper-append-to-body="false"
     @change="handleChange"
   >
-    <tui-option
+    <TUIOption
       v-for="item in speakerList"
       :key="item.deviceId"
       :label="item.deviceName"
       :value="item.deviceId"
     />
-  </tui-select>
+  </TUISelect>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, defineProps, withDefaults, onBeforeMount } from 'vue';
-import { TUIDeviceInfo } from '@tencentcloud/tuiroom-engine-js';
-import TuiSelect from '../../baseComp/Select';
-import TuiOption from '../../baseComp/Option';
+import { TUISelect, TUIOption } from '@tencentcloud/uikit-base-component-vue3';
 import { useDeviceState } from '../../states/DeviceState';
+import type { TUIDeviceInfo } from '@tencentcloud/tuiroom-engine-js';
 
 interface Props {
   onChange?: (id: string) => void;
@@ -37,12 +36,12 @@ const currentDeviceId = ref(currentSpeaker.value?.deviceId);
 
 watch(
   () => currentSpeaker.value?.deviceId,
-  val => {
+  (val) => {
     if (currentDeviceId.value !== val) {
       currentDeviceId.value = val;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 async function handleChange(deviceId: string) {
@@ -51,8 +50,8 @@ async function handleChange(deviceId: string) {
     await setCurrentSpeaker({ deviceId });
   } catch (error) {
     if (
-      currentSpeaker.value?.deviceId &&
-      speakerList.value
+      currentSpeaker.value?.deviceId
+      && speakerList.value
         .map((item: TUIDeviceInfo) => item.deviceId)
         .includes(currentSpeaker.value?.deviceId)
     ) {
@@ -63,7 +62,7 @@ async function handleChange(deviceId: string) {
 
 onBeforeMount(async () => {
   await getSpeakerList();
-})
+});
 </script>
 
 <style lang="scss" scoped>

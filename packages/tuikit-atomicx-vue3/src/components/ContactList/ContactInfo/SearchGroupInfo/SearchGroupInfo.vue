@@ -143,5 +143,5 @@ const handleJoinGroup = async () => {
 </script>
 
 <style scoped lang="scss">
-@import './SearchGroupInfo.scss';
+@use './SearchGroupInfo.scss';
 </style>

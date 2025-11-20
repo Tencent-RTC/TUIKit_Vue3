@@ -58,5 +58,5 @@ const handleUserAdvancedChange = (params: Map<SearchType, any>) => {
 </script>
 
 <style lang="scss" module>
-@import './SearchAdvanced.scss';
+@use './SearchAdvanced.scss';
 </style>

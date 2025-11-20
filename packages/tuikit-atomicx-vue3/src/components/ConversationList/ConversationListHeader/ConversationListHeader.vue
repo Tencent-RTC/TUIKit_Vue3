@@ -47,5 +47,5 @@ const props = withDefaults(defineProps<ConversationListHeaderProps>(), {
 </script>
 
 <style lang="scss" module>
-@import './ConversationListHeader.scss';
+@use './ConversationListHeader.scss';
 </style>

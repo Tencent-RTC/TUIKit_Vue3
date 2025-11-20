@@ -43,5 +43,5 @@ const handleClick = () => {
 </script>
 
 <style scoped lang="scss">
-@import './BlacklistItem.scss';
+@use './BlacklistItem.scss';
 </style>

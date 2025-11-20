@@ -6,7 +6,7 @@ import { MESSAGE_DURATION } from '../../../constants/message';
 // import { roomService } from '../../../../services';
 import useUserState from '../../../states/UserState/index';
 import useRoomActions from '../../../hooks/useRoomActions';
-import { UserInfo, RoomAction } from '../../../types';
+import { UserInfo } from '../../../types';
 
 export default function useIndex() {
   const { t } = useI18n();

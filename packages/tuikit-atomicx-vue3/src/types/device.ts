@@ -19,9 +19,9 @@ export enum MirrorType {
 }
 
 export enum DeviceType {
-  Microphone =  'Microphone',
-  Camera =  'Camera',
-  ScreenShare =  'ScreenShare',
+  Microphone = 'Microphone',
+  Camera = 'Camera',
+  ScreenShare = 'ScreenShare',
 }
 
 export enum VideoQuality {
@@ -74,10 +74,8 @@ export enum NetworkQuality {
 }
 
 export interface NetworkInfo {
-  userId: string;
   quality: NetworkQuality;
   upLoss: number;
   downLoss: number;
   delay: number;
 }
-

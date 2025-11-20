@@ -20,7 +20,7 @@
 <script setup lang="ts">
 import { ref, watch, defineProps, withDefaults, onBeforeMount } from 'vue';
 import { TUISelect, TUIOption } from '@tencentcloud/uikit-base-component-vue3';
-import { TUIDeviceInfo } from '@tencentcloud/tuiroom-engine-js';
+import TUIRoomEngine, { TUIDeviceInfo } from '@tencentcloud/tuiroom-engine-js';
 import { useDeviceState } from '../../states/DeviceState';
 const { cameraList, currentCamera, setCurrentCamera, getCameraList } = useDeviceState();
 
@@ -62,7 +62,9 @@ async function handleChange(deviceId: string) {
 }
 
 onBeforeMount(async () => {
-  await getCameraList();
+  TUIRoomEngine.once('ready', async () => {
+    await getCameraList();
+  });
 })
 </script>
 

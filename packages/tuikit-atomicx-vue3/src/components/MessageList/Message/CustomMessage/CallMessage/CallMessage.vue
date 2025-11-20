@@ -25,7 +25,7 @@ const callAgain = () => {
 
   startCall({
     type: payload.value.data.data.call_type,
-    userIDList: payload.value.data.inviteeList,
+    userIDList: [activeConversation.value.userProfile?.userID],
   });
 };
 </script>

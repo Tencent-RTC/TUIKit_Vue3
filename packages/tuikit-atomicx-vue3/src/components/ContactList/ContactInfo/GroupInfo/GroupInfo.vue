@@ -143,5 +143,5 @@ const handleGroupAction = () => {
 }
 </script>
 <style scoped lang="scss">
-@import './GroupInfo.scss';
+@use './GroupInfo.scss';
 </style>

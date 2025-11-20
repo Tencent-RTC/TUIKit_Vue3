@@ -1,10 +1,14 @@
 <template>
-  <div class="custom-layout-container" ref="streamListContainerRef">
-    <div class="stream-list" ref="streamListRef" :style="streamListStyle">
+  <div ref="streamListContainerRef" class="custom-layout-container">
+    <div
+      ref="streamListRef"
+      class="stream-list"
+      :style="streamListStyle"
+    >
       <StreamRegion
         v-for="(renderUserInfo, index) in renderUserInfoList"
-        class="stream-list-item"
         :key="`${renderUserInfo.userInfo.userId}_${renderUserInfo.streamType}`"
+        class="stream-list-item"
         :userInfo="renderUserInfo.userInfo"
         :stream-type="renderUserInfo.streamType"
         :style="getStreamStyle(index)"
@@ -12,7 +16,7 @@
         @stream-view-dblclick="handleStreamDblClick"
       >
         <template #streamViewUI="slotProps">
-          <slot name="streamViewUI" v-bind="slotProps"></slot>
+          <slot name="streamViewUI" v-bind="slotProps" />
         </template>
       </StreamRegion>
     </div>
@@ -22,13 +26,13 @@
 <script setup lang="ts">
 import { defineProps, ref, computed, onMounted, onBeforeUnmount, defineEmits, watch, withDefaults } from 'vue';
 import type { Ref, ComputedRef } from 'vue';
-import StreamRegion from '../common/StreamRegion';
-import { UserInfo } from '../../../types';
-import useUserState from '../../../states/UserState/index';
 import { TUIVideoStreamType } from '@tencentcloud/tuiroom-engine-js';
-import { useRoomState } from '../../../states/RoomState';
-import useLoginState from '../../../states/LoginState';
 import { useLiveListState } from '../../../states/LiveListState';
+import useLoginState from '../../../states/LoginState';
+import { useRoomState } from '../../../states/RoomState';
+import useUserState from '../../../states/UserState/index';
+import StreamRegion from '../common/StreamRegion';
+import type { UserInfo } from '../../../types';
 
 const { userList, localUser, userListOnSeat } = useUserState();
 const { currentRoom } = useRoomState();
@@ -98,17 +102,17 @@ const renderUserInfoList: ComputedRef<{ userInfo: UserInfo; streamType: TUIVideo
   // }
   // return videoUserList;
 
-  if (!totalUserList.value || totalUserList.value.length === 0) return [];
+  if (!totalUserList.value || totalUserList.value.length === 0) {
+    return [];
+  }
 
   return totalUserList.value
     ?.filter(props.filterFn)
     .sort(props.sortFn)
-    .map(item => {
-      return {
-        userInfo: item,
-        streamType: TUIVideoStreamType.kCameraStream,
-      };
-    });
+    .map(item => ({
+      userInfo: item,
+      streamType: TUIVideoStreamType.kCameraStream,
+    }));
 });
 
 const streamListContainerRef = ref();
@@ -116,9 +120,7 @@ const streamListRef = ref();
 
 // ------------ 处理 layout 布局 START ------------
 
-const aspectRatio = computed(() => {
-  return '16:9';
-});
+const aspectRatio = computed(() => '16:9');
 
 // Single video stream window margin size
 // 根据 streamView 的父亲元素 A 大小获取一个流布局的容器 B，容器 B 符合 aspectRatio 比例
@@ -135,20 +137,20 @@ const originStreamListStyle: Ref<Record<string, any>> = ref({
   scale: 1,
 });
 
-const streamListStyle = computed(() => {
-  return {
-    width: `${originStreamListStyle.value.width * originStreamListStyle.value.scale}px`,
-    height: `${originStreamListStyle.value.height * originStreamListStyle.value.scale}px`,
-    transform: `translate(${originStreamListStyle.value.transformX * originStreamListStyle.value.scale}px, ${
-      originStreamListStyle.value.transformY * originStreamListStyle.value.scale
-    }px)`,
-  };
-});
+const streamListStyle = computed(() => ({
+  width: `${originStreamListStyle.value.width * originStreamListStyle.value.scale}px`,
+  height: `${originStreamListStyle.value.height * originStreamListStyle.value.scale}px`,
+  transform: `translate(${originStreamListStyle.value.transformX * originStreamListStyle.value.scale}px, ${
+    originStreamListStyle.value.transformY * originStreamListStyle.value.scale
+  }px)`,
+}));
 
 const customConfig = computed(() => {
   const { layoutList } = JSON.parse(props.config);
-  if (!layoutList) return [];
-  const absoluteLayoutList = layoutList.map(item => {
+  if (!layoutList) {
+    return [];
+  }
+  const absoluteLayoutList = layoutList.map((item) => {
     if (item.width > 1 || item.height > 1) {
       return {
         left: stringToNumber(originStreamListStyle.value.width) * (item.x / 720),
@@ -200,10 +202,10 @@ function handleStreamListTransform() {
   const scaleHeight = containerHeight / streamContainerSize.value.height;
   originStreamListStyle.value.scale = Math.min(scaleWidth, scaleHeight);
 
-  originStreamListStyle.value.transformX =
-    stringToNumber(originStreamListStyle.value.width) / 2 - streamContainerSize.value.centerX;
-  originStreamListStyle.value.transformY =
-    stringToNumber(originStreamListStyle.value.height) / 2 - streamContainerSize.value.centerY;
+  originStreamListStyle.value.transformX
+    = stringToNumber(originStreamListStyle.value.width) / 2 - streamContainerSize.value.centerX;
+  originStreamListStyle.value.transformY
+    = stringToNumber(originStreamListStyle.value.height) / 2 - streamContainerSize.value.centerY;
 }
 
 const widthRatio: ComputedRef<number> = computed(() => {
@@ -252,7 +254,9 @@ function stringToNumber(str: string) {
 
 function getStreamStyle(index: number) {
   const streamLayoutConfig = JSON.parse(props.config).layoutList[index];
-  if (!streamLayoutConfig) return;
+  if (!streamLayoutConfig) {
+    return;
+  }
   // Todo: 暂时兼容绝对值和百分比，后续需要统一
   if (streamLayoutConfig?.width > 1) {
     return {
@@ -281,7 +285,7 @@ watch(
   () => currentLive.value?.layoutTemplate,
   () => {
     handleLayout();
-  }
+  },
 );
 
 const resizeObserver = new ResizeObserver(() => {

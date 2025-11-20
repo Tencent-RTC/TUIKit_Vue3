@@ -84,5 +84,5 @@ const handleRefuse = () => {
 </script>
 
 <style scoped lang="scss">
-@import './FriendApplicationInfo.scss';
+@use './FriendApplicationInfo.scss';
 </style>

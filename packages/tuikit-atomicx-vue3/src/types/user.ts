@@ -1,3 +1,5 @@
+// @deprecated 请使用最新 participant.ts 文件
+
 import { defineComponent } from 'vue';
 import { PropType } from 'vue';
 import { TUIRole, TUINetworkQuality } from './types';

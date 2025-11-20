@@ -46,5 +46,5 @@ const props = withDefaults(defineProps<ConversationListContentProps>(), {
 </script>
 
 <style lang="scss" module>
-@import './ConversationListContent.scss';
+@use './ConversationListContent.scss';
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <tui-select
+  <TUISelect
     v-model="currentDeviceId"
     placeholder="placeholder"
     class="select"
@@ -8,21 +8,21 @@
     :popper-append-to-body="false"
     @change="handleChange"
   >
-    <tui-option
+    <TUIOption
       v-for="item in cameraList"
       :key="item.deviceId"
       :label="item.deviceName"
       :value="item.deviceId"
     />
-  </tui-select>
+  </TUISelect>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, defineProps, withDefaults, onBeforeMount } from 'vue';
-import TuiSelect from '../../baseComp/Select';
-import TuiOption from '../../baseComp/Option';
-import { TUIDeviceInfo } from '@tencentcloud/tuiroom-engine-js';
+import { TUISelect, TUIOption } from '@tencentcloud/uikit-base-component-vue3';
 import { useDeviceState } from '../../states/DeviceState';
+import type { TUIDeviceInfo } from '@tencentcloud/tuiroom-engine-js';
+
 const { cameraList, currentCamera, setCurrentCamera, getCameraList } = useDeviceState();
 
 interface Props {
@@ -36,12 +36,12 @@ const currentDeviceId = ref(currentCamera.value?.deviceId);
 
 watch(
   () => currentCamera.value?.deviceId,
-  val => {
+  (val) => {
     if (currentDeviceId.value !== val) {
       currentDeviceId.value = val;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 async function handleChange(deviceId: string) {
@@ -52,8 +52,8 @@ async function handleChange(deviceId: string) {
     });
   } catch (error) {
     if (
-      currentCamera.value?.deviceId &&
-      cameraList.value
+      currentCamera.value?.deviceId
+      && cameraList.value
         .map((item: TUIDeviceInfo) => item.deviceId)
         .includes(currentCamera.value?.deviceId)
     ) {
@@ -64,7 +64,7 @@ async function handleChange(deviceId: string) {
 
 onBeforeMount(async () => {
   await getCameraList();
-})
+});
 </script>
 
 <style lang="scss" scoped>

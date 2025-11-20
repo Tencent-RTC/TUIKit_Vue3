@@ -3,7 +3,9 @@ import { ref } from 'vue';
 import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
 import TUICore, { TUILogin, TUIConstants } from '@tencentcloud/tui-core';
 import TUIRoomEngine from '@tencentcloud/tuiroom-engine-js';
+import { dataReport, MetricsKey } from '../report';
 import { useLoginState } from '../states/LoginState';
+import { isMobile } from '../utils';
 
 export default class RTCLoginServer {
   private static instance: RTCLoginServer;
@@ -69,6 +71,8 @@ export default class RTCLoginServer {
 
     try {
       this.isEngineLoggingIn = true;
+      const metricsKey = !isMobile ? MetricsKey.T_METRICS_STATE_API_LOGIN_COUNT : MetricsKey.T_METRICS_STATE_API_LOGIN_MOBILE_COUNT;
+      dataReport.reportCount(metricsKey);
       await TUIChatEngine.login({
         chat,
         SDKAppID,

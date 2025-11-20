@@ -1,0 +1,124 @@
+.uikit-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--uikit-color-black-3);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-mask {
+  background: transparent;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+.uikit-modal-default {
+  width: 480px;
+  max-width: calc(100% - 40px);
+  border-radius: var(--tui-dialog-round-radius);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+
+.uikit-modal-container {
+  box-sizing: border-box;
+  background: var(--bg-color-dialog);
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 24px;
+}
+
+.uikit-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20px;
+
+  .uikit-modal-type-icon {
+    margin-right: 6px;
+  }
+}
+
+.uikit-modal-close-icon {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  cursor: pointer;
+  color: var(--text-color-primary);
+}
+
+.uikit-modal-title {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  flex: 1;
+}
+
+.uikit-modal-body {
+  flex: 1;
+  display: flex;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  color: var(--text-color-primary);
+}
+
+.uikit-modal-footer {
+  padding-top: 20px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.uikit-modal-header:not(:has(:not(:empty))),
+.uikit-modal-body:not(:has(:not(:empty))),
+.uikit-modal-footer:not(:has(:not(:empty))) {
+  padding: 0;
+}
+
+.uikit-modal-container-mobile {
+  padding: 0;
+  .uikit-modal-header {
+    padding: 0;
+    justify-content: center;
+  }
+  .uikit-modal-header .uikit-modal-title:not(:empty) {
+    padding: 20px 20px 0;
+  }
+  .uikit-modal-body{
+    justify-content: center;
+  }
+  .uikit-modal-body:not(:has(*)) {
+    padding: 20px;
+  }
+  .uikit-modal-footer {
+    padding: 0;
+    border-top: 0.5px solid var(--stroke-color-module);
+    gap: 12px;
+    .uikit-modal-footer-btn {
+      flex: 1;
+      border-radius: 0;
+      border: 0;
+      height: 56px;
+    }
+    .uikit-modal-footer-btn + .uikit-modal-footer-btn {
+      margin: 0;
+      border-left: 0.5px solid var(--stroke-color-module);
+    }
+  }
+}
+

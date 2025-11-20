@@ -13,5 +13,5 @@ const props = defineProps<ILoadingProps>();
 </script>
 
 <style lang="scss" module>
-@import './Loading.scss';
+@use './Loading.scss';
 </style>

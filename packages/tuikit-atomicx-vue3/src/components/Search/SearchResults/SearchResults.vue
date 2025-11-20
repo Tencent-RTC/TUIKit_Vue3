@@ -396,5 +396,5 @@ const generateKey = (type: SearchType, item: SearchResultItemType, index: number
 </script>
 
 <style lang="scss" module>
-@import './SearchResults.scss';
+@use './SearchResults.scss';
 </style>

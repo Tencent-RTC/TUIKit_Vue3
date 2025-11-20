@@ -16,47 +16,48 @@
       @click-more="handleMore"
     >
       <template v-if="!currentRoom">
-        <IconCameraOn size="24" v-if="isCameraTesting" />
-        <IconCameraOff size="24" v-else />
+        <IconCameraOn v-if="isCameraTesting" size="24" />
+        <IconCameraOff v-else size="24" />
       </template>
       <template v-else>
         <IconCameraOn
-          size="24"
           v-if="cameraStatus === DeviceStatus.On"
+          size="24"
         />
-        <IconCameraOff size="24" v-else />
+        <IconCameraOff v-else size="24" />
       </template>
     </icon-button>
-    <video-setting-tab v-show="showVideoSettingTab" class="video-tab" />
+    <video-setting-tab v-if="showVideoSettingTab" class="video-tab" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, defineEmits, inject } from 'vue';
+import type { Ref } from 'vue';
+import { ref, defineEmits, inject } from 'vue';
 import {
   IconCameraOn,
   IconCameraOff,
 } from '@tencentcloud/uikit-base-component-vue3';
 import IconButton from '../../baseComp/IconButton.vue';
-import VideoSettingTab from './VideoSettingTab.vue';
-import { useI18n } from '../../locales';
 import vClickOutside from '../../directives/vClickOutside';
+import { useI18n } from '../../locales';
+import { useDeviceState } from '../../states/DeviceState';
+import { useRoomParticipantState } from '../../states/RoomParticipantState';
+import { useRoomState } from '../../states/RoomState';
 import {
   MediaSettingDisplayMode,
-  VideoSettingProps,
-} from '../../types';
-import { useDeviceState } from '../../states/DeviceState';
-import { DeviceStatus, DeviceError } from '../../types';
-import useUserState from '../../states/UserState/index';
-import { useRoomState } from '../../states/RoomState';
+  DeviceStatus, DeviceError } from '../../types';
+import VideoSettingTab from './VideoSettingTab.vue';
+import type {
+  VideoSettingProps } from '../../types';
 
-const videoSettingProps: VideoSettingProps | undefined =
-  inject('videoSettingProps');
+const videoSettingProps: VideoSettingProps | undefined
+  = inject('videoSettingProps');
 
 const emits = defineEmits(['click-icon']);
-const { cameraStatus, cameraLastError, isCameraTesting, startCameraDeviceTest, stopCameraDeviceTest, openLocalCamera, closeLocalCamera } = useDeviceState();
-const { localUser } = useUserState();
+const { cameraStatus, cameraLastError, isCameraTesting, startCameraTest, stopCameraTest, openLocalCamera, closeLocalCamera } = useDeviceState();
 const { currentRoom } = useRoomState();
+const { localParticipant } = useRoomParticipantState();
 
 const { t } = useI18n();
 const showVideoSettingTab: Ref<boolean> = ref(false);
@@ -66,13 +67,13 @@ async function handleClickIcon() {
   emits('click-icon');
   if (!currentRoom.value) {
     if (isCameraTesting.value) {
-      await stopCameraDeviceTest();
+      await stopCameraTest();
     } else {
-      await startCameraDeviceTest({ view: 'video-preview' });
+      await startCameraTest({ view: 'video-preview' });
     }
     return;
   }
-  if (localUser.value?.cameraStatus === DeviceStatus.On) {
+  if (localParticipant.value?.cameraStatus === DeviceStatus.On) {
     await closeLocalCamera();
   } else {
     await openLocalCamera();

@@ -1,4 +1,5 @@
-import TUIRoomEngine, { TUIRoomDeviceManager, TRTCCloud } from '@tencentcloud/tuiroom-engine-js';
+import TUIRoomEngine, { TRTCCloud } from '@tencentcloud/tuiroom-engine-js';
+import type { TUIRoomDeviceManager } from '@tencentcloud/tuiroom-engine-js';
 
 const roomEngine: Record<string, TUIRoomEngine | null> = { instance: null };
 const deviceManager: { instance: TUIRoomDeviceManager | null | undefined } = {
@@ -13,7 +14,7 @@ TUIRoomEngine.once('ready', () => {
       params: {
         enable: true,
       },
-    })
+    }),
   );
   roomEngine.instance = new TUIRoomEngine({ isSharedInstance: true });
   deviceManager.instance = roomEngine.instance?.getMediaDeviceManager();

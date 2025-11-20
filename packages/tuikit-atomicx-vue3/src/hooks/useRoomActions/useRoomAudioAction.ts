@@ -1,12 +1,11 @@
+import { reactive, computed, defineComponent } from 'vue';
 import { TUIMediaDevice } from '@tencentcloud/tuiroom-engine-js';
-import { RoomAction } from '../../types';
-import { useI18n } from '../../locales';
-import TUIMessageBox from '../../baseComp/MessageBox';
 import { TUIToast, TOAST_TYPE } from '@tencentcloud/uikit-base-component-vue3';
+import TUIMessageBox from '../../baseComp/MessageBox';
+import { useI18n } from '../../locales';
+import { useRoomState } from '../../states/RoomState';
 import { useRoomEngine } from '../useRoomEngine';
 // import { MESSAGE_DURATION } from '../../../../constants/message';
-import { reactive, computed, defineComponent } from 'vue';
-import { useRoomState } from '../../states/RoomState';
 
 const { currentRoom } = useRoomState();
 
@@ -18,17 +17,17 @@ export default function useRoomAudioAction() {
   // todo: 测试在点击确定期间有其他管理员改变状态的 case
 
   function toggleRoomAudio() {
-    stateForAllAudio = !currentRoom.value?.isMicrophoneDisableForAllUser;
+    stateForAllAudio = !currentRoom.value?.isAllMicrophoneDisabled;
     TUIMessageBox({
-      title: currentRoom.value?.isMicrophoneDisableForAllUser
+      title: currentRoom.value?.isAllMicrophoneDisabled
         ? t('Enable all audios')
         : t('All current and new members will be muted'),
-      message: currentRoom.value?.isMicrophoneDisableForAllUser
+      message: currentRoom.value?.isAllMicrophoneDisabled
         ? t('After unlocking, users can freely turn on the microphone')
         : t('Members will not be able to open the microphone'),
       confirmButtonText: t('Confirm'),
       cancelButtonText: t('Cancel'),
-      callback: async action => {
+      callback: async (action) => {
         if (action === 'confirm') {
           doToggleRoomAudio();
         }
@@ -37,7 +36,7 @@ export default function useRoomAudioAction() {
   }
 
   async function doToggleRoomAudio() {
-    if (currentRoom.value?.isMicrophoneDisableForAllUser === stateForAllAudio) {
+    if (currentRoom.value?.isAllMicrophoneDisabled === stateForAllAudio) {
       const tipMessage = stateForAllAudio
         ? t('All audios disabled')
         : t('All audios enabled');
@@ -58,9 +57,9 @@ export default function useRoomAudioAction() {
     key: RoomAction.AudioAction,
     icon: defineComponent({}),
     label: computed(() =>
-      currentRoom.value?.isMicrophoneDisableForAllUser
+      currentRoom.value?.isAllMicrophoneDisabled
         ? t('Lift all mute')
-        : t('All mute')
+        : t('All mute'),
     ),
     handler: toggleRoomAudio,
   });

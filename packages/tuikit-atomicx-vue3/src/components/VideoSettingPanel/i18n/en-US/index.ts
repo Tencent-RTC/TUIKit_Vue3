@@ -9,4 +9,5 @@ export const resource = {
   'High Definition': 'High Definition',
   'Super Definition': 'Super Definition',
   'Off Camera': 'Off Camera',
+  'Mirror': 'Mirror',
 };

@@ -1,19 +1,17 @@
 import { computed, watch } from 'vue';
 import { TUIRole } from '@tencentcloud/tuiroom-engine-js';
-import useAudioAction from './useAudioAction';
-import useChatAction from './useChatAction';
-import useVideoAction from './useVideoAction';
-import useTransferOwnerAction from './useTransferOwnerAction';
-import useChangeNameCardAction from './useChangeNameCardAction/index';
-import useKickUserAction from './useKickUserAction';
-import useSeatAction from './useSeatAction';
-import useAdminAction from './useAdminAction';
-import { UserInfo, SeatStatus, UserAction, ActionType, UserRoomStatus } from '../../types';
 import { useRoomState } from '../../states/RoomState';
 import useUserState from '../../states/UserState/index';
-interface ObjectType {
-  [key: string]: any;
-}
+import { SeatStatus, UserRoomStatus } from '../../types';
+import useAdminAction from './useAdminAction';
+import useAudioAction from './useAudioAction';
+import useChangeNameCardAction from './useChangeNameCardAction/index';
+import useChatAction from './useChatAction';
+import useKickUserAction from './useKickUserAction';
+import useSeatAction from './useSeatAction';
+import useTransferOwnerAction from './useTransferOwnerAction';
+import useVideoAction from './useVideoAction';
+import type { UserInfo, UserAction } from '../../types';
 
 const { currentRoom } = useRoomState();
 const { localUser } = useUserState();
@@ -24,21 +22,21 @@ export function useUserActions(option: {
 }) {
   const { userInfo, actionList } = option;
   const isTargetUserMySelf = computed(
-    () => localUser.value?.userId === userInfo.userId
+    () => localUser.value?.userId === userInfo.userId,
   );
   const isTargetUserRoomOwner = computed(
-    () => userInfo.userRole === TUIRole.kRoomOwner
+    () => userInfo.userRole === TUIRole.kRoomOwner,
   );
   const isTargetUserGeneral = computed(
-    () => userInfo.userRole === TUIRole.kGeneralUser
+    () => userInfo.userRole === TUIRole.kGeneralUser,
   );
   const isTargetUserAnchor = computed(() => userInfo?.seatStatus === SeatStatus.On);
   const isTargetUserAudience = computed(() => userInfo?.seatStatus !== SeatStatus.On);
   const isCanOperateCurrentUser = computed(
     () =>
-      (localUser.value?.userRole === TUIRole.kRoomOwner && !isTargetUserRoomOwner.value) ||
-      (localUser.value?.userRole === TUIRole.kAdministrator && isTargetUserGeneral.value) ||
-      isTargetUserMySelf.value
+      (localUser.value?.userRole === TUIRole.kRoomOwner && !isTargetUserRoomOwner.value)
+      || (localUser.value?.userRole === TUIRole.kAdministrator && isTargetUserGeneral.value)
+      || isTargetUserMySelf.value,
   );
 
   const audioAction = useAudioAction(userInfo);
@@ -48,12 +46,10 @@ export function useUserActions(option: {
   const adminAction = useAdminAction(userInfo);
   const nameCardAction = useChangeNameCardAction(userInfo);
   const kickUserAction = useKickUserAction(userInfo);
-  const { inviteUserOnSeat, agreeUserOnSeat, denyUserOnSeat, kickUserOffSeat } =
-    useSeatAction(userInfo);
+  const { inviteUserOnSeat, agreeUserOnSeat, denyUserOnSeat, kickUserOffSeat }
+    = useSeatAction(userInfo);
 
-  const isUserApplyingToAnchor = computed(() => {
-    return userInfo.seatStatus === SeatStatus.OffApplicationPending
-  });
+  const isUserApplyingToAnchor = computed(() => userInfo.seatStatus === SeatStatus.OffApplicationPending);
   const agreeOrDenyStageList = computed(() => isUserApplyingToAnchor.value
     ? [agreeUserOnSeat, denyUserOnSeat]
     : []);
@@ -64,7 +60,7 @@ export function useUserActions(option: {
   const onStageControlList = computed(() =>
     isTargetUserAnchor.value
       ? [audioAction, videoAction, kickUserOffSeat]
-      : []
+      : [],
   );
 
   watch(() => JSON.stringify(userInfo), (newVal) => {
@@ -93,26 +89,25 @@ export function useUserActions(option: {
           chatAction,
           nameCardAction,
         ],
-      }
-    } else {
-      return {
-        [TUIRole.kRoomOwner]: [
-          audioAction,
-          videoAction,
-          chatAction,
-          adminAction,
-          transferOwnerAction,
-          kickUserAction,
-          nameCardAction,
-        ],
-        [TUIRole.kAdministrator]: [
-          audioAction,
-          videoAction,
-          chatAction,
-          nameCardAction,
-        ],
-      }
+      };
     }
+    return {
+      [TUIRole.kRoomOwner]: [
+        audioAction,
+        videoAction,
+        chatAction,
+        adminAction,
+        transferOwnerAction,
+        kickUserAction,
+        nameCardAction,
+      ],
+      [TUIRole.kAdministrator]: [
+        audioAction,
+        videoAction,
+        chatAction,
+        nameCardAction,
+      ],
+    };
   });
 
   const controlList = computed(() => {
@@ -151,7 +146,7 @@ export function useUserActions(option: {
     () => {
       // 这个空函数会强制 Vue 在这些数组变化时重新评估依赖它们的计算属性
     },
-    { deep: true }
+    { deep: true },
   );
 
   return {
@@ -162,5 +157,5 @@ export function useUserActions(option: {
     agreeOrDenyStageList,
     inviteStageList,
     onStageControlList,
-  }
+  };
 }

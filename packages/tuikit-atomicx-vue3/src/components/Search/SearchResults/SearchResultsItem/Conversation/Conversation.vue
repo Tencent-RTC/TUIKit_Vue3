@@ -54,5 +54,5 @@ const handleClick = () => {
 </script>
 
 <style lang="scss" module>
-@import './Conversation.scss';
+@use './Conversation.scss';
 </style>

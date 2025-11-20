@@ -44,7 +44,7 @@
         :Preview="Preview"
         :ConversationActions="ConversationActions"
         :actions-config="actionsConfig"
-        @select="handleSelectConversation"
+        @select-conversation="handleSelectConversation"
       />
     </component>
   </div>
@@ -185,5 +185,5 @@ const handleCreated = (conversation: ConversationModel) => {
 </script>
 
 <style lang="scss" module>
-@import './ConversationList.scss';
+@use './ConversationList.scss';
 </style>

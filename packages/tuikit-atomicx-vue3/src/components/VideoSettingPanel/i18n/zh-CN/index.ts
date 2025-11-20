@@ -9,4 +9,5 @@ export const resource = {
   'High Definition': '高清',
   'Super Definition': '超清',
   'Off Camera': '摄像头已关闭',
+  'Mirror': '镜像',
 };

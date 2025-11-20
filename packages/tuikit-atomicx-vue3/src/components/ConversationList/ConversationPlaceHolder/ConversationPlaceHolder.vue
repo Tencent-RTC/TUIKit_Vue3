@@ -74,5 +74,5 @@ const placeholderText = computed(() => {
 </script>
 
 <style lang="scss" module>
-@import './ConversationPlaceHolder.scss';
+@use './ConversationPlaceHolder.scss';
 </style>

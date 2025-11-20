@@ -3,23 +3,20 @@
     <audio-media-control
       v-if="
         displayMode === MediaSettingDisplayMode.Icon ||
-        displayMode === MediaSettingDisplayMode.IconWithPanel
+          displayMode === MediaSettingDisplayMode.IconWithPanel
       "
       @click-icon="handleAudioMediaClick"
     />
     <audio-setting-tab v-if="displayMode === MediaSettingDisplayMode.Panel" />
-    <audio-request-dialog
-      v-if="displayMode !== MediaSettingDisplayMode.Panel"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { withDefaults, defineProps, reactive, provide, defineEmits } from 'vue';
+import { MediaSettingDisplayMode } from '../../types';
 import AudioMediaControl from './AudioMediaControl.vue';
 import AudioSettingTab from './AudioSettingTab.vue';
-import AudioRequestDialog from './AudioRequestDialog.vue';
-import { AudioSettingProps, MediaSettingDisplayMode } from '../../types';
+import type { AudioSettingProps } from '../../types';
 
 const emits = defineEmits(['click-icon']);
 function handleAudioMediaClick() {

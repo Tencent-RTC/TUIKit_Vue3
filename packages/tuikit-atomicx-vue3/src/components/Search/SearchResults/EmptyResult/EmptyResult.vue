@@ -28,5 +28,5 @@ const text = computed(() => props.text || t('Search.status.noContent'));
 </script>
 
 <style lang="scss" module>
-@import './EmptyResult.scss';
+@use './EmptyResult.scss';
 </style>
