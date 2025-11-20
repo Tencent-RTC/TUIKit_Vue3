@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@tencentcloud/call-uikit-vue": "^4.0.11",
-    "@tencentcloud/chat-uikit-vue3": "3.4.3",
+    "@tencentcloud/chat-uikit-vue3": "3.4.2",
     "@tencentcloud/livekit-web-vue3": "3.4.2",
     "@tencentcloud/uikit-base-component-vue3": "1.1.0",
     "@tencentcloud/uikit-base-widget-vue3": "1.1.1",
