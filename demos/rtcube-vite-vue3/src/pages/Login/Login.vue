@@ -191,6 +191,7 @@ const goBack = () => {
 @use "../../styles/mixins" as mixins;
 
 .login {
+  flex: 1;
   height: 100%;
   background: radial-gradient(1200px 600px at 20% 0%, rgba(79,142,247,0.18), transparent),
               radial-gradient(900px 500px at 90% 10%, rgba(139,125,255,0.16), transparent),
