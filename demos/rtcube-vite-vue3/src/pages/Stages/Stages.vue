@@ -234,10 +234,11 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .stage-page {
-  height: 100vh;
+  flex: 1;
   display: flex;
   flex-direction: column;
   background: #f8fafc;
+  overflow: auto;
 }
 
 .stage-header {

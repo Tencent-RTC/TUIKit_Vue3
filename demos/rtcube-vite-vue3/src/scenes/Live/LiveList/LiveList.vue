@@ -14,14 +14,14 @@
 
 <script setup lang="ts">
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { LiveList, useLiveState } from 'tuikit-atomicx-vue3';
+import { LiveList, useLiveListState } from 'tuikit-atomicx-vue3';
 import { useRouter } from 'vue-router';
 import type { LiveInfo } from 'tuikit-atomicx-vue3';
 
 const { t } = useUIKit();
 
 const router = useRouter();
-const { joinLive } = useLiveState();
+const { joinLive } = useLiveListState();
 
 const backToMain = () => {
   router.back();
