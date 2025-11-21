@@ -1,31 +1,25 @@
 <template>
   <div class="video-preview-container">
-    <div
-      id="video-preview"
-      class="video-preview"
-    />
+    <div id="video-preview" class="video-preview"></div>
     <div class="attention-info">
       <span
         v-if="!isCameraTesting && !isCameraTestLoading"
         class="off-camera-info"
-      >{{ t('Off Camera') }}
+        >{{ t('Off Camera') }}
       </span>
-      <IconLoading
-        v-if="isCameraTestLoading"
-        size="36"
-        class="loading"
-      />
+      <IconLoading size="36" v-if="isCameraTestLoading" class="loading" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
+import { IconLoading } from '@tencentcloud/uikit-base-component-vue3';
+import { useI18n } from '../../locales';
 import TUIRoomEngine from '@tencentcloud/tuiroom-engine-js';
-import { IconLoading, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useDeviceState } from '../../states/DeviceState';
+import useDeviceState from '../../states/DeviceState';
 
-const { t } = useUIKit();
+const { t } = useI18n();
 const { isCameraTesting, isCameraTestLoading, startCameraDeviceTest, stopCameraDeviceTest } = useDeviceState();
 
 onMounted(async () => {
@@ -89,3 +83,4 @@ onUnmounted(async () => {
   }
 }
 </style>
+../../states/DeviceState

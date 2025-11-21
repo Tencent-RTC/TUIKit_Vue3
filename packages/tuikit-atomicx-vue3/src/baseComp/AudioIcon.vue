@@ -60,7 +60,7 @@ const audioLevelStyle = computed(() => {
   }
 
   .audio-icon {
-    position: relative;
+    position: absolute;
     top: 0;
     left: 0;
   }

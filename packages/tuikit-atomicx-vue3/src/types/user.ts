@@ -45,6 +45,10 @@ export enum RequestType {
   Connection = 'Connection',
 }
 
+export interface BattleInfo {
+  score: number;
+}
+
 export interface UserInfo {
   // 基础信息
   userId: string;

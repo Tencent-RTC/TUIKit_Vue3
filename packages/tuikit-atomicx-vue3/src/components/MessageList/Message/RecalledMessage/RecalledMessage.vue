@@ -4,33 +4,32 @@
     :style="props.style"
   >
     <template v-if="isMessageOwner">
-      {{ `${t('MessageList.you')} ${t('MessageList.recalled_a_message')}` }}
+      {{ t('TUIChat.You') }}{{ t('TUIChat.recalled a message') }}
       <View
         v-if="isTextMessage"
         role="button"
         class="recalled-message__button"
         @click="recallMessageToInput"
       >
-        {{ t('MessageList.reedit') }}
+        {{ t('TUIChat.Re-edit') }}
       </View>
     </template>
     <template v-else>
-      {{ `${otherDisplayName} ${t('MessageList.recalled_a_message')}` }}
+      {{ otherDisplayName }} {{ t('TUIChat.recalled a message') }}
     </template>
   </View>
 </template>
 
 <script lang="ts" setup>
 import { computed } from 'vue';
+import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
-import { useMessageInputState } from '../../../../states/MessageInputState';
 import { View } from '../../../../baseComp/View';
-import { MessageType } from '../../../../types';
-import type { MessageModel } from '../../../../types';
+import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
 
 interface IRecalledMessageProps {
-  message: MessageModel;
+  message: IMessageModel;
   class?: string;
   style?: Record<string, any>;
 }
@@ -41,9 +40,18 @@ const props = withDefaults(defineProps<IRecalledMessageProps>(), {
 });
 
 const { t } = useUIKit();
-const { setContent, focusEditor } = useMessageInputState();
 
-const isTextMessage = computed(() => props.message.type === MessageType.TEXT as any);
+// Assuming Vue version has similar inputStore
+// Need to implement or import the corresponding store when actually used
+const setInputValue = (text: string) => {
+  // Implement logic to set input value
+  console.log('Set input value:', text);
+};
+const inputElementRef = {
+  current: null as HTMLElement | null,
+};
+
+const isTextMessage = computed(() => props.message.type === TUIChatEngine.TYPES.MSG_TEXT);
 const isMessageOwner = computed(() => props.message.flow === 'out');
 const otherDisplayName = computed(() => props.message.nick || props.message.from || '');
 
@@ -51,8 +59,8 @@ function recallMessageToInput() {
   // Assuming Vue version has similar transformTextWithEmojiKeyToName function
   // Need to implement or import the corresponding function when actually used
   const transformedText = props.message.payload.text;
-  setContent(transformedText);
-  focusEditor();
+  setInputValue(transformedText);
+  inputElementRef.current?.focus();
 }
 </script>
 

@@ -2,18 +2,18 @@
   <div class="panel-content">
     <div class="panel-header">
       <div class="tabs">
-        <span
+        <button
           :class="['tab-item', { active: activeTab === 'applications' }]"
           @click="activeTab = 'applications'"
         >
           {{ t('Application for live') }}
-        </span>
-        <span
+        </button>
+        <button
           :class="['tab-item', { active: activeTab === 'invitations' }]"
           @click="activeTab = 'invitations'"
         >
-          {{ t('Co-guest management') }}
-        </span>
+          {{ t('Invite for live') }}
+        </button>
       </div>
     </div>
     <div class="panel-body">
@@ -22,32 +22,29 @@
         class="applications-content"
       >
         <div
-          v-if="applicants.length > 0"
+          v-if="receivedCoGuestUserList.length > 0"
           class="user-list-container"
         >
           <div class="user-list">
             <div
-              v-for="user in applicants"
+              v-for="user in receivedCoGuestUserList"
               :key="user.userId"
               class="user-item"
             >
               <div class="user-item-left">
-                <Avatar
-                  :src="user.avatarUrl"
-                  :size="40"
-                />
+                <Avatar :src="user.avatarUrl" :size="40" />
               </div>
               <div class="user-item-right">
                 <div class="user-info">
                   <span class="user-name">{{ user.userName || user.userId }}</span>
                 </div>
                 <div class="user-actions">
-                  <TUIButton @click="handleAcceptCoGuestRequest(user.userId)">
+                  <TUIButton @click="acceptCoGuestRequest({ userId: user.userId })">
                     {{ t('Accept') }}
                   </TUIButton>
                   <TUIButton
                     color="red"
-                    @click="handleRejectCoGuestRequest(user.userId)"
+                    @click="rejectCoGuestRequest({ userId: user.userId })"
                   >
                     {{
                       t('Reject')
@@ -73,21 +70,17 @@
           <div class="user-list-title">
             <span class="user-list-title-text">{{ t('Current seat') }}</span>
             <span class="user-list-title-count">
-              {{ `(${connected.length})` }}
-              <!-- {{ `(${connected.length}/${ seatList.length})` }} -->
+              {{ `(${userListInCoGuest.length}/${ seatList.length})` }}
             </span>
           </div>
           <div class="user-list">
             <div
-              v-for="user in connected"
+              v-for="user in userListInCoGuest"
               :key="user.userId"
               class="user-item"
             >
               <div class="user-item-left">
-                <Avatar
-                  :src="user.avatarUrl"
-                  :size="40"
-                />
+                <Avatar :src="user.avatarUrl" :size="40" />
               </div>
               <div class="user-item-right">
                 <div class="user-info">
@@ -103,7 +96,7 @@
                 >
                   <TUIButton
                     color="gray"
-                    @click="handleDisconnect(user.userId)"
+                    @click="disconnect(user.userId)"
                   >
                     {{ t('Disconnect') }}
                   </TUIButton>
@@ -112,10 +105,81 @@
             </div>
           </div>
           <div
-            v-if="connected.length === 0"
+            v-if="userListInCoGuest.length === 0"
             class="empty-state"
           >
             <span>{{ t('Seat is empty') }}</span>
+          </div>
+        </div>
+        <div
+          v-if="sentCoGuestUserList.length > 0"
+          class="user-list-container"
+        >
+          <div class="user-list-title">
+            <span class="user-list-title-text">{{ t('Inviting') }}</span>
+          </div>
+          <div class="user-list">
+            <div
+              v-for="user in sentCoGuestUserList"
+              :key="user.userId"
+              class="user-item"
+            >
+              <div class="user-item-left">
+                <Avatar :src="user.avatarUrl" :size="40" />
+              </div>
+              <div class="user-item-right">
+                <div class="user-info">
+                  <span class="user-name">{{ user.userName || user.userId }}</span>
+                </div>
+                <div class="user-actions">
+                  <TUIButton
+                    color="gray"
+                    @click="cancelCoGuestRequest({ userId: user.userId })"
+                  >
+                    {{
+                      t('Cancel')
+                    }}
+                  </TUIButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="user-list-container">
+          <div class="user-list-title">
+            <span class="user-list-title-text">{{ t('Invite more') }}</span>
+          </div>
+          <div class="user-list">
+            <div
+              v-for="user in availableCoGuestUserList"
+              :key="user.userId"
+              class="user-item"
+            >
+              <div class="user-item-left">
+                <Avatar :src="user.avatarUrl" :size="40" />
+              </div>
+              <div class="user-item-right">
+                <div class="user-info">
+                  <span class="user-name">{{ user.userName || user.userId }}</span>
+                </div>
+                <div class="user-actions">
+                  <TUIButton
+                    color="gray"
+                    @click="sendCoGuestRequest({ userId: user.userId })"
+                  >
+                    {{
+                      t('Invite')
+                    }}
+                  </TUIButton>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            v-if="availableCoGuestUserList.length === 0"
+            class="empty-state"
+          >
+            <span>{{ t('No invited users yet') }}</span>
           </div>
         </div>
       </div>
@@ -125,58 +189,30 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { TUIButton, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useCoGuestState } from '../../states/CoGuestState';
 import { useLoginState } from '../../states/LoginState';
-import { useLiveSeatState } from '../../states/LiveSeatState';
+import { useSeatStore } from '../../states/SeatStore';
 import { Avatar } from '../Avatar';
-import { ERROR_MESSAGE } from './constants';
 
 const { t } = useUIKit();
 
 const { loginUserInfo } = useLoginState();
+const { seatList } = useSeatStore();
 
 const {
-  connected,
-  applicants,
-  acceptApplication,
-  rejectApplication,
+  receivedCoGuestUserList,
+  availableCoGuestUserList,
+  sentCoGuestUserList,
+  userListInCoGuest,
+  sendCoGuestRequest,
+  acceptCoGuestRequest,
+  rejectCoGuestRequest,
+  cancelCoGuestRequest,
+  disconnect,
 } = useCoGuestState();
 
-const { kickUserOutOfSeat } = useLiveSeatState();
-
 const activeTab = ref('applications');
-
-const handleAcceptCoGuestRequest = async (userId: string) => {
-  try {
-    await acceptApplication({ userId });
-  } catch (error: any) {
-    const message = t(ERROR_MESSAGE[error.code as keyof typeof ERROR_MESSAGE] || 'Accept co-guest request failed');
-    TUIToast.error({ message });
-  }
-};
-
-const handleRejectCoGuestRequest = async (userId: string) => {
-  try {
-    await rejectApplication({ userId });
-  } catch (error) {
-    console.error('[CoGuestPanel] handleRejectCoGuestRequest error', error);
-    TUIToast.error({
-      message: t('Reject co-guest request failed'),
-    });
-  }
-};
-
-const handleDisconnect = async (userId: string) => {
-  try {
-    await kickUserOutOfSeat({ userId });
-  } catch (error) {
-    console.error('[CoGuestPanel] handleDisconnect error', error);
-    TUIToast.error({
-      message: t('Disconnect co-guest failed'),
-    });
-  }
-};
 </script>
 
 <style lang="scss" scoped>
@@ -208,7 +244,6 @@ const handleDisconnect = async (userId: string) => {
         cursor: pointer;
         position: relative;
         transition: color 0.3s ease;
-        user-select: none;
 
         &.active {
           color: var(--text-color-link);
@@ -310,16 +345,7 @@ const handleDisconnect = async (userId: string) => {
         font-size: 16px;
         font-weight: 500;
         color: var(--text-color-primary);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 200px;
       }
-    }
-
-    .user-actions {
-      display: flex;
-      gap: 6px;
     }
   }
 }

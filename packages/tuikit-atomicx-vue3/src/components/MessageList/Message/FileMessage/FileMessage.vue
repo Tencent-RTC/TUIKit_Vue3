@@ -59,7 +59,7 @@ const handleFileClick = async (event: MouseEvent) => {
       window.URL.revokeObjectURL(blobUrl);
     } catch {
       TUIToast.error({
-        message: t('MessageList.download_failed'),
+        message: t('TUIChat.Download failed'),
       });
     }
   }

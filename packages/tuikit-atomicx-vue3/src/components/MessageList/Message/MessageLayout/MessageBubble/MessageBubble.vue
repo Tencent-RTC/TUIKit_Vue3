@@ -5,7 +5,7 @@ import cs from 'classnames';
 import { useMessageListState } from '../../../../../states/MessageListState';
 import { MessageActionDropdown } from '../MessageActionDropdown';
 import type { MessageAction } from '../../../../../hooks/useMessageActions';
-import type { MessageModel } from '../../../../../types/engine';
+import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
 
 interface MessageBubbleProps {
   message: MessageModel;

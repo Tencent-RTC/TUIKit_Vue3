@@ -1,1 +1,0 @@
-export { default as BlacklistInfo } from './BlacklistInfo.vue';

@@ -88,10 +88,10 @@
 import { defineProps, defineEmits, computed } from 'vue';
 import { IconArrowDown, IconCheckSm, IconLoading } from '@tencentcloud/uikit-base-component-vue3';
 import { Avatar } from '../../../Avatar';
-import type { UserPickerNode } from '../../type';
+import type { IUserPickerNode } from '../../type';
 
 interface TreeNodeProps<T = unknown> {
-  node: UserPickerNode<T>;
+  node: IUserPickerNode<T>;
   level: number;
   selectedKeys: Set<string>;
   halfSelectedKeys: Set<string>;
@@ -105,7 +105,7 @@ const props = defineProps<TreeNodeProps>();
 
 const emit = defineEmits<{
   'item-click': [key: string];
-  expand: [node: UserPickerNode<any>];
+  expand: [node: IUserPickerNode<any>];
 }>();
 
 const isSelected = computed(() => props.selectedKeys.has(props.node.key));

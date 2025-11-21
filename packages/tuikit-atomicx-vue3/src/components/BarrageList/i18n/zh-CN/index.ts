@@ -9,5 +9,4 @@ export const resource = {
   'Mute Success': '禁言成功',
   'Unmute Success': '解除禁言成功',
   'This message contains risky content': '该消息包含风险内容',
-  'Anchor': '主播',
 };

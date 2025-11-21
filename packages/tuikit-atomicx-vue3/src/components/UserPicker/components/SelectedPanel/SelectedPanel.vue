@@ -4,7 +4,7 @@
     :class="$style.selected__panel"
   >
     <div :class="$style.selected__header">
-      <span :class="$style.selected__title">{{ t('UserPicker.selected') }}</span>
+      <span :class="$style.selected__title">{{ t('TUIChat.Selected') }}</span>
       <span :class="$style.selected__count">
         {{ leafItems.length }}
         <template v-if="maxCount < InfinityValue"> / {{ maxCount }} </template>
@@ -48,13 +48,13 @@
 import { defineProps, computed, withDefaults } from 'vue';
 import { IconClose, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { Avatar } from '../../../Avatar';
-import type { UserPickerResult } from '../../type';
+import type { IUserPickerResult } from '../../type';
 
 const { t } = useUIKit();
 
 interface SelectedPanelProps {
   displayMode: 'list' | 'tree';
-  selectedItems: UserPickerResult;
+  selectedItems: IUserPickerResult;
   lockedKeys: Set<string>;
   onRemove: (key: string) => void;
   maxCount?: number;

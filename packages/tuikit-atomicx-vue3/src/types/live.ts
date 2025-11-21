@@ -1,5 +1,7 @@
 // Import from local types
-import type { TUISeatMode, TUILoginUserInfo, TUIVideoStreamType } from './types';
+import { TUISeatMode } from './types';
+import { TUISeatLayoutTemplate } from '@tencentcloud/tuiroom-engine-js';
+import type { TUILoginUserInfo, TUIVideoStreamType } from './types';
 
 export type LiveInfo = {
   liveId: string;
@@ -19,7 +21,7 @@ export type LiveInfo = {
   isSeatEnabled: boolean;
   seatMode: TUISeatMode;
   maxSeatCount: number;
-  layoutTemplate: number;
+  layoutTemplate: TUISeatLayoutTemplate;
   customInfo: Record<string, any>;
 };
 
@@ -31,6 +33,14 @@ export enum LiveType {
 export enum LiveOrientation {
   Landscape = 'landscape',
   Portrait = 'portrait',
+}
+
+export enum LiveStatus {
+  IDLE = 'IDLE', // 未进入直播间的状态
+  NotStarted = 'NotStarted', // 进入直播间，直播未开始
+  Live = 'Live', // 进入直播间，直播中
+  Paused = 'Paused', // 进入直播间，直播暂停中，优先级低
+  Ended = 'Ended', // 进入直播间，直播已结束
 }
 
 export interface LayoutItem {
@@ -67,20 +77,20 @@ export interface LayoutInfo {
 export interface CreateLiveParams {
   liveId: string;
   liveName: string;
-  notice?: string;
-  isMessageDisableForAllUser?: boolean;
-  isGiftEnabled?: boolean;
-  isLikeEnabled?: boolean;
-  isPublicVisible?: boolean;
-  isSeatEnabled?: boolean;
-  keepOwnerOnSeat?: boolean;
-  seatLayoutTemplateId?: number;
-  maxSeatCount?: number;
-  seatMode?: TUISeatMode;
-  coverUrl?: string;
-  backgroundUrl?: string;
-  categoryList?: Array<number>;
-  activityStatus?: number;
+  notice: string;
+  isMessageDisableForAllUser: boolean;
+  isGiftEnabled: boolean;
+  isLikeEnabled: boolean;
+  isPublicVisible: boolean;
+  isSeatEnabled: boolean;
+  keepOwnerOnSeat: boolean;
+  seatLayoutTemplateId: number;
+  maxSeatCount: number;
+  seatMode: TUISeatMode;
+  coverUrl: string;
+  backgroundUrl: string;
+  categoryList: Array<number>;
+  activityStatus: number;
 }
 
 export interface JoinLiveParams {
@@ -88,38 +98,10 @@ export interface JoinLiveParams {
 }
 
 export interface UpdateLiveInfoParams {
-  liveId?: string;
+  liveId: string;
   activityStatus?: number;
   categoryList?: Array<number>;
   coverUrl?: string;
   backgroundUrl?: string;
   isPublicVisible?: boolean;
-  layoutTemplate?: number;
 }
-
-export enum LiveListEvent {
-  onLiveEnded = 'onLiveEnded',
-  onKickedOutOfLive = 'onKickedOutOfLive',
-}
-
-export enum LiveEndedReason {
-  endedByHost = 1,
-  endedByServer = 2,
-}
-
-export enum LiveKickedOutReason {
-  byAdmin = 0,
-  byLoggedOnOtherDevice = 1,
-  byServer = 2,
-  forNetworkDisconnected = 3,
-  forJoinRoomStatusInvalidDuringOffline = 4,
-  forCountOfJoinedRoomsExceedLimit = 5,
-}
-
-export interface LiveListEventInfo {
-  liveId: string;
-  reason: LiveEndedReason | LiveKickedOutReason;
-  message: string;
-}
-
-export type LiveListEventCallback = (eventInfo: LiveListEventInfo) => void;

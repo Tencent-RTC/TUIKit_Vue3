@@ -20,28 +20,23 @@
 </template>
 
 <script setup lang="ts">
-import { watch, inject, ref } from 'vue';
+import { watch, inject } from 'vue';
 import CameraSelect from './CameraSelect.vue';
 import VideoProfile from './VideoProfile.vue';
 import VideoPreview from './VideoPreview.vue';
 import TuiSwitch from '../../baseComp/TuiSwitch.vue';
 import { useI18n } from '../../locales';
-import { useDeviceState } from '../../states/DeviceState';
+import useDeviceState from '../../states/DeviceState';
 import { VideoSettingProps } from '../../types';
-import { MirrorType } from '../../types';
-
 const { t } = useI18n();
-const { switchMirror } = useDeviceState();
-
-const isLocalMirror = ref(true);
-
+const { isLocalMirror, switchMirror } = useDeviceState();
 const videoSettingProps: VideoSettingProps | undefined =
   inject('videoSettingProps');
 
 watch(
   isLocalMirror,
   async (val: boolean) => {
-    switchMirror({ mirror: val ? MirrorType.Auto : MirrorType.Disable });
+    switchMirror({ mirror: val });
   },
   { immediate: true }
 );
@@ -96,3 +91,4 @@ watch(
   }
 }
 </style>
+../../states/DeviceState

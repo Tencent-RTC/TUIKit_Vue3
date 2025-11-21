@@ -1,28 +1,26 @@
 <template>
   <TUIButton
     type="primary"
-    radius="round"
+    shape="round"
     size="medium"
     :disabled="disabled"
     @click="onSendButtonClick"
   >
-    {{ t('MessageInput.send') }}
+    {{ t('TUIChat.Send') }}
   </TUIButton>
 </template>
 
 <script setup lang="ts">
 import { TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 
-interface SendButtonProps {
-  onClick?: (e: TouchEvent) => void;
+interface Props {
+  onClick?: (e: MouseEvent) => void;
   disabled?: boolean;
 }
 
-const props = defineProps<SendButtonProps>();
-
+const props = defineProps<Props>();
 const { t } = useUIKit();
-
-function onSendButtonClick(e: TouchEvent) {
+function onSendButtonClick(e: MouseEvent) {
   if (!props.disabled && props.onClick) {
     props.onClick(e);
   }

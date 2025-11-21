@@ -3,7 +3,7 @@
     v-if="dataSource.length === 0"
     :class="$style.list__empty"
   >
-    {{ t('UserPicker.no_data_available') }}
+    {{ t('TUIChat.No Data Available') }}
   </div>
   <div
     v-else
@@ -27,7 +27,10 @@
         <!-- Checkbox -->
         <div :class="$style['list__checkbox-wrapper']">
           <div :class="[$style.list__checkbox, { [$style['list__checkbox--checked']]: isSelected(item.key) }]">
-            <IconCheckSm v-if="isSelected(item.key)" />
+            <IconCheckSm
+              v-if="isSelected(item.key)"
+              name="check"
+            />
           </div>
         </div>
 
@@ -58,10 +61,10 @@
 import { defineProps } from 'vue';
 import { useUIKit, IconCheckSm } from '@tencentcloud/uikit-base-component-vue3';
 import { Avatar } from '../../../Avatar';
-import type { UserPickerRow } from '../../type';
+import type { IUserPickerRow } from '../../type';
 
 interface ListModeProps<T = unknown> {
-  dataSource: UserPickerRow<T>[];
+  dataSource: Array<IUserPickerRow<T>>;
   selectedKeys: Set<string>;
   lockedKeys: Set<string>;
   onItemClick: (key: string) => void;
@@ -147,6 +150,7 @@ const handleScroll = (e: Event) => {
     align-items: center;
     justify-content: center;
     transition: all 0.3s;
+    color: #fff;
     border: 2px solid #d9d9d9;
 
     &--checked {

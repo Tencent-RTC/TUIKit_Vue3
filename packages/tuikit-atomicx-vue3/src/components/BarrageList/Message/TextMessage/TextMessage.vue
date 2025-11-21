@@ -1,20 +1,40 @@
 <template>
   <div class="text-message">
+    <div
+      v-if="referencedInfo.content"
+      :class="
+        cs('text-message__reference', {
+          'text-danger': isOriginMessageHasRecalled,
+        })
+      "
+      @click="handleReferenceClick"
+    >
+      <template v-if="isOriginMessageHasRecalled">
+        {{ t('TUIChat.origin message has been recalled') }}
+      </template>
+      <template v-else>
+        <div class="text-message__reference__header">
+          {{ referencedInfo.sender }}
+        </div>
+        <div class="text-message__reference__content">
+          {{ referencedInfo.content }}
+        </div>
+      </template>
+    </div>
     <div class="text-message__content">
       <component
         :is="context.slots['user-badge']"
         :message="message"
       />
-      <span v-if="message.sender.userId === currentLive?.liveOwner.userId && !context.slots['user-badge']" class="user-badge">{{ t('Anchor') }}</span>
       <span
         class="text-message__content__nick"
         @click="handleNickClick"
       >
         {{
-          `${message.sender.nameCard || message.sender.userName || message.sender.userId}: `
+          `${message.nick || message.from}: `
         }}</span>
       <template
-        v-for="(item, index) in messageContent"
+        v-for="(item, index) in messageContent.text"
         :key="index"
       >
         <span
@@ -37,92 +57,96 @@
 <script lang="ts" setup>
 import type { VueElement } from 'vue';
 import { computed, withDefaults, defineProps } from 'vue';
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useLiveListState } from '../../../../states/LiveListState';
+import { TUIStore } from '@tencentcloud/chat-uikit-engine';
+import { useUIKit, TUIToast } from '@tencentcloud/uikit-base-component-vue3';
+import cs from 'classnames';
+import { useScroll } from '../../../../hooks/useScroll';
+import { useBarrageListState } from '../../../../states/BarrageListState';
+import { safeJSONParse } from '../../../../utils/json';
 import { useMessageListContext } from '../../MessageListContext';
-import { BASEURL, BASIC_EMOJI_URL_MAPPING } from './emoji';
-import type { Barrage } from '../../../../states/BarrageState';
+import type { ICloudCustomData } from '../../../../types/message';
+import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
 
-const { currentLive } = useLiveListState();
 const context: {
   slots: Record<string, () => VueElement>;
-  nickClick: (data: { message: Barrage; event: MouseEvent }) => void;
+  nickClick: (payload: { message: IMessageModel; event: MouseEvent }) => void;
 } = useMessageListContext('');
 
 const props = withDefaults(
   defineProps<{
-    message: Barrage;
+    message: IMessageModel;
     isLastInChunk: boolean;
   }>(),
   {
-    message: () => ({}) as Barrage,
+    message: () => ({}) as IMessageModel,
     isLastInChunk: false,
   },
 );
 
 const { t } = useUIKit();
+const { scrollToMessage } = useScroll();
+const { highlightMessageIDList, recalledMessageIDSet } = useBarrageListState();
 
-const messageContent = computed(() => {
-  const renderDom = [];
-  let temp = props.message.textContent || '';
-  let left = -1;
-  let right = -1;
-  while (temp !== '') {
-    left = temp.indexOf('[');
-    right = temp.indexOf(']');
-    switch (left) {
-      case 0:
-        if (right === -1) {
-          renderDom.push({
-            name: 'text',
-            text: temp,
-          });
-          temp = '';
-        } else {
-          const emojiKey = temp.slice(0, right + 1);
-          // 自定义 emoji 表情 emojiKey 必须带 @custom 标识，比如：'[@custom_Smile]'
-          if (emojiKey.indexOf('@custom') > -1) {
-            renderDom.push({
-              name: 'img',
-              src: '',
-              type: 'custom',
-              emojiKey,
-            });
-            temp = temp.substring(right + 1);
-          } else if (BASIC_EMOJI_URL_MAPPING[emojiKey]) {
-            renderDom.push({
-              name: 'img',
-              src: BASEURL.emoji + BASIC_EMOJI_URL_MAPPING[emojiKey],
-              emojiKey,
-            });
-            temp = temp.substring(right + 1);
-          } else {
-            renderDom.push({
-              name: 'text',
-              text: '[',
-            });
-            temp = temp.slice(1);
-          }
+const messageContent = computed(
+  () =>
+    props.message.getMessageContent() as {
+      showName: string;
+      text: Array<
+        | {
+          name: 'text';
+          text: string;
         }
-        break;
-      case -1:
-        renderDom.push({
-          name: 'text',
-          text: temp,
-        });
-        temp = '';
-        break;
-      default:
-        renderDom.push({
-          name: 'text',
-          text: temp.slice(0, left),
-        });
-        temp = temp.substring(left);
-        break;
-    }
-  }
-  return renderDom;
+        | {
+          name: 'img';
+          src: string;
+          emojiKey?: string;
+        }
+      >;
+    },
+);
+
+const referencedInfo = computed(() => {
+  const cloudCustomData = safeJSONParse(props.message?.cloudCustomData, {}) as Partial<ICloudCustomData>;
+  const content = cloudCustomData?.messageReply?.messageAbstract || '';
+  const sender = cloudCustomData?.messageReply?.messageSender || '';
+  const messageID = cloudCustomData?.messageReply?.messageID || '';
+  return {
+    content,
+    sender,
+    messageID,
+  };
 });
+
+const isOriginMessageHasRecalled = computed(() => recalledMessageIDSet.value.has(referencedInfo.value.messageID));
+
+const handleReferenceClick = () => {
+  if (referencedInfo.value.messageID) {
+    const { messageID } = referencedInfo.value;
+
+    const messageModel = TUIStore.getMessageModel(messageID);
+    if (isOriginMessageHasRecalled.value || !messageModel || messageModel.isDeleted || messageModel.isRevoked) {
+      TUIToast.error({
+        message: t('TUIChat.Message has been deleted or recalled'),
+      });
+      return;
+    }
+
+    const isExist = highlightMessageIDList.value.includes(messageID);
+
+    if (!isExist) {
+      highlightMessageIDList.value.push(messageID);
+      setTimeout(() => {
+        highlightMessageIDList.value = highlightMessageIDList.value.filter(id => id !== messageID);
+      }, 3000);
+    }
+
+    scrollToMessage(messageID, {
+      block: 'center',
+      skipIfVisible: true,
+      behavior: 'instant',
+    }).catch(() => {});
+  }
+};
 
 const handleNickClick = (event: MouseEvent) => {
   context.nickClick({
@@ -193,21 +217,14 @@ const handleNickClick = (event: MouseEvent) => {
     word-spacing: 0.2em;
     letter-spacing: 0.1em;
 
-    .user-badge {
-      background-color: var(--uikit-color-theme-6);
-      border-radius: 12px;
-      padding: 0px 8px;
-      margin-right: 6px;
-    }
-
     &__nick {
-      color: var(--text-color-secondary);
+      color: var(--text-color-link);
       cursor: pointer;
     }
 
     &__nick:hover {
-      // color: var(--text-color-link-active);
-      // font-weight: 600;
+      color: var(--text-color-link-active);
+      font-weight: 600;
     }
 
     &__text {

@@ -17,7 +17,7 @@ import { onMounted, onUnmounted } from 'vue';
 import { IconLoading } from '@tencentcloud/uikit-base-component-vue3';
 import { useI18n } from '../../locales';
 import TUIRoomEngine from '@tencentcloud/tuiroom-engine-js';
-import { useDeviceState } from '../../states/DeviceState';
+import useDeviceState from '../../states/DeviceState';
 
 const { t } = useI18n();
 const { isCameraTesting, isCameraTestLoading, startCameraDeviceTest, stopCameraDeviceTest } = useDeviceState();
@@ -83,3 +83,4 @@ onUnmounted(async () => {
   }
 }
 </style>
+../../states/DeviceState

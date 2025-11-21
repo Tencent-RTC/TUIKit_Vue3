@@ -49,7 +49,7 @@
       </div>
     </div>
     <div
-      v-if="loginUserInfo && currentLive?.liveId && !isOwner"
+      v-if="loginUserInfo && localLiveStatus === LiveStatus.Live"
       class="viewer-item current-user-item"
     >
       <span class="rank">-</span>
@@ -75,11 +75,12 @@ import type { CSSProperties } from 'vue';
 import { computed, defineProps, ref, onMounted, onUnmounted } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveAudienceState } from '../../states/LiveAudienceState';
-import { useLiveListState } from '../../states/LiveListState';
+import { useLiveState } from '../../states/LiveState';
 import { useLoginState } from '../../states/LoginState';
-import { Avatar } from '../Avatar';
+import { LiveStatus } from '../../types';
 import UserActionMenu from './UserActionMenu.vue';
 import type { AudienceInfo } from '../../types';
+import { Avatar } from '../Avatar';
 
 const { t } = useUIKit();
 const currentViewerTarget = ref<HTMLElement | null>(null);
@@ -91,7 +92,7 @@ const props = defineProps<{
 }>();
 const { loginUserInfo } = useLoginState();
 const { audienceList, audienceCount, fetchAudienceList } = useLiveAudienceState();
-const { currentLive } = useLiveListState();
+const { localLiveStatus, currentLive } = useLiveState();
 
 const getRankClass = (rank: number) => {
   switch (rank) {
