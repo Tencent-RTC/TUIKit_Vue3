@@ -554,5 +554,5 @@ const handleH5Cancel = () => {
 </script>
 
 <style lang="scss" module>
-@import './DateRangePicker.scss';
+@use './DateRangePicker.scss';
 </style>

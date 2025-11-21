@@ -310,5 +310,5 @@ const emptyText = computed(() => props.emptyText || t('TUIContact.No contacts'))
 </script>
 
 <style scoped lang="scss">
-@import './ContactList.scss';
+@use './ContactList.scss';
 </style>

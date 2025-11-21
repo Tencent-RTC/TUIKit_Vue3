@@ -15,5 +15,5 @@ const title =props?.conversation?.getShowName?.() || '';
 </script>
 
 <style lang="scss" module>
-@import './ConversationPreview.scss';
+@use './ConversationPreview.scss';
 </style>

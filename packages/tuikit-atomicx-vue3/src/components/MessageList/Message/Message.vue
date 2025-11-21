@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { MessageLayout } from './MessageLayout';
 import type { MessageAction } from '../../../hooks/useMessageActions';
-import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { MessageModel } from '../../../types/engine';
 
 interface MessageProps {
   message: MessageModel;

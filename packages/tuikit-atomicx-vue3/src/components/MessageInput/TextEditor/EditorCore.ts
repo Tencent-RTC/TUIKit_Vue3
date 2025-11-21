@@ -4,8 +4,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { Extension, Editor } from '@tiptap/vue-3';
 import { MessageContentType } from '../../../states/MessageInputState';
 import type { InputContent } from '../../../states/MessageInputState';
-import type { JSONContent } from '@tiptap/vue-3';
-import type { EditorOptions as TiptapEditorOptions } from '@tiptap/vue-3';
+import type { JSONContent, EditorOptions as TiptapEditorOptions } from '@tiptap/vue-3';
 import './Editor.scss';
 
 function createEmojiExtension() {
@@ -111,6 +110,7 @@ interface EditorOptions {
   placeholder?: string;
   autoFocus?: boolean;
   disabled?: boolean;
+  isPlaceholderOnlyShowWhenEditable?: boolean;
   onUpdate?: (content: InputContent[]) => void;
   onEnter?: () => void;
   onFocus?: () => void;
@@ -122,6 +122,7 @@ function createEditor({
   placeholder = '',
   autoFocus = false,
   disabled = false,
+  isPlaceholderOnlyShowWhenEditable = true,
   onUpdate,
   onEnter,
   onFocus,
@@ -134,6 +135,7 @@ function createEditor({
     createImageExtension(),
     Placeholder.configure({
       placeholder,
+      showOnlyWhenEditable: isPlaceholderOnlyShowWhenEditable,
     }),
   ];
 

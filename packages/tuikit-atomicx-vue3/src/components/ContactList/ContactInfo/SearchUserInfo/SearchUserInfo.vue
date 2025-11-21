@@ -124,5 +124,5 @@ const handleAddFriend = async () => {
 </script>
 
 <style scoped lang="scss">
-@import './SearchUserInfo.scss';
+@use './SearchUserInfo.scss';
 </style>

@@ -57,5 +57,5 @@ const selectGroupType = (type: GroupType) => {
 </script>
 
 <style lang="scss" module>
-@import './ConversationGroupTypeInfo.scss';
+@use './ConversationGroupTypeInfo.scss';
 </style>

@@ -66,5 +66,5 @@ const handleAccept = () => {
 </script>
 
 <style scoped lang="scss">
-@import './FriendApplicationItem.scss';
+@use './FriendApplicationItem.scss';
 </style>

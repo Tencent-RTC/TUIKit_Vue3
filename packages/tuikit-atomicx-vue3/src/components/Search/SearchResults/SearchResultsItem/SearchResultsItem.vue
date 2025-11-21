@@ -59,5 +59,5 @@ const props = withDefaults(defineProps<ISearchResultsItemProps>(), {
 </script>
 
 <style lang="scss" module>
-@import './SearchResultsItem.scss';
+@use './SearchResultsItem.scss';
 </style>

@@ -215,5 +215,5 @@ const handleSendMessage = () => {
 </script>
 
 <style scoped lang="scss">
-@import './FriendInfo.scss';
+@use './FriendInfo.scss';
 </style>

@@ -1,6 +1,9 @@
 <template>
-  <div>
-    <PopoverRoot :open="isOpen" @update:open="handleOpenChange">
+  <View>
+    <PopoverRoot
+      :open="isOpen"
+      @update:open="handleOpenChange"
+    >
       <PopoverTrigger
         as="div"
         :disabled="props.disabled"
@@ -45,7 +48,7 @@
         </PopoverContent>
       </PopoverPortal>
     </PopoverRoot>
-  </div>
+  </View>
 </template>
 
 <script setup lang="ts">
@@ -53,6 +56,7 @@ import { onMounted, defineProps, useCssModule, ref } from 'vue';
 import { useUIKit, IconEmoji } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui';
+import { View } from '../../../baseComp/View';
 import { emojiUrlMap, emojiBaseUrl } from '../../../constants/emoji';
 import { useMessageInputState, MessageContentType } from '../../../states/MessageInputState';
 import { transformTextWithEmojiKeyToName } from '../../../utils/emoji';

@@ -94,5 +94,5 @@ const CustomSearchBar = (searchBarProps: SearchBarProps) => h('div', { class: 'c
 </script>
 
 <style scoped lang="scss">
-@import './ContactSearch.scss';
+@use './ContactSearch.scss';
 </style>

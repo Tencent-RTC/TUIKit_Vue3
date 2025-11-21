@@ -83,5 +83,5 @@ const handleClick = (action: CreateConvTypes) => {
 </script>
 
 <style lang="scss" module>
-@import './ConversationCreateButton.scss';
+@use './ConversationCreateButton.scss';
 </style>

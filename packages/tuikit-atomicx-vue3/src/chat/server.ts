@@ -111,7 +111,6 @@ export default class ChatLoginServer {
   }
 
   public logout() {
-    TUIChatEngine.logout();
     this.isLogin.value = false;
     this.isEngineLoggingIn = false;
   }
