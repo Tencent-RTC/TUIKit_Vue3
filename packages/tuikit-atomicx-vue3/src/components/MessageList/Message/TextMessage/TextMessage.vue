@@ -8,7 +8,7 @@
       @click="handleReferenceClick"
     >
       <template v-if="isOriginMessageHasRecalled">
-        {{ t('MessageList.origin_message_has_been_recalled') }}
+        {{ t('TUIChat.origin message has been recalled') }}
       </template>
       <template v-else>
         <View class="text-message__reference__header">
@@ -47,9 +47,9 @@ import { TUIStore } from '@tencentcloud/chat-uikit-engine';
 import { useUIKit, TUIToast } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
+import { safeJSONParse } from '../../../../utils/json';
 import { useScroll } from '../../../../hooks/useScroll';
 import { useMessageListState } from '../../../../states/MessageListState';
-import { safeJSONParse } from '../../../../utils/json';
 import type { ICloudCustomData } from '../../../../types/message';
 import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
 
@@ -69,7 +69,14 @@ const {
 
 const messageContent = computed(() => props.message.getMessageContent() as {
   showName: string;
-  text: any[];
+  text: Array<{
+    name: 'text';
+    text: string;
+  } | {
+    name: 'img';
+    src: string;
+    emojiKey?: string;
+  }>;
 });
 
 const referencedInfo = computed(() => {
@@ -93,7 +100,7 @@ const handleReferenceClick = () => {
     const messageModel = TUIStore.getMessageModel(messageID);
     if (isOriginMessageHasRecalled.value || !messageModel || messageModel.isDeleted || messageModel.isRevoked) {
       TUIToast.error({
-        message: t('MessageList.origin_message_has_been_recalled'),
+        message: t('TUIChat.Message has been deleted or recalled'),
       });
       return;
     }

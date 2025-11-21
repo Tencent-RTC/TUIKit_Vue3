@@ -1,15 +1,11 @@
 <template>
   <div :class="[styles['input-wrapper'], props.disabled && styles.disabled]">
     <div :class="styles['input-prefix']">
-      <slot name="inputPrefix" />
+      <slot name="prefix"></slot>
     </div>
-    <div
-      ref="editorDomRef"
-      :key="props.disabled ? 'disabled' : 'enabled'"
-      :class="styles['editor']"
-    />
+    <div ref="editorRef" :class="styles['editor']"></div>
     <div :class="styles['input-suffix']">
-      <slot name="inputSuffix" />
+      <slot name="suffix"></slot>
     </div>
   </div>
 </template>
@@ -23,36 +19,34 @@ import { createEditor } from './EditorCore';
 import styles from './TextEditor.module.scss';
 import type { Editor } from './EditorCore';
 
-interface TextEditorProps {
+interface ITextEditorProps {
   autoFocus?: boolean;
   disabled?: boolean;
   placeholder?: string;
 }
 
-const props = withDefaults(defineProps<TextEditorProps>(), {
+const props = withDefaults(defineProps<ITextEditorProps>(), {
   autoFocus: true,
   disabled: false,
   placeholder: '',
 });
 
 const { t } = useUIKit();
-const { activeConversation } = useConversationListState();
+const { currentConversationID } = useConversationListState();
 const { updateRawValue, sendMessage, setEditorInstance, setContent } = useMessageInputState();
 
-const editorDomRef = ref<HTMLDivElement | null>(null);
+const editorRef = ref<HTMLDivElement | null>(null);
 const isFocused = ref(props.autoFocus);
 
-const placeholderText = computed(() => (props.disabled ? '' : props.placeholder || t('MessageInput.enter_a_message')));
+const placeholderText = computed(() => (props.disabled ? '' : props.placeholder || t('TUIChat.Enter a message')));
 
 let editorInstance: Editor | null = null;
 
 onMounted(() => {
-  const element = editorDomRef.value;
+  const element = editorRef.value;
   if (!element) {
     return;
   }
-
-  element.classList.add('message-input');
 
   if (!element.dataset.editorCreated) {
     editorInstance = createEditor({
@@ -60,7 +54,7 @@ onMounted(() => {
       placeholder: placeholderText.value,
       autoFocus: props.autoFocus,
       disabled: props.disabled,
-      onUpdate: (content) => {
+      onUpdate: content => {
         updateRawValue(content);
       },
       onEnter: () => {
@@ -80,7 +74,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  const element = editorDomRef.value;
+  const element = editorRef.value;
   if (editorInstance && element) {
     editorInstance.destroy();
     element.removeAttribute('data-editor-created');
@@ -88,18 +82,9 @@ onUnmounted(() => {
   }
 });
 
-watch(activeConversation, (newConversation, oldConversation) => {
-  if (newConversation?.conversationID !== oldConversation?.conversationID) {
+watch(currentConversationID, (newID, oldID) => {
+  if (newID !== oldID) {
     setContent('');
-  }
-});
-
-watch(() => props.disabled, (newDisabled) => {
-  if (editorInstance) {
-    editorInstance.setEditable(!newDisabled);
-    if (newDisabled) {
-      setContent('');
-    }
   }
 });
 </script>

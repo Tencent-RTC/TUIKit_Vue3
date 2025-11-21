@@ -1,9 +1,8 @@
 @use '../../../styles//mixins/scrollbar' as scrollbar;
 
-
-.message-input .tiptap.ProseMirror {
+.tiptap.ProseMirror {
   height: auto;
-  flex: 1;
+  flex: 1 0 auto;
   word-wrap: break-word;
   word-break: break-word;
   white-space: pre-wrap;
@@ -12,7 +11,6 @@
   overflow-y: auto;
   border: none !important;
   outline: none !important;
-  justify-content: flex-start;
 
   @include scrollbar.scrollbar-base();
 

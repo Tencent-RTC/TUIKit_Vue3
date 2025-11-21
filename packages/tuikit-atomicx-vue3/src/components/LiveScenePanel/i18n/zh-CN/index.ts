@@ -44,6 +44,4 @@ export const resource = {
   'External Devices': '外接设备',
   Multimedia: '多媒体',
   'Screen Capture': '画面捕捉',
-  'Save as new name': '保存为新名称',
-  'Please check the current browser camera permission': '请检查当前浏览器摄像头权限',
 };

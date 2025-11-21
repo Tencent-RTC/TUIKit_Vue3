@@ -1,16 +1,10 @@
 <template>
   <div class="audio-setting-panel">
     <div class="section">
-      <div class="section-title">
-        {{ t('Microphone') }}
-      </div>
-      <div class="row" v-if="microphoneList.length > 0">
+      <div class="section-title">{{ t('Microphone') }}</div>
+      <div class="row">
         <span class="label">{{ t('Select device') }}</span>
-        <TUISelect
-          v-model="currentMicrophoneId"
-          class="select"
-          :placeholder="t('Unrecognized device')"
-        >
+        <TUISelect v-model="currentMicrophoneId" class="select">
           <TUIOption
             v-for="item in microphoneList"
             :key="item.deviceId"
@@ -21,44 +15,25 @@
       </div>
       <div class="row">
         <span class="label">{{ t('Input volume') }}</span>
-        <TUISlider
-          v-model="captureVolumeValue"
-          :min="0"
-          :max="100"
-        />
+        <TUISlider v-model="captureVolumeValue" :min="0" :max="100" />
         <span class="volume-value">{{ captureVolume }}</span>
       </div>
     </div>
 
-    <div class="divider" />
+    <div class="divider"></div>
 
     <div class="section">
-      <div class="section-title">
-        {{ t('Speaker') }}
-      </div>
-      <div class="row" v-if="speakerList.length > 0">
+      <div class="section-title">{{ t('Speaker') }}</div>
+      <div class="row">
         <span class="label">{{ t('Select device') }}</span>
-        <TUISelect
-          v-model="currentSpeakerId"
-          class="select"
-          :placeholder="t('Unrecognized device')"
-        >
-          <TUIOption
-            v-for="item in speakerList"
-            :key="item.deviceId"
-            :label="item.deviceName"
-            :value="item.deviceId"
-          />
+        <TUISelect v-model="currentSpeakerId" class="select">
+          <TUIOption v-for="item in speakerList" :key="item.deviceId" :label="item.deviceName" :value="item.deviceId" />
         </TUISelect>
       </div>
 
       <div class="row">
         <span class="label">{{ t('Output volume') }}</span>
-        <TUISlider
-          v-model="outputVolumeValue"
-          :min="0"
-          :max="100"
-        />
+        <TUISlider v-model="outputVolumeValue" :min="0" :max="100" />
         <span class="volume-value">{{ outputVolume }}</span>
       </div>
     </div>
@@ -67,8 +42,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import { TUISelect, TUIOption, TUISlider, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useDeviceState } from '../../states/DeviceState';
+import { TUISelect, TUIOption, TUISlider, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 
 const { t } = useUIKit();
 
@@ -81,6 +56,7 @@ const {
   setCurrentSpeaker,
   getMicrophoneList,
   getSpeakerList,
+
   captureVolume,
   outputVolume,
   setCaptureVolume,
@@ -96,37 +72,22 @@ const outputVolumeValue = ref(outputVolume.value);
 onMounted(async () => {
   await getMicrophoneList();
   await getSpeakerList();
-  if (currentMicrophone.value) {
-    currentMicrophoneId.value = currentMicrophone.value.deviceId;
-  }
-  if (currentSpeaker.value) {
-    currentSpeakerId.value = currentSpeaker.value.deviceId;
-  }
-});
-watch(currentMicrophone, (value) => {
-  if (value && value.deviceId !== currentMicrophoneId.value) {
-    currentMicrophoneId.value = value.deviceId;
-  }
+  if (currentMicrophone.value) currentMicrophoneId.value = currentMicrophone.value.deviceId;
+  if (currentSpeaker.value) currentSpeakerId.value = currentSpeaker.value.deviceId;
 });
 
-watch(currentSpeaker, (value) => {
-  if (value && value.deviceId !== currentSpeakerId.value) {
-    currentSpeakerId.value = value.deviceId;
-  }
-});
-
-watch(captureVolumeValue, async (value) => {
+watch(captureVolumeValue, async value => {
   await setCaptureVolume(value);
 });
 
-watch(outputVolumeValue, async (value) => {
+watch(outputVolumeValue, async value => {
   await setOutputVolume(value);
 });
 
-watch(currentMicrophoneId, (id) => {
+watch(currentMicrophoneId, id => {
   setCurrentMicrophone({ deviceId: id });
 });
-watch(currentSpeakerId, (id) => {
+watch(currentSpeakerId, id => {
   setCurrentSpeaker({ deviceId: id });
 });
 </script>

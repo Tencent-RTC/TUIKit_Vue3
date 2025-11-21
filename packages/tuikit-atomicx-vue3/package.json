@@ -1,47 +1,21 @@
 {
   "name": "tuikit-atomicx-vue3",
-  "version": "4.3.1",
+  "version": "0.1.0",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "sideEffects": [
-    "*.css",
-    "*.scss",
-    "*.sass"
-  ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./chat": {
-      "types": "./dist/chat/index.d.ts",
-      "import": "./dist/chat/index.js"
-    },
-    "./rtc": {
-      "types": "./dist/rtc/index.d.ts",
-      "import": "./dist/rtc/index.js"
-    },
-    "./types": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/types/index.js"
-    }
-  },
+  "main": "./src/index.ts",
   "scripts": {},
   "peerDependencies": {
-    "@tencentcloud/chat": "^3.5.8",
-    "@tencentcloud/chat-uikit-engine": "~2.5.6",
+    "@tencentcloud/chat": "^3.5.4",
+    "@tencentcloud/chat-uikit-engine": "~2.5.1",
     "@tencentcloud/tui-core": "latest",
-    "@tencentcloud/tuiroom-engine-js": "~3.4.3",
-    "@tencentcloud/uikit-base-component-vue3": "1.1.1",
+    "@tencentcloud/tuiroom-engine-js": "~3.2.1",
+    "@tencentcloud/uikit-base-component-vue3": "0.3.6",
     "vue": "^3.4.21"
   },
   "dependencies": {
     "@tencentcloud/universal-api": "^2.4.0",
     "@tiptap/extension-image": "^2.11.5",
     "@tiptap/extension-placeholder": "^2.11.5",
-    "@tiptap/pm": "^3.1.0",
     "@tiptap/starter-kit": "^2.11.5",
     "@tiptap/vue-3": "^2.11.5",
     "@vue/tsconfig": "^0.7.0",

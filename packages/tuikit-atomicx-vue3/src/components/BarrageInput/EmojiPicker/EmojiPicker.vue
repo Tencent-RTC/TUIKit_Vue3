@@ -5,8 +5,8 @@
         <IconEmoji :class="styles['emoji-picker__icon']" size="24" />
       </PopoverTrigger>
       <PopoverPortal>
-        <PopoverContent side="top" align="center" :side-offset="8" style="box-sizing: border-box; z-index: 1000">
-          <div class="flex flex-col gap-2.5" tabindex="-1" style="outline: none;">
+        <PopoverContent side="top" align="start" :side-offset="5" style="box-sizing: border-box; z-index: 1000">
+          <div class="flex flex-col gap-2.5">
             <div :class="styles['emoji-picker__list']">
               <div
                 v-for="emojiKey in Object.keys(emojiUrlMap)"
@@ -34,7 +34,7 @@ import { useUIKit, IconEmoji } from '@tencentcloud/uikit-base-component-vue3';
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui';
 import { emojiUrlMap, emojiBaseUrl } from '../../../constants/emoji';
 import { transformTextWithEmojiKeyToName } from '../../../utils/emoji';
-import { useMessageInputState, MessageContentType } from '../MessageInputState';
+import { useMessageInputState, MessageContentType } from '../../../states/MessageInputState';
 import styles from './EmojiPicker.module.scss';
 
 const props = defineProps<{

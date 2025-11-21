@@ -8,6 +8,7 @@
       :has-more="
         audioSettingProps?.displayMode === MediaSettingDisplayMode.IconWithPanel
       "
+      :disabled="microphoneStatus === DeviceStatus.OffNeedPermission"
       :is-not-support="microphoneLastError !== DeviceError.NoError"
       @click-icon="handleClickIcon"
       @click-more="handleMore"
@@ -15,6 +16,7 @@
       <audio-icon
         :audio-volume="captureVolume"
         :is-muted="isMuted"
+        :is-disabled="microphoneStatus === DeviceStatus.OffNeedPermission"
       />
     </icon-button>
     <audio-setting-tab
@@ -32,7 +34,7 @@ import AudioIcon from '../../baseComp/AudioIcon.vue';
 import AudioSettingTab from './AudioSettingTab.vue';
 import { useI18n } from '../../locales';
 import vClickOutside from '../../directives/vClickOutside';
-import { useDeviceState } from '../../states/DeviceState';
+import useDeviceState from '../../states/DeviceState';
 import { DeviceStatus, DeviceError, AudioSettingProps, MediaSettingDisplayMode } from '../../types';
 import { useRoomState } from '../../states/RoomState';
 

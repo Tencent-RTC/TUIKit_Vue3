@@ -3,7 +3,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import StarterKit from '@tiptap/starter-kit';
 import { Extension, Editor } from '@tiptap/vue-3';
 import { MessageContentType } from '../../../states/MessageInputState';
-import type { InputContent } from '../../../states/MessageInputState';
+import type { IInputContent } from '../../../states/MessageInputState';
 import type { JSONContent } from '@tiptap/vue-3';
 import type { EditorOptions as TiptapEditorOptions } from '@tiptap/vue-3';
 import './Editor.scss';
@@ -67,7 +67,7 @@ function createEnterKeyExtension(options?: { onEnter?: (() => void) | undefined 
   });
 }
 
-function convertEditorContent(node: JSONContent): InputContent[] {
+function convertEditorContent(node: JSONContent): IInputContent[] {
   if (!node?.content) {
     return [];
   }
@@ -111,7 +111,7 @@ interface EditorOptions {
   placeholder?: string;
   autoFocus?: boolean;
   disabled?: boolean;
-  onUpdate?: (content: InputContent[]) => void;
+  onUpdate?: (content: IInputContent[]) => void;
   onEnter?: () => void;
   onFocus?: () => void;
   onBlur?: () => void;

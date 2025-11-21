@@ -8,7 +8,7 @@ import { View } from '../../../baseComp/View';
 import { useConversationListState } from '../../../states/ConversationListState';
 import { useMessageActionState } from '../../../states/MessageActionState';
 import { UserPicker } from '../../UserPicker';
-import type { UserPickerRef, UserPickerRow } from '../../UserPicker/type';
+import type { IUserPickerRef, IUserPickerRow } from '../../UserPicker/type';
 import type { IConversationModel } from '@tencentcloud/chat-uikit-engine';
 
 const { t } = useUIKit();
@@ -24,17 +24,17 @@ const {
 } = useConversationListState();
 
 // UserPicker ref
-const userPickerRef = ref<UserPickerRef<undefined> | null>(null);
+const userPickerRef = ref<IUserPickerRef<undefined> | null>(null);
 
 // Convert conversation list to UserPicker data format
-const forwardListDataSource = computed((): any[] => {
+const forwardListDataSource = computed((): Array<IUserPickerRow<undefined>> => {
   if (!conversationList.value) {
     return [];
   }
 
   return conversationList.value.map((conversation: IConversationModel) => {
     const { type, remark, groupProfile, userProfile } = conversation;
-    const userPickerRow: UserPickerRow<undefined> = {
+    const userPickerRow: IUserPickerRow<undefined> = {
       key: conversation.conversationID,
       label: '',
       avatarUrl: conversation.getAvatar() || '',
@@ -59,7 +59,7 @@ const forwardListDataSource = computed((): any[] => {
 // Track if forward button should be disabled
 const isDisableConfirm = ref(true);
 
-function handleSelectedChange(selectedItems: any[]) {
+function handleSelectedChange(selectedItems: Array<IUserPickerRow<undefined>>) {
   isDisableConfirm.value = selectedItems.length === 0;
   // Update forwardConversationIDList to maintain compatibility with existing logic
   forwardConversationIDList.value = selectedItems.map(item => item.key);
@@ -105,7 +105,7 @@ function closeMessageForward() {
         @click="closeMessageForward"
       />
       <span class="forward-header__title">
-        {{ t('MessageList.forward') }}
+        {{ t('TUIChat.Forward') }}
       </span>
       <div class="forward-header__placeholder" />
     </View>
@@ -118,20 +118,20 @@ function closeMessageForward() {
       :on-selected-change="handleSelectedChange"
       :on-max-count-exceed="() => {
         TUIToast.error({
-          message: t('MessageList.max_count_exceed'),
+          message: t('TUIChat.Max Count Exceed'),
         });
       }"
     />
 
     <View class="forward-footer">
       <TUIButton
-        radius="rect"
+        shape="rect"
         color="blue"
         type="primary"
         :disabled="isDisableConfirm"
         @click="forward"
       >
-        {{ t('MessageList.forward') }}
+        {{ t('TUIChat.Forward') }}
       </TUIButton>
     </View>
   </Modal>
@@ -202,7 +202,7 @@ $animationDuration: 200ms;
   }
 
   &__placeholder {
-    width: $icon-size;
+    width: $icon-size; // 与关闭按钮同宽，保持视觉平衡
     height: $icon-size;
   }
 }

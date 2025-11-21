@@ -45,7 +45,7 @@ import {
   MediaSettingDisplayMode,
   VideoSettingProps,
 } from '../../types';
-import { useDeviceState } from '../../states/DeviceState';
+import useDeviceState from '../../states/DeviceState';
 import { DeviceStatus, DeviceError } from '../../types';
 import useUserState from '../../states/UserState/index';
 import { useRoomState } from '../../states/RoomState';
