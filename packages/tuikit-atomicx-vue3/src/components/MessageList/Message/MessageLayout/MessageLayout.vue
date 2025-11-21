@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import { ref, computed } from 'vue';
-import ChatEngine from '@tencentcloud/chat-uikit-engine';
 import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
+import { MessageType, ConversationType } from '../../../../types/engine';
+import { isCallMessage } from '../../../../utils/call';
 import { Avatar } from '../../../Avatar';
 import { ReadReceiptInfo } from '../../ReadReceiptInfo';
 import { AudioMessage } from '../AudioMessage';
@@ -20,7 +21,7 @@ import { MessageBubble } from './MessageBubble';
 import { MessageMeta } from './MessageMeta';
 import { useMessageLayoutClasses } from './useMessageLayoutClasses';
 import type { MessageAction } from '../../../../hooks/useMessageActions';
-import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { MessageModel } from '../../../../types/engine';
 
 interface MessageLayoutProps {
   message: MessageModel;
@@ -50,20 +51,34 @@ const props = withDefaults(defineProps<MessageLayoutProps>(), {
 
 const isReadReceiptInfoOpen = ref(false);
 
+const shouldRenderAsGroupTip = computed(() => {
+  if (props.message.type === MessageType.CUSTOM && props.message.getMessageContent().businessID === 'group_create') {
+    return true;
+  }
+  if (
+    props.message.type === MessageType.CUSTOM
+    && isCallMessage(props.message)
+    && props.message.conversationType === ConversationType.GROUP
+  ) {
+    return true;
+  }
+  return false;
+});
+
 const MessageComponentsFactory = {
-  [ChatEngine.TYPES.MSG_TEXT]: TextMessage,
-  [ChatEngine.TYPES.MSG_IMAGE]: ImageMessage,
-  [ChatEngine.TYPES.MSG_AUDIO]: AudioMessage,
-  [ChatEngine.TYPES.MSG_VIDEO]: VideoMessage,
-  [ChatEngine.TYPES.MSG_FILE]: FileMessage,
-  [ChatEngine.TYPES.MSG_FACE]: FaceMessage,
-  [ChatEngine.TYPES.MSG_LOCATION]: LocationMessage,
-  [ChatEngine.TYPES.MSG_MERGER]: MergerMessage,
-  [ChatEngine.TYPES.MSG_CUSTOM]: CustomMessage,
-  [ChatEngine.TYPES.MSG_GRP_TIP]: GroupTipMessage,
+  [MessageType.TEXT]: TextMessage,
+  [MessageType.IMAGE]: ImageMessage,
+  [MessageType.AUDIO]: AudioMessage,
+  [MessageType.VIDEO]: VideoMessage,
+  [MessageType.FILE]: FileMessage,
+  [MessageType.FACE]: FaceMessage,
+  [MessageType.LOCATION]: LocationMessage,
+  [MessageType.MERGER]: MergerMessage,
+  [MessageType.CUSTOM]: CustomMessage,
+  [MessageType.GRP_TIP]: GroupTipMessage,
 };
 
-const MessageComponent = computed(() => MessageComponentsFactory[props.message.type as any]);
+const MessageComponent = computed(() => MessageComponentsFactory[props.message.type]);
 
 const isMessageOwner = computed(() => props.message.flow === 'out');
 
@@ -95,10 +110,7 @@ function handleReadReceiptClose() {
     :message="message"
   />
   <GroupTipMessage
-    v-else-if="
-      message.type === ChatEngine.TYPES.MSG_GRP_TIP
-        || (message.type === ChatEngine.TYPES.MSG_CUSTOM && message.getMessageContent().businessID === 'group_create')
-    "
+    v-else-if="message.type === MessageType.GRP_TIP || shouldRenderAsGroupTip"
     :message="message"
   />
   <View
@@ -129,10 +141,11 @@ function handleReadReceiptClose() {
         v-if="!isHiddenMessageMeta"
         :class="metaClasses"
         :status="message.status"
+        :flow="message.flow"
         :timestamp="message.time * 1000"
         :need-read-receipt="message.needReadReceipt"
         :read-receipt-info="message.readReceiptInfo"
-        :is-group="message.conversationType === ChatEngine.TYPES.CONV_GROUP"
+        :is-group="message.conversationType === ConversationType.GROUP"
         @on-read-receipt-text-click="handleReadReceiptOpen"
       />
     </View>
@@ -196,7 +209,6 @@ $message-avatar-gap: 8px;
     &.message-layout__wrapper--left {
       padding-left: calc(#{$message-avatar-size} + #{$message-avatar-gap});
     }
-    // 右侧聚合时反转 padding
     &.message-layout__wrapper--right {
       padding-right: calc(#{$message-avatar-size} + #{$message-avatar-gap});
     }

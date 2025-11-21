@@ -1,3 +1,27 @@
+// Determine if it is a JSON string
+function isJSON(str: string) {
+  if (typeof str === 'string') {
+    try {
+      const data = JSON.parse(str);
+      if (data) {
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
+// Determine if it is a JSON string
+export function JSONStringToParse(str: string) {
+  if (!isJSON(str)) {
+    return str;
+  }
+  return JSON.parse(str);
+}
+
 /**
  * safe JSON parse function
  * @param text JSON string
@@ -9,7 +33,7 @@
  * const num = safeJSONParse('123', 0);
  * const invalidJson = safeJSONParse('invalid json', { fallback: true });
  */
-function safeJSONParse<T>(
+export function safeJSONParse<T>(
   text: string,
   defaultValue: T,
   reviver?: (key: string, value: any) => any,
@@ -19,7 +43,6 @@ function safeJSONParse<T>(
   }
 
   try {
-    // resolve some usual errors
     const trimmed = text.trim();
     if (!trimmed) {
       return defaultValue;
@@ -33,18 +56,54 @@ function safeJSONParse<T>(
 
     const parsed = JSON.parse(trimmed, reviver);
 
-    // verify parsed value
     if (parsed === undefined || parsed === null) {
       return defaultValue;
     }
 
     return parsed;
   } catch (error) {
-    console.warn('JSON parse failed:', error);
     return defaultValue;
   }
 }
 
-export {
+/**
+ * safe JSON stringify function
+ * @param value value to stringify
+ * @param replacer JSON.stringify replacer function
+ * @param space JSON.stringify space parameter
+ * @returns JSON string or empty string when stringify failed
+ */
+export function safeJSONStringify(
+  value: any,
+  replacer?: (key: string, value: any) => any,
+  space?: string | number,
+): string {
+  try {
+    if (value === undefined || value === null) {
+      return '';
+    }
+    return JSON.stringify(value, replacer, space);
+  } catch (error) {
+    console.warn('JSON stringify failed:', error);
+    return '';
+  }
+}
+
+/**
+ * deep clone object using JSON
+ * @param obj object to clone
+ * @returns cloned object
+ */
+export function deepClone<T>(obj: T): T {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  return safeJSONParse(safeJSONStringify(obj), obj);
+}
+
+export default {
+  JSONStringToParse,
   safeJSONParse,
+  safeJSONStringify,
+  deepClone,
 };

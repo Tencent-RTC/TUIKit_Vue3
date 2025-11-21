@@ -1,29 +1,28 @@
 <template>
-  <div :class="[styles['attachment-picker'], className]">
+  <div :class="[styles['attachment-picker']]">
     <template v-if="isCollapsed">
       <PopoverRoot>
-        <PopoverTrigger as="span">
-          <IconPlus
-            :class="styles['attachment-picker__icon']"
-            size="24"
-          />
+        <PopoverTrigger as="div">
+          <slot>
+            <IconPlus
+              :class="styles['attachment-picker__icon']"
+              size="20"
+            />
+          </slot>
         </PopoverTrigger>
         <PopoverPortal>
           <PopoverContent
             side="top"
             align="start"
             :side-offset="5"
-            class="rounded-lg p-5 w-[260px] bg-white shadow-sm border will-change-[transform,opacity] data-[state=open]:data-[side=top]:animate-slideDownAndFade data-[state=open]:data-[side=right]:animate-slideLeftAndFade data-[state=open]:data-[side=bottom]:animate-slideUpAndFade data-[state=open]:data-[side=left]:animate-slideRightAndFade"
           >
-            <div class="flex flex-col gap-2.5">
-              <div :class="styles['attachment-picker__popup']">
-                <component
-                  :is="picker.Component"
-                  v-for="(picker, index) in pickerItems"
-                  :key="index"
-                  v-bind="picker.props"
-                />
-              </div>
+            <div :class="styles['attachment-picker__popup']">
+              <component
+                :is="picker.Component"
+                v-for="(picker, index) in pickerItems"
+                :key="index"
+                v-bind="picker.props"
+              />
             </div>
           </PopoverContent>
         </PopoverPortal>
@@ -52,7 +51,6 @@ import ImagePicker from './ImagePicker.vue';
 import VideoPicker from './VideoPicker.vue';
 
 interface Props {
-  className?: string;
   attachmentPickerMode?: 'collapsed' | 'expanded';
 }
 
@@ -62,7 +60,6 @@ const ICON_SIZE = {
 };
 
 const props = withDefaults(defineProps<Props>(), {
-  className: '',
   attachmentPickerMode: 'collapsed',
 });
 
@@ -70,13 +67,13 @@ const { t } = useUIKit();
 const isCollapsed = computed(() => props.attachmentPickerMode === 'collapsed');
 
 const pickerItems = computed(() => [
-  { type: 'File', Component: FilePicker },
-  { type: 'Image', Component: ImagePicker },
-  { type: 'Video', Component: VideoPicker },
+  { type: 'file', Component: FilePicker },
+  { type: 'image', Component: ImagePicker },
+  { type: 'video', Component: VideoPicker },
 ].map(({ type, Component }) => ({
   Component,
   props: {
-    label: isCollapsed.value ? t(`TUIChat.${type}`) : '',
+    label: isCollapsed.value ? t(`MessageInput.${type}`) : '',
     iconSize: isCollapsed.value ? ICON_SIZE.COLLAPSED : ICON_SIZE.EXPANDED,
   },
 })));

@@ -1,0 +1,52 @@
+// Fullscreen mode base styles
+.fullscreen-mode {
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 9999 !important;
+  background-color: #000 !important;
+}
+
+// H5 portrait stream fullscreen mode (preserve original width/height, no forced modification)
+.fullscreen-mode-portrait {
+  z-index: 9999 !important;
+  background-color: #000 !important;
+  // Note: Do not modify width and height, preserve original styles
+}
+
+// Landscape mode styles - Only apply CSS rotation when device is in portrait
+.landscape-mode {
+  transform: rotate(90deg) !important;
+  transform-origin: center center !important;
+  width: 100vh !important;
+  height: 100vw !important;
+  overflow: hidden !important;
+  // Add smooth transition effect
+  transition: transform 0.3s ease-in-out !important;
+}
+
+// When device is in landscape, remove CSS rotation to avoid double rotation
+@media screen and (orientation: landscape) {
+  .landscape-mode {
+    transform: none !important;
+    width: 100vw !important;
+    height: 100vh !important;
+  }
+}
+
+// Mobile device landscape optimization
+@media screen and (orientation: landscape) and (max-width: 768px) {
+  .live-core-view.landscape-mode {
+    // Ensure correct display in landscape
+    background-color: #000;
+    transform: none !important;
+  }
+}
+
+// Force landscape display on mobile portrait
+@media screen and (orientation: portrait) and (max-width: 768px) {
+  .live-core-view.landscape-mode {
+    // Force landscape display in portrait
+    transform: rotate(90deg) !important;
+    transform-origin: center center !important;
+  }
+}

@@ -1,0 +1,62 @@
+.conversationActions {
+  position: relative;
+  display: flex;
+
+  &__popup-icon {
+    display: flex;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  &__h5 {
+    z-index: 5;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background: var(--bg-color-mask)
+  }
+
+  &__h5__container {
+    background-color: var(--bg-color-operate);
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 0 10px var(--shadow-color);
+
+    .conversationActions__item {
+      text-align: center;
+      font-weight: 400;
+      font-size: 17px;
+      line-height: 22px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--stroke-color-primary);
+      color: var(--button-color-primary-default);
+
+      &:last-child {
+        border-bottom: none;
+        color: var(--text-color-error);
+      }
+    }
+  }
+
+  &__item {
+    font-size: 14px;
+    line-height: 19px;
+    padding: 9px 16px;
+    cursor: pointer;
+    font-weight: 400;
+    box-sizing: border-box;
+    color: var(--text-color-primary);
+
+    &:hover {
+      background-color: var(--dropdown-color-active);
+    }
+
+    &--delete {
+      color: var(--text-color-error);
+    }
+  }
+} 

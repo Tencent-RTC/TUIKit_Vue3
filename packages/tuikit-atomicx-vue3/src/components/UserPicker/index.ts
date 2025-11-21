@@ -1,21 +1,26 @@
-import UserPicker from './UserPicker.vue';
+import UserPickerComponent from './UserPicker.vue';
 import type {
-  IUserPickerProps,
-  IUserPickerRef,
-  IUserPickerRow,
-  IUserPickerNode,
-  IUserPickerDataSource,
-  IUserPickerResult,
+  UserPickerProps,
+  UserPickerRef,
+  UserPickerRow,
+  UserPickerNode,
+  UserPickerDataSource,
+  UserPickerResult,
 } from './type';
+import { addI18n } from '../../i18n';
+import { resources } from './i18n';
 
-export type {
-  IUserPickerProps,
-  IUserPickerRef,
-  IUserPickerRow,
-  IUserPickerNode,
-  IUserPickerDataSource,
-  IUserPickerResult,
-};
+addI18n('en-US', { translation: { UserPicker: resources['en-US'] } });
+addI18n('zh-CN', { translation: { UserPicker: resources['zh-CN'] } });
+
+const UserPicker = UserPickerComponent;
+
 export { UserPicker };
-
-export default UserPicker;
+export type {
+  UserPickerProps,
+  UserPickerRef,
+  UserPickerRow,
+  UserPickerNode,
+  UserPickerDataSource,
+  UserPickerResult,
+};

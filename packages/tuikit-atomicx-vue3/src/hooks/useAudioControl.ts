@@ -12,12 +12,12 @@ const createAudioPlayEvent = (audioId: string) => new CustomEvent(AUDIO_PLAY_EVE
   detail: { audioId },
 });
 
-interface IUseAudioControlProps {
+interface UseAudioControlProps {
   url: string;
   audioId?: string;
 }
 
-interface IUseAudioControlReturn {
+interface UseAudioControlReturn {
   isPlaying: ReturnType<typeof ref<boolean>>;
   progress: ReturnType<typeof ref<number>>;
   duration: ReturnType<typeof ref<number | undefined>>;
@@ -36,7 +36,7 @@ interface IUseAudioControlReturn {
  * @param props Configuration parameters
  * @returns Audio control related states and methods
  */
-export function useAudioControl(props: IUseAudioControlProps): IUseAudioControlReturn {
+export function useAudioControl(props: UseAudioControlProps): UseAudioControlReturn {
   const { url } = props;
 
   // Generate a unique ID if audioId is not provided
@@ -147,7 +147,20 @@ export function useAudioControl(props: IUseAudioControlProps): IUseAudioControlR
       if (!audioInstance) {
         return;
       }
-      duration.value = audioInstance.duration;
+      if (audioInstance.duration === Infinity) {
+        // Jump to a large time
+        audioInstance.currentTime = 1e101;
+        audioInstance.ontimeupdate = () => {
+          if (!audioInstance) {
+            return;
+          }
+          duration.value = audioInstance.duration;
+          audioInstance.ontimeupdate = null;
+          audioInstance.currentTime = 0;
+        };
+      } else {
+        duration.value = audioInstance.duration;
+      }
       isLoading.value = false;
     };
 

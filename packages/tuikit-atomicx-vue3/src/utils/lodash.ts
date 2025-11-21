@@ -29,7 +29,11 @@ function throttle(func, wait: number, options?: IThrottleOptions) {
   });
 }
 
-function debounce(func, wait: number, options?: IDebounceOptions) {
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number,
+  options?: IDebounceOptions
+): ((...args: Parameters<T> | []) => ReturnType<T>) & { cancel: () => void; flush: () => ReturnType<T> } {
   let lastArgs,
     lastThis,
     maxWait,
@@ -63,11 +67,8 @@ function debounce(func, wait: number, options?: IDebounceOptions) {
   }
 
   function leadingEdge(time) {
-    // Reset any `maxWait` timer.
     lastInvokeTime = time;
-    // Start the timer for the trailing edge.
     timerId = setTimeout(timerExpired, wait);
-    // Invoke the leading edge.
     return leading ? invokeFunc(time) : result;
   }
 
@@ -85,9 +86,6 @@ function debounce(func, wait: number, options?: IDebounceOptions) {
     const timeSinceLastCall = time - lastCallTime,
       timeSinceLastInvoke = time - lastInvokeTime;
 
-    // Either this is the first call, activity has stopped and we're at the
-    // trailing edge, the system time has gone backwards and we're treating
-    // it as the trailing edge, or we've hit the `maxWait` limit.
     return (lastCallTime === undefined || (timeSinceLastCall >= wait)
       || (timeSinceLastCall < 0) || (maxing && timeSinceLastInvoke >= maxWait));
   }
@@ -97,15 +95,11 @@ function debounce(func, wait: number, options?: IDebounceOptions) {
     if (shouldInvoke(time)) {
       return trailingEdge(time);
     }
-    // Restart the timer.
     timerId = setTimeout(timerExpired, remainingWait(time));
   }
 
   function trailingEdge(time) {
     timerId = undefined;
-
-    // Only invoke if we have `lastArgs` which means `func` has been
-    // debounced at least once.
     if (trailing && lastArgs) {
       return invokeFunc(time);
     }
@@ -125,24 +119,17 @@ function debounce(func, wait: number, options?: IDebounceOptions) {
     return timerId === undefined ? result : trailingEdge(Date.now());
   }
 
-  function debounced() {
+  function debounced(this: any, ...args: any[]) {
     const time = Date.now(),
       isInvoking = shouldInvoke(time);
-
-    // eslint-disable-next-line prefer-rest-params
-    lastArgs = arguments;
-
-    // @ts-expect-error ignore this type
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    lastArgs = args;
     lastThis = this;
     lastCallTime = time;
-
     if (isInvoking) {
       if (timerId === undefined) {
         return leadingEdge(lastCallTime);
       }
       if (maxing) {
-        // Handle invocations in a tight loop.
         clearTimeout(timerId);
         timerId = setTimeout(timerExpired, wait);
         return invokeFunc(lastCallTime);
@@ -155,7 +142,7 @@ function debounce(func, wait: number, options?: IDebounceOptions) {
   }
   debounced.cancel = cancel;
   debounced.flush = flush;
-  return debounced;
+  return debounced as ((...args: Parameters<T>) => ReturnType<T>) & { cancel: () => void; flush: () => ReturnType<T> };
 }
 
 function isObject(value) {
@@ -163,7 +150,37 @@ function isObject(value) {
   return value != null && (type == 'object' || type == 'function');
 }
 
+function debouncePromise<T extends (...args: any[]) => Promise<any>>(fn: T, delay: number) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  const debounced = (...args: Parameters<T>): Promise<any> => new Promise((resolve, reject) => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+
+    timeoutId = setTimeout(async () => {
+      try {
+        const result = await fn(...args);
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      }
+    }, delay);
+  });
+
+  debounced.cancel = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+  };
+
+  return debounced;
+}
+
+
 export {
   debounce,
+  debouncePromise,
   throttle,
 };

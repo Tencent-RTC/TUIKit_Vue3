@@ -37,8 +37,9 @@ import { computed, defineProps, defineEmits, ref, onMounted, onUnmounted } from 
 import { useUIKit, TUIToast } from '@tencentcloud/uikit-base-component-vue3';
 import { useCoGuestState } from '../../states/CoGuestState';
 import { useLiveAudienceState } from '../../states/LiveAudienceState';
-import { useLiveState } from '../../states/LiveState';
+import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
+import { useLiveSeatState } from '../../states/LiveSeatState';
 import { Avatar } from '../Avatar';
 
 const { t } = useUIKit();
@@ -57,18 +58,9 @@ interface Emits {
 
 const emit = defineEmits<Emits>();
 const props = defineProps<Props>();
-const { currentLive } = useLiveState();
-const {
-  userListInCoGuest,
-  receivedCoGuestUserList,
-  sentCoGuestUserList,
-  availableCoGuestUserList,
-  sendCoGuestRequest,
-  cancelCoGuestRequest,
-  acceptCoGuestRequest,
-  rejectCoGuestRequest,
-  disconnect,
-} = useCoGuestState();
+const { currentLive } = useLiveListState();
+const { connected } = useCoGuestState();
+const { kickUserOutOfSeat } = useLiveSeatState();
 const { disableSendMessage, audienceList, kickUserOutOfRoom } = useLiveAudienceState();
 const { loginUserInfo } = useLoginState();
 const currentUserInfo = computed(() => audienceList.value.find(user => user.userId === props.userId));
@@ -78,10 +70,7 @@ const actions = computed(() => {
   if (!isOwner.value) {
     return [];
   }
-  const isInCoGuest = userListInCoGuest.value.some(user => user.userId === props.userId);
-  const isSentCoGuest = sentCoGuestUserList.value.some(user => user.userId === props.userId);
-  const isAvailableCoGuest = availableCoGuestUserList.value.some(user => user.userId === props.userId);
-  const isReceivedCoGuest = receivedCoGuestUserList.value.some(user => user.userId === props.userId);
+  const isInCoGuest = connected.value.some(user => user.userId === props.userId);
   const isDisableSendMessage = currentUserInfo.value?.isMessageDisabled;
   if (!isDisableSendMessage) {
     tempActions.push({
@@ -98,37 +87,7 @@ const actions = computed(() => {
     });
   }
   if (isInCoGuest) {
-    tempActions.push({ label: t('Kick out'), action: 'disconnect', actionFn: () => disconnect(props.userId) });
-  }
-  if (isAvailableCoGuest) {
-    tempActions.push({
-      label: t('Invite to seat'),
-      action: 'takeSeat',
-      actionFn: () =>
-        sendCoGuestRequest({
-          userId: props.userId,
-          seatIndex: -1,
-        }),
-    });
-  }
-  if (isSentCoGuest) {
-    tempActions.push({
-      label: t('Cancel invitation'),
-      action: 'cancelCoGuestRequest',
-      actionFn: () => cancelCoGuestRequest({ userId: props.userId }),
-    });
-  }
-  if (isReceivedCoGuest) {
-    tempActions.push({
-      label: t('Accept invitation'),
-      action: 'acceptCoGuestRequest',
-      actionFn: () => acceptCoGuestRequest({ userId: props.userId }),
-    });
-    tempActions.push({
-      label: t('Reject invitation'),
-      action: 'rejectCoGuestRequest',
-      actionFn: () => rejectCoGuestRequest({ userId: props.userId }),
-    });
+    tempActions.push({ label: t('Kick out'), action: 'disconnect', actionFn: () => kickUserOutOfSeat({ userId: props.userId }) });
   }
   tempActions.push({
     label: t('Kick out of room'),

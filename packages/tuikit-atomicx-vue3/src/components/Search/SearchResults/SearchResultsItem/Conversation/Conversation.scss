@@ -1,0 +1,41 @@
+@use '../../../../../styles/mixins' as mixins;
+.conversationItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.avatarWrapper {
+  flex-shrink: 0;
+}
+
+.conversationContent {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.conversationHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.name {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-color-primary);
+
+  @include mixins.text-ellipsis();
+}
+
+.showText {
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-word;
+  color: var(--text-color-secondary);
+
+  @include mixins.multi-line-ellipsis(3);
+}
