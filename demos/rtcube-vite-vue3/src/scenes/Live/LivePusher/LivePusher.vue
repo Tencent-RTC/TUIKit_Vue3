@@ -15,14 +15,14 @@ import { onMounted, watch } from 'vue';
 import { LivePusherView } from '@tencentcloud/livekit-web-vue3';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import {
-  useLiveState,
+  useLiveListState,
   useLoginState,
 } from 'tuikit-atomicx-vue3';
 import { useRouter } from 'vue-router';
 
 const { t } = useUIKit();
 
-const { currentLive, joinLive } = useLiveState();
+const { currentLive, joinLive } = useLiveListState();
 const { loginUserInfo } = useLoginState();
 
 const router = useRouter();

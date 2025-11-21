@@ -45,7 +45,7 @@ import {
   BarrageInput,
   useLiveAudienceState,
   LiveCoreView,
-  useLiveState,
+  useLiveListState,
   Avatar,
 } from 'tuikit-atomicx-vue3';
 import { useRouter } from 'vue-router';
@@ -54,7 +54,7 @@ const { t } = useUIKit();
 
 const router = useRouter();
 const { audienceList } = useLiveAudienceState();
-const { currentLive, leaveLive } = useLiveState();
+const { currentLive, leaveLive } = useLiveListState();
 
 onMounted(() => {
   if (!currentLive.value?.liveId) {

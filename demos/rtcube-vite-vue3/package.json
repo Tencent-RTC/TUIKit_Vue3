@@ -10,13 +10,13 @@
   },
   "dependencies": {
     "@tencentcloud/call-uikit-vue": "^4.0.11",
-    "@tencentcloud/chat-uikit-vue3": "3.4.2",
-    "@tencentcloud/livekit-web-vue3": "3.4.2",
-    "@tencentcloud/uikit-base-component-vue3": "1.1.0",
+    "@tencentcloud/chat-uikit-vue3": "3.4.4",
+    "@tencentcloud/livekit-web-vue3": "4.3.1",
+    "@tencentcloud/uikit-base-component-vue3": "1.1.1",
     "@tencentcloud/uikit-base-widget-vue3": "1.1.1",
     "@tencentcloud/universal-api": "2.4.0",
     "pinia": "^2.2.1",
-    "tuikit-atomicx-vue3": "3.4.2",
+    "tuikit-atomicx-vue3": "4.4.0",
     "vue": "^3.5.18",
     "vue-router": "4"
   },
