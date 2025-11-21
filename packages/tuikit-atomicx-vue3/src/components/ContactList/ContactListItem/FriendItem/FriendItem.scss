@@ -1,0 +1,39 @@
+@use '../../../../styles/mixins' as mixins;
+.friend-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  user-select: none;
+
+  &:hover {
+    background-color: var(--bg-color-secondary);
+  }
+
+  &:focus {
+    outline: none;
+    background-color: var(--bg-color-secondary);
+  }
+
+  &--active {
+    background-color: var(--list-color-hover);
+  }
+
+  &__avatar {
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: 14px;
+    color: var(--text-color-primary);
+
+    @include mixins.text-ellipsis();
+  }
+}

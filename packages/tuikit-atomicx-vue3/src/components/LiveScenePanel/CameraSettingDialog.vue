@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, Ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useDeviceState } from '../../states/DeviceState';
 import { MediaSource } from '../../types';
 import {
@@ -58,10 +58,6 @@ const props = defineProps<{
 }>();
 
 const emits = defineEmits(['addCameraMaterial', 'updateCameraMaterial', 'close']);
-
-onUnmounted(async () => {
-  await previewTRTCCloud.stopCameraDeviceTest();
-});
 
 const title = computed(() => {
   return props.mediaSource ? t('Update Camera') : t('Add Camera');
@@ -101,6 +97,11 @@ onMounted(async () => {
     await previewTRTCCloud.setCurrentCameraDevice(cameraList.value[0]?.deviceId);
   }
   await previewTRTCCloud.startCameraDeviceTest('video-preview');
+});
+
+onBeforeUnmount(async () => {
+  await previewTRTCCloud.stopCameraDeviceTest();
+  previewTRTCCloud.destroy();
 });
 
 watch(

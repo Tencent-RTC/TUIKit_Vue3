@@ -1,6 +1,5 @@
 import type { Component } from 'vue';
 import { computed } from 'vue';
-import ChatEngine from '@tencentcloud/chat-uikit-engine';
 import {
   IconCopy,
   IconMsgRevoke,
@@ -12,7 +11,8 @@ import {
 } from '@tencentcloud/uikit-base-component-vue3';
 import { useMessageActionState } from '../states/MessageActionState';
 import { isCallMessage } from '../utils/call';
-import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
+import { MessageType } from '../types/engine';
+import type { MessageModel } from '../types/engine';
 
 /**
  * Message action interface
@@ -42,13 +42,13 @@ interface MessageAction {
 const DEFAULT_ACTIONS: Record<string, MessageAction> = {
   copy: {
     key: 'copy',
-    label: 'Copy',
-    visible: (message: MessageModel) => message.type === ChatEngine.TYPES.MSG_TEXT,
+    label: 'copy',
+    visible: (message: MessageModel) => message.type === MessageType.TEXT,
     icon: IconCopy,
   },
   recall: {
     key: 'recall',
-    label: 'Recall',
+    label: 'recall',
     visible: (message: MessageModel) =>
       !isCallMessage(message) && message.flow === 'out'
       && message.status === 'success'
@@ -57,19 +57,19 @@ const DEFAULT_ACTIONS: Record<string, MessageAction> = {
   },
   quote: {
     key: 'quote',
-    label: 'Quote',
+    label: 'quote',
     visible: (message: MessageModel) => !isCallMessage(message),
     icon: IconMsgQuote,
   },
   forward: {
     key: 'forward',
-    label: 'Forward',
+    label: 'forward',
     visible: (message: MessageModel) => !isCallMessage(message),
     icon: IconMsgForward,
   },
   delete: {
     key: 'delete',
-    label: 'Delete',
+    label: 'delete',
     icon: IconMsgDel,
     visible: true,
     style: {
@@ -97,19 +97,19 @@ function useMessageActions(propsActionList?: Array<MessageAction['key'] | Messag
     copy: (message) => {
       state.copyTextMessage(message)
         .then(() => TUIToast.success({
-          message: i18next.t('TUIChat.Copied'),
+          message: i18next.t('MessageList.copy_success'),
         }))
         .catch(() => TUIToast.error({
-          message: i18next.t('TUIChat.Copy Failed'),
+          message: i18next.t('MessageList.copy_failed'),
         }));
     },
     recall: (message) => {
       state.recallMessage(message)
         .then(() => TUIToast.success({
-          message: i18next.t('TUIChat.Recall Succeed'),
+          message: i18next.t('MessageList.recall_success'),
         }))
         .catch(err => TUIToast.error({
-          message: err.code === 20016 ? i18next.t('TUIChat.Recall Time Limit Exceeded') : i18next.t('TUIChat.Recall Failed'),
+          message: err.code === 20016 ? i18next.t('MessageList.recall_time_limit_exceeded') : i18next.t('MessageList.recall_failed'),
         }));
     },
     quote: state.quoteMessage,
@@ -120,10 +120,10 @@ function useMessageActions(propsActionList?: Array<MessageAction['key'] | Messag
     delete: (message) => {
       state.deleteMessage(message)
         .then(() => TUIToast.success({
-          message: i18next.t('TUIChat.Deleted'),
+          message: i18next.t('MessageList.delete_success'),
         }))
         .catch(() => TUIToast.error({
-          message: i18next.t('TUIChat.Delete Failed'),
+          message: i18next.t('MessageList.delete_failed'),
         }));
     },
   };

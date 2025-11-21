@@ -1,6 +1,6 @@
+import { watch } from 'vue';
 import TUIRoomEngine, {
   TUIRoomEvents,
-  TUIChangeReason,
   TUIVideoStreamType,
   TRTCVideoStreamType,
   TRTCVideoFillMode,
@@ -9,23 +9,23 @@ import TUIRoomEngine, {
   TRTCVideoResolution,
   TRTCVideoResolutionMode,
 } from '@tencentcloud/tuiroom-engine-js';
-import { isMobile } from '../../../utils/environment';
+import useRoomEngine from '../../../hooks/useRoomEngine';
+import { useLiveListState } from '../../../states/LiveListState';
 import useUserState from '../../../states/UserState/index';
 import { innerUserStore } from '../../../states/UserState/store';
-import { DeviceStatus, LiveStatus, StreamPlayStatus } from '../../../types';
-import useRoomEngine from '../../../hooks/useRoomEngine';
-import useLiveState from '../../../states/LiveState';
 import { useVideoMixerState } from '../../../states/VideoMixerState';
-import { watch } from 'vue';
+import { DeviceStatus, StreamPlayStatus } from '../../../types';
+import { isMobile } from '../../../utils/environment';
+import type {
+  TUIChangeReason } from '@tencentcloud/tuiroom-engine-js';
 
 const { localUser } = useUserState();
 const { isVideoMixerEnabled } = useVideoMixerState();
-const { localLiveStatus } = useLiveState();
 const roomEngine = useRoomEngine();
 const playDomMap = new Map<string, Map<HTMLElement, TUIVideoStreamType>>();
 
 // todo: 这里退出房间之后需要清空
-function setPlayDomMap(params1: {userId: string, streamType: TUIVideoStreamType}, params2: {view: HTMLElement, streamType: TUIVideoStreamType}) {
+function setPlayDomMap(params1: { userId: string; streamType: TUIVideoStreamType }, params2: { view: HTMLElement; streamType: TUIVideoStreamType }) {
   const playDomInfo = playDomMap.get(`${params1.userId}-${params1.streamType}`);
   if (!playDomInfo) {
     playDomMap.set(`${params1.userId}-${params1.streamType}`, new Map());
@@ -33,27 +33,23 @@ function setPlayDomMap(params1: {userId: string, streamType: TUIVideoStreamType}
   playDomMap.get(`${params1.userId}-${params1.streamType}`)?.set(params2.view, params2.streamType);
 }
 
-function getPlayDomMap(params: {userId: string, streamType: TUIVideoStreamType}) {
+function getPlayDomMap(params: { userId: string; streamType: TUIVideoStreamType }) {
   return playDomMap.get(`${params.userId}-${params.streamType}`);
 }
 
-watch(localLiveStatus, (newVal) => {
-  if (newVal === LiveStatus.IDLE) {
-    playDomMap.clear();
-  }
-});
-
-function updateStreamPlayStatus(params: {userId: string, streamType: TUIVideoStreamType, playStatus: StreamPlayStatus}) {
+function updateStreamPlayStatus(params: { userId: string; streamType: TUIVideoStreamType; playStatus: StreamPlayStatus }) {
   if (params.userId === 'local_fake_user') {
     return;
   }
   const { userId, streamType, playStatus } = params;
-  const assignObj = streamType === TUIVideoStreamType.kScreenStream ? {
-    screenPlayStatus: playStatus
-  } : {
-    cameraPlayStatus: playStatus
-  }
-  innerUserStore.updateUserInfo({ userId, ...assignObj })
+  const assignObj = streamType === TUIVideoStreamType.kScreenStream
+    ? {
+      screenPlayStatus: playStatus,
+    }
+    : {
+      cameraPlayStatus: playStatus,
+    };
+  innerUserStore.updateUserInfo({ userId, ...assignObj });
 }
 
 interface ObserverData {
@@ -97,7 +93,7 @@ export class MediaManager {
       userId,
       streamType,
       view,
-      observerViewInVisible
+      observerViewInVisible,
     );
     // if (userId.indexOf('livekit_') !== 0) {
     //   const hasVideo =
@@ -120,7 +116,7 @@ export class MediaManager {
       Object.assign(this.observerDataMap.get(view) || {}, {
         userId,
         streamType,
-      })
+      }),
     );
     this.intersectionObserver?.observe(view);
 
@@ -164,8 +160,8 @@ export class MediaManager {
 
   private initIntersectionObserver() {
     if (
-      !this.intersectionObserver ||
-      document.getElementById('roomContainer') !== this.observerRoot
+      !this.intersectionObserver
+      || document.getElementById('roomContainer') !== this.observerRoot
     ) {
       const observerRoot = document.getElementById('roomContainer');
       this.intersectionObserver = new IntersectionObserver(
@@ -173,7 +169,7 @@ export class MediaManager {
         {
           root: observerRoot,
           rootMargin: '0px',
-        }
+        },
       );
       this.observerDataMap = new Map();
       this.observerRoot = observerRoot;
@@ -200,11 +196,11 @@ export class MediaManager {
       } else {
         observerData.isIntersection = false;
         const isContinuePlay = Array.from(
-          playDomInfo?.keys() || []
+          playDomInfo?.keys() || [],
         ).find(
           item =>
-            !this.observerDataMap.get(item) ||
-            this.observerDataMap.get(item)?.isIntersection
+            !this.observerDataMap.get(item)
+            || this.observerDataMap.get(item)?.isIntersection,
         );
         if (!isContinuePlay) {
           this.doStopPlayVideo({ userId, streamType });
@@ -238,19 +234,19 @@ export class MediaManager {
       return;
     }
     const playStreamType = this.getPlayStreamType(userId, streamType);
-    const viewIdList = Array.from(playDomInfo.keys()).map(item => {
+    const viewIdList = Array.from(playDomInfo.keys()).map((item) => {
       if (item instanceof HTMLElement) {
         return item?.id;
       }
       return item;
     });
 
-    updateStreamPlayStatus({ userId, streamType, playStatus: StreamPlayStatus.Loading })
+    updateStreamPlayStatus({ userId, streamType, playStatus: StreamPlayStatus.Loading });
     if (userId === localUser.value?.userId) {
       if (streamType === TUIVideoStreamType.kCameraStream) {
         if (isVideoMixerEnabled.value) {
           const mediaSourceManager = roomEngine.instance?.getTRTCCloud().getMediaMixingManager();
-          mediaSourceManager.setDisplayParams(document.getElementById(viewIdList[0]) as HTMLElement);
+          mediaSourceManager.bindPreviewArea(document.getElementById(viewIdList[0]) as HTMLElement);
           // const publishParams = {
           //   videoEncoderParams: {
           //     videoResolution: TRTCVideoResolution.TRTCVideoResolution_1280_720,
@@ -284,7 +280,7 @@ export class MediaManager {
         streamType: playStreamType,
       });
     }
-    updateStreamPlayStatus({ userId, streamType, playStatus: StreamPlayStatus.Playing })
+    updateStreamPlayStatus({ userId, streamType, playStatus: StreamPlayStatus.Playing });
   }
 
   private async setVideoRenderParams(options: {
@@ -294,8 +290,8 @@ export class MediaManager {
     const { userId, streamType } = options;
     if (userId !== localUser.value?.userId) {
       const trtcCloud = roomEngine.instance?.getTRTCCloud();
-      const trtcStreamType =
-        streamType === TUIVideoStreamType.kScreenStream
+      const trtcStreamType
+        = streamType === TUIVideoStreamType.kScreenStream
           ? TRTCVideoStreamType.TRTCVideoStreamTypeSub
           : TRTCVideoStreamType.TRTCVideoStreamTypeBig;
       // todo: 确认这里的 cdn 流渲染模式
@@ -334,10 +330,10 @@ export class MediaManager {
     if (userId === localUser.value?.userId && isVideoMixerEnabled.value) {
       return;
     }
-    updateStreamPlayStatus({ userId, streamType, playStatus: StreamPlayStatus.Stopped })
+    updateStreamPlayStatus({ userId, streamType, playStatus: StreamPlayStatus.Stopped });
     if (
-      userId === localUser.value?.userId &&
-      streamType === TUIVideoStreamType.kCameraStream
+      userId === localUser.value?.userId
+      && streamType === TUIVideoStreamType.kCameraStream
     ) {
       roomEngine.instance?.setLocalVideoView({ view: null });
     } else {
@@ -412,11 +408,11 @@ export class MediaManager {
     TUIRoomEngine.once('ready', () => {
       roomEngine.instance?.on(
         TUIRoomEvents.onUserVideoStateChanged,
-        this.onUserVideoStateChanged.bind(this)
+        this.onUserVideoStateChanged.bind(this),
       );
       roomEngine.instance?.on(
         TUIRoomEvents.onUserAudioStateChanged,
-        this.onUserAudioStateChanged.bind(this)
+        this.onUserAudioStateChanged.bind(this),
       );
     });
   }
@@ -424,11 +420,11 @@ export class MediaManager {
   private unbindRoomEngineEvents() {
     roomEngine.instance?.off(
       TUIRoomEvents.onUserVideoStateChanged,
-      this.onUserVideoStateChanged
+      this.onUserVideoStateChanged,
     );
     roomEngine.instance?.off(
       TUIRoomEvents.onUserAudioStateChanged,
-      this.onUserAudioStateChanged
+      this.onUserAudioStateChanged,
     );
   }
 }

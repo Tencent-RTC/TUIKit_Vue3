@@ -1,0 +1,84 @@
+@use '../../../../styles/mixins' as mixins;
+.contact-friend-application-info {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-color-topbar);
+  padding: 48px;
+}
+
+.contact-friend-application-info__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.contact-friend-application-info__main-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 0;
+}
+
+.contact-friend-application-info__name {
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--text-color-primary);
+  max-width: 100%;
+
+  @include mixins.text-ellipsis();
+}
+
+.contact-friend-application-info__id,
+.contact-friend-application-info__intro {
+  font-size: 16px;
+  color: var(--text-color-tertiary);
+  width: 100%;
+  word-break: break-word;
+  
+  @include mixins.multi-line-ellipsis(3);
+}
+
+.contact-friend-application-info__rows {
+  border-top: 1px solid var(--stroke-color-secondary);
+  padding: 32px 0 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contact-friend-application-info__row {
+  display: flex;
+  align-items: center;
+  line-height: 32px;
+  gap: 20px;
+}
+
+.contact-friend-application-info__row-label {
+  font-size: 14px;
+  color: var(--text-color-tertiary);
+  font-weight: 400;
+}
+
+.contact-friend-application-info__row-value {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-color-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contact-friend-application-info__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}

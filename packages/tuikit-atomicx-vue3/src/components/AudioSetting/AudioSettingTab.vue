@@ -45,7 +45,7 @@ import MicrophoneSelect from './MicrophoneSelect.vue';
 import SpeakerSelect from './SpeakerSelect.vue';
 import { useI18n } from '../../locales';
 import { TUIButton } from '@tencentcloud/uikit-base-component-vue3';
-import useDeviceState from '../../states/DeviceState';
+import { useDeviceState } from '../../states/DeviceState';
 import { AudioSettingProps, MediaSettingDisplayMode } from '../../types';
 
 const { t } = useI18n();
@@ -169,4 +169,3 @@ onBeforeUnmount(() => {
   }
 }
 </style>
-../../states/DeviceState

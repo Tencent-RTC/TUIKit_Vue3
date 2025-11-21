@@ -5,7 +5,7 @@
   >
     <SearchBar
       v-if="enableSearch"
-      :placeholder="searchPlaceholder || t('TUIConversation.Search')"
+      :placeholder="searchPlaceholder || t('UserPicker.search')"
       :on-search="searchManager.handleSearch"
     />
 
@@ -17,11 +17,11 @@
         v-if="searchManager.isSearchEmpty.value"
         :class="$style['empty-search']"
       >
-        {{ t('TUIChat.No Result') }}
+        {{ t('UserPicker.no_result') }}
       </div>
       <ListMode
         v-else-if="!isTreeMode"
-        :data-source="searchManager.filteredData.value as IUserPickerRow<any>[]"
+        :data-source="searchManager.filteredData.value as UserPickerRow<any>[]"
         :selected-keys="selectionManager.selectedKeys.value"
         :locked-keys="selectionManager.lockedKeys.value"
         :on-item-click="selectionManager.toggle"
@@ -30,7 +30,7 @@
       />
       <TreeMode
         v-else
-        :data-source="searchManager.filteredData.value as IUserPickerNode<any>[]"
+        :data-source="searchManager.filteredData.value as UserPickerNode<any>[]"
         :selected-keys="selectionManager.selectedKeys.value"
         :half-selected-keys="selectionManager.halfSelectedKeys.value"
         :locked-keys="selectionManager.lockedKeys.value"
@@ -64,10 +64,7 @@ import TreeMode from './components/TreeMode';
 import { useSearchFilter } from './hooks/useSearchFilter';
 import { useSelection } from './hooks/useSelection';
 import { useTreeState } from './hooks/useTreeState';
-import type { IUserPickerProps, IUserPickerRef, IUserPickerNode, IUserPickerRow } from './type';
-
-// Define type for props (without generics for Vue3 compatibility)
-type UserPickerProps = IUserPickerProps<any>;
+import type { UserPickerProps, UserPickerRef, UserPickerNode, UserPickerRow } from './type';
 
 const props = withDefaults(defineProps<UserPickerProps>(), {
   dataSource: () => [],
@@ -129,7 +126,7 @@ watch(
 );
 
 // Generic node update function - can update any properties of a node
-const updateNodeByKey = (nodeKey: string, partialNode: Partial<IUserPickerNode<any>>) => {
+const updateNodeByKey = (nodeKey: string, partialNode: Partial<UserPickerNode<any>>) => {
   if (!isTreeMode.value) {
     return;
   }
@@ -138,7 +135,7 @@ const updateNodeByKey = (nodeKey: string, partialNode: Partial<IUserPickerNode<a
   const newData = JSON.parse(JSON.stringify(internalDataSource.value));
 
   // Recursive function: find and update node
-  const updateNode = (nodes: Array<IUserPickerNode<any>>): boolean => {
+  const updateNode = (nodes: any[]): boolean => {
     for (let i = 0; i < nodes.length; i += 1) {
       if (nodes[i].key === nodeKey) {
         // Found target node, apply updates
@@ -176,7 +173,7 @@ const updateNodeByKey = (nodeKey: string, partialNode: Partial<IUserPickerNode<a
 
   // Try to update, return original data if node is not found
   if (Array.isArray(newData)) {
-    updateNode(newData as Array<IUserPickerNode<any>>);
+    updateNode(newData as any[]);
   }
   internalDataSource.value = newData;
 
@@ -187,15 +184,15 @@ const updateNodeByKey = (nodeKey: string, partialNode: Partial<IUserPickerNode<a
 };
 
 // Implement methods exposed by ref
-const refMethods: IUserPickerRef<any> = {
+const refMethods: UserPickerRef<any> = {
   getSelectedItems: () => selectionManager.getSelectedItems(),
-  updateListData: (newDataSource: Array<IUserPickerRow<any>>) => {
+  updateListData: (newDataSource: any[]) => {
     // Update list data
     if (!isTreeMode.value) {
       internalDataSource.value = newDataSource;
     }
   },
-  updateTreeData: (nodeKey: string, partialNode: Partial<IUserPickerNode<any>>) => {
+  updateTreeData: (nodeKey: string, partialNode: Partial<UserPickerNode<any>>) => {
     // Use generic update function
     updateNodeByKey(nodeKey, partialNode);
   },
@@ -209,8 +206,6 @@ defineExpose(refMethods);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  width: 100%;
-  height: 100%;
 
   &__panel {
     flex: 1;

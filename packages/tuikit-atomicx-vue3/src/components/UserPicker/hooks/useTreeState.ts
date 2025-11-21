@@ -1,8 +1,8 @@
 import { ref, type Ref } from 'vue';
-import type { IUserPickerNode } from '../type';
+import type { UserPickerNode } from '../type';
 
 interface UseTreeStateOptions<T = unknown> {
-  onExpand?: (node: IUserPickerNode<T>) => void;
+  onExpand?: (node: UserPickerNode<T>) => void;
 }
 
 interface UseTreeStateReturn<T = unknown> {
@@ -10,7 +10,7 @@ interface UseTreeStateReturn<T = unknown> {
   loadingKeys: Ref<Set<string>>;
   checkNodeIsExpanded: (key: string) => boolean;
   checkNodeIsLoading: (key: string) => boolean;
-  toggleExpand: (node: IUserPickerNode<T>) => void;
+  toggleExpand: (node: UserPickerNode<T>) => void;
   setNodeLoading: (key: string, loading: boolean) => void;
 }
 
@@ -39,7 +39,7 @@ export function useTreeState<T = unknown>({ onExpand }: UseTreeStateOptions<T> =
   };
 
   // Toggle node expand state
-  const toggleExpand = (node: IUserPickerNode<T>) => {
+  const toggleExpand = (node: UserPickerNode<T>) => {
     // If node is leaf node, no need to handle
     if (node.isLeafNode) {
       return;

@@ -7,4 +7,5 @@ export const resource = {
   'Operation Successful': 'Operation successful',
   'Operation Failed': 'Operation failed',
   'This message contains risky content': 'This message contains risky content',
+  'Anchor': 'ANCHOR'
 };

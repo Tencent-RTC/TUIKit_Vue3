@@ -1,0 +1,1 @@
+export { default as GroupApplicationInfo } from './GroupApplicationInfo.vue';

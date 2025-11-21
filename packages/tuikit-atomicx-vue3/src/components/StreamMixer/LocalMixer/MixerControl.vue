@@ -1,15 +1,22 @@
 <template>
-  <div class="mixer-control" @mousedown="handleMouseDown">
+  <div
+    class="mixer-control"
+    @mousedown="handleMouseDown"
+  >
     <div
-      class="mixer-control-item"
       v-for="control in controlList"
-      :class="{ 'disable': control.disable }"
       :key="control.name"
+      class="mixer-control-item"
+      :class="{ 'disable': control.disable }"
       :style="control.style"
       @click.stop="control.onClick"
     >
       <div class="mixer-control-item-icon">
-        <component :is="control.icon" style="width: 100%; height: 100%" :style="control.style" />
+        <component
+          :is="control.icon"
+          style="width: 100%; height: 100%"
+          :style="control.style"
+        />
       </div>
       <span class="mixer-control-item-name">{{ control.text }}</span>
     </div>
@@ -17,16 +24,16 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+import { TRTCVideoMirrorType, TRTCVideoRotation } from '@tencentcloud/tuiroom-engine-js';
+import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { useVideoMixerState } from '../../../states/VideoMixerState';
 import CameraMirror from '../icons/CameraMirror.vue';
 import Delete from '../icons/Delete.vue';
+import Down from '../icons/Down.vue';
 import Rotation from '../icons/Rotation.vue';
 import Up from '../icons/Up.vue';
-import Down from '../icons/Down.vue';
-import { useVideoMixerState } from '../../../states/VideoMixerState';
-import { TRTCVideoMirrorType, TRTCVideoRotation } from '@tencentcloud/tuiroom-engine-js';
-import { computed, reactive } from 'vue';
-import { MediaSource } from '../../../types';
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import type { MediaSource } from '../../../types';
 
 const { activeMediaSource, mediaSourceList, updateMediaSource, removeMediaSource } = useVideoMixerState();
 const { t } = useUIKit();
@@ -35,12 +42,10 @@ function handleMouseDown(event: Event) {
   event.stopPropagation();
 }
 
-const orderMediaSourceList = computed(() => {
-  return [...mediaSourceList.value].sort((a: MediaSource, b: MediaSource) => a.layout.zOrder - b.layout.zOrder);
-});
+const orderMediaSourceList = computed(() => [...mediaSourceList.value].sort((a: MediaSource, b: MediaSource) => a.layout.zOrder - b.layout.zOrder));
 
-const isActiveMediaSourceTop = computed(() => activeMediaSource.value.id === orderMediaSourceList.value[0].id);
-const isActiveMediaSourceBottom = computed(() => activeMediaSource.value.id === orderMediaSourceList.value[orderMediaSourceList.value.length - 1].id);
+const isActiveMediaSourceTop = computed(() => activeMediaSource.value?.id === orderMediaSourceList.value[0]?.id);
+const isActiveMediaSourceBottom = computed(() => activeMediaSource.value?.id === orderMediaSourceList.value[orderMediaSourceList.value.length - 1]?.id);
 
 const controlList = computed(() => [
   {

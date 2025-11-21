@@ -5,7 +5,9 @@ type BuiltInAction =
   | 'ImagePicker'
   | 'FilePicker'
   | 'VideoPicker'
-  | 'AttachmentPicker';
+  | 'AttachmentPicker'
+  | 'AudioCallPicker'
+  | 'VideoCallPicker';
 
 export type CustomAction = {
   key: string;
@@ -20,13 +22,11 @@ export type MessageInputActions = Array<BuiltInAction | CustomAction>;
 
 export type MessageInputAttachmentPickerMode = 'collapsed' | 'expanded';
 
-export interface IMessageInputProps {
+export interface MessageInputProps {
   autoFocus?: boolean;
   disabled?: boolean;
   hideSendButton?: boolean;
   placeholder?: string;
-  className?: string;
-  style?: CSSProperties;
   attachmentPickerMode?: MessageInputAttachmentPickerMode;
   actions?: MessageInputActions;
   slots?: MessageInputSlots;
@@ -39,4 +39,5 @@ export interface MessageInputSlots {
   rightInline?: () => VNode[];
   inputPrefix?: () => VNode[];
   inputSuffix?: () => VNode[];
+  textEditor?: () => VNode[];
 }

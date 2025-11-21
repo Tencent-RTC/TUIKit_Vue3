@@ -21,17 +21,17 @@
 <script setup lang="ts">
 import { defineProps } from 'vue';
 import TreeNode from './TreeNode.vue';
-import type { IUserPickerNode } from '../../type';
+import type { UserPickerNode } from '../../type';
 
 interface TreeModeProps<T = unknown> {
-  dataSource: IUserPickerNode<T>[];
+  dataSource: UserPickerNode<T>[];
   selectedKeys: Set<string>;
   halfSelectedKeys: Set<string>;
   lockedKeys: Set<string>;
   expandedKeys: Set<string>;
   loadingKeys: Set<string>;
   onItemClick: (key: string) => void;
-  onExpand: (node: IUserPickerNode<T>) => void;
+  onExpand: (node: UserPickerNode<T>) => void;
   renderItem?: any; // Vue component or render function
 }
 

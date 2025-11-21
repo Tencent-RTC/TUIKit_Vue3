@@ -3,7 +3,7 @@
     <LiveSceneSelect :displayMode="mediaSourceList.length === 0 ? 'panel' : 'button'" @addMaterial="selectMaterial" />
     <!-- 素材列表区域 -->
     <div class="materials-list">
-      <template v-for="material in mediaSourceList" :key="material.id">
+      <template v-for="material in mediaSourceListWithZOrderSort" :key="material.id">
         <MaterialItem
           :material="material"
           @cameraSetting="updateCameraSetting(material)"
@@ -39,24 +39,30 @@ import TUIRoomEngine, {
 } from '@tencentcloud/tuiroom-engine-js';
 import LiveSceneSelect from './LiveSceneSelect.vue';
 import { TUIToast, TOAST_TYPE, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { onUnmounted, ref, computed } from 'vue';
+import { onBeforeUnmount, ref, computed } from 'vue';
 import CameraSettingDialog from './CameraSettingDialog.vue';
 import MaterialRenameDialog from './MaterialRenameDialog.vue';
 import MaterialItem from './MaterialItem.vue';
 import { useVideoMixerState } from '../../states/VideoMixerState';
 import { useDeviceState } from '../../states/DeviceState';
-import { useLiveState } from '../../states/LiveState';
+import { useLiveListState } from '../../states/LiveListState';
 import { getNanoId } from '../../utils/utils';
 import { LiveOrientation, MediaSource } from '../../types';
 const { t } = useUIKit();
 
-const { currentLive } = useLiveState();
+const { currentLive } = useLiveListState();
 const { mediaSourceList, publishVideoQuality, addMediaSource, updateMediaSource, clearMediaSource } = useVideoMixerState();
 const { getCameraList } = useDeviceState();
 
 TUIRoomEngine.once('ready', async () => {
   await getCameraList();
 });
+
+const mediaSourceListWithZOrderSort = computed(() =>
+  [...mediaSourceList.value].sort(
+    (item1: MediaSource, item2: MediaSource) => item2.layout?.zOrder - item1.layout?.zOrder
+  )
+);
 
 // 状态数据
 const showMaterialDialog = ref(false);
@@ -235,7 +241,7 @@ const updateCameraSetting = (material: MediaSource) => {
   showCameraSettingDialog.value = true;
 };
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   clearMediaSource();
 })
 </script>

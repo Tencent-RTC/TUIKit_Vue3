@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { CSSProperties, computed, defineProps, ref } from 'vue';
 import { useLoginState } from '../../states/LoginState';
-import { useLiveState } from '../../states/LiveState';
+import { useLiveListState } from '../../states/LiveListState';
 import { useLiveAudienceState } from '../../states/LiveAudienceState';
 import { type AudienceInfo } from '../../types';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
@@ -38,7 +38,7 @@ const props = defineProps<{
 }>();
 const { loginUserInfo } = useLoginState();
 const { audienceList, audienceCount } = useLiveAudienceState();
-const { currentLive } = useLiveState();
+const { currentLive } = useLiveListState();
 
 const showActionMenu = ref(false);
 const selectedViewer = ref<AudienceInfo | null>(null);
@@ -77,7 +77,7 @@ $text-color2: var(--text-color-secondary);
 
 .viewers-panel {
   box-sizing: border-box;
-  height: 500px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   color: $text-color1;
@@ -147,7 +147,7 @@ $text-color2: var(--text-color-secondary);
     &:hover {
       background-color: var(--uikit-color-gray-3);
     }
-    
+
     .viewer-info {
       display: flex;
       align-items: center;

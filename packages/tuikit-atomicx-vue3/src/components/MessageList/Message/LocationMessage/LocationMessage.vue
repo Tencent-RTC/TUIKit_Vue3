@@ -2,5 +2,7 @@
 </script>
 
 <template>
-  [Location Message]
+  <div>
+    [undefined location Message]
+  </div>
 </template>

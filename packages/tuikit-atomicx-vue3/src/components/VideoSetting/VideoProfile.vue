@@ -22,7 +22,7 @@ import TuiOption from '../../baseComp/Option';
 import { useI18n } from '../../locales';
 
 import { TUIVideoQuality } from '@tencentcloud/tuiroom-engine-js';
-import useDeviceState from '../../states/DeviceState';
+import { useDeviceState } from '../../states/DeviceState';
 
 const { t } = useI18n();
 

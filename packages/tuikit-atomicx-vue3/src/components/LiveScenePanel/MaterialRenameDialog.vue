@@ -2,7 +2,7 @@
   <TUIDialog
     :visible="true"
     :title="t('Rename')"
-    :confirmText="t('保存为新名称')"
+    :confirmText="t('Save as new name')"
     @confirm="handleRename"
     @close="closeMaterialRenameDialog"
     @cancel="closeMaterialRenameDialog"

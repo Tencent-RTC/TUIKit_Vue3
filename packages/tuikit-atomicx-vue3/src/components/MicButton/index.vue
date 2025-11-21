@@ -2,7 +2,7 @@
   <div class="mic-button-container">
     <div class="mic-button" :class="{ 'disabled': !hasPublishAudioPermission }" @click="handleClick">
       <audio-icon
-        :audio-volume="audioVolume"
+        :audio-volume="currentMicVolume"
         :is-muted="isMuted"
         :is-disabled="!hasPublishAudioPermission"
       />
@@ -19,7 +19,7 @@ import { DeviceStatus, DeviceError } from '../../types';
 import AudioIcon from './AudioIcon.vue';
 
 const {
-  audioVolume,
+  currentMicVolume,
   hasPublishAudioPermission,
   microphoneStatus,
   microphoneLastError,

@@ -1,33 +1,52 @@
 <template>
-  <div class="live-list-panel-h5" v-if="loginUserInfo">
-    <div v-if="liveList.length > 0" class="live-list" @scroll="handleScroll" @wheel="handleWheel" ref="scrollContainerRef">
-      <div class="live-list-items">
-        <div class="live-item" v-for="item in liveList" :key="item.liveId" @click="liveRoomClick(item)">
-          <div class="live-room-cover">
-            <div class="header">
-              <IconLiveCoverHeader :size="10" />
-              <span class="viewer-count"> {{ item.currentViewerCount || 0 }} </span>
-              <span> {{ t('people have watched the live') }} </span>
+  <div v-if="loginUserInfo" class="live-list-panel-h5">
+    <div
+      v-if="showLiveList.length > 0"
+      ref="scrollContainerRef"
+      class="live-list"
+    >
+      <PullToRefresh
+        :text="{
+          pull: t('Pull to refresh'),
+          release: t('Release to refresh'),
+          loading: t('Loading'),
+          success: t('Refresh success'),
+          error: t('Refresh failed'),
+        }"
+        @refresh="handleRefresh"
+        @load-more="fetchMoreLives"
+      >
+        <div class="live-list-items">
+          <div v-for="item in showLiveList" :key="item.liveId" class="live-item" @click="liveRoomClick(item)">
+            <div class="live-room-cover">
+              <div class="header">
+                <IconLiveCoverHeader :size="10" />
+                <span class="viewer-count"> {{ item.currentViewerCount || 0 }} </span>
+                <span> {{ t('people watched') }} </span>
+              </div>
+              <img :src="item.coverUrl || DEFAULT_COVER" alt="" @error="handleCoverImageError" />
             </div>
-            <img :src="item.coverUrl || DEFAULT_COVER" alt="" @error="handleCoverImageError" />
-          </div>
-          <span class="live-name">{{ item.liveName }} </span>
-          <div class="owner-info">
-            <Avatar :src="item.liveOwner.avatarUrl" :size="16" />
-            <span class="owner-name">{{ item.liveOwner.userName || item.liveOwner.userId }} </span>
+            <span class="live-name">{{ item.liveName }} </span>
+            <div class="owner-info">
+              <Avatar
+                :src="item.liveOwner.avatarUrl"
+                :size="16"
+                :style="{ border: '1px solid var(--uikit-color-white-7)' }"
+              />
+              <span class="owner-name">{{ item.liveOwner.userName || item.liveOwner.userId }} </span>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="bottom-text-no-more" v-if="!hasMoreLive">
-        <span>{{ t('No More') }}</span>
-      </div>
+        <div v-if="!hasMoreLive" class="bottom-text-no-more">
+          <span>{{ t('No More') }}</span>
+        </div>
+      </PullToRefresh>
     </div>
-    <div v-else-if="!isLoadingLiveList" class="no-live">
+    <div v-else-if="!isLoadingMore" class="no-live">
       <IconNoLiveRoom :size="60" />
       <span>{{ t('No Live') }}</span>
     </div>
-    <div class="bottom-text" v-if="liveList.length > 0 && (isShowMoreVisible || isLoadingMore)">
-      <span v-if="isShowMoreVisible">{{ t('Load More') }}</span>
+    <div v-if="liveList.length > 0 && isLoadingMore" class="bottom-text">
       <span v-if="isLoadingMore">{{ t('Loading...') }}</span>
     </div>
   </div>
@@ -36,28 +55,25 @@
 <script lang="ts" setup>
 import { ref, watch, computed, defineEmits, onMounted, onUnmounted } from 'vue';
 import { useUIKit, IconLiveCoverHeader, IconNoLiveRoom } from '@tencentcloud/uikit-base-component-vue3';
-import { useLiveState } from '../../states/LiveState';
-import { LiveInfo } from '../../types';
+import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
 import { Avatar } from '../Avatar';
+import type { LiveInfo } from '../../types';
+import PullToRefresh from './pullToRefresh.vue';
 
-const { liveList, hasMoreLive, isLoadingLiveList, isLoadingMore, fetchLiveList } = useLiveState();
+const { liveList, liveListCursor, fetchLiveList } = useLiveListState();
 const { loginUserInfo } = useLoginState();
 const { t } = useUIKit();
+const showLiveList = ref<LiveInfo[]>([]);
 
 const DEFAULT_COVER = 'https://liteav-test-1252463788.cos.ap-guangzhou.myqcloud.com/voice_room/voice_room_cover1.png';
 const scrollContainerRef = ref<HTMLElement | null>(null);
 
+const isLoadingMore = ref(false);
+const hasMoreLive = computed(() => liveListCursor.value !== '');
+
 const liveItemWidth = ref('168px');
 const liveItemHeight = ref('262px');
-
-const shouldFetchMoreLiveList = computed(() => {
-  return hasMoreLive.value && !isLoadingMore.value && !isLoadingLiveList.value;
-});
-
-const isShowMoreVisible = computed(() => {
-  return shouldFetchMoreLiveList.value && !scrollContainerRef.value;
-});
 
 const emit = defineEmits<{
   (e: 'live-room-click', liveInfo: LiveInfo): void;
@@ -65,9 +81,14 @@ const emit = defineEmits<{
 
 watch(
   loginUserInfo,
-  user => {
+  async user => {
     if (user && user.userId) {
-      fetchLiveList({});
+      isLoadingMore.value = true;
+      liveListCursor.value = '';
+      liveList.value.length = 0;
+      await fetchLiveList({});
+      showLiveList.value = liveList.value.slice();
+      isLoadingMore.value = false;
     }
   },
   { immediate: true }
@@ -85,38 +106,35 @@ watch(scrollContainerRef, () => {
   }
 });
 
+async function handleRefresh(completeRefresh: (success?: boolean) => void) {
+  try {
+    isLoadingMore.value = true;
+    liveListCursor.value = '';
+    liveList.value.length = 0;
+    await fetchLiveList({});
+    showLiveList.value = liveList.value.slice();
+    isLoadingMore.value = false;
+    completeRefresh(true);
+  } catch (error) {
+    completeRefresh(false);
+  }
+}
+
 function liveRoomClick(liveInfo: LiveInfo) {
   console.log('liveRoomClick,liveInfo:', liveInfo);
   emit('live-room-click', liveInfo);
 }
 
-function isScrollAtBottom(threshold = 50) {
-  if (!scrollContainerRef.value) {
-    return false;
-  }
-  return (
-    scrollContainerRef.value.scrollTop + scrollContainerRef.value.clientHeight >=
-    scrollContainerRef.value.scrollHeight - threshold
-  );
-}
-
-function handleWheel(event: WheelEvent) {
-  if (!scrollContainerRef.value) {
+async function fetchMoreLives() {
+  if (!hasMoreLive.value || isLoadingMore.value) {
     return;
   }
-
-  if (event.deltaY > 0 && isScrollAtBottom() && shouldFetchMoreLiveList.value) {
-    fetchLiveList({ append: true });
-  }
-}
-
-function handleScroll() {
-  if (!scrollContainerRef.value) {
-    return;
-  }
-
-  if (isScrollAtBottom() && shouldFetchMoreLiveList.value) {
-    fetchLiveList({ append: true });
+  try {
+    isLoadingMore.value = true;
+    await fetchLiveList({ cursor: liveListCursor.value });
+    showLiveList.value = liveList.value.slice();
+  } finally {
+    isLoadingMore.value = false;
   }
 }
 
@@ -138,12 +156,12 @@ onUnmounted(() => {
     scrollContainerRef.value.removeEventListener('scroll', handleScroll);
   }
 });
-
 </script>
 
 <style lang="scss" scoped>
 $text-color1: var(--text-color-primary);
 $text-color2: var(--text-color-secondary);
+$text-color3: var(--text-color-tertiary);
 
 @mixin text-size-12 {
   font-size: 12px;
@@ -259,7 +277,7 @@ $text-color2: var(--text-color-secondary);
     align-items: center;
     margin-left: 10px;
     color: $text-color1;
-    @include text-size-12;
+    @include text-size-14;
   }
 
   .owner-info {
@@ -272,7 +290,7 @@ $text-color2: var(--text-color-secondary);
     margin-left: 10px;
     gap: 4px;
     color: $text-color2;
-    @include text-size-12;
+    @include text-size-14;
 
     .owner-name {
       max-width: 80px;
@@ -285,6 +303,7 @@ $text-color2: var(--text-color-secondary);
 .bottom-text-no-more {
   flex: 1;
   min-height: 30px;
+  text-align: center;
   position: relative;
 
   span {
@@ -293,7 +312,7 @@ $text-color2: var(--text-color-secondary);
     bottom: 5px;
     text-align: center;
     transform: translate(-50%, 0);
-    color: $text-color1;
+    color: $text-color3;
     @include text-size-14;
   }
 }
