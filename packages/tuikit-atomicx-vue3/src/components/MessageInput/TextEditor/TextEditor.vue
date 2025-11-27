@@ -32,7 +32,7 @@ interface TextEditorProps {
 const props = withDefaults(defineProps<TextEditorProps>(), {
   autoFocus: true,
   disabled: false,
-  placeholder: '',
+  placeholder: undefined,
 });
 
 const { t } = useUIKit();
@@ -41,8 +41,6 @@ const { updateRawValue, sendMessage, setEditorInstance, setContent } = useMessag
 
 const editorDomRef = ref<HTMLDivElement | null>(null);
 const isFocused = ref(props.autoFocus);
-
-const placeholderText = computed(() => (props.disabled ? '' : props.placeholder || t('MessageInput.enter_a_message')));
 
 let editorInstance: Editor | null = null;
 
@@ -57,7 +55,8 @@ onMounted(() => {
   if (!element.dataset.editorCreated) {
     editorInstance = createEditor({
       element,
-      placeholder: placeholderText.value,
+      placeholder: props.placeholder ?? t('MessageInput.enter_a_message'),
+      isPlaceholderOnlyShowWhenEditable: props.placeholder === undefined,
       autoFocus: props.autoFocus,
       disabled: props.disabled,
       onUpdate: (content) => {

@@ -260,5 +260,5 @@ const handleJoinGroup = (data: GroupModel, note: string) => emit('joinGroup', da
 </script>
 
 <style scoped lang="scss">
-@import './ContactInfo.scss';
+@use './ContactInfo.scss';
 </style>

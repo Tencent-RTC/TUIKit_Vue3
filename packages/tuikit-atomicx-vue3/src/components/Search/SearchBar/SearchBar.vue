@@ -128,5 +128,5 @@ const handleClear = () => {
 </script>
 
 <style lang="scss" module>
-@import './SearchBar.scss';
+@use './SearchBar.scss';
 </style>

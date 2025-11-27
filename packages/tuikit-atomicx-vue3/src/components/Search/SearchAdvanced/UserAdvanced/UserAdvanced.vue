@@ -378,5 +378,5 @@ const getGenderText = (gender: string) => {
 </script>
 
 <style lang="scss" module>
-@import './UserAdvanced.scss';
+@use './UserAdvanced.scss';
 </style>

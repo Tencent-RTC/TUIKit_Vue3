@@ -53,5 +53,5 @@ const handleTabClick = (tabKey: SearchTabType) => {
 </script>
 
 <style lang="scss" module>
-@import './SearchTab.scss';
+@use './SearchTab.scss';
 </style>

@@ -23,5 +23,5 @@ const time = getTimeStamp({
 </script>
 
 <style lang="scss" module>
-@import './ConversationPreview.scss';
+@use './ConversationPreview.scss';
 </style>

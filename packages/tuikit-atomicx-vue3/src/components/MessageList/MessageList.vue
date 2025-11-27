@@ -243,6 +243,8 @@ watch(messageList, (newMessages, oldMessages) => {
       // TODO: new message notification
     }
   }
+}, {
+  immediate: true,
 });
 
 watch(() => props.enableReadReceipt, (newEnableReadReceipt) => {

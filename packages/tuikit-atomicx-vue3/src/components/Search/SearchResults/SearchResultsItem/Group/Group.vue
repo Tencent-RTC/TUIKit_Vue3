@@ -35,5 +35,5 @@ const handleClick = () => {
 </script>
 
 <style lang="scss" module>
-@import './Group.scss';
+@use './Group.scss';
 </style>

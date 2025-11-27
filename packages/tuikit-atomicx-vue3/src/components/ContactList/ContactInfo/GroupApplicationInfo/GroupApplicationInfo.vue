@@ -95,5 +95,5 @@ const handleRefuse = () => {
 </script>
 
 <style scoped lang="scss">
-@import './GroupApplicationInfo.scss';
+@use './GroupApplicationInfo.scss';
 </style>

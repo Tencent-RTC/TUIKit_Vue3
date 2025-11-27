@@ -178,5 +178,5 @@ const handleMaskClick = (e: Event) => {
 </script>
 
 <style lang="scss" module>
-@import './ConversationActions.scss';
+@use './ConversationActions.scss';
 </style>

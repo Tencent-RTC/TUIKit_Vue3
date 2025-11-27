@@ -93,7 +93,7 @@ function formatTime(seconds: number): string {
   return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-function substringByLength(str: string, maxLength: number = 12): string {
+function substringByLength(str: string, maxLength = 12): string {
   if (!str || str.length <= maxLength) {
     return str;
   }
@@ -150,7 +150,7 @@ function parseCallMessageText(message: MessageModel): string {
         return i18next.t('CallMessage.switch_to_video_call');
       }
       // when CDM is abnormal, the default return value is start call
-      return i18next.t('CallMessage.start_call');
+      return i18next.t('CallMessage.start_call', { messageSender: '' });
     }
     case 2:
       if (data.groupID) {
