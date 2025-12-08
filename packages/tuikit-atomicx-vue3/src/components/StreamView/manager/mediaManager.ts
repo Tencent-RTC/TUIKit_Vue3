@@ -13,14 +13,13 @@ import useRoomEngine from '../../../hooks/useRoomEngine';
 import { useLiveListState } from '../../../states/LiveListState';
 import useUserState from '../../../states/UserState/index';
 import { innerUserStore } from '../../../states/UserState/store';
-import { useVideoMixerState } from '../../../states/VideoMixerState';
+import { useVideoMixerState, isVideoMixerEnabled } from '../../../states/VideoMixerState';
 import { DeviceStatus, StreamPlayStatus } from '../../../types';
 import { isMobile } from '../../../utils/environment';
 import type {
   TUIChangeReason } from '@tencentcloud/tuiroom-engine-js';
 
 const { localUser } = useUserState();
-const { isVideoMixerEnabled } = useVideoMixerState();
 const roomEngine = useRoomEngine();
 const playDomMap = new Map<string, Map<HTMLElement, TUIVideoStreamType>>();
 

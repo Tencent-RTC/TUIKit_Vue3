@@ -1,10 +1,18 @@
 <template>
   <div :class="['audio-icon-container', `${size == 'small' && 'small'}`]">
     <div class="audio-level-container">
-      <div class="audio-level" :style="audioLevelStyle"></div>
+      <div class="audio-level" :style="audioLevelStyle" />
     </div>
-    <IconMicOff class="audio-icon" size="24" v-if="props.isMuted" />
-    <IconMicOn class="audio-icon" size="24" v-else />
+    <IconMicOff
+      v-if="props.isMuted"
+      class="audio-icon"
+      :size="24"
+    />
+    <IconMicOn
+      v-else
+      class="audio-icon"
+      :size="24"
+    />
   </div>
 </template>
 

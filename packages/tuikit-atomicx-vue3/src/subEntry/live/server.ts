@@ -3,9 +3,9 @@ import { ref } from 'vue';
 import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
 import TUICore, { TUILogin, TUIConstants } from '@tencentcloud/tui-core';
 import TUIRoomEngine from '@tencentcloud/tuiroom-engine-js';
-import { dataReport, MetricsKey } from '../report';
-import { useLoginState } from '../states/LoginState';
-import { isMobile } from '../utils';
+import { dataReport, MetricsKey } from '../../report';
+import { useLoginState } from '../../states/LoginState';
+import { isMobile } from '../../utils';
 
 export default class RTCLoginServer {
   private static instance: RTCLoginServer;

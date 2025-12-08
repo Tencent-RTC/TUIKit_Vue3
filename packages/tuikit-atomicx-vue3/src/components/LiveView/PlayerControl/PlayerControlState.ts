@@ -1,13 +1,11 @@
 import type { Ref } from 'vue';
 import { computed, ref, watch } from 'vue';
-import { TRTCCloud, TUIVideoQuality } from '@tencentcloud/tuiroom-engine-js';
+import { TUIVideoQuality } from '@tencentcloud/tuiroom-engine-js';
 import useRoomEngine from '../../../hooks/useRoomEngine';
 import { useLiveSeatState } from '../../../states/LiveSeatState';
 import { useLiveListState } from '../../../states/LiveListState';
-// Import utility modules
 import {
   getDeviceType,
-  getCurrentOrientation,
   shouldRotateToLandscapeForFullscreen,
   hadLandscapeRotationToUndo,
 } from './utils/deviceDetection';
@@ -22,7 +20,8 @@ import {
   StyleManager,
 } from './utils/fullscreenManager';
 import type {
-  FullscreenResult } from './utils/fullscreenManager';
+  FullscreenResult
+} from './utils/fullscreenManager';
 
 // Player fill mode enum
 export enum FillMode {
@@ -48,6 +47,7 @@ export interface PlayerControlState {
   isLandscapeStyleMode: Ref<boolean>;
   isPictureInPicture: Ref<boolean>;
   currentVolume: Ref<number>;
+  isMuted: Ref<boolean>;
 
   // Resolution state properties
   resolutionList: Ref<Resolution[]>;
@@ -67,16 +67,37 @@ export interface PlayerControlState {
 
   // Resolution control methods
   switchResolution: (resolution: Resolution) => Promise<boolean>;
-  getResolutionList: (roomId: string) => Promise<Resolution[]>;
-  initializeResolution: (roomId: string, applyResolution?: boolean) => Promise<void>;
 
   // Other control methods
-  setVolume: (volume: number) => Promise<boolean>;
+  setVolume: (volume: number) => Promise<boolean>; // Volume range: 0-100
+  setMute: (muted: boolean) => Promise<boolean>;
   changeFillMode: (fillMode: FillMode) => Promise<boolean>;
-
   // Cleanup method
   cleanup: () => void;
 }
+
+// Constants
+const VOLUME_CONSTANTS = {
+  // Default volume level when component initializes (100% volume)
+  DEFAULT_VOLUME: 100,
+  // Minimum allowed volume level (silent)
+  MIN_VOLUME: 0,
+  // Maximum allowed volume level (full volume)
+  MAX_VOLUME: 100,
+  // Volume level when muted (silent)
+  MUTE_VOLUME: 0,
+};
+
+const TIMING_CONSTANTS = {
+  // Delay in milliseconds before resuming playback after leaving picture-in-picture
+  // Allows browser to handle state transitions naturally
+  PIP_RESUME_DELAY: 300,
+};
+
+const ARRAY_CONSTANTS = {
+  // Index of the first element in an array
+  FIRST_INDEX: 0,
+};
 
 // State management
 const isPlaying = ref(true);
@@ -84,12 +105,15 @@ const currentFillMode = ref<FillMode>(FillMode.CONTAIN);
 const isFullscreen = ref(false);
 const isLandscapeStyleMode = ref(false);
 const isPictureInPicture = ref(false);
-const currentVolume = ref(1.0); // Default volume is 1.0 (100%)
+const currentVolume = ref(VOLUME_CONSTANTS.DEFAULT_VOLUME);
+const isMuted = ref(false); // Mute state - synced across all rooms
+
+// Internal storage for volume restoration (not reactive)
+let restoreVolume = VOLUME_CONSTANTS.DEFAULT_VOLUME;
 
 // Resolution state management
 const resolutionList = ref<Resolution[]>([]);
 const currentResolution = ref<Resolution | undefined>();
-const RESOLUTION_INITIALIZED_PREFIX = '[LiveCoreView]ResolutionInitialized';
 
 const roomEngine = useRoomEngine();
 
@@ -134,67 +158,21 @@ export function usePlayerControlState(): PlayerControlState {
     }
   };
 
-  /**
-   * Video control methods
-   */
-
-  const syncVolumeState = (): void => {
-    const video = DOMElementGetter.getVideoElement();
-    if (video) {
-      const actualVolume = video.volume;
-      if (Math.abs(currentVolume.value - actualVolume) > 0.01) { // Use small tolerance for floating point comparison
-        console.log(`Syncing volume state: ${currentVolume.value} -> ${actualVolume}`);
-        currentVolume.value = actualVolume;
-      }
-    }
-  };
-
-  const syncPlayingState = (): void => {
-    const video = DOMElementGetter.getVideoElement();
-    if (video) {
-      const actualPlayingState = !video.paused && !video.ended;
-      if (isPlaying.value !== actualPlayingState) {
-        console.log(`Syncing playing state: ${isPlaying.value} -> ${actualPlayingState}`);
-        isPlaying.value = actualPlayingState;
-      }
-    }
-  };
-
   const resume = async (): Promise<boolean> => withErrorHandling(async () => {
-    const video = DOMElementGetter.getVideoElement();
-    if (!video) {
-      throw new Error('Video element not found');
-    }
-    if (DOMElementGetter.hasTcPlayerElement()) {
-      await video.play();
-    } else {
-      const trtcCloudMap = TRTCCloud.subCloudMap;
-      trtcCloudMap.forEach((trtcCloud: TRTCCloud) => {
-        const trtc = trtcCloud?._trtc;
-        trtc?.callExperimentalAPI('resumeRemotePlayer', { userId: '*' });
-      });
-    }
+    await roomEngine.instance?.callExperimentalAPI(JSON.stringify({
+      api: 'resume',
+      params: {},
+    }));
     isPlaying.value = true;
-    console.log('Video playback resumed');
     return true;
   }, 'Resume playback', false);
 
   const pause = async (): Promise<boolean> => withErrorHandling(async () => {
-    const video = DOMElementGetter.getVideoElement();
-    if (!video) {
-      throw new Error('Video element not found');
-    }
-    if (DOMElementGetter.hasTcPlayerElement()) {
-      await video.pause();
-    } else {
-      const trtcCloudMap = TRTCCloud.subCloudMap;
-      trtcCloudMap.forEach((trtcCloud: TRTCCloud) => {
-        const trtc = trtcCloud?._trtc;
-        trtc?.callExperimentalAPI('pauseRemotePlayer', { userId: '*' });
-      });
-    }
+    await roomEngine.instance?.callExperimentalAPI(JSON.stringify({
+      api: 'pause',
+      params: {},
+    }));
     isPlaying.value = false;
-    console.log('Video playback paused');
     return true;
   }, 'Pause playback', false);
 
@@ -202,13 +180,7 @@ export function usePlayerControlState(): PlayerControlState {
    * Handle orientation change
    */
   const handleOrientationChange = (newOrientation: 'portrait' | 'landscape' | 'unknown'): void => {
-    // Only handle orientation changes in fullscreen mode
-    if (!isFullscreen.value) {
-      return;
-    }
-
-    // Only handle for landscape streams
-    if (!isLandscapeStream.value) {
+    if (!isFullscreen.value || !isLandscapeStream.value) {
       return;
     }
 
@@ -218,14 +190,6 @@ export function usePlayerControlState(): PlayerControlState {
       return;
     }
 
-    console.log('Handling orientation change:', {
-      newOrientation,
-      deviceType,
-      isLandscapeStream: isLandscapeStream.value,
-      isFullscreen: isFullscreen.value,
-    });
-
-    // Smart adjustment of landscape styles
     StyleManager.smartApplyLandscapeStyles(elements.view, newOrientation);
   };
 
@@ -240,22 +204,7 @@ export function usePlayerControlState(): PlayerControlState {
       throw new Error(`Missing required DOM elements: ${validation.missingElements.join(', ')}`);
     }
 
-    const currentOrientation = getCurrentOrientation();
     const shouldRotateToLandscape = shouldRotateToLandscapeForFullscreen(deviceType, isLandscapeStream.value);
-
-    console.log('Request fullscreen:', {
-      deviceType,
-      currentOrientation,
-      streamType: isLandscapeStream.value ? 'landscape stream' : isPortraitStream.value ? 'portrait stream' : 'unknown',
-      shouldRotate: shouldRotateToLandscape,
-      reason: shouldRotateToLandscape
-        ? 'Mobile device in portrait with landscape stream'
-        : currentOrientation === 'landscape'
-          ? 'Already in landscape orientation'
-          : !isLandscapeStream.value
-            ? 'Not a landscape stream'
-            : 'Desktop device or other reason',
-    });
 
     const result: FullscreenResult = await FullscreenManager.requestFullscreen(
       elements.container!,
@@ -267,7 +216,6 @@ export function usePlayerControlState(): PlayerControlState {
 
     if (result.success) {
       isFullscreen.value = true;
-      console.log(`Fullscreen request successful (${result.mode})`);
     } else {
       console.error('Fullscreen request failed:', result.error);
     }
@@ -281,22 +229,7 @@ export function usePlayerControlState(): PlayerControlState {
       throw new Error('live-core-view element not found');
     }
 
-    const currentOrientation = getCurrentOrientation();
     const hadLandscapeRotation = hadLandscapeRotationToUndo(deviceType, isLandscapeStream.value);
-
-    console.log('Exit fullscreen:', {
-      deviceType,
-      currentOrientation,
-      streamType: isLandscapeStream.value ? 'landscape stream' : isPortraitStream.value ? 'portrait stream' : 'unknown',
-      hadLandscapeRotation,
-      reason: hadLandscapeRotation
-        ? 'Mobile device with landscape stream in landscape mode'
-        : currentOrientation === 'portrait'
-          ? 'Already in portrait orientation'
-          : !isLandscapeStream.value
-            ? 'Not a landscape stream'
-            : 'Desktop device or other reason',
-    });
 
     const result: FullscreenResult = await FullscreenManager.exitFullscreen(
       elements.view,
@@ -304,15 +237,11 @@ export function usePlayerControlState(): PlayerControlState {
       hadLandscapeRotation,
     );
 
-    // For standard fullscreen, state is updated by event listeners
-    // For CSS simulated fullscreen, update state directly
     if (result.mode === FullscreenMode.CSS_SIMULATED) {
       isFullscreen.value = false;
     }
 
-    if (result.success) {
-      console.log(`Fullscreen exit successful (${result.mode})`);
-    } else {
+    if (!result.success) {
       console.error('Fullscreen exit failed:', result.error);
     }
     isLandscapeStyleMode.value = false;
@@ -332,11 +261,8 @@ export function usePlayerControlState(): PlayerControlState {
       throw new Error('Picture-in-picture not supported in current environment');
     }
 
-    // Ensure event listeners are set
     setupVideoEventListeners();
     await video.requestPictureInPicture();
-
-    console.log('Picture-in-picture request successful');
     return true;
   }, 'Request picture-in-picture', false);
 
@@ -346,7 +272,6 @@ export function usePlayerControlState(): PlayerControlState {
     }
 
     await document.exitPictureInPicture();
-    console.log('Picture-in-picture exit successful');
     return true;
   }, 'Exit picture-in-picture', false);
 
@@ -357,6 +282,7 @@ export function usePlayerControlState(): PlayerControlState {
     if (!roomEngine.instance) {
       throw new Error('Room engine instance not available');
     }
+    console.debug('Switching to resolution:', resolution);
     await roomEngine.instance.callExperimentalAPI(
       JSON.stringify({
         api: 'switchPlaybackQuality',
@@ -370,7 +296,6 @@ export function usePlayerControlState(): PlayerControlState {
       isPlaying.value = true;
     }
     currentResolution.value = resolution;
-    console.log(`Resolution switched to: ${resolution}`);
     return true;
   }, 'Switch resolution', false);
 
@@ -388,46 +313,28 @@ export function usePlayerControlState(): PlayerControlState {
       }),
     );
 
-    console.log(`Retrieved resolution list for room ${roomId}:`, resolutions);
     return (resolutions || []) as Resolution[];
   }, 'Get resolution list', []);
 
   const initializeResolution = async (roomId: string, applyResolution = true): Promise<void> => {
     try {
-      // Check if resolution has been initialized for this room
-      const initializedKey = `${RESOLUTION_INITIALIZED_PREFIX}_${roomId}`;
-      const hasInitialized = localStorage.getItem(initializedKey) === 'true';
-
-      // Get available resolutionList
       const availableResolutions = await getResolutionList(roomId);
       resolutionList.value = availableResolutions;
 
-      if (availableResolutions.length === 0) {
-        console.warn('No resolutions available for room:', roomId);
+      if (availableResolutions.length === ARRAY_CONSTANTS.FIRST_INDEX) {
+        console.warn('[Resolution] No resolutions available for room:', roomId);
+        currentResolution.value = undefined;
         return;
       }
 
-      // Always set current resolution if it's not set or if it's not in the available list
-      if (!currentResolution.value || !availableResolutions.includes(currentResolution.value)) {
-        currentResolution.value = availableResolutions[0];
+      // Always set to the first available resolution when entering a room
+      const targetResolution = availableResolutions[ARRAY_CONSTANTS.FIRST_INDEX];
+      currentResolution.value = targetResolution;
+      if (applyResolution) {
+        await switchResolution(targetResolution);
       }
-
-      // Only apply resolution if it hasn't been initialized for this room or explicitly requested
-      const shouldApplyResolution = applyResolution && !hasInitialized && currentResolution.value !== undefined;
-      if (shouldApplyResolution) {
-        await switchResolution(currentResolution.value!);
-        // Mark as initialized for this room
-        localStorage.setItem(initializedKey, 'true');
-      }
-
-      console.log(`Resolution initialized for room ${roomId}:`, {
-        availableResolutions,
-        currentResolution: currentResolution.value,
-        applied: shouldApplyResolution,
-        hasInitialized,
-      });
     } catch (error) {
-      console.error('Failed to initialize resolution:', error);
+      console.error('[Resolution] Failed to initialize resolution:', error);
     }
   };
 
@@ -435,19 +342,32 @@ export function usePlayerControlState(): PlayerControlState {
    * Other control methods
    */
   const setVolume = async (volume: number): Promise<boolean> => withErrorHandling(async () => {
-    if (volume < 0 || volume > 1) {
-      throw new Error('Volume value must be between 0-1');
+    if (volume < VOLUME_CONSTANTS.MIN_VOLUME || volume > VOLUME_CONSTANTS.MAX_VOLUME) {
+      throw new Error(`Volume value must be between ${VOLUME_CONSTANTS.MIN_VOLUME}-${VOLUME_CONSTANTS.MAX_VOLUME}`);
     }
-    await roomEngine.instance?.setAudioPlayoutVolume({ volume: volume * 100 });
+    await roomEngine.instance?.setAudioPlayoutVolume({ volume });
     currentVolume.value = volume;
-    console.log(`Video volume set to: ${volume}`);
+    restoreVolume = volume;
+    isMuted.value = volume == VOLUME_CONSTANTS.MUTE_VOLUME;
     return true;
   }, 'Set volume', false);
 
+  const setMute = async (muted: boolean): Promise<boolean> => withErrorHandling(async () => {
+    let volume;
+    if (muted) {
+      restoreVolume = currentVolume.value;
+      volume = VOLUME_CONSTANTS.MUTE_VOLUME;
+    } else {
+      volume = restoreVolume || VOLUME_CONSTANTS.DEFAULT_VOLUME;
+    }
+    await roomEngine.instance?.setAudioPlayoutVolume({ volume });
+    currentVolume.value = volume;
+    isMuted.value = muted;
+    return true;
+  }, 'Set mute', false);
+
   const changeFillMode = async (fillMode: FillMode): Promise<boolean> => withErrorHandling(async () => {
     currentFillMode.value = fillMode;
-    console.log(`Fill mode changed to: ${fillMode}`);
-    // TODO: Implement actual fill mode logic
     return true;
   }, 'Change fill mode', false);
 
@@ -458,55 +378,35 @@ export function usePlayerControlState(): PlayerControlState {
     try {
       const elements = DOMElementGetter.getAllElements();
       if (!elements.view) {
-        console.warn('live-core-view element not found for fullscreen exit cleanup');
+        console.warn('View element not found for fullscreen exit cleanup');
         return;
       }
 
-      console.log('Executing fullscreen exit style cleanup:', {
-        deviceType,
-        hasLandscapeStream: isLandscapeStream.value,
-        currentOrientation: getCurrentOrientation(),
-      });
-
-      // Remove all fullscreen related styles
       StyleManager.removeFullscreenStyles(elements.view);
       StyleManager.removeLandscapeStyles(elements.view);
 
-      // If mobile device, try to unlock screen orientation
       if (deviceType !== 'desktop') {
-        OrientationManager.unlockOrientation().catch((error) => {
-          console.warn('Failed to unlock orientation during cleanup:', error);
+        OrientationManager.unlockOrientation().catch(() => {
+          // Ignore orientation unlock errors in non-desktop environments
         });
       }
-
       isLandscapeStyleMode.value = false;
-      console.log('Fullscreen exit style cleanup completed');
     } catch (error) {
-      console.error('Fullscreen exit style cleanup failed:', error);
+      console.error('Fullscreen exit cleanup failed:', error);
     }
   };
 
   /**
-   * Event listener setup
+   * Event listener setup for fullscreen state changes
+   * Handles fullscreen API events across different browsers and visibility changes
    */
   const setupFullscreenEventListeners = (): void => {
     const handleFullscreenChange = () => {
       const isCurrentlyFullscreen = !!document.fullscreenElement;
       const wasFullscreen = isFullscreen.value;
 
-      console.log('Fullscreen state change:', {
-        fullscreenElement: document.fullscreenElement,
-        isCurrentlyFullscreen,
-        previousValue: wasFullscreen,
-        deviceType,
-        changeType: isCurrentlyFullscreen ? 'entered' : 'exited',
-      });
-
-      // Update state
       isFullscreen.value = isCurrentlyFullscreen;
-      // If exiting fullscreen, need to cleanup styles
       if (wasFullscreen && !isCurrentlyFullscreen) {
-        console.log('Detected passive fullscreen exit, executing style cleanup');
         handleFullscreenExit();
       }
     };
@@ -517,163 +417,88 @@ export function usePlayerControlState(): PlayerControlState {
     eventManager.addListener('mozfullscreenchange', document, 'mozfullscreenchange', handleFullscreenChange);
     eventManager.addListener('MSFullscreenChange', document, 'MSFullscreenChange', handleFullscreenChange);
 
-    // Add additional detection mechanisms for non-standard fullscreen exits (like Android back button)
     const handleVisibilityChange = () => {
-      // When page visibility changes, check if fullscreen state is consistent
       if (document.visibilityState === 'visible' && isFullscreen.value) {
         const actuallyFullscreen = !!document.fullscreenElement;
         if (!actuallyFullscreen) {
-          console.log('Detected fullscreen state inconsistency via visibilitychange, executing cleanup');
           isFullscreen.value = false;
           handleFullscreenExit();
         }
       }
     };
 
-    // Listen to page visibility changes (Android back button scenarios)
     eventManager.addListener('visibilitychange', document, 'visibilitychange', handleVisibilityChange);
   };
 
   const setupVideoEventListeners = (): void => {
     const video = DOMElementGetter.getVideoElement();
     if (!video) {
+      console.warn('Video element not found for setting up event listeners');
       return;
     }
 
     const handleEnterPictureInPicture = () => {
-      console.log('Entered picture-in-picture mode');
       isPictureInPicture.value = true;
     };
 
     const handleLeavePictureInPicture = () => {
-      console.log('Left picture-in-picture mode');
       isPictureInPicture.value = false;
-      setTimeout(resume, 300);
+      setTimeout(resume, TIMING_CONSTANTS.PIP_RESUME_DELAY);
     };
 
-    // Video playback state change handlers
-    const handlePlay = () => {
-      console.log('Video play event detected');
-      isPlaying.value = true;
-    };
-
-    const handlePause = () => {
-      console.log('Video pause event detected');
-      isPlaying.value = false;
-    };
-
-    const handleEnded = () => {
-      console.log('Video ended event detected');
-      isPlaying.value = false;
-    };
-
-    const handleLoadStart = () => {
-      console.log('Video load start event detected');
-      // Sync initial state when video loads
-      isPlaying.value = !video.paused;
-    };
-
-    const handleCanPlay = () => {
-      console.log('Video can play event detected');
-      // Sync state when video becomes playable
-      isPlaying.value = !video.paused;
-    };
-
-    const handleSeeking = () => {
-      console.log('Video seeking event detected');
-      // Sync state during seeking
-      syncPlayingState();
-    };
-
-    const handleSeeked = () => {
-      console.log('Video seeked event detected');
-      // Sync state after seeking
-      syncPlayingState();
-    };
-
-    const handleTimeUpdate = () => {
-      // Only sync occasionally during time updates to avoid too many calls
-      if (Math.random() < 0.1) { // 10% chance per timeupdate event
-        syncPlayingState();
-      }
-    };
-
-    const handleVolumeChange = () => {
-      console.log('Video volume change event detected');
-      // Sync state when volume changes (might indicate user interaction)
-      syncPlayingState();
-      syncVolumeState();
-    };
-
-    // Add picture-in-picture event listeners
     eventManager.addListener('enterpictureinpicture', video, 'enterpictureinpicture', handleEnterPictureInPicture);
     eventManager.addListener('leavepictureinpicture', video, 'leavepictureinpicture', handleLeavePictureInPicture);
-
-    // Add video playback state event listeners
-    eventManager.addListener('play', video, 'play', handlePlay);
-    eventManager.addListener('pause', video, 'pause', handlePause);
-    eventManager.addListener('ended', video, 'ended', handleEnded);
-    eventManager.addListener('loadstart', video, 'loadstart', handleLoadStart);
-    eventManager.addListener('canplay', video, 'canplay', handleCanPlay);
-
-    // Add additional state sync events
-    eventManager.addListener('seeking', video, 'seeking', handleSeeking);
-    eventManager.addListener('seeked', video, 'seeked', handleSeeked);
-    eventManager.addListener('timeupdate', video, 'timeupdate', handleTimeUpdate);
-    eventManager.addListener('volumechange', video, 'volumechange', handleVolumeChange);
   };
 
   /**
    * Cleanup method
    */
   const cleanup = (): void => {
-    console.log('Cleaning up player control state...');
-
-    // Remove orientation listener
     OrientationManager.removeOrientationListener(orientationListenerId);
-
-    // Remove all event listeners
     eventManager.removeAllListeners();
-    console.log(`Cleaned up ${eventManager.getListenerCount()} event listeners`);
   };
 
-  // Initialize
   setupFullscreenEventListeners();
   setupVideoEventListeners();
-
-  // Setup orientation listener for dynamic style adjustment
   OrientationManager.addOrientationListener(orientationListenerId, handleOrientationChange);
 
-  // Initial state sync
-  syncPlayingState();
-  syncVolumeState();
+  watch(
+    () => currentLive.value?.liveId,
+    async (newLiveId) => {
+      if (newLiveId) {
+        isPlaying.value = true;
+        resolutionList.value = [];
+        currentResolution.value = undefined;
+        // When pulling a TRTC stream, this interface has a cache, but when using TCPlayer, there is no cache
+        await setVolume(currentVolume.value);
+        await initializeResolution(newLiveId, false);
 
-  watch(() => currentLive.value?.liveId, (liveId) => {
-    if (!liveId) {
-      exitFullscreen();
-      exitPictureInPicture();
-      isPlaying.value = true;
-      isFullscreen.value = false;
-      isPictureInPicture.value = false;
-      currentVolume.value = 1.0;
-    }
-  });
+        // Print player control state after entering room
+        console.log('[PlayerControl] State after entering room:', {
+          isPlaying: isPlaying.value,
+          currentFillMode: currentFillMode.value,
+          isFullscreen: isFullscreen.value,
+          isLandscapeStyleMode: isLandscapeStyleMode.value,
+          isPictureInPicture: isPictureInPicture.value,
+          currentVolume: currentVolume.value,
+          resolutionList: resolutionList.value,
+          currentResolution: currentResolution.value,
+        });
+      }
+    },
+  );
 
   // Return interface implementation
   return {
-    // State
     isPlaying,
     currentFillMode,
     isFullscreen,
     isLandscapeStyleMode,
     isPictureInPicture,
     currentVolume,
-
-    // Resolution state
+    isMuted,
     resolutionList,
     currentResolution,
-
-    // Methods
     resume,
     pause,
     requestFullscreen,
@@ -681,12 +506,9 @@ export function usePlayerControlState(): PlayerControlState {
     requestPictureInPicture,
     exitPictureInPicture,
     switchResolution,
-    getResolutionList,
-    initializeResolution,
     setVolume,
+    setMute,
     changeFillMode,
-
-    // Cleanup
     cleanup,
   };
 }

@@ -5,6 +5,7 @@
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { getTimeStamp } from '../../../utils/time';
 import type { ConversationModel } from '../../../types';
@@ -15,11 +16,10 @@ const props = defineProps<{
 
 const { language } = useUIKit();
 
-const time = getTimeStamp({
+const time = computed(() => getTimeStamp({
   time: Number(props.conversation?.lastMessage?.lastTime || 0) * 1000,
   language: language.value,
-}) || '';
-
+}) || '');
 </script>
 
 <style lang="scss" module>

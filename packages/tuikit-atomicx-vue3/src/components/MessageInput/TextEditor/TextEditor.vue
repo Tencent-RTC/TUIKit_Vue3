@@ -27,20 +27,24 @@ interface TextEditorProps {
   autoFocus?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  maxLength?: number;
 }
 
 const props = withDefaults(defineProps<TextEditorProps>(), {
   autoFocus: true,
   disabled: false,
   placeholder: undefined,
+  maxLength: undefined,
 });
 
-const { t } = useUIKit();
+const { t, language } = useUIKit();
 const { activeConversation } = useConversationListState();
 const { updateRawValue, sendMessage, setEditorInstance, setContent } = useMessageInputState();
 
 const editorDomRef = ref<HTMLDivElement | null>(null);
 const isFocused = ref(props.autoFocus);
+
+const computedPlaceholder = computed(() => props.placeholder ?? t('MessageInput.enter_a_message'));
 
 let editorInstance: Editor | null = null;
 
@@ -55,10 +59,11 @@ onMounted(() => {
   if (!element.dataset.editorCreated) {
     editorInstance = createEditor({
       element,
-      placeholder: props.placeholder ?? t('MessageInput.enter_a_message'),
+      placeholder: computedPlaceholder.value,
       isPlaceholderOnlyShowWhenEditable: props.placeholder === undefined,
       autoFocus: props.autoFocus,
       disabled: props.disabled,
+      maxLength: props.maxLength,
       onUpdate: (content) => {
         updateRawValue(content);
       },
@@ -90,6 +95,22 @@ onUnmounted(() => {
 watch(activeConversation, (newConversation, oldConversation) => {
   if (newConversation?.conversationID !== oldConversation?.conversationID) {
     setContent('');
+  }
+});
+
+// Watch language change and update placeholder using Tiptap's extensionManager
+watch(language, () => {
+  if (editorInstance && props.placeholder === undefined) {
+    // Update placeholder extension options
+    const placeholderExtension = editorInstance.extensionManager.extensions.find(
+      ext => ext.name === 'placeholder',
+    );
+    if (placeholderExtension) {
+      // eslint-disable-next-line no-param-reassign
+      placeholderExtension.options.placeholder = computedPlaceholder.value;
+      // Force re-render to apply new placeholder
+      editorInstance.view.updateState(editorInstance.state);
+    }
   }
 });
 

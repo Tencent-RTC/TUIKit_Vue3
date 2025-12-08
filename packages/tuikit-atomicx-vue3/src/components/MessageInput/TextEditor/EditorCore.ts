@@ -3,6 +3,8 @@ import Placeholder from '@tiptap/extension-placeholder';
 import StarterKit from '@tiptap/starter-kit';
 import { Extension, Editor } from '@tiptap/vue-3';
 import { MessageContentType } from '../../../states/MessageInputState';
+import { CharacterCount } from './extensions/characterCountExtension';
+import { createImageExtension } from './extensions/imageExtension';
 import type { InputContent } from '../../../states/MessageInputState';
 import type { JSONContent, EditorOptions as TiptapEditorOptions } from '@tiptap/vue-3';
 import './Editor.scss';
@@ -21,31 +23,6 @@ function createEmojiExtension() {
         },
       };
     },
-  });
-}
-
-function createImageExtension() {
-  return Image.extend({
-    addOptions() {
-      return {
-        ...this.parent?.(),
-        HTMLAttributes: {
-          class: 'message-image',
-        },
-      };
-    },
-    addAttributes() {
-      return {
-        ...this.parent?.(),
-        fileData: {
-          default: null,
-          parseHTML: element => element.getAttribute('file-data'),
-          renderHTML: attributes => attributes.fileData ? { 'file-data': attributes.fileData } : {},
-        },
-      };
-    },
-  }).configure({
-    inline: true,
   });
 }
 
@@ -110,6 +87,7 @@ interface EditorOptions {
   placeholder?: string;
   autoFocus?: boolean;
   disabled?: boolean;
+  maxLength?: number;
   isPlaceholderOnlyShowWhenEditable?: boolean;
   onUpdate?: (content: InputContent[]) => void;
   onEnter?: () => void;
@@ -123,13 +101,22 @@ function createEditor({
   autoFocus = false,
   disabled = false,
   isPlaceholderOnlyShowWhenEditable = true,
+  maxLength = undefined,
   onUpdate,
   onEnter,
   onFocus,
   onBlur,
 }: EditorOptions) {
   const createBaseExtensions = (enterHandler?: () => void) => [
-    StarterKit,
+    StarterKit.configure({
+      bold: false,
+      italic: false,
+      strike: false,
+      code: false,
+    }),
+    CharacterCount.configure({
+      limit: maxLength,
+    }),
     createEnterKeyExtension(enterHandler ? { onEnter: enterHandler } : undefined),
     createEmojiExtension(),
     createImageExtension(),

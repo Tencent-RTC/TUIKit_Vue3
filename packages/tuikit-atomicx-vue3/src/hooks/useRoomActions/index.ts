@@ -1,7 +1,8 @@
 import useRoomAudioAction from './useRoomAudioAction';
-import useRoomVideoAction from './useRoomVideoAction';
 import useRoomScreenAction from './useRoomScreenAction';
-import { ActionType, RoomAction } from '../../types';
+import useRoomVideoAction from './useRoomVideoAction';
+import type { ActionType } from '../../types';
+
 export default function useRoomActions(options?: {
   actionList: RoomAction[];
 }): ActionType<RoomAction>[] {

@@ -1,7 +1,7 @@
 <template>
   <TUISelect
     v-model="currentDeviceId"
-    placeholder="placeholder"
+    :placeholder="t('VideoSettingPanel.SelectCamera')"
     class="select"
     :disabled="disabled"
     :teleported="false"
@@ -18,11 +18,14 @@
 </template>
 
 <script setup lang="ts">
+import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { ref, watch, defineProps, withDefaults, onBeforeMount } from 'vue';
 import { TUISelect, TUIOption } from '@tencentcloud/uikit-base-component-vue3';
-import { TUIDeviceInfo } from '@tencentcloud/tuiroom-engine-js';
+import TUIRoomEngine, { TUIDeviceInfo } from '@tencentcloud/tuiroom-engine-js';
 import { useDeviceState } from '../../states/DeviceState';
 const { cameraList, currentCamera, setCurrentCamera, getCameraList } = useDeviceState();
+
+const { t } = useUIKit();
 
 interface Props {
   onChange?: (id: string) => void;
@@ -62,7 +65,9 @@ async function handleChange(deviceId: string) {
 }
 
 onBeforeMount(async () => {
-  await getCameraList();
+  TUIRoomEngine.once('ready', async () => {
+    await getCameraList();
+  });
 })
 </script>
 

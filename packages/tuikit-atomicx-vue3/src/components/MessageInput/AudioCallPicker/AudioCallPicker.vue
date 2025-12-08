@@ -74,7 +74,7 @@ const props = withDefaults(defineProps<AudioCallPickerProps>(), {
 const styles = useCssModule();
 const { t } = useUIKit();
 const { activeConversation } = useConversationListState();
-const { allMembers, getGroupMemberList, memberCount } = useGroupSettingState();
+const { allMembers, getGroupMemberList, memberCount, currentUserID } = useGroupSettingState();
 
 const isGroupCallDialogVisible = ref(false);
 const groupMemberPickerRef = ref();
@@ -83,13 +83,15 @@ const isC2CConversation = computed(() =>
   activeConversation.value?.type === ConversationType.C2C,
 );
 
-const groupMemberOptions = computed(() =>
-  allMembers.value?.map((member: any) => ({
+const groupMemberOptions = computed(() => {
+  const restructuredMembers = allMembers.value?.map(member => ({
     key: member.userID,
     label: member.nick || member.userID,
     avatarUrl: member.avatar,
-  })) ?? [],
-);
+  })) ?? [];
+
+  return restructuredMembers.filter(member => member.key !== currentUserID.value);
+});
 
 const canStartCall = computed(() => {
   if (!activeConversation.value || props.disabled) {
@@ -229,7 +231,7 @@ const handleConfirmGroupCall = () => initiateGroupCall();
 
 <style>
 .group-call-dialog {
-  background: white;
+  background: var(--bg-color-operate);
   border-radius: 8px;
   max-width: 500px;
   max-height: 70vh;

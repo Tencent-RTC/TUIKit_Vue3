@@ -1,6 +1,3 @@
-@use "sass:map";
-@use "@tencentcloud/uikit-base-component-vue3/src/providers/UIKitProvider/styles/variables.scss" as *;
-
 .SearchUserAdvanced {
   padding: 10px 20px;
   background-color: var(--bg-color-operate);
@@ -306,4 +303,4 @@
   cursor: pointer;
   background: var(--text-color-link);
   color: #fff;
-} 
+}

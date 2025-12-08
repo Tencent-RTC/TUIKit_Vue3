@@ -1,12 +1,9 @@
 import { TUIMediaDevice } from '@tencentcloud/tuiroom-engine-js';
-import { RoomAction } from '../../types';
+import { TUIToast, TOAST_TYPE } from '@tencentcloud/uikit-base-component-vue3';
+import TUIMessageBox from '../../baseComp/MessageBox';
 import { useI18n } from '../../locales';
 import { useRoomState } from '../../states/RoomState';
-import TUIMessageBox from '../../baseComp/MessageBox';
-import { TUIToast, TOAST_TYPE } from '@tencentcloud/uikit-base-component-vue3';
-import { useRoomEngine } from '../useRoomEngine';
-// import { MESSAGE_DURATION } from '@/core/constants/message';
-import { computed, defineComponent, reactive } from 'vue';
+import useRoomEngine from '../useRoomEngine';
 
 export default function useRoomVideoAction() {
   const { t } = useI18n();
@@ -16,17 +13,17 @@ export default function useRoomVideoAction() {
   let stateForAllVideo = false;
 
   function toggleRoomVideo() {
-    stateForAllVideo = !currentRoom.value?.isCameraDisableForAllUser;
+    stateForAllVideo = !currentRoom.value?.isAllCameraDisabled;
     TUIMessageBox({
-      title: currentRoom.value?.isCameraDisableForAllUser
+      title: currentRoom.value?.isAllCameraDisabled
         ? t('Enable all videos')
         : t('All and new members will be banned from the camera'),
-      message: currentRoom.value?.isCameraDisableForAllUser
+      message: currentRoom.value?.isAllCameraDisabled
         ? t('After unlocking, users can freely turn on the camera')
         : t('Members will not be able to open the camera'),
       confirmButtonText: t('Confirm'),
       cancelButtonText: t('Cancel'),
-      callback: async action => {
+      callback: async (action) => {
         if (action === 'confirm') {
           doToggleRoomVideo();
         }
@@ -35,7 +32,7 @@ export default function useRoomVideoAction() {
   }
 
   async function doToggleRoomVideo() {
-    if (currentRoom.value?.isCameraDisableForAllUser === stateForAllVideo) {
+    if (currentRoom.value?.isAllCameraDisabled === stateForAllVideo) {
       const tipMessage = stateForAllVideo
         ? t('All videos disabled')
         : t('All videos enabled');
@@ -56,9 +53,9 @@ export default function useRoomVideoAction() {
     key: RoomAction.VideoAction,
     icon: defineComponent({}),
     label: computed(() =>
-      currentRoom.value?.isCameraDisableForAllUser
+      currentRoom.value?.isAllCameraDisabled
         ? t('Lift stop all video')
-        : t('All stop video')
+        : t('All stop video'),
     ),
     handler: toggleRoomVideo,
   });

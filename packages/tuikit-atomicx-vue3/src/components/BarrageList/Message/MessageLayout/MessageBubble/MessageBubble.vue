@@ -16,7 +16,7 @@
 import { toRefs, defineProps, withDefaults } from 'vue';
 import cs from 'classnames';
 import { useLoginState } from '../../../../../states/LoginState';
-import type { Barrage } from '../../../../../states/BarrageState';
+import type { Barrage } from '../../../../../types/barrage';
 
 interface IMessageBubbleProps {
   message: Barrage;

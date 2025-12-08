@@ -1,8 +1,8 @@
 <template>
   <div id="streamContainer" :class="streamContainerClass">
     <StreamRegion
-      class="enlarged-stream-container"
       v-if="enlargeStream"
+      class="enlarged-stream-container"
       :user-info="enlargeStream.userInfo"
       :stream-type="enlargeStream.streamType"
       :support-touch-scale="true"
@@ -36,15 +36,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, watch, computed, ComputedRef } from 'vue';
-import ArrowStroke from '../common/ArrowStroke.vue';
-import StreamRegion from '../common/StreamRegion';
-import StreamList from '../common/StreamList/index.vue';
+import type { Ref, ComputedRef } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { TUIVideoStreamType } from '@tencentcloud/tuiroom-engine-js';
-import { StreamPlayMode, StreamPlayQuality } from '../../../types';
-import useUserState from '../../../states/UserState/index';
 import { useRoomState } from '../../../states/RoomState';
-import { DeviceStatus, UserInfo } from '../../../types';
+import useUserState from '../../../states/UserState/index';
+import { StreamPlayMode, StreamPlayQuality, DeviceStatus } from '../../../types';
+import ArrowStroke from '../common/ArrowStroke.vue';
+import StreamList from '../common/StreamList/index.vue';
+import StreamRegion from '../common/StreamRegion';
+import type { UserInfo } from '../../../types';
 
 interface VideoStreamInfo {
   userInfo: UserInfo;
@@ -65,20 +66,20 @@ const localCameraStreamInfo: ComputedRef<VideoStreamInfo | null> = computed(() =
     return {
       userInfo: localUser.value,
       streamType: TUIVideoStreamType.kCameraStream,
-    }
+    };
   }
   return null;
-})
+});
 
 const screenStreamInfo: ComputedRef<VideoStreamInfo | null> = computed(() => {
   if (userWithScreenOn.value) {
     return {
       userInfo: userWithScreenOn.value,
       streamType: TUIVideoStreamType.kScreenStream,
-    }
+    };
   }
   return null;
-})
+});
 
 const allStreamInfoList: ComputedRef<VideoStreamInfo[]> = computed(() => {
   let cameraStreamList = [];
@@ -97,7 +98,7 @@ const allStreamInfoList: ComputedRef<VideoStreamInfo[]> = computed(() => {
     return [screenStreamInfo.value, ...cameraStreamList];
   }
   return cameraStreamList;
-})
+});
 
 const renderStreamInfoList: ComputedRef<VideoStreamInfo[]> = computed(() => {
   if (props.filterFn) {
@@ -109,15 +110,15 @@ const renderStreamInfoList: ComputedRef<VideoStreamInfo[]> = computed(() => {
 const gridLayoutStreamList: ComputedRef<VideoStreamInfo[]> = computed(() => {
   if (currentLayout.value === LAYOUT.NINE_EQUAL_POINTS) {
     return renderStreamInfoList.value;
-  } else {
-    if (enlargeStream.value?.streamType === TUIVideoStreamType.kScreenStream || !userWithScreen.value) {
-      return renderStreamInfoList.value.filter(stream => stream.streamType !== TUIVideoStreamType.kScreenStream);
-    } else if (screenStreamInfo.value) {
-      return renderStreamInfoList.value;
-    }
   }
+  if (enlargeStream.value?.streamType === TUIVideoStreamType.kScreenStream || !userWithScreen.value) {
+    return renderStreamInfoList.value.filter(stream => stream.streamType !== TUIVideoStreamType.kScreenStream);
+  } if (screenStreamInfo.value) {
+    return renderStreamInfoList.value;
+  }
+
   return [];
-})
+});
 
 interface Props {
   config?: string;
@@ -142,10 +143,10 @@ const props = withDefaults(defineProps<Props>(), {
     topLayout: {
       maxColumns: 0,
       maxRows: 1,
-    }
+    },
   })),
   filterFn: (streamInfo: VideoStreamInfo, index: number, list: UserInfo[]) => true,
-  sortFn: (streamInfo: VideoStreamInfo, index: number, list: UserInfo[]) => 0
+  sortFn: (streamInfo: VideoStreamInfo, index: number, list: UserInfo[]) => 0,
 });
 
 const streamListConfig = computed(() => {
@@ -159,7 +160,7 @@ const streamListConfig = computed(() => {
     return JSON.stringify(JSON.parse(props.config).topLayout);
   }
   return JSON.stringify(JSON.parse(props.config).gridLayout);
-})
+});
 
 const showControlBar = computed(() => JSON.parse(props.config)?.showControlBar);
 const preferLayout = computed(() => JSON.parse(props.config)?.preferLayout);
@@ -168,13 +169,12 @@ const currentLayout = ref(preferLayout.value);
 
 watch(preferLayout, (val) => {
   currentLayout.value = val;
-})
-
+});
 
 const isSameStream = (
-    stream1: VideoStreamInfo | null | undefined,
-    stream2: VideoStreamInfo | null | undefined
-  ) => getStreamKey(stream1) === getStreamKey(stream2);
+  stream1: VideoStreamInfo | null | undefined,
+  stream2: VideoStreamInfo | null | undefined,
+) => getStreamKey(stream1) === getStreamKey(stream2);
 
 const getStreamKey = (stream: VideoStreamInfo | null | undefined) =>
   `${stream?.userInfo.userId}_${stream?.streamType}`;
@@ -188,7 +188,7 @@ const getStreamKey = (stream: VideoStreamInfo | null | undefined) =>
 
 const isSideListLayout = computed(
   () =>
-    [LAYOUT.RIGHT_SIDE_LIST, LAYOUT.TOP_SIDE_LIST].indexOf(currentLayout.value) >= 0
+    [LAYOUT.RIGHT_SIDE_LIST, LAYOUT.TOP_SIDE_LIST].indexOf(currentLayout.value) >= 0,
 );
 
 const fixedStream: Ref<VideoStreamInfo | null> = ref(null);
@@ -213,11 +213,11 @@ const enlargeStream = computed(() => {
 
 watch(
   () => allStreamInfoList.value.length,
-  val => {
+  (val) => {
     if (val === 1 && isSideListLayout.value) {
       currentLayout.value = LAYOUT.NINE_EQUAL_POINTS;
     }
-  }
+  },
 );
 
 watch(
@@ -229,7 +229,7 @@ watch(
         currentLayout.value = LAYOUT.RIGHT_SIDE_LIST;
       }
     }
-  }
+  },
 );
 
 watch(
@@ -241,7 +241,7 @@ watch(
         fixedStream.value = null;
       }
     }
-  }
+  },
 );
 
 /**
@@ -281,7 +281,7 @@ watch(
   () => {
     handleLayout();
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const showSideList = ref(true);
@@ -433,4 +433,3 @@ function handleClickIcon() {
   }
 }
 </style>
-../../../states/RoomState

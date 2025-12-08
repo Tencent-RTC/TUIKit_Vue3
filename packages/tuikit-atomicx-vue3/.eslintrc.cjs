@@ -7,9 +7,10 @@ module.exports = {
     ecmaVersion: 2020,
     sourceType: 'module',
     project: [
-      './tsconfig.json',
+      './tsconfig.eslint.json',
     ],
     tsconfigRootDir: __dirname,
+    extraFileExtensions: ['.vue'],
   },
   rules: {
     'vue/multi-word-component-names': 'off',
@@ -29,6 +30,9 @@ module.exports = {
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': 'error',
     '@typescript-eslint/no-duplicate-enum-values': 0,
+    'class-methods-use-this': 0,
+    '@typescript-eslint/no-useless-constructor': 'off',
+    'no-await-in-loop': 0,
   },
-  ignorePatterns: ['node_modules', 'public', 'dist', '*.d.ts', '!.*.cjs', '!.storybook', '*.cjs'],
+  ignorePatterns: ['node_modules', 'public', 'dist', '*.d.ts', '!.*.cjs', '!.storybook', '*.cjs', 'test-app'],
 };

@@ -19,7 +19,7 @@
             'mic-bar',
             `${showVolume && volumeNum > index ? 'active' : ''}`,
           ]"
-        ></div>
+        />
       </div>
     </div>
     <div v-if="audioSettingProps?.supportSwitchSpeaker" class="item-setting">
@@ -41,14 +41,14 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, inject } from 'vue';
+import { TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { useDeviceState } from '../../states/DeviceState';
+import { MediaSettingDisplayMode } from '../../types';
 import MicrophoneSelect from './MicrophoneSelect.vue';
 import SpeakerSelect from './SpeakerSelect.vue';
-import { useI18n } from '../../locales';
-import { TUIButton } from '@tencentcloud/uikit-base-component-vue3';
-import { useDeviceState } from '../../states/DeviceState';
-import { AudioSettingProps, MediaSettingDisplayMode } from '../../types';
+import type { AudioSettingProps } from '../../types';
 
-const { t } = useI18n();
+const { t } = useUIKit();
 const {
   captureVolume,
   isMicrophoneTesting,
@@ -59,24 +59,24 @@ const {
   stopSpeakerTest,
 } = useDeviceState();
 
-const audioSettingProps: AudioSettingProps | undefined =
-  inject('audioSettingProps');
+const audioSettingProps: AudioSettingProps | undefined
+  = inject('audioSettingProps');
 
 const isSimpleMode = computed(
-  () => audioSettingProps?.displayMode === MediaSettingDisplayMode.IconWithPanel
+  () => audioSettingProps?.displayMode === MediaSettingDisplayMode.IconWithPanel,
 );
 const isDetailMode = computed(
-  () => audioSettingProps?.displayMode === MediaSettingDisplayMode.Panel
+  () => audioSettingProps?.displayMode === MediaSettingDisplayMode.Panel,
 );
 
 const volumeTotalNum = computed(() => (isDetailMode.value ? 36 : 28));
 
 const volumeNum = computed(
-  () => (captureVolume.value * volumeTotalNum.value) / 100
+  () => (captureVolume.value * volumeTotalNum.value) / 100,
 );
 
 const showVolume = computed(
-  () => isSimpleMode.value || (isDetailMode.value && isMicrophoneTesting.value)
+  () => isSimpleMode.value || (isDetailMode.value && isMicrophoneTesting.value),
 );
 
 /**
@@ -93,8 +93,8 @@ function handleMicrophoneTest() {
  * Click on the speaker [Test] button
  **/
 async function handleSpeakerTest() {
-  const SPEAKER_TEST_URL =
-    'https://web.sdk.qcloud.com/trtc/electron/download/resources/media/TestSpeaker.mp3';
+  const SPEAKER_TEST_URL
+    = 'https://web.sdk.qcloud.com/trtc/electron/download/resources/media/TestSpeaker.mp3';
   if (isSpeakerTesting.value) {
     stopSpeakerTest();
   } else {

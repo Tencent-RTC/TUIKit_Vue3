@@ -1,61 +1,57 @@
 <template>
-  <div class="audio-setting-panel">
-    <div class="section">
-      <div class="section-title">
-        {{ t('Microphone') }}
+  <div class="audio-setting-tab">
+    <div class="item-setting">
+      <span class="title">{{ t('AudioSettingPanel.Microphone') }}</span>
+      <div class="flex">
+        <microphone-select class="select" />
+        <TUIButton v-if="micTestVisible" @click="handleMicrophoneTest">
+          {{ isMicrophoneTesting ? t('AudioSettingPanel.Stop') : t('AudioSettingPanel.Test') }}
+        </TUIButton>
       </div>
-      <div class="row" v-if="microphoneList.length > 0">
-        <span class="label">{{ t('Select device') }}</span>
-        <TUISelect
-          v-model="currentMicrophoneId"
-          class="select"
-          :placeholder="t('Unrecognized device')"
-        >
-          <TUIOption
-            v-for="item in microphoneList"
-            :key="item.deviceId"
-            :label="item.deviceName"
-            :value="item.deviceId"
-          />
-        </TUISelect>
+    </div>
+    <div v-if="inputVolumeLevelVisible" class="item-setting">
+      <span class="title">{{ t('AudioSettingPanel.InputLevel') }}</span>
+      <div class="mic-bar-container">
+        <div
+          v-for="(item, index) in new Array(volumeTotalNum).fill('')"
+          :key="index"
+          :class="[
+            'mic-bar',
+            `${showInputVolume && volumeNum > index ? 'active' : ''}`,
+          ]"
+        />
       </div>
-      <div class="row">
-        <span class="label">{{ t('Input volume') }}</span>
+    </div>
+    <div v-if="inputVolumeVisible" class="item-setting">
+      <span class="title">{{ t('AudioSettingPanel.InputVolume') }}</span>
+      <div class="flex">
         <TUISlider
           v-model="captureVolumeValue"
+          class="custom-slider"
           :min="0"
           :max="100"
         />
         <span class="volume-value">{{ captureVolume }}</span>
       </div>
     </div>
-
-    <div class="divider" />
-
-    <div class="section">
-      <div class="section-title">
-        {{ t('Speaker') }}
-      </div>
-      <div class="row" v-if="speakerList.length > 0">
-        <span class="label">{{ t('Select device') }}</span>
-        <TUISelect
-          v-model="currentSpeakerId"
+    <div class="item-setting">
+      <span class="title">{{ t('AudioSettingPanel.Speaker') }}</span>
+      <div class="flex">
+        <speaker-select
           class="select"
-          :placeholder="t('Unrecognized device')"
-        >
-          <TUIOption
-            v-for="item in speakerList"
-            :key="item.deviceId"
-            :label="item.deviceName"
-            :value="item.deviceId"
-          />
-        </TUISelect>
+          :disabled="speakerTestVisible"
+        />
+        <TUIButton v-if="speakerTestVisible" @click="handleSpeakerTest">
+          {{ isSpeakerTesting ? t('AudioSettingPanel.Stop') : t('AudioSettingPanel.Test') }}
+        </TUIButton>
       </div>
-
-      <div class="row">
-        <span class="label">{{ t('Output volume') }}</span>
+    </div>
+    <div v-if="outputVolumeVisible" class="item-setting">
+      <span class="title">{{ t('AudioSettingPanel.OutputVolume') }}</span>
+      <div class="flex">
         <TUISlider
           v-model="outputVolumeValue"
+          class="custom-slider"
           :min="0"
           :max="100"
         />
@@ -66,54 +62,90 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
-import { TUISelect, TUIOption, TUISlider, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { ref, watch, computed } from 'vue';
+import { useUIKit, TUIButton, TUISlider } from '@tencentcloud/uikit-base-component-vue3';
 import { useDeviceState } from '../../states/DeviceState';
+import MicrophoneSelect from './MicrophoneSelect.vue';
+import SpeakerSelect from './SpeakerSelect.vue';
 
 const { t } = useUIKit();
 
+const props = defineProps({
+  micTestVisible: {
+    type: Boolean,
+    default: true,
+  },
+  inputVolumeLevelVisible: {
+    type: Boolean,
+    default: true,
+  },
+  inputVolumeVisible: {
+    type: Boolean,
+    default: true,
+  },
+  speakerTestVisible: {
+    type: Boolean,
+    default: true,
+  },
+  outputVolumeVisible: {
+    type: Boolean,
+    default: true,
+  },
+});
+
 const {
-  microphoneList,
-  currentMicrophone,
-  setCurrentMicrophone,
-  speakerList,
-  currentSpeaker,
-  setCurrentSpeaker,
-  getMicrophoneList,
-  getSpeakerList,
   captureVolume,
+  currentMicVolume,
+  testingMicVolume,
   outputVolume,
   setCaptureVolume,
   setOutputVolume,
+  isMicrophoneTesting,
+  isSpeakerTesting,
+  startMicrophoneTest,
+  stopMicrophoneTest,
+  startSpeakerTest,
+  stopSpeakerTest,
 } = useDeviceState();
 
-const currentMicrophoneId = ref('');
-const currentSpeakerId = ref('');
+function handleMicrophoneTest() {
+  if (isMicrophoneTesting.value) {
+    stopMicrophoneTest();
+  } else {
+    startMicrophoneTest({ interval: 200 });
+  }
+}
+
+async function handleSpeakerTest() {
+  const SPEAKER_TEST_URL
+    = 'https://web.sdk.qcloud.com/trtc/electron/download/resources/media/TestSpeaker.mp3';
+  if (isSpeakerTesting.value) {
+    stopSpeakerTest();
+  } else {
+    startSpeakerTest({ filePath: SPEAKER_TEST_URL });
+  }
+}
+
+const volumeTotalNum = ref(28);
+
+const volumeNum = computed(() => {
+  if (isMicrophoneTesting.value) {
+    return (testingMicVolume.value * volumeTotalNum.value) / 100;
+  } else {
+    return (currentMicVolume.value * volumeTotalNum.value) / 100;
+  }
+});
+
+const showInputVolume = computed(() => {
+  if (props.micTestVisible) {
+    return isMicrophoneTesting.value;
+  } else {
+    return true;
+  }
+})
 
 const captureVolumeValue = ref(captureVolume.value);
 const outputVolumeValue = ref(outputVolume.value);
-
-onMounted(async () => {
-  await getMicrophoneList();
-  await getSpeakerList();
-  if (currentMicrophone.value) {
-    currentMicrophoneId.value = currentMicrophone.value.deviceId;
-  }
-  if (currentSpeaker.value) {
-    currentSpeakerId.value = currentSpeaker.value.deviceId;
-  }
-});
-watch(currentMicrophone, (value) => {
-  if (value && value.deviceId !== currentMicrophoneId.value) {
-    currentMicrophoneId.value = value.deviceId;
-  }
-});
-
-watch(currentSpeaker, (value) => {
-  if (value && value.deviceId !== currentSpeakerId.value) {
-    currentSpeakerId.value = value.deviceId;
-  }
-});
 
 watch(captureVolumeValue, async (value) => {
   await setCaptureVolume(value);
@@ -122,69 +154,65 @@ watch(captureVolumeValue, async (value) => {
 watch(outputVolumeValue, async (value) => {
   await setOutputVolume(value);
 });
-
-watch(currentMicrophoneId, (id) => {
-  setCurrentMicrophone({ deviceId: id });
-});
-watch(currentSpeakerId, (id) => {
-  setCurrentSpeaker({ deviceId: id });
-});
 </script>
 
-<style scoped lang="scss">
-.audio-setting-panel {
-  color: var(--tui-color-text-primary);
+<style lang="scss" scoped>
+.audio-setting-tab {
+  width: 100%;
+  font-size: 14px;
+  border-radius: 4px;
 
-  .section {
-    margin-bottom: 32px;
+  .item-setting {
+    width: 100%;
 
-    .section-title {
-      font-size: 18px;
-      font-weight: bold;
-      margin-bottom: 16px;
-    }
-
-    .row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 16px;
-
-      .label {
-        width: 96px;
-      }
-
-      .volume-value {
-        margin-left: 12px;
-      }
+    &:not(:last-child) {
+      margin-bottom: 20px;
     }
   }
 
-  .divider {
-    height: 1px;
-    background: var(--uikit-color-gray-4);
-    margin: 32px 0;
+  .flex {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 10px;
   }
 
   .select {
-    width: 300px;
-  }
-
-  input[type='range'] {
-    margin: 0 16px;
     flex: 1;
   }
 
-  .icon-tip {
+  .title {
     display: inline-block;
-    margin-left: 4px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #444;
-    text-align: center;
-    font-size: 12px;
-    line-height: 16px;
-    cursor: pointer;
+    width: 100%;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 22px;
+    color: var(--text-color-secondary);
   }
+
+  .custom-slider {
+    flex: 1;
+  }
+
+  .volume-value {
+    margin-left: 6px;
+  }
+
+  .mic-bar-container {
+    display: flex;
+    justify-content: space-between;
+
+    .mic-bar {
+      width: 3px;
+      height: 6px;
+      background-color: var(--text-color-secondary);
+
+      &.active {
+        background-color: var(--text-color-link);
+      }
+    }
+  }
+
 }
 </style>

@@ -272,6 +272,7 @@ const userPickerDialogTitle = computed(() => {
       >
         <UserPicker
           ref="userPickerRef"
+          class="user-picker-dialog__content"
           display-mode="list"
           :data-source="memberDataSource"
           :locked-items="userPickerLockedItems"
@@ -292,5 +293,9 @@ const userPickerDialogTitle = computed(() => {
 <style lang="scss">
 .user-picker-dialog {
   height: 70vh;
+
+  &__content {
+    width: 100%;
+  }
 }
 </style>

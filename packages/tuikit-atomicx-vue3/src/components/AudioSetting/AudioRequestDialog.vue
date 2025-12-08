@@ -14,7 +14,7 @@
   >
     <span>{{ dialogContent }}</span>
     <template #footer>
-      <TUIButton @click="handleAccept" type="primary">
+      <TUIButton type="primary" @click="handleAccept">
         {{ t('Turn on the microphone') }}
       </TUIButton>
       <TUIButton @click="handleReject">
@@ -25,21 +25,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, onUnmounted } from 'vue';
+import type { Ref } from 'vue';
+import { ref, onUnmounted } from 'vue';
 import TUIRoomEngine, {
   TUIRoomEvents,
-  TUIRequest,
   TUIRequestAction,
   TUIRole,
 } from '@tencentcloud/tuiroom-engine-js';
-import { TUIButton } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import TuiDialog from '../../baseComp/Dialog';
-import { useI18n } from '../../locales';
-import useRoomEngine from '../../hooks/useRoomEngine';
-import useUserState from '../../states/UserState/index';
+import { useRoomEngine } from '../../hooks/useRoomEngine';
+import { useUserState } from '../../states/UserState';
+import type { TUIRequest } from '@tencentcloud/tuiroom-engine-js';
 
 const roomEngine = useRoomEngine();
-const { t } = useI18n();
+const { t } = useUIKit();
 const dialogContent: Ref<string> = ref('');
 
 const { getUserInfo } = useUserState();
@@ -52,8 +52,8 @@ const requestOpenMicRequestId: Ref<string> = ref('');
 async function onRequestReceived(eventInfo: { request: TUIRequest }) {
   const { userId, requestAction, requestId } = eventInfo.request;
   if (requestAction === TUIRequestAction.kRequestToOpenRemoteMicrophone) {
-    const userRole =
-      getUserInfo({ userId })?.userRole === TUIRole.kRoomOwner
+    const userRole
+      = getUserInfo({ userId })?.userRole === TUIRole.kRoomOwner
         ? t('RoomOwner')
         : t('Admin');
     dialogContent.value = t('Sb invites you to turn on the microphone', {
@@ -99,7 +99,7 @@ onUnmounted(() => {
   roomEngine.instance?.off(TUIRoomEvents.onRequestReceived, onRequestReceived);
   roomEngine.instance?.off(
     TUIRoomEvents.onRequestCancelled,
-    onRequestCancelled
+    onRequestCancelled,
   );
 });
 </script>

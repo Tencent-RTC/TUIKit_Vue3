@@ -1,6 +1,5 @@
 import { TUIFriendService, TUIUserService, TUIChatEngine } from '@tencentcloud/chat-uikit-engine';
 import TUICore, { TUIConstants } from '@tencentcloud/tui-core';
-import { i18next } from '@tencentcloud/uikit-base-component-vue3';
 import { safeJSONParse } from './json';
 import type { StartCallParams, CallMessagePayload } from '../types/call';
 import type { MessageModel } from '../types/engine';
@@ -114,7 +113,7 @@ const userShowNameMap = new Map<string, string>();
  */
 const requestedUserMap = new Map<string, number>();
 
-function parseCallMessageText(message: MessageModel): string {
+function parseCallMessageText(message: MessageModel, t: any): string {
   const callMessagePayload = parseCallMessage(message);
 
   if (!callMessagePayload || callMessagePayload.data.businessID !== 1) {
@@ -134,63 +133,63 @@ function parseCallMessageText(message: MessageModel): string {
     case 1: {
       if (objectData?.data?.cmd === 'audioCall' || objectData?.data?.cmd === 'videoCall') {
         if (data.groupID) {
-          return i18next.t('CallMessage.start_call', { messageSender });
+          return t('CallMessage.start_call', { messageSender });
         }
       }
       if (objectData?.data?.cmd === 'hangup') {
         if (data.groupID) {
-          return i18next.t('CallMessage.call_ended');
+          return t('CallMessage.call_ended');
         }
-        return `${i18next.t('CallMessage.call_duration')}: ${formatTime(objectData?.call_end)}`;
+        return `${t('CallMessage.call_duration')}: ${formatTime(objectData?.call_end)}`;
       }
       if (objectData?.data?.cmd === 'switchToAudio') {
-        return i18next.t('CallMessage.switch_to_audio_call');
+        return t('CallMessage.switch_to_audio_call');
       }
       if (objectData?.data?.cmd === 'switchToVideo') {
-        return i18next.t('CallMessage.switch_to_video_call');
+        return t('CallMessage.switch_to_video_call');
       }
       // when CDM is abnormal, the default return value is start call
-      return i18next.t('CallMessage.start_call', { messageSender: '' });
+      return t('CallMessage.start_call', { messageSender: '' });
     }
     case 2:
       if (data.groupID) {
-        return `${messageSender} ${i18next.t('CallMessage.cancel_call')}`;
+        return `${messageSender} ${t('CallMessage.cancel_call')}`;
       }
       if (data.inviter === myUserID) {
-        return i18next.t('CallMessage.canceled');
+        return t('CallMessage.canceled');
       }
-      return i18next.t('CallMessage.canceled_by_recipient');
+      return t('CallMessage.canceled_by_recipient');
     case 3:
       if (objectData?.data?.cmd === 'switchToAudio') {
-        return i18next.t('CallMessage.switch_to_audio_call');
+        return t('CallMessage.switch_to_audio_call');
       }
       if (objectData?.data?.cmd === 'switchToVideo') {
-        return i18next.t('CallMessage.switch_to_video_call');
+        return t('CallMessage.switch_to_video_call');
       }
       if (data.groupID) {
-        return `${messageSender} ${i18next.t('CallMessage.answered')}`;
+        return `${messageSender} ${t('CallMessage.answered')}`;
       }
-      return i18next.t('CallMessage.answered');
+      return t('CallMessage.answered');
     case 4:
       if (data.groupID) {
-        return `${messageSender} ${i18next.t('CallMessage.decline_call')}`;
+        return `${messageSender} ${t('CallMessage.decline_call')}`;
       }
       if (objectData?.line_busy === 'line_busy' || objectData?.data?.message === 'lineBusy') {
         if (data.inviter === myUserID) {
-          return i18next.t('CallMessage.line_busy');
+          return t('CallMessage.line_busy');
         }
-        return i18next.t('CallMessage.missed_due_to_busy');
+        return t('CallMessage.missed_due_to_busy');
       }
       if (data.inviter === myUserID) {
-        return i18next.t('CallMessage.declined_by_recipient');
+        return t('CallMessage.declined_by_recipient');
       }
-      return i18next.t('CallMessage.declined');
+      return t('CallMessage.declined');
     case 5:
       if (objectData?.data?.cmd === 'switchToAudio') {
-        return i18next.t('CallMessage.switch_to_audio_call');
+        return t('CallMessage.switch_to_audio_call');
       }
       if (objectData?.data?.cmd === 'switchToVideo') {
-        return i18next.t('CallMessage.switch_to_video_call');
+        return t('CallMessage.switch_to_video_call');
       }
       if (data.groupID) {
         // group call initiator timeout
@@ -202,15 +201,15 @@ function parseCallMessageText(message: MessageModel): string {
             inviteeList += `${substringByLength(showName)}、`;
           });
           inviteeList = inviteeList.substring(0, inviteeList.lastIndexOf('、'));
-          return `${inviteeList} ${i18next.t('CallMessage.no_answer')}`;
+          return `${inviteeList} ${t('CallMessage.no_answer')}`;
         }
         // group call recipient timeout
-        return `${messageSender} ${i18next.t('CallMessage.no_answer')}`;
+        return `${messageSender} ${t('CallMessage.no_answer')}`;
       }
       if (data.inviter === myUserID) {
-        return i18next.t('CallMessage.no_answer_from_recipient');
+        return t('CallMessage.no_answer_from_recipient');
       }
-      return i18next.t('CallMessage.no_answer_timeout');
+      return t('CallMessage.no_answer_timeout');
     default:
       return '';
   }

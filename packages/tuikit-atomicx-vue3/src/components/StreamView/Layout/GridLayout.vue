@@ -8,15 +8,15 @@
     }"
   >
     <div
-      class="stream-list"
       ref="streamListRef"
+      class="stream-list"
       :style="streamListStyle"
       @wheel="handleWheel"
     >
       <StreamRegion
         v-for="renderUserInfo in renderUserInfoList"
-        class="stream-list-item"
         :key="`${renderUserInfo.userInfo.userId}_${renderUserInfo.streamType}`"
+        class="stream-list-item"
         :userInfo="renderUserInfo.userInfo"
         :stream-type="renderUserInfo.streamType"
         :style="streamStyle"
@@ -42,22 +42,21 @@ import {
   nextTick,
 } from 'vue';
 import type { Ref, ComputedRef } from 'vue';
-import StreamRegion from '../common/StreamRegion';
-import { getContentSize } from '../../../utils/domOperation';
-import { UserInfo, LocalRoomStatus } from '../../../types';
-import useUserState from '../../../states/UserState/index';
 import { TUIVideoStreamType } from '@tencentcloud/tuiroom-engine-js';
-import { safelyParse } from '../../../utils/utils';
-import { useRoomState } from '../../../states/RoomState';
 import { useDeviceState } from '../../../states/DeviceState';
 import useLoginState from '../../../states/LoginState';
+import { useRoomState } from '../../../states/RoomState';
+import useUserState from '../../../states/UserState/index';
 import { getNewUserInfo } from '../../../states/UserState/store';
+import { getContentSize } from '../../../utils/domOperation';
+import { safelyParse } from '../../../utils/utils';
+import StreamRegion from '../common/StreamRegion';
+import type { UserInfo } from '../../../types';
 
 const { userList, userListOnSeat, userWithScreenOn } = useUserState();
 const { microphoneStatus, cameraStatus } = useDeviceState();
-const { currentRoom, localRoomStatus } = useRoomState();
+const { currentRoom } = useRoomState();
 const { loginUserInfo } = useLoginState();
-
 
 const emits = defineEmits(['stream-view-dblclick']);
 
@@ -75,16 +74,14 @@ const props = withDefaults(defineProps<Props>(), {
     columnSpacing: 8,
   })),
   filterFn: () => true,
-  sortFn: () => 0
+  sortFn: () => 0,
 });
 
-const gridConfig = computed(() => {
-  return safelyParse(props.config) || {
-    maxRows: 3,
-    maxColumns: 3,
-    rowSpacing: 8,
-    columnSpacing: 8,
-  };
+const gridConfig = computed(() => safelyParse(props.config) || {
+  maxRows: 3,
+  maxColumns: 3,
+  rowSpacing: 8,
+  columnSpacing: 8,
 });
 
 const localFakeUser = computed(() => {
@@ -92,26 +89,24 @@ const localFakeUser = computed(() => {
   localUser.cameraStatus = cameraStatus.value;
   localUser.microphoneStatus = microphoneStatus.value;
   return localUser;
-})
+});
 
 const totalUserList = computed(() => {
   if (!currentRoom.value && localRoomStatus.value === LocalRoomStatus.IDLE) {
-    return [localFakeUser.value]
+    return [localFakeUser.value];
   }
   return currentRoom.value?.isSeatEnabled ? userListOnSeat.value : userList.value;
 });
 
-const renderUserInfoList: ComputedRef<({ userInfo: UserInfo, streamType: TUIVideoStreamType })[]> = computed(() => {
-  const videoUserList = totalUserList.value.filter(props.filterFn).map(item => {
-    return {
-      userInfo: item,
-      streamType: TUIVideoStreamType.kCameraStream
-    }
-  });
+const renderUserInfoList: ComputedRef<({ userInfo: UserInfo; streamType: TUIVideoStreamType })[]> = computed(() => {
+  const videoUserList = totalUserList.value.filter(props.filterFn).map(item => ({
+    userInfo: item,
+    streamType: TUIVideoStreamType.kCameraStream,
+  }));
   if (userWithScreenOn.value && [userWithScreenOn.value].filter(props.filterFn).length > 0) {
     videoUserList.unshift({
       userInfo: userWithScreenOn.value,
-      streamType: TUIVideoStreamType.kScreenStream
+      streamType: TUIVideoStreamType.kScreenStream,
     });
   }
   return videoUserList;
@@ -123,7 +118,7 @@ const column = computed(() => {
   }
   return Math.min(
     Math.ceil(Math.sqrt(renderUserInfoList.value.length)),
-    gridConfig.value.maxColumns
+    gridConfig.value.maxColumns,
   );
 });
 const row = computed(() => {
@@ -132,7 +127,7 @@ const row = computed(() => {
   }
   return Math.min(
     Math.ceil(renderUserInfoList.value.length / column.value),
-    gridConfig.value.maxRows
+    gridConfig.value.maxRows,
   );
 });
 
@@ -140,7 +135,7 @@ const streamListContainerRef = ref();
 const streamListRef = ref();
 
 const isEqualPointsLayout = computed(
-  () => gridConfig.value.maxRows !== Infinity && gridConfig.value.maxColumns !== Infinity
+  () => gridConfig.value.maxRows !== Infinity && gridConfig.value.maxColumns !== Infinity,
 );
 const isHorizontalInfinityLayout = computed(() => gridConfig.value.maxColumns === Infinity);
 const isVerticalInfinityLayout = computed(() => gridConfig.value.maxRows === Infinity);
@@ -151,7 +146,7 @@ watch(
     await nextTick();
     handleLayout();
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 function handleLayout() {
@@ -165,7 +160,6 @@ function handleLayout() {
   }
   if (isEqualPointsLayout.value) {
     handleEqualPointsLayout();
-    return;
   }
 }
 
@@ -204,10 +198,10 @@ async function handleEqualPointsLayout() {
   const containerWidth = Math.floor(containerRect.width);
   const containerHeight = Math.floor(containerRect.height);
   // Subtract the margin size of a single video stream to ensure that the ratio of width and height is 16:9
-  const contentWidth =
-    (containerWidth - (column.value - 1) * gridConfig.value.columnSpacing) / column.value;
-  const contentHeight =
-    (containerHeight - (row.value - 1) * gridConfig.value.rowSpacing) / row.value;
+  const contentWidth
+    = (containerWidth - (column.value - 1) * gridConfig.value.columnSpacing) / column.value;
+  const contentHeight
+    = (containerHeight - (row.value - 1) * gridConfig.value.rowSpacing) / row.value;
 
   let width = contentWidth;
   let height = contentHeight;
@@ -342,6 +336,3 @@ function handleWheel(event: WheelEvent) {
   }
 }
 </style>
-../../../states/DeviceState
-../../../states/LoginState
-../../../states/RoomState

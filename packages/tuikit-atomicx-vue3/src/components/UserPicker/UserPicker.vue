@@ -102,7 +102,7 @@ const selectionManager = useSelection<any>({
 const searchManager = useSearchFilter<any>({
   dataSource: internalDataSource,
   isTreeMode: isTreeMode.value,
-  onSearch: props.onSearch || (() => {}),
+  onSearch: props.onSearch,
 });
 
 // Use custom hook to manage tree state (if in tree mode)

@@ -11,7 +11,7 @@ import { useBarrageListState } from './BarrageListState';
 import UserActionMenu from './ClickAction/UserActionMenu.vue';
 import { Message as DefaultMessage } from './Message';
 import { MessageListContextSymbol } from './MessageListContext';
-import type { Barrage } from '../../states/BarrageState';
+import type { Barrage } from '../../types/barrage';
 
 const { t } = useUIKit();
 

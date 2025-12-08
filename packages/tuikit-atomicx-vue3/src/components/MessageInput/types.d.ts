@@ -28,6 +28,7 @@ export interface MessageInputProps {
   hideSendButton?: boolean;
   placeholder?: string;
   attachmentPickerMode?: MessageInputAttachmentPickerMode;
+  maxLength?: number;
   actions?: MessageInputActions;
   slots?: MessageInputSlots;
 }

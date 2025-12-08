@@ -8,6 +8,7 @@
       <span :class="$style.selected__count">
         {{ leafItems.length }}
         <template v-if="maxCount < InfinityValue"> / {{ maxCount }} </template>
+        {{ t('UserPicker.people_unit') }}
       </span>
     </div>
     <div :class="$style.selected__list">

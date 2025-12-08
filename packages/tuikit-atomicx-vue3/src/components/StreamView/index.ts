@@ -1,5 +1,7 @@
-import StreamView from './index.vue'
+import StreamViewComp from './index.vue';
+
+const StreamView = StreamViewComp;
 
 export {
-  StreamView
-}
+  StreamView,
+};

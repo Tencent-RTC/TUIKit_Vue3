@@ -1,6 +1,3 @@
-@use "sass:map";
-@use "@tencentcloud/uikit-base-component-vue3/src/providers/UIKitProvider/styles/variables.scss" as *;
-
 .SearchAdvanced {
   display: flex;
   flex-direction: column;
@@ -53,4 +50,4 @@
     margin-top: 8px;
     z-index: 1000;
   }
-} 
+}
