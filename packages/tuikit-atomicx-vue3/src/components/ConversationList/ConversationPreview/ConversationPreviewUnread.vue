@@ -30,5 +30,5 @@ const isUnreadMarked = computed(() => props.conversation?.markList?.includes(TUI
 </script>
 
 <style lang="scss" module>
-@import './ConversationPreview.scss';
+@use './ConversationPreview.scss';
 </style>

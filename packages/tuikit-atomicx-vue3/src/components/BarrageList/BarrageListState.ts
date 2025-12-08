@@ -3,7 +3,7 @@ import { TUIRoomEvents } from '@tencentcloud/tuiroom-engine-js';
 import { useRoomEngine } from '../../hooks/useRoomEngine';
 import { useBarrageState } from '../../states/BarrageState';
 import { useLiveListState } from '../../states/LiveListState';
-import type { Barrage } from '../../states/BarrageState';
+import type { Barrage } from '../../types/barrage';
 
 interface IMessageGroupTip {
   avatarUrl: string;

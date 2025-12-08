@@ -28,7 +28,13 @@
       "@/types": ["src/types"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "tests/**/*.ts"],
+  "include": [
+    "src/**/*.ts", 
+    "src/**/*.vue", 
+    "src/**/*.d.ts",
+    "tests/**/*.ts",
+    "**/*.vue"
+  ],
   "references": [
     {
       "path": "./tsconfig.node.json"

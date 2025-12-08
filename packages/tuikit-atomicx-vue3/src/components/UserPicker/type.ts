@@ -47,7 +47,7 @@ export interface UserPickerProps<T = unknown> {
   // Search related
   enableSearch?: boolean; // Whether to enable search
   searchPlaceholder?: string; // Search placeholder text
-  onSearch?: (value: string) => void; // Search callback
+  onSearch?: (dataSource: Array<UserPickerRow<T>>, keyword: string) => Array<UserPickerRow<T>>; // Custom search function for list mode only
 
   // Custom rendering
   renderItem?: (data: UserPickerRow<T> | UserPickerNode<T>) => any; // Vue render function or component

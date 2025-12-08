@@ -188,5 +188,5 @@ const stopClickPropagation = (e: Event) => {
 </script>
 
 <style lang="scss" module>
-@import './Search.scss';
+@use './Search.scss';
 </style>

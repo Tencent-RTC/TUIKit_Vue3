@@ -67,5 +67,5 @@ const handleRemoveFromBlacklist = async () => {
 </script>
 
 <style scoped lang="scss">
-@import './BlacklistInfo.scss';
+@use './BlacklistInfo.scss';
 </style>

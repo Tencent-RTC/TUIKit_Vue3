@@ -41,7 +41,7 @@ import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveListState } from '../../../../states/LiveListState';
 import { useMessageListContext } from '../../MessageListContext';
 import { BASEURL, BASIC_EMOJI_URL_MAPPING } from './emoji';
-import type { Barrage } from '../../../../states/BarrageState';
+import type { Barrage } from '../../../../types/barrage';
 
 const { currentLive } = useLiveListState();
 const context: {

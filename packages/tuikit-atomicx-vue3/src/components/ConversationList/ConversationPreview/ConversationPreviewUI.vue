@@ -96,7 +96,7 @@ const props = withDefaults(defineProps<ConversationPreviewUIProps>(), {
 });
 
 const emit = defineEmits<{
-  select: [conversation: ConversationModel];
+  selectConversation: [conversation: ConversationModel];
 }>();
 
 const { activeConversation, setActiveConversation } = useConversationListState();
@@ -120,7 +120,7 @@ watch(isHovered, (newValue) => {
 });
 
 const handleClick = () => {
-  emit('select', props.conversation);
+  emit('selectConversation', props.conversation);
   setActiveConversation(props.conversation.conversationID);
 };
 
@@ -130,5 +130,5 @@ const handleCloseActionsModal = () => {
 </script>
 
 <style lang="scss" module>
-@import './ConversationPreview.scss';
+@use './ConversationPreview.scss';
 </style>

@@ -1,8 +1,8 @@
 <template>
   <div class="audio-control" :style="iconSizeStyle" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
-    <span class="control-btn volume-btn" :title="isMuted ? t('Open Speaker') : t('Close Speaker')" @click="handleVolumeIconClick">
-      <IconSpeakerOff size="20" v-if="isMuted" />
-      <IconSpeakerOn size="20" v-else />
+    <span class="control-btn volume-btn" :title="props.isMuted ? t('Open Speaker') : t('Close Speaker')" @click="handleVolumeIconClick">
+      <IconSpeakerOff :size="props.iconSize" v-if="props.isMuted" />
+      <IconSpeakerOn :size="props.iconSize" v-else />
     </span>
     <div v-show="isVolumeSliderVisible" class="volume-slider-container">
       <div
@@ -35,36 +35,41 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onUnmounted, toRaw } from 'vue';
+import { computed, ref, onUnmounted, defineProps, withDefaults } from 'vue';
 import { IconSpeakerOn, IconSpeakerOff, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { isMobile } from '../../../utils';
 
+// Constants
+const VOLUME_CONSTANTS = {
+  // Minimum allowed volume level (silent)
+  MIN_VOLUME: 0,
+  // Maximum allowed volume level (full volume)
+  MAX_VOLUME: 100,
+};
+
 interface AudioControlEmits {
   (e: 'volume-change', value: number): void;
-  (e: 'muted-change', value: boolean): void;
+  (e: 'mute-change'): void;
 }
 
 interface AudioControlProps {
   iconSize?: number;
-  enableVolumeControl?: boolean;
+  isMuted?: boolean;
+  volume?: number; // Volume range: 0-100
 }
 
 const props = withDefaults(defineProps<AudioControlProps>(), {
   iconSize: 20,
-  enableVolumeControl: true,
+  isMuted: false,
+  volume: 100,
 });
 
 const emit = defineEmits<AudioControlEmits>();
 
 const { t } = useUIKit();
 
-// Volume state - merged into single object
-const volumeState = ref({
-  current: 1,
-  previous: 1,
-});
 
-const isMuted = ref(false);
+
 const isVolumeSliderVisible = ref(false);
 const isDragging = ref(false);
 const volumeSliderElement = ref<HTMLElement>();
@@ -72,65 +77,46 @@ const volumeSliderAutoHideTimer = ref<number | null>(null);
 
 // Auto-hide delay for different platforms
 const AUTO_HIDE_DELAY = {
-  PC: 500, // 0.5 seconds for PC
+  PC: 1500, // 1.5 seconds for PC
   MOBILE: 3000, // 3 seconds for mobile
 };
 
-// Simplified computed property - directly use isVolumeSliderVisible
+// Computed property - use volume from props (already in percentage)
 const volumePercentage = computed(() => {
-  if (props.enableVolumeControl === false) {
-    return isMuted.value ? 0 : 100;
-  }
-  return Math.round(volumeState.value.current * 100);
+  return Math.round(props.volume);
 });
 
 const iconSizeStyle = computed(() => ({
-  width: `${props.iconSize || 20}px`,
-  height: `${props.iconSize || 20}px`,
+  width: `${props.iconSize}px`,
+  height: `${props.iconSize}px`,
 }));
 
 const updateVolume = (newVolume: number) => {
-  volumeState.value.previous = toRaw(volumeState.value.current);
-  volumeState.value.current = newVolume;
-  isMuted.value = newVolume === 0;
-  emit('volume-change', newVolume);
+  // Clamp volume to valid range
+  const clampedVolume = Math.max(VOLUME_CONSTANTS.MIN_VOLUME, Math.min(VOLUME_CONSTANTS.MAX_VOLUME, newVolume));
+  emit('volume-change', clampedVolume);
 };
 
 const toggleMute = () => {
-  if (isMuted.value) {
-    isMuted.value = false;
-    volumeState.value.current = volumeState.value.previous || 0.2;
-    emit('muted-change', false);
-    emit('volume-change', volumeState.value.current);
-  } else {
-    isMuted.value = true;
-    volumeState.value.previous = volumeState.value.current;
-    volumeState.value.current = 0;
-    emit('muted-change', true);
-    emit('volume-change', volumeState.value.current);
-  }
+  // Simply emit mute change event, let parent component handle the logic
+  emit('mute-change');
 };
 
 const handleVolumeIconClick = () => {
-  if (props.enableVolumeControl === false) {
-    // When volume control is disabled, handle mute/unmute on all platforms
-    toggleMute();
-  } else {
-    // When volume control is enabled
-    if (isMobile) {
-      // On mobile: toggle volume slider visibility
-      isVolumeSliderVisible.value = !isVolumeSliderVisible.value;
+  // When volume control is enabled
+  if (isMobile) {
+    // On mobile: toggle volume slider visibility
+    isVolumeSliderVisible.value = !isVolumeSliderVisible.value;
 
-      // Start auto-hide timer when showing volume slider
-      if (isVolumeSliderVisible.value) {
-        startVolumeSliderAutoHideTimer();
-      } else {
-        stopVolumeSliderAutoHideTimer();
-      }
+    // Start auto-hide timer when showing volume slider
+    if (isVolumeSliderVisible.value) {
+      startVolumeSliderAutoHideTimer();
     } else {
-      // On PC: handle mute/unmute, volume slider will show on mouse hover
-      toggleMute();
+      stopVolumeSliderAutoHideTimer();
     }
+  } else {
+    // On PC: handle mute/unmute, volume slider will show on mouse hover
+    toggleMute();
   }
 };
 
@@ -138,9 +124,7 @@ const startVolumeSliderAutoHideTimer = () => {
   stopVolumeSliderAutoHideTimer();
   const delay = isMobile ? AUTO_HIDE_DELAY.MOBILE : AUTO_HIDE_DELAY.PC;
   volumeSliderAutoHideTimer.value = window.setTimeout(() => {
-    if (props.enableVolumeControl) {
-      isVolumeSliderVisible.value = false;
-    }
+    isVolumeSliderVisible.value = false;
   }, delay);
 };
 
@@ -152,8 +136,6 @@ const stopVolumeSliderAutoHideTimer = () => {
 };
 
 const handleMouseEnter = () => {
-  if (props.enableVolumeControl === false) return;
-
   // Only handle mouse events on PC
   if (isMobile) return;
 
@@ -163,7 +145,6 @@ const handleMouseEnter = () => {
 };
 
 const handleMouseLeave = () => {
-  if (props.enableVolumeControl === false) return;
   // Only handle mouse events on PC
   if (isMobile) return;
   // On PC, start auto-hide timer when mouse leaves icon area
@@ -177,7 +158,8 @@ const calculateVolumeFromPosition = (clientY: number, target: HTMLElement): numb
   const rect = target.getBoundingClientRect();
   const clickY = clientY - rect.top;
   const height = rect.height;
-  return Math.max(0, Math.min(1, 1 - clickY / height));
+  const volumePercentage = (1 - clickY / height) * 100; // Convert to 0-100 range
+  return Math.max(VOLUME_CONSTANTS.MIN_VOLUME, Math.min(VOLUME_CONSTANTS.MAX_VOLUME, volumePercentage));
 };
 
 const addGlobalEventListeners = () => {
@@ -197,9 +179,7 @@ const removeGlobalEventListeners = () => {
 const startDragging = () => {
   isDragging.value = true;
   // Stop auto-hide timer when dragging starts
-  if (props.enableVolumeControl) {
-    stopVolumeSliderAutoHideTimer();
-  }
+  stopVolumeSliderAutoHideTimer();
   addGlobalEventListeners();
 };
 
@@ -219,26 +199,23 @@ const handleSliderMove = (event: MouseEvent | TouchEvent) => {
 const handleSliderEnd = () => {
   isDragging.value = false;
   // Restart auto-hide timer when dragging ends
-  if (props.enableVolumeControl && isVolumeSliderVisible.value) {
+  if (isVolumeSliderVisible.value) {
     startVolumeSliderAutoHideTimer();
   }
   removeGlobalEventListeners();
 };
 
 const handleSliderMouseDown = (event: MouseEvent) => {
-  if (props.enableVolumeControl === false) return;
   startDragging();
   event.preventDefault();
 };
 
 const handleSliderTouchStart = (event: TouchEvent) => {
-  if (props.enableVolumeControl === false) return;
   startDragging();
   event.preventDefault();
 };
 
 const handleVolumeSliderAreaClick = () => {
-  if (props.enableVolumeControl === false) return;
   if (isMobile) {
     // On mobile, toggle volume slider visibility
     isVolumeSliderVisible.value = !isVolumeSliderVisible.value;
@@ -253,7 +230,6 @@ const handleVolumeSliderAreaClick = () => {
 };
 
 const handleVolumeSliderMouseEnter = () => {
-  if (props.enableVolumeControl === false) return;
   // Only handle mouse events on PC
   if (isMobile) return;
   // On PC, stop auto-hide timer when mouse enters slider area
@@ -261,7 +237,6 @@ const handleVolumeSliderMouseEnter = () => {
 };
 
 const handleVolumeSliderMouseLeave = () => {
-  if (props.enableVolumeControl === false) return;
   // Only handle mouse events on PC
   if (isMobile) return;
   // On PC, start auto-hide timer when mouse leaves slider area
@@ -315,9 +290,9 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   background: var(--volume-control-background);
-  padding: 12px 8px;
+  padding: 12px 8px; // Increased padding for PC (from 8px 6px)
   border-radius: 8px;
   backdrop-filter: blur(10px);
   border: 1px solid var(--volume-control-border);
@@ -326,6 +301,11 @@ onUnmounted(() => {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+
+  // Mobile devices keep original padding
+  @media (max-width: 768px) {
+    padding: 8px 6px;
+  }
 
   @media (hover: none) and (pointer: coarse) {
     cursor: grab;
@@ -338,21 +318,32 @@ onUnmounted(() => {
 
 .volume-slider-wrapper-inner {
   position: relative;
-  width: 20px;
-  height: 80px;
+  width: 24px;  // Increased to accommodate 16px thumb (20px -> 24px)
+  height: 96px; // Increased to accommodate thumb at top/bottom (80px + 16px = 96px)
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 12px;
+  margin-top: 4px;
+  
+  // Mobile devices keep smaller size
+  @media (max-width: 768px) {
+    width: 20px;
+    height: 80px;
+  }
 }
 
 .custom-volume-slider {
   position: relative;
-  width: 4px;
-  height: 80px;
+  width: 6px;
+  height: 80px; // Keep slider track height same, but container is bigger
   cursor: pointer;
   z-index: 2;
-  margin: 0;
+  margin: 8px 0; // Add margin to center the track in the larger container
+  
+  // Mobile devices keep original margin
+  @media (max-width: 768px) {
+    margin: 0;
+  }
 }
 
 .slider-track {
@@ -376,7 +367,7 @@ onUnmounted(() => {
 }
 
 .slider-thumb {
-  $thumb-size: 12px;
+  $thumb-size: 16px;
 
   position: absolute;
   left: 50%;
@@ -418,7 +409,7 @@ onUnmounted(() => {
 
 @media (hover: none) and (pointer: coarse) {
   .volume-slider-wrapper {
-    padding: 16px 12px;
+    padding: 10px 8px;
 
     &:active {
       background: var(--volume-control-background-light);
@@ -429,6 +420,7 @@ onUnmounted(() => {
 
   .volume-slider-wrapper-inner {
     height: 100px;
+    margin-top: 4px;
   }
 }
 </style>

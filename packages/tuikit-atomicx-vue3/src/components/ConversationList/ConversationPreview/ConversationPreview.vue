@@ -14,7 +14,7 @@
       :actionsConfig="actionsConfig"
       :className="className"
       :style="style"
-      @select="handleSelectConversation"
+      @select-conversation="handleSelectConversation"
     >
       <slot />
     </component>

@@ -1,5 +1,5 @@
 import TUIRoomEngine from '@tencentcloud/tuiroom-engine-js';
-import { MetricsKey } from './MetricsKey';
+import type { MetricsKey } from './MetricsKey';
 
 const KEY_METRICS_API = 'KeyMetricsStats';
 
@@ -14,11 +14,15 @@ export class DataReport {
   }
 
   public reportCount(key: MetricsKey) {
-    const task = this.createReportCountTask(key);
-    if (!this.isReady) {
-      this.taskQueue.push(task);
-    } else {
-      task();
+    try {
+      const task = this.createReportCountTask(key);
+      if (!this.isReady) {
+        this.taskQueue.push(task);
+      } else {
+        task();
+      }
+    } catch (error) {
+      console.warn('Report count failed:', error);
     }
   }
 
@@ -30,11 +34,11 @@ export class DataReport {
   }
 
   private executePendingTasks() {
-    this.taskQueue.forEach(task => {
+    this.taskQueue.forEach((task) => {
       try {
         task();
       } catch (error) {
-        console.error('Task execution failed:', error);
+        console.warn('Task execution failed:', error);
       }
     });
     this.taskQueue = [];
@@ -46,7 +50,7 @@ export class DataReport {
         JSON.stringify({
           api: KEY_METRICS_API,
           params: { key },
-        })
+        }),
       );
     };
   }

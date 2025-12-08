@@ -23,6 +23,7 @@
           :autoFocus="autoFocus"
           :disabled="disabled"
           :placeholder="placeholder"
+          :maxLength="maxLength"
         >
           <template #inputPrefix>
             <slot name="inputPrefix" />
@@ -76,7 +77,8 @@ const props = withDefaults(defineProps<MessageInputProps>(), {
   autoFocus: true,
   disabled: false,
   hideSendButton: false,
-  placeholder: '',
+  placeholder: undefined,
+  maxLength: undefined,
   attachmentPickerMode: 'collapsed',
   actions: () => ['EmojiPicker', 'ImagePicker', 'FilePicker', 'VideoPicker'],
 });

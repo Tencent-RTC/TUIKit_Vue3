@@ -26,19 +26,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, defineEmits, computed, inject } from 'vue';
-import IconButton from '../../baseComp/IconButton.vue';
+import type { Ref } from 'vue';
+import { ref, defineEmits, computed, inject } from 'vue';
 import AudioIcon from '../../baseComp/AudioIcon.vue';
-import AudioSettingTab from './AudioSettingTab.vue';
-import { useI18n } from '../../locales';
+import IconButton from '../../baseComp/IconButton.vue';
 import vClickOutside from '../../directives/vClickOutside';
+import { useI18n } from '../../locales';
 import { useDeviceState } from '../../states/DeviceState';
-import { DeviceStatus, DeviceError, AudioSettingProps, MediaSettingDisplayMode } from '../../types';
 import { useRoomState } from '../../states/RoomState';
+import { DeviceStatus, DeviceError, MediaSettingDisplayMode } from '../../types';
+import AudioSettingTab from './AudioSettingTab.vue';
+import type { AudioSettingProps } from '../../types';
 
-const audioSettingProps: AudioSettingProps | undefined =
-  inject('audioSettingProps');
-
+const audioSettingProps: AudioSettingProps | undefined
+  = inject('audioSettingProps');
 
 const { currentRoom } = useRoomState();
 const {
@@ -59,7 +60,7 @@ const showAudioSettingTab: Ref<boolean> = ref(false);
 const { t } = useI18n();
 
 const isMuted = computed(() => {
-  if (!currentRoom.value) {
+  if (!currentRoom?.value) {
     return !isMicrophoneTesting.value;
   }
   return microphoneStatus.value !== DeviceStatus.On;

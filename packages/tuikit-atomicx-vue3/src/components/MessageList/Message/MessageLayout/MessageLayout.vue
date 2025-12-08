@@ -82,17 +82,17 @@ const MessageComponent = computed(() => MessageComponentsFactory[props.message.t
 
 const isMessageOwner = computed(() => props.message.flow === 'out');
 
-const {
-  layoutClasses,
-  wrapperClasses,
-  avatarClasses,
-  bubbleClasses,
-  metaClasses,
-} = useMessageLayoutClasses({
+const messageLayoutClasses = computed(() => useMessageLayoutClasses({
   isMessageOwner: isMessageOwner.value,
   alignment: props.alignment,
   isAggregated: props.isAggregated,
-});
+}));
+
+const layoutClasses = computed(() => messageLayoutClasses.value.layoutClasses);
+const wrapperClasses = computed(() => messageLayoutClasses.value.wrapperClasses);
+const avatarClasses = computed(() => messageLayoutClasses.value.avatarClasses);
+const bubbleClasses = computed(() => messageLayoutClasses.value.bubbleClasses);
+const metaClasses = computed(() => messageLayoutClasses.value.metaClasses);
 
 function handleReadReceiptOpen() {
   isReadReceiptInfoOpen.value = true;

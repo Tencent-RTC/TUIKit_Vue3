@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { computed } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { ConversationType } from '../../../../types/engine';
@@ -28,20 +29,20 @@ const { t } = useUIKit();
 
 const messageContent = props.message.getMessageContent() as GroupTipMessageContent & CustomMessageContent;
 
-const renderText = () => {
+const renderText = computed(() => {
   if (messageContent.businessID === 'group_create') {
     return `${messageContent.showName || ''} ${t('MessageList.create_group')}`;
   }
   if (isCallMessage(props.message) && props.message.conversationType === ConversationType.GROUP) {
-    return parseCallMessageText(props.message);
+    return parseCallMessageText(props.message, t);
   }
   return resolveGroupTipMessage(props.message).text;
-};
+});
 </script>
 
 <template>
   <div :class="cs('group-tip-message')">
-    {{ renderText() }}
+    {{ renderText }}
   </div>
 </template>
 

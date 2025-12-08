@@ -78,5 +78,5 @@ const handleStart = (type: 'min' | 'max', e: MouseEvent | TouchEvent) => {
 </script>
 
 <style lang="scss" module>
-@import './Slider.scss';
+@use './Slider.scss';
 </style>

@@ -74,5 +74,5 @@ const handleAction = (action: 'accept' | 'refuse', event: Event) => {
 </script>
 
 <style scoped lang="scss">
-@import './GroupApplicationItem.scss';
+@use './GroupApplicationItem.scss';
 </style>

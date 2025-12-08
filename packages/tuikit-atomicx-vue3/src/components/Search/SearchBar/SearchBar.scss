@@ -1,6 +1,3 @@
-@use "sass:map";
-@use "@tencentcloud/uikit-base-component-vue3/src/providers/UIKitProvider/styles/variables.scss" as *;
-
 .SearchBar {
   display: flex;
   align-items: center;
@@ -27,7 +24,7 @@
 
     .tui-input {
       width: 100%;
-      
+
       .tui-input__native-input {
         height: 40px;
         padding: 8px 12px 8px 40px;
@@ -91,7 +88,7 @@
 
     .clearIcon {
       color: var(--text-color-disabled);
-      
+
       &:hover {
         color: var(--text-color-secondary);
       }
@@ -117,4 +114,4 @@
   &--h5 {
     padding: 10px;
   }
-} 
+}

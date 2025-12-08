@@ -9,11 +9,13 @@
       "
     >
       <Avatar class="avatar-url" :img-src="userInfo.avatarUrl" />
-      <div class="user-name">{{ getDisplayName(userInfo) }}</div>
+      <div class="user-name">
+        {{ getDisplayName(userInfo) }}
+      </div>
       <div class="role-info">
         <IconUser
-          size="20"
           v-if="isTargetUserRoomOwner || isTargetUserAdmin"
+          size="20"
           :class="isTargetUserAdmin ? 'admin-icon' : 'master-icon'"
         />
         <div
@@ -26,7 +28,11 @@
     <!-- User audio and video status information -->
     <div v-if="showStateIcon" class="member-av-state">
       <template v-for="(item, index) in iconList" :key="index">
-        <component :is="item.icon" :class="['state-icon', { 'disable-icon': item.disable }]" :size="item.size" />
+        <component
+          :is="item.icon"
+          :class="['state-icon', { 'disable-icon': item.disable }]"
+          :size="item.size"
+        />
       </template>
     </div>
   </div>
@@ -34,7 +40,6 @@
 <script setup lang="ts">
 import { computed, defineProps, withDefaults } from 'vue';
 import { TUIRole } from '@tencentcloud/tuiroom-engine-js';
-import Avatar from '../../../../baseComp/Avatar.vue';
 import {
   IconVideoOpen,
   IconVideoClose,
@@ -44,13 +49,14 @@ import {
   IconApplyActive,
   IconUser,
 } from '@tencentcloud/uikit-base-component-vue3';
+import Avatar from '../../../../baseComp/Avatar.vue';
 import { useI18n } from '../../../../locales';
-import { isMobile } from '../../../../utils/environment';
-import { SeatStatus, UserInfo, DeviceStatus } from '../../../../types';
 
 import { useRoomState } from '../../../../states/RoomState';
 import useUserState from '../../../../states/UserState/index';
-
+import { SeatStatus, DeviceStatus } from '../../../../types';
+import { isMobile } from '../../../../utils/environment';
+import type { UserInfo } from '../../../../types';
 
 const { t } = useI18n();
 
@@ -69,10 +75,10 @@ const isMaster = computed(() => props.userInfo.userRole === TUIRole.kRoomOwner);
 const isMe = computed(() => localUser.value?.userId === props.userInfo.userId);
 
 const isTargetUserRoomOwner = computed(
-  () => props.userInfo.userRole === TUIRole.kRoomOwner
+  () => props.userInfo.userRole === TUIRole.kRoomOwner,
 );
 const isTargetUserAdmin = computed(
-  () => props.userInfo.userRole === TUIRole.kAdministrator
+  () => props.userInfo.userRole === TUIRole.kAdministrator,
 );
 
 const extraInfo = computed(() => {
@@ -95,11 +101,11 @@ const extraInfo = computed(() => {
 });
 
 const isAudienceRole = computed(
-  () => currentRoom.value?.isSeatEnabled && props.userInfo.seatStatus !== SeatStatus.On
+  () => currentRoom.value?.isSeatEnabled && props.userInfo.seatStatus !== SeatStatus.On,
 );
 
 const isUserApplyingToAnchor = computed(() =>
-  props.userInfo.seatStatus === SeatStatus.OffApplicationPending
+  props.userInfo.seatStatus === SeatStatus.OffApplicationPending,
 );
 
 const iconList = computed(() => {
@@ -225,4 +231,3 @@ const iconList = computed(() => {
   width: 80vw;
 }
 </style>
-../../../../states/RoomState

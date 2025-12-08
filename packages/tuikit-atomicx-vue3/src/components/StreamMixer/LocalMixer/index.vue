@@ -210,8 +210,13 @@ const re = new ResizeObserver(() => {
 onMounted(() => {
   re.observe(localMixerRef.value);
   TUIRoomEngine.once('ready', async () => {
+    const mixerView = document.getElementById('local-video-mixer');
+    if (!mixerView) {
+      return;
+    }
+
     const mediaSourceManager = roomEngine.instance?.getTRTCCloud().getMediaMixingManager();
-    await mediaSourceManager.bindPreviewArea(document.getElementById('local-video-mixer') as HTMLElement);
+    await mediaSourceManager.bindPreviewArea(mixerView as HTMLElement);
     getMixControlStyle();
   });
 

@@ -1,49 +1,48 @@
 <template>
-  <tui-select
+  <TUISelect
     v-model="localVideoQuality"
     placeholder="placeholder"
     class="select"
     :teleported="false"
     :popper-append-to-body="false"
   >
-    <tui-option
+    <TUIOption
       v-for="(item, index) in videoQualityList"
       :key="index"
       :label="item.label"
       :value="item.value"
     />
-  </tui-select>
+  </TUISelect>
 </template>
 
 <script setup lang="ts">
-import { watch, computed, ComputedRef } from 'vue';
-import TuiSelect from '../../baseComp/Select';
-import TuiOption from '../../baseComp/Option';
+import type { ComputedRef } from 'vue';
+import { watch, computed } from 'vue';
+import { TUISelect, TUIOption } from '@tencentcloud/uikit-base-component-vue3';
 import { useI18n } from '../../locales';
-
-import { TUIVideoQuality } from '@tencentcloud/tuiroom-engine-js';
 import { useDeviceState } from '../../states/DeviceState';
+import { VideoQuality } from '../../types';
 
 const { t } = useI18n();
 
 const videoQualityList: ComputedRef<
-  { label: string; value: TUIVideoQuality }[]
+  { label: string; value: VideoQuality }[]
 > = computed(() => [
-  { label: t('Low Definition'), value: TUIVideoQuality.kVideoQuality_360p },
+  { label: t('Low Definition'), value: VideoQuality.Quality360P },
   {
     label: t('Standard Definition'),
-    value: TUIVideoQuality.kVideoQuality_540p,
+    value: VideoQuality.Quality540P,
   },
-  { label: t('High Definition'), value: TUIVideoQuality.kVideoQuality_720p },
+  { label: t('High Definition'), value: VideoQuality.Quality720P },
   {
     label: t('Super Definition'),
-    value: TUIVideoQuality.kVideoQuality_1080p,
+    value: VideoQuality.Quality1080P,
   },
 ]);
 
 const { localVideoQuality, updateVideoQuality } = useDeviceState();
 
-watch(localVideoQuality, (val: TUIVideoQuality) => {
+watch(localVideoQuality, (val: VideoQuality) => {
   updateVideoQuality({ quality: val });
 });
 </script>
@@ -54,4 +53,3 @@ watch(localVideoQuality, (val: TUIVideoQuality) => {
   font-size: 14px;
 }
 </style>
-../../states/DeviceState

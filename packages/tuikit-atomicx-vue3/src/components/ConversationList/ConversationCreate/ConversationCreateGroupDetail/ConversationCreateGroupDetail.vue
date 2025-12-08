@@ -120,5 +120,5 @@ const groupInfoChange = (value: string, type: string) => {
 </script>
 
 <style lang="scss" module>
-@import './ConversationCreateGroupDetail.scss';
+@use './ConversationCreateGroupDetail.scss';
 </style>

@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import { toRefs, computed, withDefaults, defineProps } from 'vue';
 import cs from 'classnames';
-import { BarrageType } from '../../../../states/BarrageState';
 import { useLoginState } from '../../../../states/LoginState';
+import { BarrageType } from '../../../../types/barrage';
 import { CustomMessage } from '../CustomMessage';
 import { TextMessage } from '../TextMessage';
 import { MessageBubble } from './MessageBubble';
-import type { Barrage } from '../../../../states/BarrageState';
+import type { Barrage } from '../../../../types/barrage';
 
 interface IMessageLayoutProps {
   message: Barrage;

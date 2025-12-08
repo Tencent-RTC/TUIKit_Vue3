@@ -5,14 +5,14 @@
   >
     <div
       class="manage-member-button"
-      :class="currentRoom?.isMicrophoneDisableForAllUser ? 'lift-all' : ''"
+      :class="currentRoom?.isAllMicrophoneDisabled ? 'lift-all' : ''"
       @touchstart="roomAudioAction.handler"
     >
       {{ roomAudioAction.label }}
     </div>
     <div
       class="manage-member-button"
-      :class="currentRoom?.isCameraDisableForAllUser ? 'lift-all' : ''"
+      :class="currentRoom?.isAllCameraDisabled ? 'lift-all' : ''"
       @touchstart="roomVideoAction.handler"
     >
       {{ roomVideoAction.label }}
@@ -47,9 +47,9 @@
 
 <script setup lang="ts">
 import { defineProps } from 'vue';
-import useIndex from './useIndexHooks';
 import { TUIIcon } from '@tencentcloud/uikit-base-component-vue3';
 import { useRoomState } from '../../../states/RoomState';
+import useIndex from './useIndexHooks';
 
 const { currentRoom } = useRoomState();
 

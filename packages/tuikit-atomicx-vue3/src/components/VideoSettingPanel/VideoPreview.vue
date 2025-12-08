@@ -8,7 +8,7 @@
       <span
         v-if="!isCameraTesting && !isCameraTestLoading"
         class="off-camera-info"
-      >{{ t('Off Camera') }}
+      >{{ t('VideoSettingPanel.OffCamera') }}
       </span>
       <IconLoading
         v-if="isCameraTestLoading"
@@ -26,16 +26,16 @@ import { IconLoading, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useDeviceState } from '../../states/DeviceState';
 
 const { t } = useUIKit();
-const { isCameraTesting, isCameraTestLoading, startCameraDeviceTest, stopCameraDeviceTest } = useDeviceState();
+const { isCameraTesting, isCameraTestLoading, startCameraTest, stopCameraTest } = useDeviceState();
 
 onMounted(async () => {
   TUIRoomEngine.once('ready', () => {
-    startCameraDeviceTest({ view: 'video-preview' });
+    startCameraTest({ view: 'video-preview' });
   });
 });
 
 onUnmounted(async () => {
-  await stopCameraDeviceTest();
+  await stopCameraTest();
 });
 </script>
 

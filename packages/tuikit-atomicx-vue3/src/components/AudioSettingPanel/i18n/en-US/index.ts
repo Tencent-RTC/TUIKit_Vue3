@@ -1,8 +1,14 @@
 export const resource = {
-  Microphone: 'Microphone',
-  'Select device': 'Select device',
-  'Input volume': 'Input volume',
-  Speaker: 'Speaker',
-  'Output volume': '输出音量',
-  'Unrecognized device': 'Unrecognized device',
+  AudioSettingPanel: {
+    Microphone: 'Microphone',
+    SelectMicrophone: 'Select microphone',
+    SelectSpeaker: 'Select speaker',
+    InputLevel: 'Input level',
+    InputVolume: 'Input volume',
+    Speaker: 'Speaker',
+    OutputVolume: 'Output volume',
+    UnrecognizedDevice: 'Unrecognized device',
+    Test: 'Test',
+    Stop: 'Stop',
+  },
 };

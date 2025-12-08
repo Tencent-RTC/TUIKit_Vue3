@@ -188,5 +188,5 @@ watch(keyword, handleSearchChange, { immediate: true });
 </script>
 
 <style lang="scss" module>
-@import './ConversationSearch.scss';
+@use './ConversationSearch.scss';
 </style>

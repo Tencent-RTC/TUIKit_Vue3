@@ -1,12 +1,13 @@
 <template>
   <span
-    v-if="resolutionList.length > 0"
+    v-if="resolutionList.length > 0 && currentResolution"
     v-click-outside="handleClickOutside"
     class="multi-resolution"
   >
     <span
       v-show="isShowResolutionList"
       class="multi-resolution-list"
+      :class="{ 'switching-disabled': isResolutionSwitching }"
       @click="handleClickResolution"
     >
       <span
@@ -19,30 +20,23 @@
       </span>
     </span>
     <span class="current-resolution" @click="handleClickCurrentResolution">
-      {{ currentResolution ? t(resolutionMap[currentResolution]) : (resolutionList.length > 0 ? t(resolutionMap[resolutionList[0]]) : '') }}
+      {{ t(resolutionMap[currentResolution]) }}
     </span>
   </span>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, defineEmits } from 'vue';
+import { ref } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import vClickOutside from '../../../directives/vClickOutside';
-import { useLiveListState } from '../../../states/LiveListState';
 import { usePlayerControlState, Resolution } from './PlayerControlState';
 
 const { t } = useUIKit();
-const { currentLive } = useLiveListState();
 const {
   resolutionList,
   currentResolution,
   switchResolution,
-  initializeResolution,
 } = usePlayerControlState();
-
-const emit = defineEmits<{
-  (e: 'resolution-change', resolution: Resolution): void;
-}>();
 
 // Resolution mapping for UI display
 const resolutionMap: Record<Resolution, string> = {
@@ -54,6 +48,10 @@ const resolutionMap: Record<Resolution, string> = {
 
 const isShowResolutionList = ref<boolean>(false);
 
+// Throttle state for resolution switching
+const isResolutionSwitching = ref<boolean>(false);
+const RESOLUTION_SWITCH_COOLDOWN = 1000; // 1 second cooldown
+
 const handleClickOutside = () => {
   isShowResolutionList.value = false;
 };
@@ -64,6 +62,12 @@ const handleClickCurrentResolution = () => {
 
 const handleClickResolution = async (event: MouseEvent) => {
   event.stopPropagation();
+  
+  if (isResolutionSwitching.value) {
+    console.warn('[MultiResolution] Resolution switching in progress, please wait...');
+    return;
+  }
+  
   const resolution = (event.target as HTMLElement)?.dataset.resolution;
   if (resolution) {
     const resolutionValue = Number(resolution) as Resolution;
@@ -72,25 +76,19 @@ const handleClickResolution = async (event: MouseEvent) => {
       if (resolutionValue === currentResolution.value) {
         return;
       }
-      await switchResolution(resolutionValue);
-      emit('resolution-change', resolutionValue);
+      try {
+        isResolutionSwitching.value = true;
+        await switchResolution(resolutionValue);
+      } catch (error) {
+        console.error('[MultiResolution] Failed to switch resolution:', error);
+      } finally {
+        setTimeout(() => {
+          isResolutionSwitching.value = false;
+        }, RESOLUTION_SWITCH_COOLDOWN);
+      }
     }
   }
 };
-
-onMounted(() => {
-  watch(
-    () => currentLive.value?.liveId,
-    async () => {
-      if (currentLive.value?.liveId) {
-        await initializeResolution(currentLive.value.liveId);
-      }
-    },
-    {
-      immediate: true,
-    },
-  );
-});
 </script>
 
 <style lang="scss" scoped>
@@ -115,6 +113,11 @@ onMounted(() => {
     transform: translate(-12px, -110%);
     background-color: #1f2024;
     border: 1px solid #2b2c30;
+
+    &.switching-disabled {
+      pointer-events: none;
+      opacity: 0.6;
+    }
 
     .multi-resolution-item {
       width: 100%;

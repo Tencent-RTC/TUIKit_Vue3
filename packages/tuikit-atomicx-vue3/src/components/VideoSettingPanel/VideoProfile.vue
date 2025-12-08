@@ -1,7 +1,7 @@
 <template>
   <TUISelect
     v-model="localVideoQuality"
-    placeholder="placeholder"
+    :placeholder="t('VideoSettingPanel.Resolution')"
     class="select"
     :teleported="false"
     :popper-append-to-body="false"
@@ -27,14 +27,14 @@ const { t } = useUIKit();
 const videoQualityList: ComputedRef<
   { label: string; value: VideoQuality }[]
 > = computed(() => [
-  { label: t('Low Definition'), value: VideoQuality.Quality360P },
+  { label: t('VideoSettingPanel.LowDefinition'), value: VideoQuality.Quality360P },
   {
-    label: t('Standard Definition'),
+    label: t('VideoSettingPanel.StandardDefinition'),
     value: VideoQuality.Quality540P,
   },
-  { label: t('High Definition'), value: VideoQuality.Quality720P },
+  { label: t('VideoSettingPanel.HighDefinition'), value: VideoQuality.Quality720P },
   {
-    label: t('Super Definition'),
+    label: t('VideoSettingPanel.SuperDefinition'),
     value: VideoQuality.Quality1080P,
   },
 ]);
@@ -43,7 +43,7 @@ const { localVideoQuality, updateVideoQuality } = useDeviceState();
 
 watch(localVideoQuality, (val: VideoQuality) => {
   updateVideoQuality({ quality: val });
-});
+}, { immediate: true });
 </script>
 
 <style lang="scss" scoped>

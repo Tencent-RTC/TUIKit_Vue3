@@ -14,36 +14,36 @@
     </div>
     <div v-if="videoSettingProps?.supportSwitchMirror" class="mirror-container">
       <span>{{ t('Mirror') }}</span>
-      <tui-switch v-model="isLocalMirror" />
+      <TUISwitch v-model="isLocalMirror" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { watch, inject, ref } from 'vue';
-import CameraSelect from './CameraSelect.vue';
-import VideoProfile from './VideoProfile.vue';
-import VideoPreview from './VideoPreview.vue';
-import TuiSwitch from '../../baseComp/TuiSwitch.vue';
+import { TUISwitch } from '@tencentcloud/uikit-base-component-vue3';
 import { useI18n } from '../../locales';
 import { useDeviceState } from '../../states/DeviceState';
-import { VideoSettingProps } from '../../types';
 import { MirrorType } from '../../types';
+import CameraSelect from './CameraSelect.vue';
+import VideoPreview from './VideoPreview.vue';
+import VideoProfile from './VideoProfile.vue';
+import type { VideoSettingProps } from '../../types';
 
 const { t } = useI18n();
 const { switchMirror } = useDeviceState();
 
 const isLocalMirror = ref(true);
 
-const videoSettingProps: VideoSettingProps | undefined =
-  inject('videoSettingProps');
+const videoSettingProps: VideoSettingProps | undefined
+  = inject('videoSettingProps');
 
 watch(
   isLocalMirror,
   async (val: boolean) => {
     switchMirror({ mirror: val ? MirrorType.Auto : MirrorType.Disable });
   },
-  { immediate: true }
+  { immediate: true },
 );
 </script>
 

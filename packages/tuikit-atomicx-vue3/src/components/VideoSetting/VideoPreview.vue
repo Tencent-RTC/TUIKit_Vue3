@@ -1,31 +1,37 @@
 <template>
   <div class="video-preview-container">
-    <div id="video-preview" class="video-preview"></div>
+    <div :id="previewId" class="video-preview" />
     <div class="attention-info">
       <span
         v-if="!isCameraTesting && !isCameraTestLoading"
         class="off-camera-info"
-        >{{ t('Off Camera') }}
+      >{{ t('Off Camera') }}
       </span>
-      <IconLoading size="36" v-if="isCameraTestLoading" class="loading" />
+      <IconLoading
+        v-if="isCameraTestLoading"
+        size="36"
+        class="loading"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, ref, onBeforeMount } from 'vue';
 import { IconLoading } from '@tencentcloud/uikit-base-component-vue3';
 import { useI18n } from '../../locales';
-import TUIRoomEngine from '@tencentcloud/tuiroom-engine-js';
 import { useDeviceState } from '../../states/DeviceState';
 
 const { t } = useI18n();
 const { isCameraTesting, isCameraTestLoading, startCameraDeviceTest, stopCameraDeviceTest } = useDeviceState();
+const previewId = ref<string>('');
+
+onBeforeMount(() => {
+  previewId.value = `atomicx-video-preview-${Math.random().toString(36).substring(2, 15)}`;
+});
 
 onMounted(async () => {
-  TUIRoomEngine.once('ready', () => {
-    startCameraDeviceTest({ view: 'video-preview' });
-  });
+  await startCameraDeviceTest({ view: previewId.value });
 });
 
 onUnmounted(async () => {

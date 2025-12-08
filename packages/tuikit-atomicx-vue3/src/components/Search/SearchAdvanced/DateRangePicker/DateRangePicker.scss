@@ -1,6 +1,3 @@
-@use "sass:map";
-@use "@tencentcloud/uikit-base-component-vue3/src/providers/UIKitProvider/styles/variables.scss" as *;
-
 .SearchDateRangePicker {
   background: var(--bg-color-dialog);
   box-shadow: 0 2px 8px var(--shadow-color);
@@ -305,4 +302,4 @@
     color: #fff;
     border-color: #1677ff;
   }
-} 
+}

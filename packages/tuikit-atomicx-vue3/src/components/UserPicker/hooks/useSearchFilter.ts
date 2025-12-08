@@ -5,7 +5,7 @@ import type { UserPickerDataSource, UserPickerNode, UserPickerRow } from '../typ
 interface UseSearchFilterOptions<T = unknown> {
   dataSource: Ref<UserPickerDataSource<T>>;
   isTreeMode?: boolean;
-  onSearch?: (value: string) => void;
+  onSearch?: (dataSource: Array<UserPickerRow<T>>, keyword: string) => Array<UserPickerRow<T>>;
   debounceTime?: number;
 }
 
@@ -33,15 +33,18 @@ function searchTreeNodes<T>(nodes: Array<UserPickerNode<T>>, searchValue: string
     return nodes;
   }
 
-  // Helper function: check if node matches
+  const lowerSearchValue = searchValue.toLowerCase();
+
+  // Helper function: check if node matches (support both key and label)
   const isNodeMatched = (node: UserPickerNode<T>): boolean =>
-    node.label.toLowerCase().includes(searchValue.toLowerCase());
+    node.key.toLowerCase().includes(lowerSearchValue)
+    || node.label.toLowerCase().includes(lowerSearchValue);
 
   // Helper function: recursively search nodes
   const searchNodes = (nodesList: Array<UserPickerNode<T>>): Array<UserPickerNode<T>> => {
     const matchedNodes: Array<UserPickerNode<T>> = [];
 
-    nodesList.forEach(node => {
+    nodesList.forEach((node) => {
       const isMatched = isNodeMatched(node);
       let matchedChildren: Array<UserPickerNode<T>> = [];
 
@@ -64,13 +67,18 @@ function searchTreeNodes<T>(nodes: Array<UserPickerNode<T>>, searchValue: string
   return searchNodes(nodes);
 }
 
-// Search list structure
+// Search list structure (default implementation)
 function searchListItems<T>(items: Array<UserPickerRow<T>>, searchValue: string): Array<UserPickerRow<T>> {
   if (!searchValue.trim()) {
     return items;
   }
 
-  return items.filter(item => item.label.toLowerCase().includes(searchValue.toLowerCase()));
+  const lowerSearchValue = searchValue.toLowerCase();
+
+  return items.filter(item =>
+    item.key.toLowerCase().includes(lowerSearchValue)
+    || item.label.toLowerCase().includes(lowerSearchValue),
+  );
 }
 
 export function useSearchFilter<T = unknown>({
@@ -85,35 +93,36 @@ export function useSearchFilter<T = unknown>({
 
   // Filter data based on search value
   const filteredData = computed(() => {
-    if (!searchValue.value.trim()) {
+    const keyword = searchValue.value.trim();
+
+    // No search keyword, return original data
+    if (!keyword) {
       return dataSource.value;
     }
 
+    // Tree mode: always use default search (custom search not supported)
     if (isTreeMode && isTreeDataSource(dataSource.value)) {
-      return searchTreeNodes(dataSource.value as Array<UserPickerNode<T>>, searchValue.value);
+      return searchTreeNodes(dataSource.value as Array<UserPickerNode<T>>, keyword);
     }
-    return searchListItems(dataSource.value as Array<UserPickerRow<T>>, searchValue.value);
+
+    // List mode: use custom search if provided, otherwise use default search
+    if (onSearch) {
+      return onSearch(dataSource.value as Array<UserPickerRow<T>>, keyword);
+    }
+
+    return searchListItems(dataSource.value as Array<UserPickerRow<T>>, keyword);
   });
 
   // Handle search input
   const handleSearch = (value: string) => {
     isSearching.value = true;
     searchValue.value = value;
-
-    // Trigger external search callback
-    if (onSearch) {
-      onSearch(value);
-    }
-
     isSearching.value = false;
   };
 
   // Clear search
   const clearSearch = () => {
     searchValue.value = '';
-    if (onSearch) {
-      onSearch('');
-    }
   };
 
   // Set search value

@@ -8,14 +8,14 @@ import {
   IconDenyOnStage,
   IconOnStage,
   IconOffStage,
-} from '@tencentcloud/uikit-base-component-vue3';
+  TUIToast, TOAST_TYPE } from '@tencentcloud/uikit-base-component-vue3';
 import { useI18n } from '../../locales';
-import { TUIToast, TOAST_TYPE } from '@tencentcloud/uikit-base-component-vue3';
 // import { MESSAGE_DURATION } from '@/constants/message';
-import { UserInfo, UserAction, ActionType, RequestType, SeatStatus } from '../../types';
-import useRoomEngine from '../useRoomEngine';
-import useUserState from '../../states/UserState/index';
 import { useRoomState } from '../../states/RoomState';
+import useUserState from '../../states/UserState/index';
+import { UserAction, RequestType, SeatStatus } from '../../types';
+import useRoomEngine from '../useRoomEngine';
+import type { UserInfo, ActionType } from '../../types';
 
 const { currentRoom } = useRoomState();
 
@@ -24,7 +24,7 @@ const { t } = useI18n();
 const roomEngine = useRoomEngine();
 
 export function useInviteUserOnSeat(
-  userInfo: UserInfo
+  userInfo: UserInfo,
 ): ActionType<UserAction> {
   const { userListOnSeat, getDisplayName, cancelInvitationByAdmin, sendInvitationByAdmin } = useUserState();
 
@@ -75,7 +75,7 @@ export function useInviteUserOnSeat(
                   'The invitation to sb to go on stage has timed out',
                   {
                     name: getDisplayName(userInfo),
-                  }
+                  },
                 ),
                 // duration: MESSAGE_DURATION.NORMAL,
               });
@@ -85,7 +85,7 @@ export function useInviteUserOnSeat(
                 TUIToast({
                   type: TOAST_TYPE.WARNING,
                   message: t(
-                    'This member has already received the same request, please try again later'
+                    'This member has already received the same request, please try again later',
                   ),
                   // duration: MESSAGE_DURATION.NORMAL,
                 });
@@ -104,12 +104,12 @@ export function useInviteUserOnSeat(
     icon: computed(() =>
       userInfo.seatStatus === SeatStatus.OffInvitationPending
         ? IconDenyOnStage
-        : IconInviteOnStage
+        : IconInviteOnStage,
     ),
     label: computed(() =>
       userInfo.seatStatus === SeatStatus.OffInvitationPending
         ? t('Cancel stage')
-        : t('Invite stage')
+        : t('Invite stage'),
     ),
     handler: toggleInviteUserOnSeat,
   });

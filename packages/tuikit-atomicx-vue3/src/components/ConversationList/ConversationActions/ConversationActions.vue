@@ -25,11 +25,11 @@
     <TUIDropdown
       v-else
       trigger="click"
+      :teleported="false"
       placement="bottom-end"
     >
       <div
         :class="$style['conversationActions__popup-icon']"
-        @click="toggleClick"
       >
         <IconEllipsis size="18px" />
       </div>
@@ -81,7 +81,6 @@ const { t } = useUIKit();
 const { markConversationUnread } = useConversationListState();
 
 const markUnreadStatus = ref(true);
-const anchor = ref<HTMLElement | null>(null);
 const conversationActions = ref<Record<string, ConversationActionItem>>({});
 
 const enabledActions = computed(() => Object.entries(conversationActions.value)
@@ -151,12 +150,7 @@ watch(
   { immediate: true, deep: true },
 );
 
-const toggleClick = (e: Event) => {
-  anchor.value = anchor.value ? null : (e.currentTarget as HTMLElement);
-};
-
 const onClickMenuItem = (e: Event, key: string) => {
-  toggleClick(e);
   emit('click', e, key, props.conversation);
 
   const action = conversationActions.value[key];
@@ -178,5 +172,5 @@ const handleMaskClick = (e: Event) => {
 </script>
 
 <style lang="scss" module>
-@import './ConversationActions.scss';
+@use './ConversationActions.scss';
 </style>

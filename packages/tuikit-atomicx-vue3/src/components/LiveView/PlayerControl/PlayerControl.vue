@@ -16,14 +16,15 @@
         </span>
         <div class="center-controls"></div>
         <div class="right-controls">
-          <MultiResolution @resolution-change="handleResolutionChanged" />
+          <MultiResolution />
           <span class="control-btn audio-control-btn">
             <AudioControl
               class="audio-control-icon"
               :icon-size="20"
-              :enable-volume-control="isEnableVolumeControl()"
+              :volume="currentVolume"
+              :is-muted="isMuted"
               @volume-change="handleVolumeChange"
-              @muted-change="handleMutedChange"
+              @mute-change="handleMuteChange"
             />
           </span>
           <span
@@ -61,10 +62,10 @@ import { usePlayerControlState } from './PlayerControlState';
 import AudioControl from './AudioControl.vue';
 import MultiResolution from './MultiResolution.vue';
 import { isMobile } from '../../../utils';
-import { isFirefoxBrowser, isSafariBrowser } from './utils/deviceDetection';
 import { waitForVideoMounted } from './utils/domHelpers';
 
 const {
+  isMuted,
   isPlaying,
   isFullscreen,
   isPictureInPicture,
@@ -76,6 +77,7 @@ const {
   requestFullscreen,
   exitFullscreen,
   setVolume,
+  setMute,
   cleanup,
 } = usePlayerControlState();
 
@@ -84,39 +86,17 @@ const props = defineProps<{
 }>();
 
 const { t } = useUIKit();
-const isMuted = ref(false);
 const playerControlRef = ref<HTMLElement>();
 const showControls = ref(false);
 const hideTimeout = ref<number | null>(null);
 
 const AUTO_HIDE_DELAY = 3000; // ms
 
-const isEnableVolumeControl = () => {
-  // PC
-  if (!isMobile) return true;
-
-  // Safari is not supported
-  if (isSafariBrowser()) return false;
-
-  // Firefox is not supported
-  if (isFirefoxBrowser()) return false;
-
-  // Other Mobile browsers is supported
-  return true;
-};
-
 const handlePlayPause = () => {
   if (isPlaying.value) {
     pause();
   } else {
     resume();
-  }
-};
-
-const handleResolutionChanged = async () => {
-  const video = await waitForVideoMounted();
-  if (video) {
-    await setVolume(currentVolume.value);
   }
 };
 
@@ -146,12 +126,15 @@ const handleFullscreen = () => {
 };
 
 const handleVolumeChange = async (volume: number) => {
-  currentVolume.value = volume;
   // When the mouse is placed in the liveCoreView area on a pc, playerControls will always be displayed
   if (isMobile) {
     startAutoHideControl();
   }
   await setVolume(volume);
+};
+
+const handleMuteChange = async () => {
+  await setMute(!isMuted.value);
 };
 
 const startAutoHideControl = () => {
@@ -285,15 +268,6 @@ const removeTouchEventListeners = () => {
     document.removeEventListener('touchstart', handleScreenTouchStart, true);
     document.removeEventListener('touchmove', handleScreenTouchMove, true);
     document.removeEventListener('touchend', handleScreenTouchEnd, true);
-  }
-};
-
-const handleMutedChange = async (muted: boolean) => {
-  isMuted.value = muted;
-  if (muted) {
-    await setVolume(0);
-  } else {
-    await setVolume(currentVolume.value);
   }
 };
 

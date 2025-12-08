@@ -259,5 +259,5 @@ const handleQuickOptionClick = (option: string) => {
 </script>
 
 <style lang="scss" module>
-@import './MessageAdvanced.scss';
+@use './MessageAdvanced.scss';
 </style>

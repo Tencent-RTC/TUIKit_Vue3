@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, useCssModule } from 'vue';
-import { IconCall1Filled, IconVideoDefaultFilled } from '@tencentcloud/uikit-base-component-vue3';
+import { IconCall1Filled, IconVideoDefaultFilled, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { View } from '../../../../../baseComp/View';
 import { useConversationListState } from '../../../../../states/ConversationListState';
 import { ConversationType } from '../../../../../types/engine';
@@ -12,10 +12,12 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { t } = useUIKit();
 const classes = useCssModule();
 const { activeConversation } = useConversationListState();
 
-const text = computed(() => parseCallMessageText(props.message));
+const text = computed(() => parseCallMessageText(props.message, t));
 const payload = computed(() => parseCallMessage(props.message));
 
 const callAgain = () => {
@@ -25,7 +27,7 @@ const callAgain = () => {
 
   startCall({
     type: payload.value.data.data.call_type,
-    userIDList: payload.value.data.inviteeList,
+    userIDList: [activeConversation.value.userProfile?.userID],
   });
 };
 </script>

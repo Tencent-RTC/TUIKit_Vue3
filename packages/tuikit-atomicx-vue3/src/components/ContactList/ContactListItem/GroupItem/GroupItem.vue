@@ -43,5 +43,5 @@ const handleClick = () => {
 </script>
 
 <style scoped lang="scss">
-@import './GroupItem.scss';
+@use './GroupItem.scss';
 </style>
