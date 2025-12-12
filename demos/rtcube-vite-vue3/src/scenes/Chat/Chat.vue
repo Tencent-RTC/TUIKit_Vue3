@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { h, ref } from 'vue';
+import { h, ref, watch } from 'vue';
 import { TUICallKit } from '@tencentcloud/call-uikit-vue';
 import {
   ConversationList,
@@ -17,23 +17,29 @@ import {
   VideoPicker,
   AudioCallPicker,
   VideoCallPicker,
+  useUIKit,
+  ChatHeader,
+  useConversationListState,
 } from '@tencentcloud/chat-uikit-vue3';
-import { TUIDrawer, IconHistory3, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { ChatHeader } from './components/ChatHeader';
+import { IconMenu, IconHistory3 } from '@tencentcloud/uikit-base-component-vue3';
 import { PlaceholderEmpty } from './components/PlaceholderEmpty';
-import { TabList } from './components/TabList';
-import { useComponentOpenStore } from './stores';
+import { SideTab } from './components/SideTab';
 
 const activeContact = ref();
 const activeTab = ref<'conversation' | 'contact'>('conversation');
-const { t } = useUIKit();
+const isChatSettingShow = ref(false);
+const isSearchInChatShow = ref(false);
 
-const {
-  isChatSettingOpen,
-  setIsChatSettingOpen,
-  isSearchOpen,
-  setIsSearchOpen,
-} = useComponentOpenStore();
+const { t, theme } = useUIKit();
+const { activeConversation } = useConversationListState();
+
+// Close sidebar when switching conversations
+watch(() => activeConversation.value?.conversationID, (newVal, oldVal) => {
+  if (newVal !== oldVal) {
+    isChatSettingShow.value = false;
+    isSearchInChatShow.value = false;
+  }
+});
 
 const handleTabChange = (tab: 'conversation' | 'contact') => {
   activeTab.value = tab;
@@ -46,39 +52,49 @@ const enterChat = () => {
 </script>
 
 <template>
-  <div class="all-chat-container">
-    <TUICallKit class="floating-window" />
-    <div
-      :class="{
-        'first-screen': true,
-      }"
-    >
-      <TabList
-        :activeTab="activeTab"
-        @change="handleTabChange"
+  <div class="chat-layout">
+    <TUICallKit class="call-kit" />
+
+    <!-- SideTab Navigation -->
+    <SideTab
+      :active-tab="activeTab"
+      @change="handleTabChange"
+    />
+
+    <!-- Conversation/Contact List Panel -->
+    <div class="conversation-list-panel">
+      <ConversationList
+        v-show="activeTab === 'conversation'"
+        enable-create
       />
-      <div class="first-screen-content">
-        <ConversationList
-          v-if="activeTab === 'conversation'"
-          enable-create
-        />
-        <ContactList v-else />
-      </div>
+      <ContactList v-show="activeTab === 'contact'" />
     </div>
+
+    <!-- Chat Content Panel -->
     <Chat
       v-if="activeTab === 'conversation'"
       :PlaceholderEmpty="() => h(
         PlaceholderEmpty,
         { type: 'chat' })
       "
-      style="flex: 1;"
+      class="chat-content-panel"
     >
-      <ChatHeader />
+      <ChatHeader>
+        <template #ChatHeaderRight>
+          <button
+            class="icon-button"
+            :title="t('chat.Setting')"
+            @click="isChatSettingShow = !isChatSettingShow"
+          >
+            <IconMenu size="20" />
+          </button>
+        </template>
+      </ChatHeader>
       <MessageList />
-      <MessageInput class="message-input">
+      <MessageInput class="message-input-container">
         <template #headerToolbar>
-          <div class="header-toolbar">
-            <div class="header-toolbar-left">
+          <div class="message-toolbar">
+            <div class="message-toolbar-actions">
               <EmojiPicker />
               <ImagePicker />
               <FilePicker />
@@ -86,13 +102,55 @@ const enterChat = () => {
               <AudioCallPicker />
               <VideoCallPicker />
             </div>
-            <div class="header-toolbar-right">
-              <IconHistory3 size="20" @click="setIsSearchOpen(true)" />
-            </div>
+            <button
+              class="icon-button"
+              :title="t('chat.Search')"
+              @click="isSearchInChatShow = !isSearchInChatShow"
+            >
+              <IconHistory3 size="20" />
+            </button>
           </div>
         </template>
       </MessageInput>
+
+      <!-- Chat Setting Sidebar -->
+      <div
+        v-show="isChatSettingShow"
+        class="chat-sidebar"
+        :class="{ dark: theme === 'dark' }"
+      >
+        <div class="chat-sidebar-header">
+          <span class="chat-sidebar-title">{{ t('chat.Setting') }}</span>
+          <button
+            class="icon-button"
+            @click="isChatSettingShow = false"
+          >
+            ✕
+          </button>
+        </div>
+        <ChatSetting />
+      </div>
+
+      <!-- Search in Chat Sidebar -->
+      <div
+        v-show="isSearchInChatShow"
+        class="chat-sidebar"
+        :class="{ dark: theme === 'dark' }"
+      >
+        <div class="chat-sidebar-header">
+          <span class="chat-sidebar-title">{{ t('chat.Search') }}</span>
+          <button
+            class="icon-button"
+            @click="isSearchInChatShow = false"
+          >
+            ✕
+          </button>
+        </div>
+        <Search :variant="VariantType.EMBEDDED" />
+      </div>
     </Chat>
+
+    <!-- Contact Detail Panel -->
     <ContactInfo
       v-else
       :active-contact-item="activeContact"
@@ -100,32 +158,17 @@ const enterChat = () => {
         PlaceholderEmpty,
         { type: 'contact' })
       "
+      class="contact-detail-panel"
       @send-message="enterChat"
       @enter-group="enterChat"
     />
-    <TUIDrawer
-      :model-value="isChatSettingOpen"
-      :title="t('chat.Setting')"
-      @close="setIsChatSettingOpen(false)"
-    >
-      <ChatSetting style="flex: 1;" />
-    </TUIDrawer>
-    <TUIDrawer
-      :model-value="isSearchOpen"
-      :title="t('chat.Search')"
-      @close="setIsSearchOpen(false)"
-    >
-      <Search
-        :variant="VariantType.EMBEDDED"
-      />
-    </TUIDrawer>
   </div>
 </template>
 
 <style lang="scss" scoped>
 @use '../../styles/mixins' as mixins;
 
-.all-chat-container {
+.chat-layout {
   flex: 1;
   display: flex;
   flex-direction: row;
@@ -145,30 +188,33 @@ const enterChat = () => {
   }
 }
 
-.first-screen {
-  flex: 1;
+.conversation-list-panel {
+  width: 300px;
   display: flex;
-  flex-direction: row;
-  height: 100%;
-  border-right: 1px solid #F4F5F9;
-  max-width: 300px;
+  flex-direction: column;
+  overflow-y: auto;
+  min-height: 0;
+  border-right: 1px solid var(--stroke-color-primary);
 
   @include mixins.desktop {
-    max-width: 350px;
+    width: 350px;
   }
 }
 
-.first-screen-content {
+.chat-content-panel {
   flex: 1;
-  overflow-y: auto;
-  min-height: 0;
+  position: relative;
 }
 
-.message-input {
-  border-top: 1px solid #F4F5F9;
+.contact-detail-panel {
+  flex: 1;
 }
 
-.floating-window {
+.message-input-container {
+  border-top: 1px solid var(--stroke-color-primary);
+}
+
+.call-kit {
   position: fixed;
   width: 800px;
   height: 600px;
@@ -178,18 +224,79 @@ const enterChat = () => {
   transform: translate(-50%, -50%);
 }
 
-.header-toolbar {
+.message-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.header-toolbar-left {
+.message-toolbar-actions {
   display: flex;
   align-items: center;
   gap: 4px;
 }
-.header-toolbar-right {
-  padding: 0 10px;
+
+.icon-button {
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  font-size: 20px;
+  color: var(--text-color-primary);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  outline: none;
+
+  &:focus {
+    outline: none;
+  }
+
+  &:hover {
+    background-color: var(--button-color-secondary-hover);
+  }
+
+  &:active {
+    background-color: var(--button-color-secondary-active);
+  }
+}
+
+.chat-sidebar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  min-width: 300px;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-color-operate);
+  box-shadow: var(--shadow-color) 0 0 10px;
+  overflow: auto;
+  z-index: 1000;
+
+  &.dark {
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.4), -1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+}
+
+.chat-sidebar-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: var(--bg-color-operate);
+  border-bottom: 1px solid var(--stroke-color-primary);
+  z-index: 10;
+}
+
+.chat-sidebar-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color-primary);
 }
 </style>
