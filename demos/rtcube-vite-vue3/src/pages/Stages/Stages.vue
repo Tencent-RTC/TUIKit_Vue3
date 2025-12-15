@@ -9,7 +9,7 @@ import {
   useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useLoginState, Avatar } from 'tuikit-atomicx-vue3';
 import { useRoute, useRouter } from 'vue-router';
-import Logo from '@/assets/RTCubeLogo.png';
+import LogoImage from '@/assets/RTCubeLogo.png';
 import { getEnabledScenes, getDefaultScene } from '@/config';
 
 const { login, logout: _logout, loginUserInfo } = useLoginState();
@@ -115,7 +115,7 @@ onUnmounted(() => {
     <header class="stage-header">
       <div class="stage-header__left">
         <img
-          :src="Logo"
+          :src="LogoImage"
           alt="RTCube Logo"
           class="stage-header__logo"
           @click="router.replace('/')"

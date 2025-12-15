@@ -2,7 +2,7 @@
 import { onBeforeMount } from 'vue';
 import { UIKitProvider, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 
-const { language, setLanguage } = useUIKit();
+const { setLanguage } = useUIKit();
 
 onBeforeMount(() => {
   setLanguage('zh-CN');
@@ -11,11 +11,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <UIKitProvider
-    :key="language"
-    :language="language"
-    theme="light"
-  >
+  <UIKitProvider theme="light" language="zh-CN">
     <router-view />
   </UIKitProvider>
 </template>
