@@ -6,7 +6,7 @@
     </div>
     <div :class="$style.SearchMessage__content">
       <div :class="$style.SearchMessage__header">
-        <span :class="$style.SearchMessage__name" v-html="highlightedName"> </span>
+        <span :class="$style.SearchMessage__name" v-html="highlightedName" />
         <span v-if="time" :class="$style.SearchMessage__time">
           {{ formatTime(time) }}
         </span>
@@ -24,19 +24,18 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, h, defineProps, useCssModule } from 'vue';
+import { computed, h, useCssModule } from 'vue';
 import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
-import { SearchType } from '../../../../../types/engine';
-import type { ResultItemProps, MessageModel } from '../../../../../types';
-import { Avatar } from '../../../../Avatar';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { SearchType } from '../../../../../types/engine';
+import { Avatar } from '../../../../Avatar';
 import { highlightText } from '../utils';
+import type { MessageModel } from '../../../../../types/engine';
+import type { ResultItemProps } from '../../../../../types/search';
 
 const $style = useCssModule();
 
-const formatTime = (timestamp: number): string => {
-  return new Date(timestamp * 1000).toLocaleString();
-};
+const formatTime = (timestamp: number): string => new Date(timestamp * 1000).toLocaleString();
 
 const props = defineProps<ResultItemProps<SearchType.CHAT_MESSAGE>>();
 
@@ -49,7 +48,7 @@ const highlightedName = computed(() => {
   if (!props.keyword) {
     return name.value;
   }
-  return highlightText(name.value, props.keyword, $style['SearchMessage__highlight']);
+  return highlightText(name.value, props.keyword, $style.SearchMessage__highlight);
 });
 
 const renderTextContent = (messageContent: any, keyword: string) => {
@@ -59,16 +58,16 @@ const renderTextContent = (messageContent: any, keyword: string) => {
         if (item.name === 'text') {
           return h('span', {
             key: idx,
-            innerHTML: highlightText(item.text, keyword, $style['SearchMessage__highlight']),
+            innerHTML: highlightText(item.text, keyword, $style.SearchMessage__highlight),
           });
         }
         if (item.name === 'img') {
           return h('img', {
-            key: idx,
-            src: item.src,
-            alt: item.emojiKey || '',
-            class: $style['SearchMessage__emoji-img'],
-            draggable: false,
+            'key': idx,
+            'src': item.src,
+            'alt': item.emojiKey || '',
+            'class': $style['SearchMessage__emoji-img'],
+            'draggable': false,
             'data-emoji-key': item.emojiKey || '',
           });
         }
@@ -77,7 +76,7 @@ const renderTextContent = (messageContent: any, keyword: string) => {
       .filter(Boolean);
   }
   return h('span', {
-    innerHTML: highlightText(messageContent.text, keyword, $style['SearchMessage__highlight']),
+    innerHTML: highlightText(messageContent.text, keyword, $style.SearchMessage__highlight),
   });
 };
 
@@ -90,9 +89,9 @@ const renderMessageContent = (message: MessageModel, searchKeyword: string) => {
       return h(
         'div',
         {
-          class: $style['SearchMessage__text'],
+          class: $style.SearchMessage__text,
         },
-        renderTextContent(messageContent, searchKeyword)
+        renderTextContent(messageContent, searchKeyword),
       );
 
     case TUIChatEngine.TYPES.MSG_IMAGE:
@@ -138,11 +137,11 @@ const renderMessageContent = (message: MessageModel, searchKeyword: string) => {
                     points: '9,7 18,12 9,17',
                     fill: '#2B5DF5',
                   }),
-                ]
+                ],
               ),
-            ]
+            ],
           ),
-        ]
+        ],
       );
 
     case TUIChatEngine.TYPES.MSG_FILE:
@@ -155,18 +154,18 @@ const renderMessageContent = (message: MessageModel, searchKeyword: string) => {
           h(
             'span',
             {
-              class: $style['SearchMessage__text'],
+              class: $style.SearchMessage__text,
             },
-            messageContent.name
+            messageContent.name,
           ),
           h(
             'span',
             {
-              class: $style['SearchMessage__text'],
+              class: $style.SearchMessage__text,
             },
-            messageContent.size
+            messageContent.size,
           ),
-        ]
+        ],
       );
 
     case TUIChatEngine.TYPES.MSG_AUDIO:
@@ -217,12 +216,12 @@ const renderMessageContent = (message: MessageModel, searchKeyword: string) => {
                     fill: '#2B5DF5',
                     fillOpacity: '0.4',
                   }),
-                ]
+                ],
               ),
-            ]
+            ],
           ),
           h('span', `${messageContent.second}s`),
-        ]
+        ],
       );
 
     case TUIChatEngine.TYPES.MSG_LOCATION:
@@ -230,7 +229,7 @@ const renderMessageContent = (message: MessageModel, searchKeyword: string) => {
         return h(
           'span',
           {
-            class: $style['SearchMessage__text'],
+            class: $style.SearchMessage__text,
           },
           [
             messageContent.text,
@@ -241,9 +240,9 @@ const renderMessageContent = (message: MessageModel, searchKeyword: string) => {
                 target: '_blank',
                 rel: 'noopener noreferrer',
               },
-              `${t('Search.action.readMore')}>>>`
+              `${t('Search.action.readMore')}>>>`,
             ),
-          ]
+          ],
         );
       }
       return h('span', t('Search.messageType.custom'));

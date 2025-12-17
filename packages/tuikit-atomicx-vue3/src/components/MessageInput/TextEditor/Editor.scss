@@ -39,7 +39,9 @@
     height: 20px;
     user-select: text;
     pointer-events: none;
+    vertical-align: bottom;
   }
+
   .message-image {
     display: inline-block;
     width: 100px;
@@ -55,5 +57,28 @@
   float: left;
   height: 0;
   pointer-events: none;
+}
+
+// Mention tag styles (Telegram-style)
+.uikit-message-input-mention-tag {
+  display: inline;
+  padding: 2px 4px;
+  margin: 0 2px;
+  border-radius: 4px;
+  background-color: rgba(0, 122, 255, 0.1);
+  color: #007AFF;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: rgba(0, 122, 255, 0.15);
+  }
+
+  // Selected state (when backspacing)
+  &.ProseMirror-selectednode {
+    background-color: rgba(0, 122, 255, 0.2);
+  }
 }
 

@@ -196,6 +196,7 @@ const selectMaterial = async (type: TRTCMediaSourceType) => {
         name: t('Screen'),
         screen: {
           resolution: TRTCVideoResolution.TRTCVideoResolution_1920_1080,
+          systemAudio: true,
           fps: 15,
         },
       });

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import cs from 'classnames';
+import ImagePreview from './ImagePreview.vue';
 import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
 
 interface ImageMessageProps {
@@ -14,6 +15,8 @@ interface ImageMessageContent {
   height?: number;
   showName?: string;
 }
+
+defineOptions({ inheritAttrs: false });
 
 const MAX_HEIGHT = 320;
 const MIN_HEIGHT = 50;
@@ -57,6 +60,9 @@ const naturalSize = ref<{ width: number; height: number; aspectRatio: number } |
 const imageRef = ref<HTMLImageElement | null>(null);
 const containerRef = ref<HTMLDivElement | null>(null);
 let observerRef: IntersectionObserver | null = null;
+
+const isPreviewOpen = ref(false);
+let previousBodyOverflow: string | null = null;
 
 const isBlobImage = computed(() => messageContent.value.url.startsWith('blob'));
 
@@ -180,6 +186,30 @@ const handleImageError = () => {
   loadingState.value = 'error';
 };
 
+function handlePreviewOpen() {
+  if (loadingState.value !== 'loaded') return;
+  if (!messageContent.value.url) return;
+  isPreviewOpen.value = true;
+}
+
+function handlePreviewClose() {
+  isPreviewOpen.value = false;
+}
+
+function lockBodyScroll() {
+  if (typeof document === 'undefined') return;
+  previousBodyOverflow = document.body.style.overflow;
+  document.body.style.overflow = 'hidden';
+}
+
+function unlockBodyScroll() {
+  if (typeof document === 'undefined') return;
+  if (previousBodyOverflow !== null) {
+    document.body.style.overflow = previousBodyOverflow;
+    previousBodyOverflow = null;
+  }
+}
+
 // Watch for message content changes
 watch(() => messageContent.value.url, () => {
   loadingState.value = getInitialLoadingState(messageContent.value.url);
@@ -195,6 +225,14 @@ watch(() => messageContent.value.url, () => {
   fetchBlobDimensions();
 });
 
+watch(isPreviewOpen, (open) => {
+  if (open) {
+    lockBodyScroll();
+  } else {
+    unlockBodyScroll();
+  }
+});
+
 onMounted(() => {
   initializeLazyLoading();
   fetchBlobDimensions();
@@ -205,12 +243,14 @@ onUnmounted(() => {
   if (observerRef) {
     observerRef.disconnect();
   }
+  unlockBodyScroll();
 });
 </script>
 
 <template>
   <div
     ref="containerRef"
+    v-bind="$attrs"
     :class="cs('image-message', {
       'image-message--loading': loadingState === 'loading',
       'image-message--error': loadingState === 'error',
@@ -221,6 +261,9 @@ onUnmounted(() => {
       height: `${displaySize.height}px`,
       aspectRatio: `${displaySize.aspectRatio}`,
     }"
+    role="button"
+    tabindex="0"
+    @click="handlePreviewOpen"
   >
     <!-- skeleton -->
     <div
@@ -249,6 +292,12 @@ onUnmounted(() => {
       @error="handleImageError"
     >
   </div>
+  <ImagePreview
+    :open="isPreviewOpen"
+    :src="messageContent.url"
+    :alt="messageContent.showName || 'image message preview'"
+    @close="handlePreviewClose"
+  />
 </template>
 
 <style lang="scss" scoped>

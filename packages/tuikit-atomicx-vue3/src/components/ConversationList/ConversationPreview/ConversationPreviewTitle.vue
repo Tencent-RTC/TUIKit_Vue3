@@ -5,13 +5,14 @@
 </template>
 
 <script lang="ts" setup>
-import type { ConversationModel } from '../../../types';
+import { computed } from 'vue';
+import type { ConversationModel } from '../../../types/engine';
 
 const props = defineProps<{
   conversation: ConversationModel;
 }>();
 
-const title =props?.conversation?.getShowName?.() || '';
+const title = computed(() => props?.conversation?.getShowName?.() || '');
 </script>
 
 <style lang="scss" module>

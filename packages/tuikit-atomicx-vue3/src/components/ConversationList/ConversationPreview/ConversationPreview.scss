@@ -71,6 +71,14 @@
     color: var(--text-color-secondary, #666);
 
     @include mixins.text-ellipsis();
+
+    &__drafts {
+      color: var(--text-color-error);
+    }
+
+    &__at-info {
+      color: var(--text-color-error);
+    }
   }
 
   &__external {

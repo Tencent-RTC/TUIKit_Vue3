@@ -3,10 +3,10 @@
     <div :class="styles['input-prefix']">
       <slot name="inputPrefix" />
     </div>
-    <div
-      ref="editorDomRef"
-      :key="props.disabled ? 'disabled' : 'enabled'"
+    <EditorContent
+      :editor="editor"
       :class="styles['editor']"
+      class="message-input"
     />
     <div :class="styles['input-suffix']">
       <slot name="inputSuffix" />
@@ -15,13 +15,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { computed, watch, onBeforeUnmount } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { useEditor, EditorContent } from '@tiptap/vue-3';
 import { useConversationListState } from '../../../states/ConversationListState';
 import { useMessageInputState } from '../../../states/MessageInputState';
-import { createEditor } from './EditorCore';
+import { createExtensions, convertEditorContent } from './EditorCore';
 import styles from './TextEditor.module.scss';
-import type { Editor } from './EditorCore';
 
 interface TextEditorProps {
   autoFocus?: boolean;
@@ -41,85 +41,81 @@ const { t, language } = useUIKit();
 const { activeConversation } = useConversationListState();
 const { updateRawValue, sendMessage, setEditorInstance, setContent } = useMessageInputState();
 
-const editorDomRef = ref<HTMLDivElement | null>(null);
-const isFocused = ref(props.autoFocus);
-
 const computedPlaceholder = computed(() => props.placeholder ?? t('MessageInput.enter_a_message'));
 
-let editorInstance: Editor | null = null;
+// Handle Enter key to send message
+const handleEnter = () => {
+  sendMessage();
+  setContent('');
+};
 
-onMounted(() => {
-  const element = editorDomRef.value;
-  if (!element) {
+// Create editor using Tiptap's official useEditor composable
+const editor = useEditor({
+  autofocus: props.autoFocus,
+  editable: !props.disabled,
+  extensions: createExtensions({
+    placeholder: computedPlaceholder.value,
+    maxLength: props.maxLength,
+    showPlaceholderOnlyWhenEditable: props.placeholder === undefined,
+    onEnter: handleEnter,
+  }),
+  onUpdate: ({ editor: editorInstance }) => {
+    const content = convertEditorContent(editorInstance.getJSON());
+    updateRawValue(content);
+  },
+});
+
+// Sync editor instance to global state
+watch(editor, (newEditor) => {
+  setEditorInstance(newEditor ?? null);
+}, { immediate: true });
+
+// Reactive: disabled prop
+watch(() => props.disabled, (newDisabled) => {
+  editor.value?.setEditable(!newDisabled);
+  if (newDisabled) {
+    setContent('');
+  }
+});
+
+// Reactive: placeholder (including language change)
+watch([computedPlaceholder, language], () => {
+  if (!editor.value) {
     return;
   }
 
-  element.classList.add('message-input');
-
-  if (!element.dataset.editorCreated) {
-    editorInstance = createEditor({
-      element,
-      placeholder: computedPlaceholder.value,
-      isPlaceholderOnlyShowWhenEditable: props.placeholder === undefined,
-      autoFocus: props.autoFocus,
-      disabled: props.disabled,
-      maxLength: props.maxLength,
-      onUpdate: (content) => {
-        updateRawValue(content);
-      },
-      onEnter: () => {
-        sendMessage();
-        setContent('');
-      },
-      onFocus: () => {
-        isFocused.value = true;
-      },
-      onBlur: () => {
-        isFocused.value = false;
-      },
-    });
-    element.dataset.editorCreated = 'true';
-    setEditorInstance(editorInstance);
+  const placeholderExtension = editor.value.extensionManager.extensions.find(
+    ext => ext.name === 'placeholder',
+  );
+  if (placeholderExtension) {
+    placeholderExtension.options.placeholder = computedPlaceholder.value;
+    editor.value.view.updateState(editor.value.state);
   }
 });
 
-onUnmounted(() => {
-  const element = editorDomRef.value;
-  if (editorInstance && element) {
-    editorInstance.destroy();
-    element.removeAttribute('data-editor-created');
-    setEditorInstance(null);
+// Reactive: maxLength
+watch(() => props.maxLength, (newMaxLength) => {
+  if (!editor.value) {
+    return;
+  }
+
+  const characterCountExtension = editor.value.extensionManager.extensions.find(
+    ext => ext.name === 'characterCount',
+  );
+  if (characterCountExtension) {
+    characterCountExtension.options.limit = newMaxLength;
   }
 });
 
+// Clear content when conversation changes
 watch(activeConversation, (newConversation, oldConversation) => {
   if (newConversation?.conversationID !== oldConversation?.conversationID) {
     setContent('');
   }
 });
 
-// Watch language change and update placeholder using Tiptap's extensionManager
-watch(language, () => {
-  if (editorInstance && props.placeholder === undefined) {
-    // Update placeholder extension options
-    const placeholderExtension = editorInstance.extensionManager.extensions.find(
-      ext => ext.name === 'placeholder',
-    );
-    if (placeholderExtension) {
-      // eslint-disable-next-line no-param-reassign
-      placeholderExtension.options.placeholder = computedPlaceholder.value;
-      // Force re-render to apply new placeholder
-      editorInstance.view.updateState(editorInstance.state);
-    }
-  }
-});
-
-watch(() => props.disabled, (newDisabled) => {
-  if (editorInstance) {
-    editorInstance.setEditable(!newDisabled);
-    if (newDisabled) {
-      setContent('');
-    }
-  }
+// Cleanup on unmount
+onBeforeUnmount(() => {
+  setEditorInstance(null);
 });
 </script>

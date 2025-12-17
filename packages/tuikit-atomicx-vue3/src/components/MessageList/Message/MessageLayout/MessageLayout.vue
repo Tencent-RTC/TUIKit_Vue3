@@ -25,9 +25,11 @@ import type { MessageModel } from '../../../../types/engine';
 
 interface MessageLayoutProps {
   message: MessageModel;
+  nick?: string;
   isAggregated?: boolean;
   isHiddenMessageAvatar?: boolean;
   isHiddenMessageMeta?: boolean;
+  isHiddenMessageNick?: boolean;
   isFirstInChunk?: boolean;
   isLastInChunk?: boolean;
   alignment?: 'left' | 'right' | 'two-sided';
@@ -39,9 +41,11 @@ interface MessageLayoutProps {
 const props = withDefaults(defineProps<MessageLayoutProps>(), {
   message: () => ({}) as MessageModel,
   alignment: 'two-sided',
+  nick: undefined,
   isAggregated: false,
   isHiddenMessageAvatar: false,
   isHiddenMessageMeta: false,
+  isHiddenMessageNick: false,
   isFirstInChunk: undefined,
   isLastInChunk: undefined,
   messageActionList: undefined,
@@ -125,6 +129,9 @@ function handleReadReceiptClose() {
       :src="message.avatar"
     />
     <View :class="cs(wrapperClasses)">
+      <View v-if="!isHiddenMessageNick" :class="cs('message-layout__nick')">
+        {{ props.nick || message.nameCard || message.nick || message.from }}
+      </View>
       <MessageBubble
         :class="bubbleClasses"
         :message="message"
@@ -186,7 +193,7 @@ $message-avatar-gap: 8px;
 
   &__nick {
     font-size: 12px;
-    min-width: min(70%, 200px);
+    max-width: min(70%, 120px);
     color: var(--text-color-tertiary);
     @include mixin.text-ellipsis;
   }
