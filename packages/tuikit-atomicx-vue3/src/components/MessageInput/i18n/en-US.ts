@@ -12,6 +12,9 @@ const MessageInput = {
   cancel: 'Cancel',
   confirm: 'Confirm',
   initiate_call: 'Initiate call',
+  loading: 'Loading...',
+  no_matching_members: 'No matching members',
+  at_all_members: 'All members',
 };
 
 export default MessageInput;

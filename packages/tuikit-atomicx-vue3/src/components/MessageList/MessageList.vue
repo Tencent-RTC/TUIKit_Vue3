@@ -14,7 +14,11 @@ import cs from 'classnames';
 import { ObserverView } from '../../baseComp/ObserverView';
 import { View } from '../../baseComp/View';
 import { useScroll } from '../../hooks/useScroll';
+import { useConversationListState } from '../../states/ConversationListState';
+import { useGroupSettingState } from '../../states/GroupSettingState';
 import { useMessageListState } from '../../states/MessageListState';
+import { ConversationType, MessageType } from '../../types/engine';
+import { isCallMessage } from '../../utils/call';
 import { throttle } from '../../utils/lodash';
 import { Message as DefaultMessage } from './Message';
 import { MessageForward } from './MessageForward';
@@ -22,7 +26,7 @@ import { MessageListContextSymbol } from './MessageListContext';
 import { MessageTimeDivider as DefaultMessageTimeDivider } from './MessageTimeDivider';
 import { ScrollToBottom } from './ScrollToBottom';
 import type { MessageAction } from '../../hooks/useMessageActions';
-import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { MessageModel } from '../../types/engine';
 
 // Define message chunk interface
 interface MessageChunk {
@@ -80,8 +84,12 @@ const {
   setEnableReadReceipt,
 } = useMessageListState();
 
-const { scrollToBottom } = useScroll();
+const { getGroupMemberList } = useGroupSettingState();
 
+const { scrollToBottom } = useScroll();
+const { activeConversation } = useConversationListState();
+
+const isGroup = computed(() => activeConversation.value?.type === ConversationType.GROUP);
 const enableMessageAggregation = computed(() => props.messageAggregationTime && props.messageAggregationTime > 0);
 
 // Message aggregation logic
@@ -110,18 +118,21 @@ const messageChunks = computed(() => {
 
   filteredMessageList.forEach((message, index, messages) => {
     const messageTime = message.time;
-    const lastChunk = chunks.length > 0 ? chunks[chunks.length - 1] : undefined;
-    const lastMessage = index > 0 ? messages[index - 1] : undefined;
+    const prevChunk = chunks.length > 0 ? chunks[chunks.length - 1] : undefined;
+    const prevMessage = index > 0 ? messages[index - 1] : undefined;
 
-    const shouldCreateNewChunk = !lastChunk
-      || messageTime - lastChunk.timestamp > MAX_TIME_BETWEEN_MESSAGE_GROUP
-      || lastChunk.messages[0].from !== message.from
+    const shouldCreateNewChunk = !prevChunk
+      || messageTime - prevChunk.timestamp > MAX_TIME_BETWEEN_MESSAGE_GROUP
+      || prevChunk.messages[0].from !== message.from
       || message.isRevoked
-      || (lastMessage && lastMessage.isRevoked)
+      || (prevMessage && prevMessage.isRevoked)
       || message.status === 'fail'
-      || (lastMessage && lastMessage.status === 'fail')
+      || (prevMessage && prevMessage.status === 'fail')
       || message.hasRiskContent
-      || (lastMessage && lastMessage.hasRiskContent);
+      || (prevMessage && prevMessage.hasRiskContent)
+      || isCallMessage(message)
+      || (prevMessage && isCallMessage(prevMessage))
+      || (prevMessage && prevMessage.type === MessageType.CUSTOM && prevMessage.getMessageContent().businessID === 'group_create');
 
     if (shouldCreateNewChunk) {
       chunks.push({
@@ -130,7 +141,7 @@ const messageChunks = computed(() => {
         key: `chunk-${message.ID}`,
       });
     } else {
-      lastChunk.messages.push(message);
+      prevChunk.messages.push(message);
     }
   });
 
@@ -222,6 +233,9 @@ watch(messageList, (newMessages, oldMessages) => {
       scrollToBottom({ behavior: 'instant' });
       isFinishFirstRender.value = true;
     });
+    if (isGroup.value) {
+      getGroupMemberList();
+    }
     return;
   }
 
@@ -306,14 +320,22 @@ onUnmounted(() => {
               :message="message"
               :alignment="props.alignment"
               :messageActionList="props.messageActionList"
-              :isAggregated="Boolean(enableMessageAggregation && messageIndex !== chunk.messages.length - 1)"
+              :isAggregated="Boolean(enableMessageAggregation && messageIndex !== 0)"
               :is-first-in-chunk="Boolean(messageIndex === 0)"
               :is-last-in-chunk="Boolean(messageIndex === chunk.messages.length - 1)"
               :isHiddenMessageAvatar="
                 Boolean(
                   alignment === 'two-sided'
-                    ? (enableMessageAggregation && messageIndex !== chunk.messages.length - 1 || message.flow === 'out')
-                    : (enableMessageAggregation && messageIndex !== chunk.messages.length - 1 )
+                    ? (enableMessageAggregation && messageIndex !== 0 || message.flow === 'out')
+                    : (enableMessageAggregation && messageIndex !== 0 )
+                )
+              "
+              :is-hidden-message-nick="
+                Boolean(
+                  !isGroup
+                    || (alignment === 'two-sided'
+                      ? enableMessageAggregation && messageIndex !== 0 || message.flow === 'out'
+                      : enableMessageAggregation && messageIndex !== 0)
                 )
               "
               :isHiddenMessageMeta="
@@ -354,7 +376,7 @@ onUnmounted(() => {
   @include scrollbar.scrollbar-hidden();
 }
 .message-chunk--container {
-  margin-top: 10px;
+  margin-top: 25px;
 }
 .message-chunk {
   display: flex;

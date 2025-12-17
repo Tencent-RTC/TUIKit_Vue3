@@ -1,48 +1,72 @@
-import Image from '@tiptap/extension-image';
+/**
+ * EditorCore - Pure functional utilities for Tiptap editor
+ * Provides extension configuration and content conversion
+ */
 import Placeholder from '@tiptap/extension-placeholder';
 import StarterKit from '@tiptap/starter-kit';
-import { Extension, Editor } from '@tiptap/vue-3';
 import { MessageContentType } from '../../../states/MessageInputState';
-import { CharacterCount } from './extensions/characterCountExtension';
-import { createImageExtension } from './extensions/imageExtension';
+import {
+  CharacterCount,
+  createEmojiExtension,
+  createEnterKeyExtension,
+  createImageExtension,
+  createMentionExtension,
+} from './extensions';
 import type { InputContent } from '../../../states/MessageInputState';
-import type { JSONContent, EditorOptions as TiptapEditorOptions } from '@tiptap/vue-3';
+import type { JSONContent, Extensions } from '@tiptap/vue-3';
 import './Editor.scss';
 
-function createEmojiExtension() {
-  return Image.extend({
-    name: MessageContentType.EMOJI,
-    inline: true,
-    group: 'inline',
-    draggable: true,
-    addOptions() {
-      return {
-        ...this.parent?.(),
-        HTMLAttributes: {
-          class: 'message-emoji',
-        },
-      };
-    },
-  });
+// ============================================================================
+// Extension Configuration
+// ============================================================================
+
+interface ExtensionOptions {
+  placeholder?: string;
+  maxLength?: number;
+  showPlaceholderOnlyWhenEditable?: boolean;
+  onEnter?: () => void;
 }
 
-function createEnterKeyExtension(options?: { onEnter?: (() => void) | undefined }) {
-  return Extension.create({
-    addKeyboardShortcuts() {
-      return {
-        'Enter': () => {
-          options?.onEnter?.();
-          return true;
-        },
-        'Mod-Enter': ({ editor }) => {
-          editor.commands.setHardBreak();
-          return true;
-        },
-      };
-    },
-  });
+/**
+ * Create all editor extensions with given options
+ */
+function createExtensions(options: ExtensionOptions = {}): Extensions {
+  const {
+    placeholder = '',
+    maxLength,
+    showPlaceholderOnlyWhenEditable = true,
+    onEnter,
+  } = options;
+
+  return [
+    StarterKit.configure({
+      bold: false,
+      italic: false,
+      strike: false,
+      code: false,
+    }),
+    CharacterCount.configure({
+      limit: maxLength,
+    }),
+    createEnterKeyExtension(onEnter),
+    createEmojiExtension(),
+    createImageExtension(),
+    createMentionExtension(),
+    Placeholder.configure({
+      placeholder,
+      showOnlyWhenEditable: showPlaceholderOnlyWhenEditable,
+    }),
+  ];
 }
 
+// ============================================================================
+// Content Conversion
+// ============================================================================
+
+/**
+ * Convert Tiptap JSON content to business InputContent array
+ * Uses simple switch-case for clarity (no over-engineered registry pattern)
+ */
 function convertEditorContent(node: JSONContent): InputContent[] {
   if (!node?.content) {
     return [];
@@ -57,11 +81,13 @@ function convertEditorContent(node: JSONContent): InputContent[] {
             content: child.text,
           }]
           : [];
+
       case 'image':
         return [{
           type: MessageContentType.IMAGE,
           content: child.attrs?.fileData,
         }];
+
       case 'emoji':
         return [{
           type: MessageContentType.EMOJI,
@@ -71,81 +97,35 @@ function convertEditorContent(node: JSONContent): InputContent[] {
             text: child.attrs?.title,
           },
         }];
+
       case 'hardBreak':
         return [{
           type: MessageContentType.TEXT,
           content: '\n',
         }];
+
+      case 'mention':
+        return [{
+          type: MessageContentType.MENTION,
+          content: {
+            id: child.attrs?.id,
+            label: child.attrs?.label,
+            mentionSuggestionChar: child.attrs?.mentionSuggestionChar,
+          },
+        }];
+
       default:
+        // Recursively handle nested content (e.g., paragraph nodes)
         return convertEditorContent(child);
     }
   });
 }
 
-interface EditorOptions {
-  element: Element;
-  placeholder?: string;
-  autoFocus?: boolean;
-  disabled?: boolean;
-  maxLength?: number;
-  isPlaceholderOnlyShowWhenEditable?: boolean;
-  onUpdate?: (content: InputContent[]) => void;
-  onEnter?: () => void;
-  onFocus?: () => void;
-  onBlur?: () => void;
-}
-
-function createEditor({
-  element,
-  placeholder = '',
-  autoFocus = false,
-  disabled = false,
-  isPlaceholderOnlyShowWhenEditable = true,
-  maxLength = undefined,
-  onUpdate,
-  onEnter,
-  onFocus,
-  onBlur,
-}: EditorOptions) {
-  const createBaseExtensions = (enterHandler?: () => void) => [
-    StarterKit.configure({
-      bold: false,
-      italic: false,
-      strike: false,
-      code: false,
-    }),
-    CharacterCount.configure({
-      limit: maxLength,
-    }),
-    createEnterKeyExtension(enterHandler ? { onEnter: enterHandler } : undefined),
-    createEmojiExtension(),
-    createImageExtension(),
-    Placeholder.configure({
-      placeholder,
-      showOnlyWhenEditable: isPlaceholderOnlyShowWhenEditable,
-    }),
-  ];
-
-  const editorConfig: Partial<TiptapEditorOptions> = {
-    element,
-    autofocus: autoFocus,
-    editable: !disabled,
-    extensions: createBaseExtensions(onEnter),
-    onUpdate: ({ editor }) => {
-      const content = convertEditorContent(editor.getJSON());
-      onUpdate?.(content);
-    },
-    onFocus,
-    onBlur,
-  };
-
-  return new Editor(editorConfig);
-}
+// ============================================================================
+// Exports
+// ============================================================================
 
 export {
-  createEditor,
-};
-
-export type {
-  Editor,
+  createExtensions,
+  convertEditorContent,
 };

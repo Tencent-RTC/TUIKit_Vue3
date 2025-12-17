@@ -16,60 +16,57 @@
     <IconClose
       :class="styles['quoted__message__preview__close']"
       size="16"
-      @click="handleClose"
+      @click="handleCloseQuotedMessage"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue';
-import TencentCloudChat from '@tencentcloud/chat';
+import { watch, onUnmounted } from 'vue';
 import { useUIKit, IconClose } from '@tencentcloud/uikit-base-component-vue3';
-import { useConversationListState } from '../../../states/ConversationListState';
 import { useMessageActionState } from '../../../states/MessageActionState';
 import { useMessageInputState } from '../../../states/MessageInputState';
+import { MessageType } from '../../../types/engine';
+import { transformTextWithEmojiKeyToName } from '../../../utils';
 import styles from './QuotedMessagePreview.module.scss';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { MessageModel } from '../../../types/engine';
 
 const { t } = useUIKit();
-const { activeConversation } = useConversationListState();
 const { focusEditor } = useMessageInputState();
 const { quotedMessage, clearQuotedMessage } = useMessageActionState();
 
-// Watch referencedMessage changes
+onUnmounted(() => {
+  clearQuotedMessage();
+});
+
 watch(quotedMessage, (newVal) => {
   if (newVal) {
     focusEditor();
   }
 });
 
-// Watch conversation changes
-watch(activeConversation, () => {
-  clearQuotedMessage();
-});
-
-const handleClose = () => {
+const handleCloseQuotedMessage = () => {
   clearQuotedMessage();
 };
 
-const calculateReferenceContent = (message: IMessageModel | undefined): string => {
+const calculateReferenceContent = (message: MessageModel | undefined): string => {
   if (!message) {
     return 'no reference';
   }
   switch (message.type) {
-    case TencentCloudChat.TYPES.MSG_TEXT:
-      return message.payload?.text;
-    case TencentCloudChat.TYPES.MSG_IMAGE:
+    case MessageType.TEXT:
+      return transformTextWithEmojiKeyToName(message.payload?.text || '');
+    case MessageType.IMAGE:
       return t('MessageInput.image');
-    case TencentCloudChat.TYPES.MSG_AUDIO:
+    case MessageType.AUDIO:
       return t('MessageInput.audio');
-    case TencentCloudChat.TYPES.MSG_VIDEO:
+    case MessageType.VIDEO:
       return t('MessageInput.video');
-    case TencentCloudChat.TYPES.MSG_FILE:
+    case MessageType.FILE:
       return t('MessageInput.file');
-    case TencentCloudChat.TYPES.MSG_LOCATION:
+    case MessageType.LOCATION:
       return t('MessageInput.location');
-    case TencentCloudChat.TYPES.MSG_CUSTOM:
+    case MessageType.CUSTOM:
       return t('MessageInput.custom_message');
     default:
       return t('MessageInput.unknown');

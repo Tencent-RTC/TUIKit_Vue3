@@ -1,11 +1,11 @@
-// Chat related exports
-import { View as ViewComponent } from '../baseComp/View';
-import { ChatSetting as ChatSettingComponent } from '../components/ChatSetting';
+// Chat related exports (pure components, no initialization)
+import { View as ViewComponent } from '../../baseComp/View';
+import { ChatSetting as ChatSettingComponent } from '../../components/ChatSetting';
 import {
   ContactList as ContactListComponent,
   ContactListItem as ContactListItemComponent,
   ContactInfo as ContactInfoComponent,
-} from '../components/ContactList';
+} from '../../components/ContactList';
 import {
   ConversationList as ConversationListComponent,
   ConversationActions as ConversationActionsComponent,
@@ -14,7 +14,7 @@ import {
   ConversationPreview as ConversationPreviewComponent,
   ConversationPreviewUI as ConversationPreviewUIComponent,
   ConversationSearch as ConversationSearchComponent,
-} from '../components/ConversationList';
+} from '../../components/ConversationList';
 import {
   MessageInput as MessageInputComponent,
   EmojiPicker as EmojiPickerComponent,
@@ -24,11 +24,11 @@ import {
   VideoPicker as VideoPickerComponent,
   AudioCallPicker as AudioCallPickerComponent,
   VideoCallPicker as VideoCallPickerComponent,
-} from '../components/MessageInput';
+} from '../../components/MessageInput';
 import {
   MessageList as MessageListComponent,
   Message as MessageComponent,
-} from '../components/MessageList';
+} from '../../components/MessageList';
 import {
   Search as SearchComponent,
   SearchAdvanced as SearchAdvancedComponent,
@@ -37,17 +37,16 @@ import {
   SearchResultItem as SearchResultItemComponent,
   SearchBar as SearchBarComponent,
   SearchResults as SearchResultsComponent,
-} from '../components/Search';
-import { useMessageActions as useMessageActionsHook } from '../hooks/useMessageActions';
-import { useConversationListState as conversationListState } from '../states/ConversationListState';
-import { useMessageActionState as messageActionState } from '../states/MessageActionState';
-import { useMessageInputState as messageInputState } from '../states/MessageInputState';
-import { useMessageListState as messageListState } from '../states/MessageListState';
-import { useSearchState as searchState } from '../states/SearchState';
-import { useContactListState as contactListState } from "../states/ContactListState";
-import { useC2CSettingState as c2cSettingState } from '../states/C2CSettingState';
-import { useGroupSettingState as groupSettingState } from '../states/GroupSettingState';
-
+} from '../../components/Search';
+import { useMessageActions as useMessageActionsHook } from '../../hooks/useMessageActions';
+import { useConversationListState as conversationListState } from '../../states/ConversationListState';
+import { useMessageActionState as messageActionState } from '../../states/MessageActionState';
+import { useMessageInputState as messageInputState } from '../../states/MessageInputState';
+import { useMessageListState as messageListState } from '../../states/MessageListState';
+import { useSearchState as searchState } from '../../states/SearchState';
+import { useContactListState as contactListState } from '../../states/ContactListState';
+import { useC2CSettingState as c2cSettingState } from '../../states/C2CSettingState';
+import { useGroupSettingState as groupSettingState } from '../../states/GroupSettingState';
 import ChatLoginServer from './server';
 
 ChatLoginServer.getInstance().init();
@@ -142,3 +141,11 @@ export {
   useC2CSettingState,
   useGroupSettingState,
 };
+
+export * from '../../types/message';
+export * from '../../types/search';
+export * from '../../types/engine';
+export * from '../../types/conversation';
+export * from '../../types/contact';
+export * from '../../types/call';
+export * from '../../types/chatSetting';

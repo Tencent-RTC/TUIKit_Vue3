@@ -12,6 +12,9 @@ const MessageInput = {
   cancel: '取消',
   confirm: '确认',
   initiate_call: '发起通话',
+  loading: '加载中...',
+  no_matching_members: '暂无匹配成员',
+  at_all_members: '所有人',
 };
 
 export default MessageInput;

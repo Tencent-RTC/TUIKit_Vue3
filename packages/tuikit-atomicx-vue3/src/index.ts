@@ -1,7 +1,7 @@
 // common export
 export * from './subEntry/common';
 // chat export
-export * from './chat';
+export * from './subEntry/chat/chat';
 // live export
 export * from './subEntry/live/live';
 // room export
