@@ -90,13 +90,17 @@ async function init() {
         useUploadPlugin: true,
       });
     }
+    // Not logged in, redirect to login page directly without calling logout()
     if (!userInfo.userID && !loginUserInfo.value?.userId) {
-      throw new Error('No user info found');
+      router.replace({ name: 'Login', params: { sceneId: currentKey.value } });
+      return;
     }
     isSceneReady.value = true;
   } catch (error) {
+    // Login failed, clean up localStorage and redirect to login page
     console.error('Login failed:', error);
-    logout();
+    localStorage.removeItem('userInfo');
+    router.replace({ name: 'Login', params: { sceneId: currentKey.value } });
   }
 }
 
@@ -238,7 +242,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   background: #f8fafc;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .stage-header {
@@ -422,6 +426,7 @@ onUnmounted(() => {
   background: #ffffff;
   min-height: 0;
   position: relative;
+  min-width: 0;
 
   .scene {
     flex: 1;
