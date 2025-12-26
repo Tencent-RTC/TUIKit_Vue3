@@ -1,6 +1,7 @@
 import { TUIFriendService, TUIUserService, TUIChatEngine } from '@tencentcloud/chat-uikit-engine';
 import TUICore, { TUIConstants } from '@tencentcloud/tui-core';
 import { safeJSONParse } from './json';
+import { showChatErrorModalById, ChatErrorModalId } from '../components/UIKitModal/chatErrorModal';
 import type { StartCallParams, CallMessagePayload } from '../types/call';
 import type { MessageModel } from '../types/engine';
 
@@ -20,6 +21,13 @@ function isCallMessage(message: MessageModel) {
 }
 
 function startCall(params: StartCallParams) {
+  const result = TUICore.getService(TUIConstants.TUICalling.SERVICE.NAME);
+
+  if (!result) {
+    showChatErrorModalById(ChatErrorModalId.CALL_KIT_NOT_INTEGRATED);
+    return;
+  }
+
   TUICore.callService({
     serviceName: TUIConstants.TUICalling.SERVICE.NAME,
     method: TUIConstants.TUICalling.SERVICE.METHOD.START_CALL,

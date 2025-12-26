@@ -136,6 +136,7 @@ const copy = async (value: string) => {
 .room-detail {
   padding: 20px 0;
   user-select: text;
+  text-align: initial;
 
   .room-detail-empty {
     text-align: center;

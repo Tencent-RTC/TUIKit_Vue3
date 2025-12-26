@@ -13,6 +13,7 @@ import type { Component } from 'vue';
 import cs from 'classnames';
 import { ObserverView } from '../../baseComp/ObserverView';
 import { View } from '../../baseComp/View';
+import { useReadReceipt } from '../../hooks/useReadReceipt/useReadReceipt';
 import { useScroll } from '../../hooks/useScroll';
 import { useConversationListState } from '../../states/ConversationListState';
 import { useGroupSettingState } from '../../states/GroupSettingState';
@@ -88,6 +89,14 @@ const { getGroupMemberList } = useGroupSettingState();
 
 const { scrollToBottom } = useScroll();
 const { activeConversation } = useConversationListState();
+const {
+  observeMessageList,
+  resetProcessedMessages,
+} = useReadReceipt({
+  enabled: props.enableReadReceipt ?? false,
+  containerSelector: '#messageScrollList',
+  getMessageIDFromDom: (dom: HTMLElement) => dom.dataset.messageId || '',
+});
 
 const isGroup = computed(() => activeConversation.value?.type === ConversationType.GROUP);
 const enableMessageAggregation = computed(() => props.messageAggregationTime && props.messageAggregationTime > 0);
@@ -176,6 +185,7 @@ const initializeMessageList = async () => {
   isFinishFirstRender.value = false;
   setIsDisableScroll(false);
   isScrollToBottomVisible.value = false;
+  resetProcessedMessages();
 };
 
 // Load more history messages
@@ -232,6 +242,7 @@ watch(messageList, (newMessages, oldMessages) => {
     nextTick(() => {
       scrollToBottom({ behavior: 'instant' });
       isFinishFirstRender.value = true;
+      observeMessageList();
     });
     if (isGroup.value) {
       getGroupMemberList();
@@ -247,6 +258,9 @@ watch(messageList, (newMessages, oldMessages) => {
   const oldLastMessage = oldMessages[oldMessages.length - 1];
 
   if (newLastMessage?.ID !== oldLastMessage?.ID) {
+    nextTick(() => {
+      observeMessageList();
+    });
     // new message coming
     const shouldAutoScroll = newLastMessage.flow === 'out'
       || (!isDisableScroll.value && distanceToBottom.value < autoScrollThreshold);

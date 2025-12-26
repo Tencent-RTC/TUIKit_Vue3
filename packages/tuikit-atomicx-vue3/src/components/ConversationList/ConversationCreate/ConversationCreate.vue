@@ -189,7 +189,11 @@ const handleCreateGroupConversation = async () => {
     const conversation = await createGroupConversation(options);
     _onConversationCreated(conversation);
   } catch (error: any) {
-    TUIToast.error({ message: error.message });
+    if (error.code === 10021) {
+      TUIToast.error({ message: t('TUIConversation.group_id_already_used') });
+    } else {
+      TUIToast.error({ message: error.message });
+    }
   }
 };
 

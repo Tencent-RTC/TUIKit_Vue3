@@ -1,5 +1,6 @@
 import { onMounted, onUnmounted, watch } from 'vue';
 import { TUIChatService, TUIStore } from '@tencentcloud/chat-uikit-engine';
+import { handleChatErrorWithModal } from '../../components/UIKitModal/chatErrorModal';
 import { throttle } from '../../utils/lodash';
 import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
 
@@ -66,8 +67,8 @@ export function useReadReceipt({
       .then(() => {
         // Successfully sent read receipts
       })
-      .catch(() => {
-        // Failed to send read receipts
+      .catch((error) => {
+        handleChatErrorWithModal(error as unknown as any);
       });
     pendingReadReceiptMessages.clear();
   }, delay, { leading: false, trailing: true });
@@ -99,7 +100,7 @@ export function useReadReceipt({
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && entry.intersectionRatio >= intersectionThreshold) {
-            const messageID = getMessageIDFromDom(entry.target);
+            const messageID = getMessageIDFromDom(entry.target as HTMLElement);
             if (messageID) {
               checkMessageAndSendReadReceipt(messageID);
             }
@@ -144,7 +145,7 @@ export function useReadReceipt({
     if (!container) {
       return;
     }
-    const messageElements = container.querySelectorAll(messageSelector);
+    const messageElements = container.querySelectorAll(messageSelector) as unknown as HTMLElement[];
     messageElements.forEach((element) => {
       const messageID = getMessageIDFromDom(element);
       if (!messageID) {

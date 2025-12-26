@@ -432,6 +432,7 @@ watch(() => loginUserInfo.value?.userId, (userId) => {
   height: 100%;
   overflow-y: auto;
   position: relative;
+  text-align: initial;
 }
 
 .loading-overlay {

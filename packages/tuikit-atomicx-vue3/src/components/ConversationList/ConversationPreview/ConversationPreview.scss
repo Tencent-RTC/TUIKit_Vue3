@@ -18,7 +18,7 @@
   }
 
   &--active {
-    background-color: var(--list-color-hover, #e3f2fd);
+    background-color: var(--list-color-focused, #e3f2fd);
   }
 
   &--pin {
@@ -123,4 +123,4 @@
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
-} 
+}

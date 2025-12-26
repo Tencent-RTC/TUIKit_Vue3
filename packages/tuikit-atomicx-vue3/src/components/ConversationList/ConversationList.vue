@@ -25,7 +25,6 @@
         @created="handleCreated"
       />
     </component>
-
     <component
       :is="List"
       :empty="renderConversationList.length === 0"

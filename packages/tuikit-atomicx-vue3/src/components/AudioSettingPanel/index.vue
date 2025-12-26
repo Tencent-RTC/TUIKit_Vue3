@@ -131,18 +131,16 @@ const volumeTotalNum = ref(28);
 const volumeNum = computed(() => {
   if (isMicrophoneTesting.value) {
     return (testingMicVolume.value * volumeTotalNum.value) / 100;
-  } else {
-    return (currentMicVolume.value * volumeTotalNum.value) / 100;
   }
+  return (currentMicVolume.value * volumeTotalNum.value) / 100;
 });
 
 const showInputVolume = computed(() => {
   if (props.micTestVisible) {
     return isMicrophoneTesting.value;
-  } else {
-    return true;
   }
-})
+  return true;
+});
 
 const captureVolumeValue = ref(captureVolume.value);
 const outputVolumeValue = ref(outputVolume.value);
@@ -161,6 +159,7 @@ watch(outputVolumeValue, async (value) => {
   width: 100%;
   font-size: 14px;
   border-radius: 4px;
+  text-align: initial;
 
   .item-setting {
     width: 100%;

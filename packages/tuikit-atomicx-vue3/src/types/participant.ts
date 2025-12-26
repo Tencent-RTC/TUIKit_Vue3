@@ -102,6 +102,9 @@ export interface IRoomParticipantState {
   acceptOpenDeviceInvitation(options: { userId: string; device: DeviceType }): Promise<void>;
   declineOpenDeviceInvitation(options: { userId: string; device: DeviceType }): Promise<void>;
 
+  muteMicrophone(): Promise<void>;
+  unmuteMicrophone(): Promise<void>;
+
   subscribeEvent(event: RoomParticipantEvent, callback: RoomParticipantEventPayloads[keyof RoomParticipantEventPayloads]): void;
   unsubscribeEvent(event: RoomParticipantEvent, callback: RoomParticipantEventPayloads[keyof RoomParticipantEventPayloads]): void;
 }
