@@ -1,6 +1,6 @@
 {
   "name": "tuikit-atomicx-vue3",
-  "version": "4.5.2",
+  "version": "4.5.3",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
