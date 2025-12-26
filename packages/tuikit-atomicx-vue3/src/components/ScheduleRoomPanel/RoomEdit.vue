@@ -340,7 +340,8 @@ const handleSave = () => {
 
 <style lang="scss" scoped>
 .room-edit {
-    width: 100%;
+  width: 100%;
+  text-align: initial;
 
   .edit-form {
     .form-item {

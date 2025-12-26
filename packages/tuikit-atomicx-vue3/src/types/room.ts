@@ -69,6 +69,23 @@ export enum RoomCallResult {
   AlreadyInRoom = 2,
 }
 
+/**
+ * 呼叫拒绝原因枚举
+ * @enum {number}
+ * @description 表示呼叫被拒绝的原因。
+ *
+ */
+export enum CallRejectReason {
+  /**
+   * 用户拒绝呼叫
+   */
+  Rejected = 0,
+  /**
+   * 用户已在其他房间中
+   */
+  InOtherRoom = 1,
+}
+
 export interface RoomCall {
   caller: RoomUser;
   callee: RoomUser;
@@ -116,6 +133,22 @@ export enum RoomEvent {
   onCallCancelled = 'onCallCancelled',
   onCallTimeout = 'onCallTimeout',
   onCallAccepted = 'onCallAccepted',
+
+  /**
+   * 当您发出的呼叫被被叫方拒绝时触发。
+   * @event
+   * @param {object} options - 事件参数对象
+   * @param {RoomInfo} options.roomInfo - 房间信息
+   * @param {RoomCall} options.call - 呼叫信息
+   * @param {string} options.extensionInfo - 被叫方拒绝的原因或附加信息
+   * @example
+   * import { useRoomState, RoomEvent } from 'tuikit-atomicx-vue3';
+   *
+   * const roomState = useRoomState();
+   * roomState.subscribeEvent(RoomEvent.onCallRejected, ({ roomInfo, call, reason }) => {
+   *   console.log(`${call.callee.userName} 拒绝了您的呼叫: ${reason}`);
+   * });
+   */
   onCallRejected = 'onCallRejected',
   onCallHandledByOtherDevice = 'onCallHandledByOtherDevice',
   onCallRevokedByAdmin = 'onCallRevokedByAdmin',
@@ -132,7 +165,22 @@ export interface RoomEventHandlers {
   onCallCancelled: (options: { roomInfo: RoomInfo; call: RoomCall }) => void;
   onCallTimeout: (options: { roomInfo: RoomInfo; call: RoomCall }) => void;
   onCallAccepted: (options: { roomInfo: RoomInfo; call: RoomCall }) => void;
-  onCallRejected: (options: { roomInfo: RoomInfo; call: RoomCall; extensionInfo: string }) => void;
+
+  /**
+   * onCallRejected 事件处理函数
+   * @param options - 事件数据
+   * @param options.roomInfo - 房间信息
+   * @param options.call - 呼叫信息
+   * @param options.reason - 被叫方拒绝原因
+   */
+  onCallRejected: (options: { roomInfo: RoomInfo; call: RoomCall; reason: CallRejectReason }) => void;
+
+  /**
+   * onCallHandledByOtherDevice 事件处理函数
+   * @param options - 事件数据
+   * @param options.roomInfo - 房间信息
+   * @param options.isAccepted - 呼叫是否在其他设备上被接受
+   */
   onCallHandledByOtherDevice: (options: { roomInfo: RoomInfo; isAccepted: boolean }) => void;
   onCallRevokedByAdmin: (options: { roomInfo: RoomInfo; call: RoomCall; operator: RoomUser }) => void;
 }

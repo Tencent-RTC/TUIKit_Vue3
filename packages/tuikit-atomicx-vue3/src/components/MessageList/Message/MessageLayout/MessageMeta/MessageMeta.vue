@@ -54,13 +54,22 @@ const readReceiptText = computed(() => {
     return '';
   }
 
+  const {
+    readCount,
+    unreadCount,
+    isPeerRead,
+  } = props.readReceiptInfo;
+
   if (props.isGroup) {
-    if (props.readReceiptInfo.unreadCount > 0) {
-      return `${props.readReceiptInfo.unreadCount} ${t('MessageList.unread')} ·`;
+    if (unreadCount === undefined || readCount === undefined) {
+      return '';
+    }
+    if (unreadCount > 0) {
+      return `${unreadCount} ${t('MessageList.unread')} ·`;
     }
     return `${t('MessageList.all_read')} ·`;
   }
-  if (props.readReceiptInfo.isPeerRead) {
+  if (isPeerRead) {
     return `${t('MessageList.read')} ·`;
   }
   return `${t('MessageList.unread')} ·`;

@@ -25,8 +25,9 @@
     <TUIDropdown
       v-else
       trigger="click"
-      :teleported="false"
+      :teleported="true"
       placement="bottom-end"
+      @visible-change="handleDropdownVisibleChange"
     >
       <div
         :class="$style['conversationActions__popup-icon']"
@@ -71,6 +72,7 @@ const props = withDefaults(defineProps<ConversationActionsProps>(), {
 const emit = defineEmits<{
   click: [e: Event, key?: string, conversation?: ConversationModel];
   close: [];
+  dropdownVisibleChange: [visible: boolean];
   markConversationUnread: [conversation: ConversationModel, e?: Event];
   conversationPin: [conversation: ConversationModel, e?: Event];
   conversationMute: [conversation: ConversationModel, e?: Event];
@@ -168,6 +170,10 @@ const handleMaskClick = (e: Event) => {
   if ((e.target as HTMLElement) === (e.currentTarget as HTMLElement) && isH5 && props.onClose) {
     props.onClose();
   }
+};
+
+const handleDropdownVisibleChange = (visible: boolean) => {
+  emit('dropdownVisibleChange', visible);
 };
 </script>
 

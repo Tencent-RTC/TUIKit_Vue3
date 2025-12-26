@@ -75,5 +75,6 @@ export default {
     'you_have_left_the_group_chat': 'You have left the group chat',
     'someone_at_me': 'You were mentioned',
     'at_all': '@All',
+    'group_id_already_used': 'The group ID for creating the group chat is already in use, please choose a different group ID.',
   },
 };

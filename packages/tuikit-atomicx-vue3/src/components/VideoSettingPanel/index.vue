@@ -65,6 +65,7 @@ defineProps({
 .video-setting-panel {
   font-size: 14px;
   border-radius: 8px;
+  text-align: initial;
 
   .item-setting {
     &:not(:last-child) {

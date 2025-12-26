@@ -140,6 +140,7 @@ const copyRoomInfoAndLink = async () => {
 .room-share {
   min-width: 400px;
   user-select: text;
+  text-align: initial;
 
   .room-share-empty {
     text-align: center;

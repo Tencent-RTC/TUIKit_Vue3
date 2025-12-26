@@ -47,6 +47,7 @@
             :conversation="conversation"
             v-bind="actionsConfig"
             @close="handleCloseActionsModal"
+            @dropdown-visible-change="handleDropdownVisibleChange"
           />
           <component
             :is="LastMessageTimestamp"
@@ -103,6 +104,7 @@ const { activeConversation, setActiveConversation } = useConversationListState()
 
 const conversationPreviewRef = ref<HTMLElement>();
 const isActionMenuActive = ref(false);
+const isDropdownOpen = ref(false);
 
 const { isHovered } = useMouseHover(conversationPreviewRef);
 const { getEventHandlers } = useLongPress(() => {
@@ -115,6 +117,10 @@ const longPressEvents = getEventHandlers();
 
 watch(isHovered, (newValue) => {
   if (!isH5) {
+    // Don't hide when dropdown is open
+    if (!newValue && isDropdownOpen.value) {
+      return;
+    }
     isActionMenuActive.value = newValue;
   }
 });
@@ -126,6 +132,15 @@ const handleClick = () => {
 
 const handleCloseActionsModal = () => {
   isActionMenuActive.value = false;
+};
+
+const handleDropdownVisibleChange = (visible: boolean) => {
+  console.log('[ConversationPreview] dropdown visible changed:', visible);
+  isDropdownOpen.value = visible;
+  // When dropdown closes and mouse is not hovering, hide actions
+  if (!visible && !isHovered.value) {
+    isActionMenuActive.value = false;
+  }
 };
 </script>
 

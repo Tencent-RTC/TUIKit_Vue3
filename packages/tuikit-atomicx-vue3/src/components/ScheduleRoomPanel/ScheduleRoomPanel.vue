@@ -461,6 +461,7 @@ watch(() => props.visible, (visible) => {
   width: 100%;
   max-width: 600px;
   height: 100%;
+  text-align: initial;
 }
 
 .panel-content {

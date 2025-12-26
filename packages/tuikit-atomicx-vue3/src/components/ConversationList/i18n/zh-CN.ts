@@ -75,5 +75,6 @@ export default {
     'you_have_left_the_group_chat': '你已退出该群聊',
     'someone_at_me': '有人@我',
     'at_all': '@所有人',
+    'group_id_already_used': '当前创建群聊的群ID已被使用，请选择其他群ID',
   },
 };
