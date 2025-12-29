@@ -67,7 +67,7 @@ import type { SeatInfo, SeatUserInfo } from '../../types';
 import { isMobile } from '../../utils';
 import { usePlayerControlState } from './PlayerControl';
 
-const { isFullscreen, isLandscapeStyleMode } = usePlayerControlState();
+const { isFullscreen, isLandscapeStyleMode, isPictureInPicture, exitPictureInPicture } = usePlayerControlState();
 const { t } = useUIKit();
 const { seatList, canvas, startPlayStream, stopPlayStream } = useLiveSeatState();
 const { currentLive } = useLiveListState();
@@ -96,6 +96,9 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(async () => {
+  if (isPictureInPicture.value) {
+    exitPictureInPicture();
+  }
   isMounted.value = false;
   await stopPlayStream();
   isPlayedVideo.value = false;
@@ -248,8 +251,8 @@ function handleStreamListTransform() {
 
 const streamViewStyle = computed(() => {
   return {
-    width: `${Math.floor(originStreamViewStyle.value.width) * originStreamViewStyle.value.scale}px`,
-    height: `${Math.floor(originStreamViewStyle.value.height) * originStreamViewStyle.value.scale}px`,
+    width: `${Math.ceil(originStreamViewStyle.value.width) * originStreamViewStyle.value.scale}px`,
+    height: `${Math.ceil(originStreamViewStyle.value.height) * originStreamViewStyle.value.scale}px`,
     transform: `translate(${originStreamViewStyle.value.transformX * originStreamViewStyle.value.scale}px, ${
       originStreamViewStyle.value.transformY * originStreamViewStyle.value.scale
     }px)`,
@@ -419,6 +422,7 @@ onBeforeUnmount(() => {
       position: absolute;
       top: 0;
       left: 0;
+      overflow: hidden;
     }
 
     .live-core-ui {

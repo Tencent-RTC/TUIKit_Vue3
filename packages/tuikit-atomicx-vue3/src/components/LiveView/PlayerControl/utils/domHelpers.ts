@@ -73,7 +73,8 @@ export class DOMElementGetter {
   }
 
   /**
-   * Validate if elements exist
+   * Validate if required elements exist for fullscreen
+   * Note: video element is optional because canvas rendering (TRTC SDK) doesn't use video
    */
   static validateElements(elements: { container?: HTMLElement | null; view?: HTMLElement | null; video?: HTMLVideoElement | null }): {
     isValid: boolean;
@@ -87,9 +88,8 @@ export class DOMElementGetter {
     if (elements.view === null) {
       missingElements.push('live-core-view');
     }
-    if (elements.video === null) {
-      missingElements.push('video');
-    }
+    // Video element is not required for fullscreen (canvas rendering works without it)
+    // Only required for picture-in-picture feature
 
     return {
       isValid: missingElements.length === 0,
