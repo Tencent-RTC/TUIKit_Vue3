@@ -1,17 +1,20 @@
 import type { Ref } from 'vue';
 import { computed, ref, watch } from 'vue';
 import { TUIVideoQuality } from '@tencentcloud/tuiroom-engine-js';
+import { TUIMessageBox, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import useRoomEngine from '../../../hooks/useRoomEngine';
-import { useLiveSeatState } from '../../../states/LiveSeatState';
 import { useLiveListState } from '../../../states/LiveListState';
+import { useLiveSeatState } from '../../../states/LiveSeatState';
 import {
   getDeviceType,
   shouldRotateToLandscapeForFullscreen,
   hadLandscapeRotationToUndo,
+  isSafariBrowser,
 } from './utils/deviceDetection';
 import {
   DOMElementGetter,
   EventListenerManager,
+  waitForVideoMounted,
 } from './utils/domHelpers';
 import {
   FullscreenManager,
@@ -20,7 +23,7 @@ import {
   StyleManager,
 } from './utils/fullscreenManager';
 import type {
-  FullscreenResult
+  FullscreenResult,
 } from './utils/fullscreenManager';
 
 // Player fill mode enum
@@ -48,6 +51,8 @@ export interface PlayerControlState {
   isPictureInPicture: Ref<boolean>;
   currentVolume: Ref<number>;
   isMuted: Ref<boolean>;
+  isSafari: Ref<boolean>;
+  isTcPlayer: Ref<boolean>;
 
   // Resolution state properties
   resolutionList: Ref<Resolution[]>;
@@ -88,25 +93,21 @@ const VOLUME_CONSTANTS = {
   MUTE_VOLUME: 0,
 };
 
-const TIMING_CONSTANTS = {
-  // Delay in milliseconds before resuming playback after leaving picture-in-picture
-  // Allows browser to handle state transitions naturally
-  PIP_RESUME_DELAY: 300,
-};
-
 const ARRAY_CONSTANTS = {
   // Index of the first element in an array
   FIRST_INDEX: 0,
 };
 
 // State management
-const isPlaying = ref(true);
+const isPlaying = ref(false);
 const currentFillMode = ref<FillMode>(FillMode.CONTAIN);
 const isFullscreen = ref(false);
 const isLandscapeStyleMode = ref(false);
 const isPictureInPicture = ref(false);
 const currentVolume = ref(VOLUME_CONSTANTS.DEFAULT_VOLUME);
 const isMuted = ref(false); // Mute state - synced across all rooms
+const isSafari = ref(isSafariBrowser());
+const isTcPlayer = ref(false);
 
 // Internal storage for volume restoration (not reactive)
 let restoreVolume = VOLUME_CONSTANTS.DEFAULT_VOLUME;
@@ -116,6 +117,7 @@ const resolutionList = ref<Resolution[]>([]);
 const currentResolution = ref<Resolution | undefined>();
 
 const roomEngine = useRoomEngine();
+const { t } = useUIKit();
 
 /**
  * Player control state management hook
@@ -159,12 +161,31 @@ export function usePlayerControlState(): PlayerControlState {
   };
 
   const resume = async (): Promise<boolean> => withErrorHandling(async () => {
-    await roomEngine.instance?.callExperimentalAPI(JSON.stringify({
-      api: 'resume',
-      params: {},
-    }));
-    isPlaying.value = true;
-    return true;
+    try {
+      await roomEngine.instance?.callExperimentalAPI(JSON.stringify({
+        api: 'resume',
+        params: {},
+      }));
+      isPlaying.value = true;
+      return true;
+    } catch (error: any) {
+      // Handle browser autoplay policy restriction
+      if (error?.name === 'NotAllowedError' && (error?.message?.includes('user agent') || error?.message?.includes('denied permission'))) {
+        TUIMessageBox.alert({
+          content: t('Content is ready. Click the button to start playback'),
+          confirmText: t('Play'),
+          callback: async () => {
+            await roomEngine.instance?.callExperimentalAPI(JSON.stringify({
+              api: 'resume',
+              params: {},
+            }));
+            isPlaying.value = true;
+          },
+        });
+        return false;
+      }
+      throw error;
+    }
   }, 'Resume playback', false);
 
   const pause = async (): Promise<boolean> => withErrorHandling(async () => {
@@ -443,7 +464,6 @@ export function usePlayerControlState(): PlayerControlState {
 
     const handleLeavePictureInPicture = () => {
       isPictureInPicture.value = false;
-      setTimeout(resume, TIMING_CONSTANTS.PIP_RESUME_DELAY);
     };
 
     eventManager.addListener('enterpictureinpicture', video, 'enterpictureinpicture', handleEnterPictureInPicture);
@@ -462,19 +482,34 @@ export function usePlayerControlState(): PlayerControlState {
   setupVideoEventListeners();
   OrientationManager.addOrientationListener(orientationListenerId, handleOrientationChange);
 
+  const updateIsTcPlayer = async () => {
+    try {
+      await waitForVideoMounted();
+    } finally {
+      const hasTcPlayer = DOMElementGetter.hasTcPlayerElement();
+      if (hasTcPlayer !== isTcPlayer.value) {
+        isTcPlayer.value = hasTcPlayer;
+        console.log('[PlayerControl] isTcPlayer:', isTcPlayer.value);
+      }
+    }
+  };
+
   watch(
     () => currentLive.value?.liveId,
     async (newLiveId) => {
       if (newLiveId) {
         isPlaying.value = true;
+        isPictureInPicture.value = false;
+        isFullscreen.value = false;
         resolutionList.value = [];
         currentResolution.value = undefined;
         // When pulling a TRTC stream, this interface has a cache, but when using TCPlayer, there is no cache
         await setVolume(currentVolume.value);
         await initializeResolution(newLiveId, false);
+        updateIsTcPlayer();
 
         // Print player control state after entering room
-        console.log('[PlayerControl] State after entering room:', {
+        console.log('[PlayerControl] State after entering room:', JSON.stringify({
           isPlaying: isPlaying.value,
           currentFillMode: currentFillMode.value,
           isFullscreen: isFullscreen.value,
@@ -483,10 +518,16 @@ export function usePlayerControlState(): PlayerControlState {
           currentVolume: currentVolume.value,
           resolutionList: resolutionList.value,
           currentResolution: currentResolution.value,
-        });
+        }));
       }
     },
   );
+
+  watch(() => isPlaying.value, (newIsPlaying) => {
+    if (newIsPlaying) {
+      updateIsTcPlayer();
+    }
+  }, { immediate: true });
 
   // Return interface implementation
   return {
@@ -499,6 +540,8 @@ export function usePlayerControlState(): PlayerControlState {
     isMuted,
     resolutionList,
     currentResolution,
+    isSafari,
+    isTcPlayer,
     resume,
     pause,
     requestFullscreen,

@@ -10,14 +10,20 @@
       ]"
     >
       <div class="control-buttons">
-        <span class="control-btn play-pause-btn" :title="isPlaying ? t('Pause') : t('Play')" @click="handlePlayPause">
-          <IconPause size="20" v-if="isPlaying" />
-          <IconPlay size="20" v-else />
+        <span
+          v-if="!isSafari || !isTcPlayer"
+          class="control-btn play-pause-btn"
+          :class="{disabled: isPictureInPicture}"
+          :title="isPlaying ? t('Pause') : t('Play')"
+          @click="handlePlayPause"
+        >
+          <IconPause v-if="isPlaying" size="20" />
+          <IconPlay v-else size="20" />
         </span>
-        <div class="center-controls"></div>
+        <div class="center-controls" />
         <div class="right-controls">
           <MultiResolution />
-          <span class="control-btn audio-control-btn">
+          <span v-if="!isSafari || !isTcPlayer" class="control-btn audio-control-btn">
             <AudioControl
               class="audio-control-icon"
               :icon-size="20"
@@ -29,6 +35,7 @@
           </span>
           <span
             class="control-btn"
+            :class="{disabled: !isPlaying && !isPictureInPicture}"
             :title="isPictureInPicture ? t('Exit Picture in Picture') : t('Picture in Picture')"
             @click="handlePictureInPicture"
           >
@@ -58,11 +65,10 @@ import {
   TUIToast,
   TOAST_TYPE,
 } from '@tencentcloud/uikit-base-component-vue3';
-import { usePlayerControlState } from './PlayerControlState';
+import { isMobile } from '../../../utils';
 import AudioControl from './AudioControl.vue';
 import MultiResolution from './MultiResolution.vue';
-import { isMobile } from '../../../utils';
-import { waitForVideoMounted } from './utils/domHelpers';
+import { usePlayerControlState } from './PlayerControlState';
 
 const {
   isMuted,
@@ -79,6 +85,8 @@ const {
   setVolume,
   setMute,
   cleanup,
+  isSafari,
+  isTcPlayer,
 } = usePlayerControlState();
 
 const props = defineProps<{
@@ -93,6 +101,14 @@ const hideTimeout = ref<number | null>(null);
 const AUTO_HIDE_DELAY = 3000; // ms
 
 const handlePlayPause = () => {
+  if (isPictureInPicture.value) {
+    TUIToast({
+      type: TOAST_TYPE.WARNING,
+      message: t('Not allow to "Pause" in picture-in-picture mode'),
+    });
+    return;
+  }
+
   if (isPlaying.value) {
     pause();
   } else {
@@ -101,6 +117,14 @@ const handlePlayPause = () => {
 };
 
 const handlePictureInPicture = async () => {
+  if (!isPlaying.value && !isPictureInPicture.value) {
+    TUIToast({
+      type: TOAST_TYPE.WARNING,
+      message: t('Not allow to "Picture in Picture" in non-playing mode'),
+    });
+    return;
+  }
+
   let flag = false;
   if (isPictureInPicture.value) {
     flag = await exitPictureInPicture();
@@ -184,13 +208,9 @@ const removeParentMouseListener = () => {
 const touchStartCoords = ref<{ x: number; y: number } | null>(null);
 
 // Touch distance calculation
-const calculateTouchDistance = (start: { x: number; y: number }, end: Touch) => {
-  return Math.sqrt(Math.pow(end.clientX - start.x, 2) + Math.pow(end.clientY - start.y, 2));
-};
+const calculateTouchDistance = (start: { x: number; y: number }, end: Touch) => Math.sqrt((end.clientX - start.x) ** 2 + (end.clientY - start.y) ** 2);
 
-const isPlayerControlTarget = (target: Node) => {
-  return playerControlRef.value?.contains(target) || false;
-};
+const isPlayerControlTarget = (target: Node) => playerControlRef.value?.contains(target) || false;
 
 const isLiveCoreViewTarget = (target: Node) => {
   const container = document.getElementById('live-core-view-container');
@@ -224,7 +244,6 @@ const handleScreenTouchStart = (event: TouchEvent) => {
 const handleScreenTouchMove = (event: TouchEvent) => {
   if (playerControlRef.value && playerControlRef.value.contains(event.target as Node)) {
     stopAutoHideControl();
-    return;
   }
 };
 
@@ -394,6 +413,11 @@ onBeforeUnmount(() => {
     width: 20px;
     height: 20px;
     fill: currentColor;
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
   }
 }
 

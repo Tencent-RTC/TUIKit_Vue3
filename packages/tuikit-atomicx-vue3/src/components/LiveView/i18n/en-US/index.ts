@@ -10,6 +10,7 @@ export const resource = {
   'Open Speaker': 'Open Speaker',
   'Close Speaker': 'Close Speaker',
   'The system does not support picture-in-picture mode': 'The system does not support picture-in-picture mode',
+  'Content is ready. Click the button to start playback': 'Content is ready. Click the button to start playback',
   'co-Hosting': 'co-Hosting',
   'In battle': 'In battle',
   '360P': '360P',
@@ -17,4 +18,6 @@ export const resource = {
   '720P': '720P',
   '1080P': '1080P',
   'Connecting': 'Connecting',
+  'Not allow to "Pause" in picture-in-picture mode': 'Not allow to "Pause" in picture-in-picture mode',
+  'Not allow to "Picture in Picture" in non-playing mode': 'Not allow to "Picture in Picture" in non-playing mode',
 };

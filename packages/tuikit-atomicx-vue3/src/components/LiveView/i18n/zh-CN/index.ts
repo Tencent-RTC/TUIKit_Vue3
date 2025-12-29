@@ -10,6 +10,7 @@ export const resource = {
   'Open Speaker': '取消静音',
   'Close Speaker': '静音',
   'The system does not support picture-in-picture mode': '系统不支持画中画模式',
+  'Content is ready. Click the button to start playback': '画面已准备好，点击播放按钮开始播放',
   'co-Hosting': '连线中',
   'In battle': 'PK中',
   '360P': '低清',
@@ -17,4 +18,6 @@ export const resource = {
   '720P': '高清',
   '1080P': '超清',
   'Connecting': '连线中',
+  'Not allow to "Pause" in picture-in-picture mode': '画中画模式下不允许暂停操作',
+  'Not allow to "Picture in Picture" in non-playing mode': '暂停状态下不允许进入画中画模式',
 };
