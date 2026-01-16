@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { h, computed, Fragment } from 'vue';
 import { getTimeStampAuto } from '../../../utils/time';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
 
 interface IMessageTimeDividerProps {
   previousMessage: IMessageModel | undefined;

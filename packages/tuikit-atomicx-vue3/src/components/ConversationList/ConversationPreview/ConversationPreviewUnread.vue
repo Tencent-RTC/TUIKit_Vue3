@@ -18,7 +18,7 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
+import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import { IconMute } from '@tencentcloud/uikit-base-component-vue3';
 import type { ConversationModel } from '../../../types';
 

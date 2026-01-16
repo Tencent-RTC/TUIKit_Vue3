@@ -1,11 +1,14 @@
 export const resource = {
-  'No message yet': 'No message yet',
-  'Come in': 'Come in',
-  Leave: 'Leave',
-  Mute: 'Mute',
-  Unmute: 'Unmute',
-  'Operation Successful': 'Operation successful',
-  'Operation Failed': 'Operation failed',
-  'This message contains risky content': 'This message contains risky content',
-  'Anchor': 'ANCHOR'
+  'BarrageList.NoMessageYet': 'No message yet',
+  'BarrageList.ComeIn': 'Come in',
+  'BarrageList.Leave': 'Leave',
+  'BarrageList.Mute': 'Mute',
+  'BarrageList.Unmute': 'Unmute',
+  'BarrageList.OperationSuccessful': 'Operation successful',
+  'BarrageList.OperationFailed': 'Operation failed',
+  'BarrageList.MuteSuccess': 'Mute success',
+  'BarrageList.UnmuteSuccess': 'Unmute success',
+  'BarrageList.RiskyContent': 'This message contains risky content',
+  'BarrageList.Anchor': 'ANCHOR',
+  'BarrageList.SendGift': 'sent',
 };

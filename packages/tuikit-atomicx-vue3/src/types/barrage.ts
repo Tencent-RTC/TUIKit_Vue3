@@ -1,3 +1,5 @@
+import { TUIUserInfo } from '@tencentcloud/tuiroom-engine-js';
+
 /**
  * 弹幕消息类型枚举
  * @memberof module:BarrageState

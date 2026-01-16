@@ -25,7 +25,7 @@
 
 <script lang="ts" setup>
 import { computed, h, useCssModule } from 'vue';
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
+import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { SearchType } from '../../../../../types/engine';
 import { Avatar } from '../../../../Avatar';

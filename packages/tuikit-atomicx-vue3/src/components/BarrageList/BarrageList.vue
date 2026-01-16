@@ -1,17 +1,23 @@
 <!-- eslint-disable import/extensions -->
 <script lang="ts" setup>
-import { ref, onMounted, onUnmounted, nextTick, watch, provide, useSlots, withDefaults, defineProps } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, watch, provide, useSlots } from 'vue';
 import type { Component, CSSProperties } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useScroll } from '../../hooks/useScroll';
 import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
+import { useLiveGiftState } from '../../states/LiveGiftState';
+import { useBarrageState } from '../../states/BarrageState';
 import { throttle } from '../../utils/lodash';
-import { useBarrageListState } from './BarrageListState';
+import { useBarrageListState, isGiftMessage } from './BarrageListState';
 import UserActionMenu from './ClickAction/UserActionMenu.vue';
 import { Message as DefaultMessage } from './Message';
+import { GiftMessage } from './Message/GiftMessage';
 import { MessageListContextSymbol } from './MessageListContext';
+import { LiveGiftEvents } from '../../types/gift';
+import { BarrageType } from '../../types/barrage';
 import type { Barrage } from '../../types/barrage';
+import type { LiveGiftEventMap } from '../../types';
 
 const { t } = useUIKit();
 
@@ -42,8 +48,37 @@ const isDisableAutoScroll = ref<boolean>(false);
 const distanceToBottom = ref<number>(0);
 
 const { messageList, messageGroupTip } = useBarrageListState();
+const { appendLocalTip } = useBarrageState();
+const { subscribeEvent, unsubscribeEvent } = useLiveGiftState();
 
 const { scrollToBottom } = useScroll();
+
+// Handle gift message received event
+const handleGiftMessage = (gift: LiveGiftEventMap[LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE]) => {
+  const lastBarrage = messageList.value.at(-1);
+  let sequence = 0;
+  if (lastBarrage) {
+    sequence = lastBarrage.sequence + 1;
+  }
+
+  const barrage: Barrage = {
+    liveId: gift.liveId,
+    sender: gift.sender,
+    sequence,
+    timestampInSecond: Date.now() / 1000,
+    messageType: BarrageType.custom,
+    textContent: '',
+    extensionInfo: null,
+    businessId: 'gift',
+    data: JSON.stringify({
+      type: 'gift',
+      giftInfo: gift.giftInfo,
+      count: gift.giftCount,
+    }),
+  };
+
+  appendLocalTip(barrage);
+};
 
 // Calculate action menu position to prevent overflow beyond scrollContainer boundaries
 const calculateActionMenuPosition = (targetRect: DOMRect) => {
@@ -161,12 +196,18 @@ onMounted(() => {
     scrollContainer.value.addEventListener('scroll', handleScroll);
   }
   initializeMessageList();
+  
+  // Subscribe to gift message event
+  subscribeEvent(LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE, handleGiftMessage);
 });
 
 onUnmounted(() => {
   if (scrollContainer.value) {
     scrollContainer.value.removeEventListener('scroll', handleScroll);
   }
+  
+  // Unsubscribe from gift message event
+  unsubscribeEvent(LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE, handleGiftMessage);
 });
 </script>
 
@@ -180,7 +221,13 @@ onUnmounted(() => {
     >
       <div class="message-chunk">
         <template v-for="message in messageList" :key="message.sequence + message.timestampInSecond">
+          <GiftMessage
+            v-if="isGiftMessage(message)"
+            :style="props.itemStyle"
+            :message="message"
+          />
           <component
+            v-else
             :is="props.Message || DefaultMessage"
             :style="props.itemStyle"
             :message="message"
@@ -189,7 +236,7 @@ onUnmounted(() => {
         </template>
       </div>
       <div v-if="!messageList?.length" class="empty-message">
-        {{ t('No message yet') }}
+        {{ t('BarrageList.NoMessageYet') }}
       </div>
     </div>
     <div v-if="messageGroupTip" class="message-group-tip">
@@ -197,7 +244,7 @@ onUnmounted(() => {
         {{ messageGroupTip?.nameCard || messageGroupTip?.userName || messageGroupTip?.userId }}
       </div>
       <div class="message-group-tip-action">
-        {{ messageGroupTip?.displayAction === 'enter' ? t('Come in') : t('Leave') }}
+        {{ messageGroupTip?.displayAction === 'enter' ? t('BarrageList.ComeIn') : t('BarrageList.Leave') }}
       </div>
     </div>
   </div>
@@ -300,6 +347,7 @@ onUnmounted(() => {
 .message-group-tip {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   padding: 10px;
@@ -309,9 +357,15 @@ onUnmounted(() => {
   letter-spacing: 0.1em;
 
   .message-group-tip-name {
+    max-width: 192px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: var(--uikit-color-theme-8);
   }
 
-  .message-group-tip-action {}
+  .message-group-tip-action {
+    white-space: nowrap;
+  }
 }
 </style>

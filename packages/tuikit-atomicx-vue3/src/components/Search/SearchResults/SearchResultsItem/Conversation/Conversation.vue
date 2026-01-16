@@ -15,7 +15,7 @@
 
 <script lang="ts" setup>
 import { computed, defineProps } from 'vue';
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
+import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import { SearchType } from '../../../../../types/engine';
 import type { ResultItemProps } from '../../../../../types/search';
 import { Avatar } from '../../../../Avatar';

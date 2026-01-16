@@ -3,7 +3,7 @@
     <div class="co-host-decorate-container">
     </div>
     <div class="co-host-decorate-content">
-      <span class="co-host-status">{{ t('co-Hosting') }}</span>
+      <span class="co-host-status">{{ t('LiveView.CoHosting') }}</span>
       <span class="co-host-time">{{ time }}</span>
       <IconChevronRight size="10" />
     </div>

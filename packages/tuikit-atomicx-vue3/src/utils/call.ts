@@ -1,5 +1,5 @@
-import { TUIFriendService, TUIUserService, TUIChatEngine } from '@tencentcloud/chat-uikit-engine';
-import TUICore, { TUIConstants } from '@tencentcloud/tui-core';
+import { TUIFriendService, TUIUserService, TUIChatEngine } from '@tencentcloud/chat-uikit-engine-lite';
+import TUICore, { TUIConstants } from '@tencentcloud/tui-core-lite';
 import { safeJSONParse } from './json';
 import { showChatErrorModalById, ChatErrorModalId } from '../components/UIKitModal/chatErrorModal';
 import type { StartCallParams, CallMessagePayload } from '../types/call';

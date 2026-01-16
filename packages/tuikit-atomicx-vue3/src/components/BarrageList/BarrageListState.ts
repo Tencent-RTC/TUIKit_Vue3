@@ -220,4 +220,17 @@ function useBarrageListState() {
   };
 }
 
-export { useBarrageListState };
+function isGiftMessage (message: Barrage): boolean {
+  if (!message.data) {
+    return false;
+  }
+
+  try {
+    const data = JSON.parse(message.data);
+    return data.type === 'gift';
+  } catch (error) {
+    return false;
+  }
+};
+
+export { useBarrageListState, isGiftMessage };

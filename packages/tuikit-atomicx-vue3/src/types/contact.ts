@@ -1,6 +1,6 @@
 import { Component } from 'vue';
 import type { GroupModel } from './engine';
-import type TUIChatEngine from '@tencentcloud/chat-uikit-engine';
+import type TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 
 export type ContactItem = Friend
   | GroupModel

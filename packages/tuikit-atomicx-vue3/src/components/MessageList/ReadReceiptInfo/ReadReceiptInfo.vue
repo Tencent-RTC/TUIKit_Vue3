@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref, computed, watch } from 'vue';
-import { TUIStore, TUIChatService } from '@tencentcloud/chat-uikit-engine';
+import { TUIStore, TUIChatService } from '@tencentcloud/chat-uikit-engine-lite';
 import { useUIKit, IconLoading, IconClose } from '@tencentcloud/uikit-base-component-vue3';
 
 import { Modal } from '../../../baseComp/Modal';

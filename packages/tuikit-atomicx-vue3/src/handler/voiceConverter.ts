@@ -1,8 +1,8 @@
 import {
   TUIChatService,
   TUIStore,
-} from '@tencentcloud/chat-uikit-engine';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
+} from '@tencentcloud/chat-uikit-engine-lite';
+import type { IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
 
 class VoiceConverter {
   static instance: VoiceConverter | undefined = undefined;

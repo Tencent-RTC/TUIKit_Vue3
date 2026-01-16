@@ -2,9 +2,9 @@ import TUIChatEngine, {
   TUIChatService,
   TUIStore,
   TUIUserService,
-} from '@tencentcloud/chat-uikit-engine';
+} from '@tencentcloud/chat-uikit-engine-lite';
 import type { ITranslationTextType } from '../types/message';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
 
 class Translator {
   static instance: Translator | undefined = undefined;

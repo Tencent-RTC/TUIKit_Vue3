@@ -1,5 +1,5 @@
-import ChatEngine from '@tencentcloud/chat-uikit-engine';
-import type { IConversationModel, IMessageModel } from '@tencentcloud/chat-uikit-engine';
+import ChatEngine from '@tencentcloud/chat-uikit-engine-lite';
+import type { IConversationModel, IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
 
 enum ConversationType {
   C2C = ChatEngine.TYPES.CONV_C2C,
@@ -43,7 +43,7 @@ export type {
   ISearchCloudUsersResultItem as SearchCloudUsersResultItem,
   ISearchCloudGroupsResultItem as SearchCloudGroupsResultItem,
   CreateGroupParams,
-} from '@tencentcloud/chat-uikit-engine';
+} from '@tencentcloud/chat-uikit-engine-lite';
 
 export type {
   ConversationModel,

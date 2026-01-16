@@ -170,7 +170,7 @@
 
 <script lang="ts" setup>
 import { ref, watch, onMounted, onUnmounted, computed, defineProps } from 'vue';
-import ChatEngine from '@tencentcloud/chat-uikit-engine';
+import ChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import { IconBack, IconSetting, TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { SearchType } from '../../../../types/engine';
 import { isH5 } from '../../../../utils';

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { toRefs, computed, withDefaults, defineProps } from 'vue';
+import { toRefs, computed } from 'vue';
 import cs from 'classnames';
 import { useLoginState } from '../../../../states/LoginState';
 import { BarrageType } from '../../../../types/barrage';

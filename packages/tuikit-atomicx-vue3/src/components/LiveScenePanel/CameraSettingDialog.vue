@@ -3,6 +3,7 @@
     :visible="true"
     width="600px"
     :confirmText="confirmText"
+    :cancelText="cancelText"
     @close="handleClose"
     @cancel="handleClose"
     @confirm="handleConfirm"
@@ -66,6 +67,7 @@ const title = computed(() => {
 const confirmText = computed(() => {
   return props.mediaSource ? t('Update Camera') : t('Add Camera');
 });
+const cancelText = t('Cancel');
 
 const currentCameraId = ref(props.mediaSource?.camera.cameraId || cameraList.value[0]?.deviceId);
 const currentResolution = ref(props.mediaSource?.camera.resolution || TRTCVideoResolution.TRTCVideoResolution_1280_720);
@@ -194,7 +196,7 @@ const handleClose = () => {
 :deep(.camera-setting-dialog) {
   width: 600px;
   padding: 20px;
-  .dialog-body {
+  .tui-dialog-body {
     display: flex;
     flex-direction: column;
     align-items: center;

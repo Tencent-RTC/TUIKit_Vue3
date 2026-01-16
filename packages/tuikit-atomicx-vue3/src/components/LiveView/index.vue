@@ -9,7 +9,7 @@
       v-if="!$slots.localVideo && !isPlayedVideo"
       class="live-core-placeholder"
     >
-      <span class="placeholder-text">{{ t('No video') }}</span>
+      <span class="placeholder-text">{{ t('LiveView.NoVideo') }}</span>
     </div>
     <div
       class="live-core-view"
@@ -20,7 +20,7 @@
         class="stream-content"
       />
       <div
-        v-if="needPlayStreamViewInfo.length > 0"
+        v-if="needPlayStreamViewInfo.length > 0 && !isPictureInPicture"
         class="live-core-ui"
       >
         <div
@@ -50,6 +50,7 @@
       <PlayerControl :isLandscapeStyleMode="isLandscapeStyleMode" v-if="isShowPlayerControl" />
     </Teleport>
     <PlayerControl :isLandscapeStyleMode="isLandscapeStyleMode" v-if="isShowPlayerControl && isFullscreen" />
+    <div :id="SVGA_PLAYER_VIEW"></div>
   </div>
 </template>
 
@@ -66,6 +67,7 @@ import LiveCoreDecorate from './CoreViewDecorate/LiveCoreDecorate.vue';
 import type { SeatInfo, SeatUserInfo } from '../../types';
 import { isMobile } from '../../utils';
 import { usePlayerControlState } from './PlayerControl';
+import { setGiftPlayerView } from '../../states/LiveGiftState';
 
 const { isFullscreen, isLandscapeStyleMode, isPictureInPicture, exitPictureInPicture } = usePlayerControlState();
 const { t } = useUIKit();
@@ -73,7 +75,7 @@ const { seatList, canvas, startPlayStream, stopPlayStream } = useLiveSeatState()
 const { currentLive } = useLiveListState();
 
 const slots = useSlots();
-
+const SVGA_PLAYER_VIEW = 'svga-player-view';
 const isInStreamMixerComp = computed(() => slots.localVideo);
 
 const { loginUserInfo } = useLoginState();
@@ -135,12 +137,10 @@ const ratioLayoutList = computed(() => {
   }));
 });
 
-const streamViewSize = computed(() => {
-  return {
-    width: originStreamViewStyle.value.width * originStreamViewStyle.value.scale,
-    height: originStreamViewStyle.value.height * originStreamViewStyle.value.scale,
-  };
-});
+const streamViewSize = computed(() => ({
+  width: Math.ceil(originStreamViewStyle.value.width * originStreamViewStyle.value.scale),
+  height: Math.ceil(originStreamViewStyle.value.height * originStreamViewStyle.value.scale),
+}));
 
 const seatListWithRealSize = computed(() => seatList.value.map((item: SeatInfo, index: number) => {
   const ratioLayout = ratioLayoutList.value[index];
@@ -164,13 +164,13 @@ const seatListWithRealSize = computed(() => seatList.value.map((item: SeatInfo, 
     userInfo: item.userInfo as SeatUserInfo,
     region: {
       position: 'absolute' as const,
-      left: `${streamViewSize.value.width * ratioLayout.x}px`,
-      top: `${streamViewSize.value.width * ratioLayout.y}px`,
-      width: `${Math.ceil(streamViewSize.value.width * ratioLayout.width)}px`,
+      left: `${Math.floor(streamViewSize.value.width * ratioLayout.x) - 1}px`,
+      top: `${Math.floor(streamViewSize.value.width * ratioLayout.y) - 1}px`,
+      width: `${Math.ceil(streamViewSize.value.width * ratioLayout.width) + 1}px`,
       height:
-          ratioLayout.height === -1
-            ? `${streamViewSize.value.height}px`
-            : `${streamViewSize.value.width * ratioLayout.height}px`,
+            ratioLayout.height === -1
+              ? `${Math.ceil(streamViewSize.value.height) + 1}px`
+              : `${Math.ceil(streamViewSize.value.width * ratioLayout.height) + 1}px`,
       zIndex: Number(ratioLayout.zOrder) || 0,
     },
   };
@@ -238,7 +238,6 @@ function handleStreamListTransform() {
     const scaleWidth = containerWidth / visualStreamSize.value.width;
     const scaleHeight = containerHeight / visualStreamSize.value.height;
     originStreamViewStyle.value.scale = Math.min(scaleWidth, scaleHeight);
-
     originStreamViewStyle.value.transformX = originStreamViewStyle.value.width / 2 - visualStreamSize.value.centerX;
     originStreamViewStyle.value.transformY = originStreamViewStyle.value.height / 2 - visualStreamSize.value.centerY;
   } else {
@@ -249,15 +248,13 @@ function handleStreamListTransform() {
   }
 }
 
-const streamViewStyle = computed(() => {
-  return {
-    width: `${Math.ceil(originStreamViewStyle.value.width) * originStreamViewStyle.value.scale}px`,
-    height: `${Math.ceil(originStreamViewStyle.value.height) * originStreamViewStyle.value.scale}px`,
-    transform: `translate(${originStreamViewStyle.value.transformX * originStreamViewStyle.value.scale}px, ${
-      originStreamViewStyle.value.transformY * originStreamViewStyle.value.scale
-    }px)`,
-  };
-});
+const streamViewStyle = computed(() => ({
+  width: `${Math.ceil(originStreamViewStyle.value.width * originStreamViewStyle.value.scale)}px`,
+  height: `${Math.ceil(originStreamViewStyle.value.height * originStreamViewStyle.value.scale)}px`,
+  transform: `translate(${originStreamViewStyle.value.transformX * originStreamViewStyle.value.scale}px, ${
+    originStreamViewStyle.value.transformY * originStreamViewStyle.value.scale
+  }px)`,
+}));
 
 const aspectRatio = computed(() => {
   if (canvas.value.width && canvas.value.height) {
@@ -319,6 +316,7 @@ function handleStreamRegionSize() {
   const containerHeight = getContentSize(liveCoreViewContainerRef.value).height;
   let width = containerWidth;
   let height = containerHeight;
+  
   if (widthRatio.value && heightRatio.value) {
     const scaleWidth = containerWidth / widthRatio.value;
     const scaleHeight = containerHeight / heightRatio.value;
@@ -333,16 +331,29 @@ function handleStreamRegionSize() {
         height = (containerWidth / widthRatio.value) * heightRatio.value;
       }
     } else {
+      // Fill mode: ensure video fills container in at least one dimension without exceeding
+      // Skip boundary check on mobile devices
       if (scaleWidth > scaleHeight) {
         width = containerWidth;
         height = (containerWidth / widthRatio.value) * heightRatio.value;
+        // Check if height exceeds container (only on PC), if so, use container height as base
+        if (!isMobile && height > containerHeight) {
+          width = (containerHeight / heightRatio.value) * widthRatio.value;
+          height = containerHeight;
+        }
       }
       if (scaleWidth <= scaleHeight) {
         width = (containerHeight / heightRatio.value) * widthRatio.value;
         height = containerHeight;
+        // Check if width exceeds container (only on PC), if so, use container width as base
+        if (!isMobile && width > containerWidth) {
+          width = containerWidth;
+          height = (containerWidth / widthRatio.value) * heightRatio.value;
+        }
       }
     }
   }
+  
   originStreamViewStyle.value.width = width;
   originStreamViewStyle.value.height = height;
 }
@@ -374,6 +385,9 @@ const ro = new ResizeObserver(() => {
 
 onMounted(() => {
   ro.observe(liveCoreViewContainerRef.value as Element);
+  setGiftPlayerView({
+    view: SVGA_PLAYER_VIEW
+  });
   getContainerOrientation();
 });
 
@@ -390,6 +404,8 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: center;
   overflow: hidden;
+  background-color: var(--bg-color-operate);
+
   &.align-center {
     align-items: center;
   }
@@ -433,6 +449,15 @@ onBeforeUnmount(() => {
       top: 0;
       left: 0;
     }
+  }
+  #svga-player-view {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 50vmin;
+    height: 50vmin;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
   }
 }
 </style>

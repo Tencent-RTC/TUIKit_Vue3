@@ -67,14 +67,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import ChatEngine from '@tencentcloud/chat-uikit-engine';
+import ChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import { useUIKit, TUIButton } from '@tencentcloud/uikit-base-component-vue3';
 import { useContactListState } from '../../../../states/ContactListState';
 import { Avatar } from '../../../Avatar';
 import { TEXTAREA_LENGTH_LIMIT } from '../../constants/const';
 import type { SearchGroupInfoProps } from '../../../../types/contact';
 import type { GroupModel } from '../../../../types/engine';
-import type { IGroupModel } from '@tencentcloud/chat-uikit-engine';
+import type { IGroupModel } from '@tencentcloud/chat-uikit-engine-lite';
 
 const props = withDefaults(defineProps<SearchGroupInfoProps>(), {
   showActions: true,

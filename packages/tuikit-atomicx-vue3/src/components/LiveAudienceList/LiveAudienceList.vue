@@ -35,7 +35,7 @@
       </div>
 
       <div
-        v-if="audienceCount >= 200"
+        v-if="audienceCount >= MAX_AUDIENCE_COUNT"
         class="viewer-bottom-line"
       >
         {{ t('Only show 200 viewers') }}
@@ -65,14 +65,14 @@
       :avatar-url="selectedViewer?.avatarUrl"
       :style="actionMenuStyle"
       :click-target="currentViewerTarget"
-      @close="showActionMenu = false"
+      @close="handleCloseActionMenu"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { CSSProperties } from 'vue';
-import { computed, defineProps, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveAudienceState } from '../../states/LiveAudienceState';
 import { useLiveListState } from '../../states/LiveListState';
@@ -80,6 +80,7 @@ import { useLoginState } from '../../states/LoginState';
 import { Avatar } from '../Avatar';
 import UserActionMenu from './UserActionMenu.vue';
 import type { AudienceInfo } from '../../types';
+import { MAX_AUDIENCE_COUNT } from './index';
 
 const { t } = useUIKit();
 const currentViewerTarget = ref<HTMLElement | null>(null);
@@ -126,6 +127,11 @@ const handleViewerClick = (viewer: AudienceInfo, event: MouseEvent) => {
     top: `${rect.bottom + 8}px`,
     zIndex: 1001,
   };
+};
+
+const handleCloseActionMenu = () => {
+  showActionMenu.value = false;
+  selectedViewer.value = null;
 };
 
 const handleScroll = async () => {

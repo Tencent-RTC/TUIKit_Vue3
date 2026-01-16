@@ -1,26 +1,43 @@
 <template>
   <div v-if="loginUserInfo" class="live-list-panel">
-    <div v-if="liveList.length > 0" ref="scrollContainerRef" class="live-list" @wheel="handleWheel">
+    <div
+      v-if="liveList.length > 0"
+      ref="scrollContainerRef"
+      class="live-list"
+      @wheel="handleWheel"
+    >
       <div ref="liveListItemsRef" class="live-list-items">
-        <div v-for="item in liveList" :key="item.liveId" class="live-item" @click="liveRoomClick(item)">
+        <div
+          v-for="item in liveList"
+          :key="item.liveId"
+          class="live-item"
+          @click="liveRoomClick(item)"
+        >
           <div class="live-room-cover">
             <div class="header">
               <div class="left">
                 <IconLiveCoverHeader :size="10" />
-                <span> {{ t('LIVE') }} </span>
+                <span> {{ t('LiveList.LIVE') }} </span>
               </div>
               <div class="right">
                 <span> {{ item.currentViewerCount || 0 }} </span>
-                <span> {{ t('people watched') }} </span>
+                <span> {{ t('LiveList.PeopleWatched') }} </span>
               </div>
             </div>
-            <div class="gradient"></div>
-            <img :src="item.coverUrl || DEFAULT_COVER" alt="" @error="handleCoverImageError">
+            <div class="gradient" />
+            <img
+              :src="item.coverUrl || DEFAULT_COVER"
+              alt=""
+              @error="handleCoverImageError"
+            >
           </div>
           <span class="live-name">{{ item.liveName }} </span>
           <div class="owner-info">
-            <Avatar :src="item.liveOwner.avatarUrl" :size="20"
-              :style="{ border: '1px solid var(--uikit-color-white-7)' }" />
+            <Avatar
+              :src="item.liveOwner.avatarUrl"
+              :size="20"
+              :style="{ border: '1px solid var(--uikit-color-white-7)' }"
+            />
             <span class="owner-name">{{ item.liveOwner.userName || item.liveOwner.userId }} </span>
           </div>
         </div>
@@ -28,16 +45,16 @@
     </div>
     <div v-else-if="!isLoadingMore" class="no-live">
       <IconNoLiveRoom :size="60" />
-      <span>{{ t('No Live') }}</span>
+      <span>{{ t('LiveList.NoLive') }}</span>
     </div>
     <div v-if="liveList.length > 0 && (isShowMoreVisible || isLoadingMore)" class="bottom-text">
-      <span v-if="isShowMoreVisible" class="load-more-lives">{{ t('Load More') }}</span>
-      <span v-if="isLoadingMore" class="loading">{{ t('Loading...') }}</span>
+      <span v-if="isShowMoreVisible" class="load-more-lives">{{ t('LiveList.LoadMore') }}</span>
+      <span v-if="isLoadingMore" class="loading">{{ t('LiveList.Loading') }}</span>
     </div>
   </div>
 </template>
 <script lang="ts" setup>
-import { ref, computed, defineEmits, watch } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import { useUIKit, IconLiveCoverHeader, IconNoLiveRoom } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
@@ -52,13 +69,18 @@ const props = defineProps({
     default: 5,
   },
 });
-const DEFAULT_COVER = 'https://liteav-test-1252463788.cos.ap-guangzhou.myqcloud.com/voice_room/voice_room_cover1.png';
+const SMALL_CONTAINER_WIDTH = 1000;
+const SMALL_CONTAINER_GAP = 12;
+const LARGE_CONTAINER_GAP = 20;
+const MIN_LIVE_ITEM_WIDTH = 200;
+const LIVE_INFO_HEIGHT = 52;
+
+const DEFAULT_COVER = 'https://web.sdk.qcloud.com/trtc/live/web/assets/defaultCoverLive.png';
 const scrollContainerRef = ref<HTMLElement | null>(null);
 const liveListItemsRef = ref<HTMLElement | null>(null);
- 
+
 const isLoadingMore = ref(false);
 const hasMoreLive = computed(() => liveListCursor.value !== '');
-
 const liveItemWidth = ref('356px');
 const liveItemHeight = ref('270px');
 const coverWidth = ref('356px');
@@ -66,6 +88,24 @@ const coverHeight = ref('210px');
 const itemGap = ref('20px');
 const shouldFetchMoreLiveList = computed(() => hasMoreLive.value && !isLoadingMore.value);
 const isShowMoreVisible = computed(() => shouldFetchMoreLiveList.value && !scrollContainerRef.value);
+
+let resizeObserver: ResizeObserver | null = null;
+
+function resizeLiveListItems() {
+  if (liveListItemsRef.value) {
+    const { width } = liveListItemsRef.value.getBoundingClientRect();
+    const itemGapWidth = width <= SMALL_CONTAINER_WIDTH ? SMALL_CONTAINER_GAP : LARGE_CONTAINER_GAP;
+
+    itemGap.value = `${itemGapWidth}px`;
+    const gapWidth = itemGapWidth * (props.columnCount - 1);
+    const newItemWidth = Math.max(Math.floor((width - gapWidth) / props.columnCount), MIN_LIVE_ITEM_WIDTH);
+    coverWidth.value = `${newItemWidth}px`;
+    coverHeight.value = `${newItemWidth * 0.6}px`;
+    liveItemWidth.value = `${newItemWidth}px`;
+    liveItemHeight.value = `${coverHeight.value + LIVE_INFO_HEIGHT}px`;
+  }
+}
+
 watch(
   loginUserInfo,
   async (user) => {
@@ -79,25 +119,23 @@ watch(
   },
   { immediate: true },
 );
-watch(liveListItemsRef, () => {
-  if (liveListItemsRef.value && screen.width > screen.height) {
-    const { width } = liveListItemsRef.value.getBoundingClientRect();
-    let itemGapWidth = 20;
-    if (width <= 1000) {
-      itemGapWidth = 12;
-    } else {
-      itemGapWidth = 20;
-    }
- 
-    itemGap.value = `${itemGapWidth}px`;
-    const gapWidth = itemGapWidth * (props.columnCount - 1);
-    const newItemWidth = (width - gapWidth) / props.columnCount;
-    coverWidth.value = `${newItemWidth}px`;
-    coverHeight.value = `${newItemWidth * 0.6}px`;
-    liveItemWidth.value = `${newItemWidth}px`;
-    liveItemHeight.value = `${coverHeight.value + 52}px`;
+
+watch([liveListItemsRef, props.columnCount], () => {
+  resizeLiveListItems();
+  if (liveListItemsRef.value && !resizeObserver) {
+    resizeObserver = new ResizeObserver(() => {
+      resizeLiveListItems();
+    });
+    resizeObserver.observe(liveListItemsRef.value);
   }
 });
+
+onBeforeUnmount(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+  }
+});
+
 const emit = defineEmits<{
   (e: 'live-room-click', liveInfo: LiveInfo): void;
 }>();
@@ -135,8 +173,10 @@ async function fetchMoreLives() {
 }
 function handleCoverImageError(event: Event) {
   const image = event.target as HTMLImageElement;
-  if (image) {
+  if (image && image.src !== DEFAULT_COVER) {
     image.src = DEFAULT_COVER;
+    // Delete the error callback to avoid recursion
+    image.onerror = null;
   }
 }
 </script>
@@ -186,7 +226,10 @@ $text-color3: var(--text-color-tertiary);
   width: 100%;
   overflow: auto;
   align-items: center;
-  @include scrollbar;
+  &::-webkit-scrollbar {
+    width: 0;
+    background: transparent;
+  }
 }
 .live-list-items {
   width: 100%;
@@ -196,7 +239,7 @@ $text-color3: var(--text-color-tertiary);
   justify-content: center;
   gap: v-bind(itemGap);
 }
- 
+
 .live-item {
   display: flex;
   flex-direction: column;

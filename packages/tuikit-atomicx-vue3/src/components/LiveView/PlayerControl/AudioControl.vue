@@ -1,6 +1,6 @@
 <template>
   <div class="audio-control" :style="iconSizeStyle" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
-    <span class="control-btn volume-btn" :title="props.isMuted ? t('Open Speaker') : t('Close Speaker')" @click="handleVolumeIconClick">
+    <span class="control-btn volume-btn" :title="props.isMuted ? t('LiveView.OpenSpeaker') : t('LiveView.CloseSpeaker')" @click="handleVolumeIconClick">
       <IconSpeakerOff :size="props.iconSize" v-if="props.isMuted" />
       <IconSpeakerOn :size="props.iconSize" v-else />
     </span>
@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onUnmounted, defineProps, withDefaults } from 'vue';
+import { computed, ref, onUnmounted } from 'vue';
 import { IconSpeakerOn, IconSpeakerOff, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { isMobile } from '../../../utils';
 
@@ -67,8 +67,6 @@ const props = withDefaults(defineProps<AudioControlProps>(), {
 const emit = defineEmits<AudioControlEmits>();
 
 const { t } = useUIKit();
-
-
 
 const isVolumeSliderVisible = ref(false);
 const isDragging = ref(false);
@@ -371,7 +369,7 @@ onUnmounted(() => {
 
   position: absolute;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(50%);
   width: $thumb-size;
   height: $thumb-size;
   background: #ffffff;
@@ -388,11 +386,11 @@ onUnmounted(() => {
 
   &:active {
     cursor: grabbing;
-    transform: translateX(-50%) scale(1.1);
+    transform: translateX(-50%) translateY(50%) scale(1.1);
   }
 
   &:hover {
-    transform: translateX(-50%) scale(1.1);
+    transform: translateX(-50%) translateY(50%) scale(1.1);
   }
 }
 

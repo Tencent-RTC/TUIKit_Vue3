@@ -13,7 +13,7 @@
           <span class="viewer-name">{{ viewer.userName || viewer.userId }}</span>
         </div>
       </div>
-      <div class="viewer-bottom-line" v-if="audienceCount >= 200">{{ t('Only show 200 viewers') }}</div>
+      <div class="viewer-bottom-line" v-if="audienceCount >= MAX_AUDIENCE_COUNT">{{ t('Only show 200 viewers') }}</div>
 
       <div v-if="audienceList.length === 0" class="empty-state">
         <p>{{ t('No audience yet') }}</p>
@@ -23,13 +23,15 @@
 </template>
 
 <script setup lang="ts">
-import { CSSProperties, computed, defineProps, ref } from 'vue';
+import { CSSProperties, computed, ref } from 'vue';
 import { useLoginState } from '../../states/LoginState';
 import { useLiveListState } from '../../states/LiveListState';
 import { useLiveAudienceState } from '../../states/LiveAudienceState';
 import { type AudienceInfo } from '../../types';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { Avatar } from '../Avatar';
+import { MAX_AUDIENCE_COUNT } from './index';
+
 const { t } = useUIKit();
 const currentViewerTarget = ref<HTMLElement | null>(null);
 const props = defineProps<{

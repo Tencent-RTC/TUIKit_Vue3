@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, withDefaults, defineProps, defineEmits, computed, nextTick } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { useUIKit, TUIButton, TUIToast } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveAudienceState } from '../../states/LiveAudienceState';
 import { useLoginState } from '../../states/LoginState';
@@ -153,7 +153,6 @@ const handleShowEditor = async () => {
     display: flex;
     align-items: center;
     background-color: var(--bg-color-operate);
-    overflow: auto;
     box-sizing: border-box;
     height: 36px;
     max-height: 140px;
@@ -173,6 +172,11 @@ const handleShowEditor = async () => {
       gap: 12px;
       margin-right: 12px;
       flex-shrink: 0;
+    }
+
+    span {
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
   }
 }

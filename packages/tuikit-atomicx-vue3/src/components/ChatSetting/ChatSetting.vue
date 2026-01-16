@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { TUIChatEngine } from '@tencentcloud/chat-uikit-engine';
+import { TUIChatEngine } from '@tencentcloud/chat-uikit-engine-lite';
 import { useConversationListState } from '../../states/ConversationListState';
 import { C2CChatSetting } from './C2CChatSetting';
 import { GroupChatSetting } from './GroupChatSetting';
