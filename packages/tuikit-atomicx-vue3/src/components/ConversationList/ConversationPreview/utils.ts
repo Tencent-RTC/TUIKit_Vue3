@@ -1,4 +1,4 @@
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
+import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import { MessageType, ConversationType } from '../../../types/engine';
 import { transformTextWithEmojiKeyToName, safeJSONParse } from '../../../utils';
 import { parseCallMessageText } from '../../../utils/call';

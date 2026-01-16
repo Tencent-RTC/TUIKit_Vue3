@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
+import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import cs from 'classnames';
 import { useMessageListState } from '../../../../../states/MessageListState';
 import { MessageActionDropdown } from '../MessageActionDropdown';

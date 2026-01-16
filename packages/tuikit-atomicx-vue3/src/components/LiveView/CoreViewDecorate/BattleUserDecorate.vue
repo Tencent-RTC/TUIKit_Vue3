@@ -9,7 +9,7 @@
       :style="item.region"
     >
       <div class="battle-decorate" v-if="getBattleLevel(item.userInfo.userId) > 0">
-        <span class="battle-score-value" v-if="!battleScore?.has(item.userInfo.userId)">{{ t('Connecting') }}</span>
+        <span class="battle-score-value" v-if="!battleScore?.has(item.userInfo.userId)">{{ t('LiveView.Connecting') }}</span>
         <template v-else>
           <div class="battle-badge-container" :class="getBattleLevel(item.userInfo.userId) === 1 ? 'top-badge' : 'ordinary-badge'">
             <img :src="getBattleLevel(item.userInfo.userId) === 1 ? BattleTopBadge : BattleOrdinaryBadge" alt="battle-badge" class="battle-badge" />

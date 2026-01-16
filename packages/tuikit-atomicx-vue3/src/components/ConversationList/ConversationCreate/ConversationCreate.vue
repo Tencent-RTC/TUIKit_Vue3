@@ -37,7 +37,7 @@
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
-import { TUIConversationService } from '@tencentcloud/chat-uikit-engine';
+import { TUIConversationService } from '@tencentcloud/chat-uikit-engine-lite';
 import { useUIKit, TUIDialog, TUIToast } from '@tencentcloud/uikit-base-component-vue3';
 import { useConversationListState } from '../../../states/ConversationListState';
 import { useLoginState } from '../../../states/LoginState';

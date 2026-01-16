@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, withDefaults, defineEmits } from 'vue';
+import { computed } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveAudienceState } from '../../states/LiveAudienceState';
 import { useLoginState } from '../../states/LoginState';

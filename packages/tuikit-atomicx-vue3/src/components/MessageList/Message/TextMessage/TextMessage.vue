@@ -43,7 +43,7 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { TUIStore } from '@tencentcloud/chat-uikit-engine';
+import { TUIStore } from '@tencentcloud/chat-uikit-engine-lite';
 import { useUIKit, TUIToast } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
@@ -51,7 +51,7 @@ import { useScroll } from '../../../../hooks/useScroll';
 import { useMessageListState } from '../../../../states/MessageListState';
 import { safeJSONParse } from '../../../../utils/json';
 import type { ICloudCustomData } from '../../../../types/message';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
 
 const props = withDefaults(defineProps<{
   message: IMessageModel;

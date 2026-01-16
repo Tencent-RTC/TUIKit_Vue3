@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
+import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import { IconCopy, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { View } from '../../../../baseComp/View';
 import { useConversationListState } from '../../../../states/ConversationListState';

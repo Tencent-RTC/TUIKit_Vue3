@@ -1,13 +1,13 @@
 <!-- eslint-disable import/extensions -->
 <script lang="ts" setup>
-import { ref, onMounted, onUnmounted, nextTick, watch, provide, useSlots, withDefaults, defineProps } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, watch, provide, useSlots } from 'vue';
 import type { Component, CSSProperties } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useScroll } from '../../hooks/useScroll';
 import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
 import { throttle } from '../../utils/lodash';
-import { useBarrageListState } from './BarrageListState';
+import { useBarrageListState, isGiftMessage } from './BarrageListState';
 import UserActionMenu from './ClickAction/UserActionMenu.vue';
 import { Message as DefaultMessage } from './Message';
 import { MessageListContextSymbol } from './MessageListContext';
@@ -178,17 +178,18 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="message-list" :style="{ height: props.height, ...props.style }">
+  <div class="message-list-container" :style="{ height: props.height, ...props.style }">
     <div
       id="messageScrollList"
       ref="scrollContainer"
-      class="message-list-container"
+      class="message-list"
       :style="props.containerStyle"
       @touchstart="handleTouchStart"
     >
       <div class="message-chunk">
         <template v-for="message in messageList" :key="message.sequence + message.timestampInSecond">
           <component
+            v-if="!isGiftMessage(message)"
             :is="props.Message || DefaultMessage"
             :style="props.itemStyle"
             :message="message"
@@ -201,7 +202,7 @@ onUnmounted(() => {
           {{ messageGroupTip?.nameCard || messageGroupTip?.userName || messageGroupTip?.userId }}
         </div>
         <div class="message-group-tip-action">
-          {{ messageGroupTip?.displayAction === 'enter' ? t('Come in') : t('Leave') }}
+          {{ messageGroupTip?.displayAction === 'enter' ? t('BarrageList.ComeIn') : t('BarrageList.Leave') }}
         </div>
       </div>
     </div>
@@ -220,7 +221,7 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 @use '../../styles/mixins/_scrollbar.scss' as scrollbar;
 
-.message-list {
+.message-list-container {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -229,11 +230,21 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.message-list-container {
+.message-list {
   flex: 1;
   height: 100%;
   padding: 10px;
-  @include scrollbar.scrollbar-thin();
+  overflow-y: auto;
+  overflow-x: hidden;
+  
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Hide scrollbar for IE, Edge and Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 .message-chunk--container {
@@ -270,6 +281,7 @@ onUnmounted(() => {
 .message-group-tip {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   padding: 10px;
@@ -279,10 +291,16 @@ onUnmounted(() => {
   letter-spacing: 0.1em;
 
   .message-group-tip-name {
+    max-width: 192px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: var(--uikit-color-theme-8);
   }
 
-  .message-group-tip-action {}
+  .message-group-tip-action {
+    white-space: nowrap;
+  }
 }
 
 :deep(.message-bubble) {

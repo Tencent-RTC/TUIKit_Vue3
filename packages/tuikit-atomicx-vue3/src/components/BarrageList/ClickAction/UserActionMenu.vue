@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, defineEmits, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useLiveAudienceState } from '../../../states/LiveAudienceState';
 import { useUIKit, TUIToast } from '@tencentcloud/uikit-base-component-vue3';
 import { Avatar } from '../../Avatar';
@@ -53,13 +53,13 @@ const actions = computed(() => {
 
   if (!targetUserInfo.isMessageDisabled) {
     actionList.push({
-      label: t('Mute'),
+      label: t('BarrageList.Mute'),
       action: 'disableSendMessage',
       actionFn: () => disableSendMessage({ userId: props.userId, isDisable: true }),
     });
   } else {
     actionList.push({
-      label: t('Unmute'),
+      label: t('BarrageList.Unmute'),
       action: 'disableSendMessage',
       actionFn: () => disableSendMessage({ userId: props.userId, isDisable: false }),
     });
@@ -72,12 +72,12 @@ const handleAction = async (action: { actionFn: () => Promise<void>; label: stri
   try {
     await action.actionFn();
     TUIToast.success({
-      message: t(action.label === t('Mute') ? 'Mute Success' : 'Unmute Success'),
+      message: t(action.label === t('BarrageList.Mute') ? 'BarrageList.MuteSuccess' : 'BarrageList.UnmuteSuccess'),
     });
   } catch (error) {
     console.error('Action failed:', error);
     TUIToast.error({
-      message: t('Operation Failed'),
+      message: t('BarrageList.OperationFailed'),
     });
   }
   emit('close');

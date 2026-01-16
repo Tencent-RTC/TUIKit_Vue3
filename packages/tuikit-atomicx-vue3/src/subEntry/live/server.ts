@@ -1,7 +1,7 @@
 import type { Ref } from 'vue';
 import { ref } from 'vue';
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
-import TUICore, { TUILogin, TUIConstants } from '@tencentcloud/tui-core';
+import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
+import TUICore, { TUILogin, TUIConstants } from '@tencentcloud/tui-core-lite';
 import TUIRoomEngine from '@tencentcloud/tuiroom-engine-js';
 import { dataReport, MetricsKey } from '../../report';
 import { useLoginState } from '../../states/LoginState';

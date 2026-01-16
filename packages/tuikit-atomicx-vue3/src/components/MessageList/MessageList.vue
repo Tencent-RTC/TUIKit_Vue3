@@ -50,6 +50,8 @@ interface MessageListProps {
   Message?: Component | undefined;
   /** custom message timeline component */
   MessageTimeDivider?: Component | undefined;
+  /** conversation id */
+  conversationID?: string | undefined;
 }
 
 const props = withDefaults(defineProps<MessageListProps>(), {
@@ -62,6 +64,7 @@ const props = withDefaults(defineProps<MessageListProps>(), {
   /** custom components */
   Message: undefined,
   MessageTimeDivider: undefined,
+  conversationID: undefined,
 });
 
 const slots = useSlots();
@@ -88,7 +91,7 @@ const {
 const { getGroupMemberList } = useGroupSettingState();
 
 const { scrollToBottom } = useScroll();
-const { activeConversation } = useConversationListState();
+const { activeConversation, setActiveConversation } = useConversationListState();
 const {
   observeMessageList,
   resetProcessedMessages,
@@ -277,6 +280,14 @@ watch(messageList, (newMessages, oldMessages) => {
 
 watch(() => props.enableReadReceipt, (newEnableReadReceipt) => {
   setEnableReadReceipt(newEnableReadReceipt);
+}, {
+  immediate: true,
+});
+
+watch(() => props?.conversationID, (newConversationId) => {
+  if (newConversationId) {
+    setActiveConversation(newConversationId);
+  }
 }, {
   immediate: true,
 });

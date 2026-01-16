@@ -7,7 +7,7 @@ import {
   PopoverPortal,
 } from 'reka-ui';
 import { throttle } from '../../../../utils/lodash';
-import { TUIChatEngine } from '@tencentcloud/chat-uikit-engine';
+import { TUIChatEngine } from '@tencentcloud/chat-uikit-engine-lite';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { Avatar } from '../../../Avatar';
 import { useGroupSettingState } from '../../../../states/GroupSettingState';

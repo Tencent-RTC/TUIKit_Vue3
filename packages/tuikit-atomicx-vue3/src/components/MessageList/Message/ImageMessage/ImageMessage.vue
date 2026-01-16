@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import cs from 'classnames';
 import ImagePreview from './ImagePreview.vue';
-import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine-lite';
 
 interface ImageMessageProps {
   message: MessageModel;

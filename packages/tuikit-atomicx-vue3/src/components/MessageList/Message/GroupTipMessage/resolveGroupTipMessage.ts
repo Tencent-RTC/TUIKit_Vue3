@@ -1,4 +1,4 @@
-import { TUIChatEngine } from '@tencentcloud/chat-uikit-engine';
+import { TUIChatEngine } from '@tencentcloud/chat-uikit-engine-lite';
 import { i18next } from '@tencentcloud/uikit-base-component-vue3';
 import type { MessageModel } from '../../../../types/engine';
 

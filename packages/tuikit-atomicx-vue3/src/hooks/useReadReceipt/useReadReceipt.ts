@@ -1,8 +1,8 @@
 import { onMounted, onUnmounted, watch } from 'vue';
-import { TUIChatService, TUIStore } from '@tencentcloud/chat-uikit-engine';
+import { TUIChatService, TUIStore } from '@tencentcloud/chat-uikit-engine-lite';
 import { handleChatErrorWithModal } from '../../components/UIKitModal/chatErrorModal';
 import { throttle } from '../../utils/lodash';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
 
 interface UseReadReceiptOptions {
   /**

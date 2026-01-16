@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import { MessageLayout } from './MessageLayout';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
 
 interface IMessageProps {
   message: IMessageModel;

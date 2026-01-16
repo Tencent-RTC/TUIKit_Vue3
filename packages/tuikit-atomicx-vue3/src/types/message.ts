@@ -1,4 +1,4 @@
-import type { IMessageModel, SendForwardMessageOptions } from '@tencentcloud/chat-uikit-engine';
+import type { IMessageModel, SendForwardMessageOptions } from '@tencentcloud/chat-uikit-engine-lite';
 
 /**
  * three type for origin text to be translated

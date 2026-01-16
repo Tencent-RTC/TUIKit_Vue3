@@ -172,8 +172,8 @@ export function usePlayerControlState(): PlayerControlState {
       // Handle browser autoplay policy restriction
       if (error?.name === 'NotAllowedError' && (error?.message?.includes('user agent') || error?.message?.includes('denied permission'))) {
         TUIMessageBox.alert({
-          content: t('Content is ready. Click the button to start playback'),
-          confirmText: t('Play'),
+          content: t('LiveView.ContentReady'),
+          confirmText: t('LiveView.Play'),
           callback: async () => {
             await roomEngine.instance?.callExperimentalAPI(JSON.stringify({
               api: 'resume',

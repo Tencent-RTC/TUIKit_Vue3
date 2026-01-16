@@ -14,7 +14,7 @@
           v-if="!isSafari || !isTcPlayer"
           class="control-btn play-pause-btn"
           :class="{disabled: isPictureInPicture}"
-          :title="isPlaying ? t('Pause') : t('Play')"
+          :title="isPlaying ? t('LiveView.Pause') : t('LiveView.Play')"
           @click="handlePlayPause"
         >
           <IconPause v-if="isPlaying" size="20" />
@@ -36,14 +36,14 @@
           <span
             class="control-btn"
             :class="{disabled: !isPlaying && !isPictureInPicture}"
-            :title="isPictureInPicture ? t('Exit Picture in Picture') : t('Picture in Picture')"
+            :title="isPictureInPicture ? t('LiveView.ExitPictureInPicture') : t('LiveView.PictureInPicture')"
             @click="handlePictureInPicture"
           >
             <IconPictureInPicture size="20" />
           </span>
           <span
             class="control-btn fullscreen-btn"
-            :title="isFullscreen ? t('Exit Fullscreen') : t('Fullscreen')"
+            :title="isFullscreen ? t('LiveView.ExitFullscreen') : t('LiveView.Fullscreen')"
             @click="handleFullscreen"
           >
             <IconFullScreen size="20" />
@@ -98,13 +98,13 @@ const playerControlRef = ref<HTMLElement>();
 const showControls = ref(false);
 const hideTimeout = ref<number | null>(null);
 
-const AUTO_HIDE_DELAY = 3000; // ms
+const AUTO_HIDE_DELAY = 1500; // ms
 
 const handlePlayPause = () => {
   if (isPictureInPicture.value) {
     TUIToast({
       type: TOAST_TYPE.WARNING,
-      message: t('Not allow to "Pause" in picture-in-picture mode'),
+      message: t('LiveView.NotAllowPauseInPIP'),
     });
     return;
   }
@@ -120,7 +120,7 @@ const handlePictureInPicture = async () => {
   if (!isPlaying.value && !isPictureInPicture.value) {
     TUIToast({
       type: TOAST_TYPE.WARNING,
-      message: t('Not allow to "Picture in Picture" in non-playing mode'),
+      message: t('LiveView.NotAllowPIPInNonPlaying'),
     });
     return;
   }
@@ -135,7 +135,7 @@ const handlePictureInPicture = async () => {
   if (!flag) {
     TUIToast({
       type: TOAST_TYPE.ERROR,
-      message: t('The system does not support picture-in-picture mode'),
+      message: t('LiveView.SystemNotSupportPIP'),
     });
   }
 };
@@ -323,6 +323,12 @@ onBeforeUnmount(() => {
   left: 0;
   right: 0;
   z-index: 10;
+
+  .control-buttons {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 32px;
+  }
 }
 
 .mobile-mode {

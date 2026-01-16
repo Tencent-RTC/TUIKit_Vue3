@@ -132,7 +132,7 @@ function convertToTwoDigits(value: number) {
 const time = computed(() => {
   const { minutes, seconds } = convertSecondsToHMS(leftBattleTime.value);
   if (minutes <= 0 && seconds <= 0) {
-    return t('Battle ended');
+    return t('LiveView.BattleEnded');
   }
   return `${convertToTwoDigits(minutes)}:${convertToTwoDigits(seconds)}`;
 });

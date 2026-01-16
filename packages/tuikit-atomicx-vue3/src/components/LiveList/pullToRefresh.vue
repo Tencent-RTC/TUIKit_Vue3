@@ -118,11 +118,11 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   resultDuration: 500,
   text: () => ({
-    pull: 'Pull to refresh',
-    release: 'Release to refresh',
-    loading: 'Loading...',
-    success: 'Refresh success',
-    error: 'Refresh failed',
+    pull: 'LiveList.PullDownToRefresh',
+    release: 'LiveList.ReleaseToRefresh',
+    loading: 'LiveList.Loading',
+    success: 'LiveList.RefreshSuccess',
+    error: 'LiveList.RefreshFailed',
   }),
 });
 

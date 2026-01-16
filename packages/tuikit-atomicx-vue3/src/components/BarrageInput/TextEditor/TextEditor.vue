@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch, withDefaults, defineProps, nextTick, defineEmits } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useConversationListState } from '../../../states/ConversationListState';
 import { useMessageInputState } from '../MessageInputState';

@@ -6,6 +6,7 @@
   -webkit-user-select: text;
   user-select: text;
   overflow-y: auto;
+  overflow-x: hidden !important;
   border: none !important;
   outline: none !important;
   display: flex;
@@ -53,6 +54,10 @@
 
   .is-editor-empty {
     display: block;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .message-emoji {
@@ -63,6 +68,7 @@
     pointer-events: none;
     vertical-align: middle;
   }
+
   .message-image {
     display: inline-block;
     width: 100px;

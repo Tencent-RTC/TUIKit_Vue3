@@ -2,7 +2,7 @@ import type { Component, CSSProperties } from 'vue';
 import type { Friend } from './contact';
 import type { ConversationModel } from './engine';
 import type { AvatarProps } from '../components/Avatar';
-import type { CreateGroupParams } from '@tencentcloud/chat-uikit-engine';
+import type { CreateGroupParams } from '@tencentcloud/chat-uikit-engine-lite';
 
 export interface ConversationListProps {
   /** Determines whether the conversation search input appears on the conversation list view. */

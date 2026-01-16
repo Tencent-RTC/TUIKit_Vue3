@@ -7,11 +7,11 @@
     >
       <PullToRefresh
         :text="{
-          pull: t('Pull to refresh'),
-          release: t('Release to refresh'),
-          loading: t('Loading'),
-          success: t('Refresh success'),
-          error: t('Refresh failed'),
+          pull: t('LiveList.PullDownToRefresh'),
+          release: t('LiveList.ReleaseToRefresh'),
+          loading: t('LiveList.Loading'),
+          success: t('LiveList.RefreshSuccess'),
+          error: t('LiveList.RefreshFailed'),
         }"
         @refresh="handleRefresh"
         @load-more="fetchMoreLives"
@@ -22,7 +22,7 @@
               <div class="header">
                 <IconLiveCoverHeader :size="10" />
                 <span class="viewer-count"> {{ item.currentViewerCount || 0 }} </span>
-                <span> {{ t('people watched') }} </span>
+                <span> {{ t('LiveList.PeopleWatched') }} </span>
               </div>
               <img :src="item.coverUrl || DEFAULT_COVER" alt="" @error="handleCoverImageError" />
             </div>
@@ -38,22 +38,22 @@
           </div>
         </div>
         <div v-if="!hasMoreLive" class="bottom-text-no-more">
-          <span>{{ t('No More') }}</span>
+          <span>{{ t('LiveList.NoMore') }}</span>
         </div>
       </PullToRefresh>
     </div>
     <div v-else-if="!isLoadingMore" class="no-live">
       <IconNoLiveRoom :size="60" />
-      <span>{{ t('No Live') }}</span>
+      <span>{{ t('LiveList.NoLive') }}</span>
     </div>
     <div v-if="liveList.length > 0 && isLoadingMore" class="bottom-text">
-      <span v-if="isLoadingMore">{{ t('Loading...') }}</span>
+      <span v-if="isLoadingMore">{{ t('LiveList.Loading') }}</span>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, computed, defineEmits, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useUIKit, IconLiveCoverHeader, IconNoLiveRoom } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
@@ -66,7 +66,8 @@ const { loginUserInfo } = useLoginState();
 const { t } = useUIKit();
 const showLiveList = ref<LiveInfo[]>([]);
 
-const DEFAULT_COVER = 'https://liteav-test-1252463788.cos.ap-guangzhou.myqcloud.com/voice_room/voice_room_cover1.png';
+// The default address supports ipv6 network access
+const DEFAULT_COVER = 'https://web.sdk.qcloud.com/trtc/live/web/assets/defaultCoverLive.png';
 const scrollContainerRef = ref<HTMLElement | null>(null);
 
 const isLoadingMore = ref(false);
@@ -140,22 +141,12 @@ async function fetchMoreLives() {
 
 function handleCoverImageError(event: Event) {
   const image = event.target as HTMLImageElement;
-  if (image) {
+  if (image && image.src !== DEFAULT_COVER) {
     image.src = DEFAULT_COVER;
+    // Delete the error callback to avoid recursion
+    image.onerror = null;
   }
 }
-
-onMounted(() => {
-  if (scrollContainerRef.value) {
-    scrollContainerRef.value.addEventListener('scroll', handleScroll);
-  }
-});
-
-onUnmounted(() => {
-  if (scrollContainerRef.value) {
-    scrollContainerRef.value.removeEventListener('scroll', handleScroll);
-  }
-});
 </script>
 
 <style lang="scss" scoped>

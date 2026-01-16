@@ -23,7 +23,7 @@ import { View } from '../../../../baseComp/View';
 import { useAudioControl } from '../../../../hooks/useAudioControl';
 import PlayButton from './PlayButton.vue';
 import WaveForm from './WaveForm.vue';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
 
 interface IAudioMessageProps {
   message: IMessageModel;

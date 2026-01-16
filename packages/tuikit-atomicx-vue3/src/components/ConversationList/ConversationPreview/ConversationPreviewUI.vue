@@ -70,7 +70,7 @@
 
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
+import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import { useLongPress, useMouseHover } from '../../../hooks';
 import { useConversationListState } from '../../../states/ConversationListState';
 import { isH5 } from '../../../utils';
@@ -100,7 +100,7 @@ const emit = defineEmits<{
   selectConversation: [conversation: ConversationModel];
 }>();
 
-const { activeConversation, setActiveConversation } = useConversationListState();
+const { activeConversation } = useConversationListState();
 
 const conversationPreviewRef = ref<HTMLElement>();
 const isActionMenuActive = ref(false);
@@ -127,7 +127,6 @@ watch(isHovered, (newValue) => {
 
 const handleClick = () => {
   emit('selectConversation', props.conversation);
-  setActiveConversation(props.conversation.conversationID);
 };
 
 const handleCloseActionsModal = () => {

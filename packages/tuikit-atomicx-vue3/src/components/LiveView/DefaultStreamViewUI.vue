@@ -17,8 +17,8 @@
       </div>
     </template>
     <div v-if="!userInfo.userId" class="empty-position">
-      <span class="text" :title="t('Waiting for connection')" v-if="connected.some(item => item.userId === loginUserInfo?.userId)">{{ t('Waiting for connection') }}</span>
-      <span class="text" :title="t('Waiting for connection')" v-else>{{ t('Waiting for connection') }}</span>
+      <span class="text" :title="t('LiveView.WaitingForConnection')" v-if="connected.some(item => item.userId === loginUserInfo?.userId)">{{ t('LiveView.WaitingForConnection') }}</span>
+      <span class="text" :title="t('LiveView.WaitingForConnection')" v-else>{{ t('LiveView.WaitingForConnection') }}</span>
     </div>
   </div>
 </template>

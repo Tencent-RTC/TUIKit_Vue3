@@ -5,7 +5,7 @@
         :is="context.slots['user-badge']"
         :message="message"
       />
-      <span v-if="message.sender.userId === currentLive?.liveOwner.userId && !context.slots['user-badge']" class="user-badge">{{ t('Anchor') }}</span>
+      <span v-if="message.sender.userId === currentLive?.liveOwner.userId && !context.slots['user-badge']" class="user-badge">{{ t('BarrageList.Anchor') }}</span>
       <span
         class="text-message__content__nick"
         @click="handleNickClick"
@@ -36,7 +36,7 @@
 
 <script lang="ts" setup>
 import type { VueElement } from 'vue';
-import { computed, withDefaults, defineProps } from 'vue';
+import { computed } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveListState } from '../../../../states/LiveListState';
 import { useMessageListContext } from '../../MessageListContext';

@@ -52,7 +52,7 @@
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine';
+import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import { IconEllipsis, useUIKit, TUIDropdown } from '@tencentcloud/uikit-base-component-vue3';
 import { useConversationListState } from '../../../states/ConversationListState';
 import { isH5 } from '../../../utils';

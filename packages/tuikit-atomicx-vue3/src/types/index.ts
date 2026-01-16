@@ -21,10 +21,12 @@ export * from './coGuest';
 export * from './coHost';
 export * from './battle';
 export * from './barrage';
+export * from './gift';
 // room
 export * from './room';
 export * from './participant';
 export * from './beauty';
 export * from './virtualBackground';
+export * from './asr';
 // @deprecated 请使用最新 participant.ts 文件
 export * from './user';

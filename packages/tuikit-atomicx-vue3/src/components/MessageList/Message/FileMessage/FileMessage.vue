@@ -7,7 +7,7 @@ import {
 } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine';
+import type { IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
 
 interface IFileMessageProps {
   message: IMessageModel;
