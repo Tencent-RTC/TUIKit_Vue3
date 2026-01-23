@@ -29,20 +29,21 @@ const concurrentMonitors = 10; // 同時監視ライブルーム数
 2. TRTCアプリケーションを作成し、`SDKAppId` を取得
 3. アプリケーション管理でシークレット情報を取得
 
-#### 2. サーバー設定 (`server/config/.env`)
+#### 2. サーバー設定 (`server/config/index.js`)
 
-`server/config/.env` ファイルを作成：
+`server/config/index.js` ファイルを編集：
 
-```bash
-# サーバーポート
-PORT=3000
+```javascript
+const Config = {
+  SdkAppId: 0,                        // ご利用のTencent Cloud LiveKit sdkAppId
+  SecretKey: '',                      // SDKシークレットキー
+  Identifier: 'administrator',        // ユーザーID（管理者権限必須）
+  Protocol: 'https://',
+  Domain: 'console.tim.qq.com',       // REST APIリクエストドメイン
+  Port: 9000,                         // サーバーポート
+};
 
-# TRTC設定 
-SDK_APP_ID = 0               # ご利用のTencent Cloud LiveKit sdkAppId
-SDK_SECRET_KEY = ""          # アプリケーションのSDK_SECRET_KEYに置き換え（文字列引用符不要）
-IDENTIFIER = administrator   # ユーザーID（管理者権限必須）
-PROTOCOL = https://
-DOMAIN = console.tim.qq.com  # rest_apiインターフェースリクエストドメイン
+module.exports = { Config };
 ```
 
 ### 🔧 依存関係のインストール

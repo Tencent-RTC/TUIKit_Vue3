@@ -29,20 +29,21 @@ const concurrentMonitors = 10; // Number of live streams monitored at the same t
 2. Create TRTC application and get `SDKAppId`
 3. Get secret key information in application management
 
-#### 2. Server Configuration (`server/config/.env`)
+#### 2. Server Configuration (`server/config/index.js`)
 
-Create `server/config/.env` file:
+Modify `server/config/index.js` file:
 
-```bash
-# Server port
-PORT=3000
+```javascript
+const Config = {
+  SdkAppId: 0,                        // Your Tencent Cloud LiveKit sdkAppId
+  SecretKey: '',                      // Your SDK secret key
+  Identifier: 'administrator',        // User identity must be administrator
+  Protocol: 'https://',
+  Domain: 'console.tim.qq.com',       // REST API request domain
+  Port: 9000,                         // Server port
+};
 
-# TRTC Configuration 
-SDK_APP_ID = 0               # Your Tencent Cloud LiveKit sdkAppId
-SDK_SECRET_KEY = ""          # Please replace with your application's SDK_SECRET_KEY, no string quotes needed
-IDENTIFIER = administrator   # User identity must be administrator
-PROTOCOL = https://
-DOMAIN = console.tim.qq.com  # REST API request domain
+module.exports = { Config };
 ```
 
 ### 🔧 Install Dependencies
