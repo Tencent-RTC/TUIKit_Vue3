@@ -224,7 +224,7 @@ export enum RoomLayoutTemplate {
    */
   GridLayout = 'gridLayout',
   /**
-   * 影院布局
+   * 顶部拦布局
    * @default 'cinemaLayout'
    */
   CinemaLayout = 'cinemaLayout',
@@ -233,6 +233,11 @@ export enum RoomLayoutTemplate {
    * @default 'sidebarLayout'
    */
   SidebarLayout = 'sidebarLayout',
+  /**
+   * 移动端布局
+   * @default 'mobileLayout'
+   */
+  MobileLayout = 'MobileLayout',
 }
 
 export interface IRoomParticipantState {

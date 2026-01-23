@@ -282,7 +282,7 @@ onUnmounted(() => {
   z-index: 9999;
   width: 568px;
   height: 398px;
-  padding: 12px;
+  padding: 4px;
   overflow: hidden;
   box-sizing: border-box;
   border: 1px solid var(--stroke-color-module);

@@ -55,6 +55,10 @@ export const getLatestMessagePreview = (conversation: ConversationModel, t: (key
   const typedLastMessage = lastMessage as unknown as MessageModel;
   const { type, payload } = typedLastMessage;
 
+  if (!type || !payload) {
+    return '';
+  }
+
   let messageContent = '';
 
   if (lastMessage?.isRevoked) {

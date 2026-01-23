@@ -113,6 +113,7 @@ const iconList = computed(() => {
   cursor: pointer;
   transition: background .2s ease;
   height: 50px;
+  -webkit-tap-highlight-color: transparent;
 
   &:active {
     background: var(--list-color-hover);

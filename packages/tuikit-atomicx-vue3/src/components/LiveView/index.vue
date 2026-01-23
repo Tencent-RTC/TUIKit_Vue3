@@ -1,7 +1,7 @@
 <template>
   <div
-    ref="liveCoreViewContainerRef"
     id="live-core-view-container"
+    ref="liveCoreViewContainerRef"
     class="live-core-view-container"
     :class="{ 'align-center': isAlignCenter }"
   >
@@ -27,6 +27,7 @@
           v-for="(item, index) in needPlayStreamViewInfo"
           :key="`seat-${index}`"
           :style="item.region"
+          @click="handleEmptySeatClick(index, item)"
         >
           <slot
             name="streamViewUI"
@@ -46,28 +47,35 @@
       />
       <LiveCoreDecorate :seatListWithRealSize="seatListWithRealSize" />
     </div>
-    <Teleport to="body" v-if="!isFullscreen" :disabled="!isMobile">
-      <PlayerControl :isLandscapeStyleMode="isLandscapeStyleMode" v-if="isShowPlayerControl" />
+    <Teleport
+      v-if="!isFullscreen"
+      to="body"
+      :disabled="!isMobile"
+    >
+      <PlayerControl v-if="isShowPlayerControl" :isLandscapeStyleMode="isLandscapeStyleMode" />
     </Teleport>
-    <PlayerControl :isLandscapeStyleMode="isLandscapeStyleMode" v-if="isShowPlayerControl && isFullscreen" />
-    <div :id="SVGA_PLAYER_VIEW"></div>
+    <PlayerControl v-if="isShowPlayerControl && isFullscreen" :isLandscapeStyleMode="isLandscapeStyleMode" />
+    <div :id="SVGA_PLAYER_VIEW" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount, useSlots, type ComputedRef, Teleport } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount, useSlots, Teleport } from 'vue';
+import type { ComputedRef } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useLiveSeatState } from '../../states/LiveSeatState';
-import { useLiveListState } from '../../states/LiveListState';
-import { useLoginState } from '../../states/LoginState';
-import { getContentSize } from '../../utils/domOperation';
-import DefaultStreamViewUI from './DefaultStreamViewUI.vue';
-import PlayerControl from './PlayerControl/PlayerControl.vue';
-import LiveCoreDecorate from './CoreViewDecorate/LiveCoreDecorate.vue';
-import type { SeatInfo, SeatUserInfo } from '../../types';
-import { isMobile } from '../../utils';
-import { usePlayerControlState } from './PlayerControl';
 import { setGiftPlayerView } from '../../states/LiveGiftState';
+import { useLiveListState } from '../../states/LiveListState';
+import { useLiveSeatState } from '../../states/LiveSeatState';
+import { useLoginState } from '../../states/LoginState';
+import { isMobile } from '../../utils';
+import { getContentSize } from '../../utils/domOperation';
+import LiveCoreDecorate from './CoreViewDecorate/LiveCoreDecorate.vue';
+import DefaultStreamViewUI from './DefaultStreamViewUI.vue';
+import { usePlayerControlState } from './PlayerControl';
+import PlayerControl from './PlayerControl/PlayerControl.vue';
+import type { SeatInfo, SeatUserInfo } from '../../types';
+
+const emit = defineEmits(['empty-seat-click']);
 
 const { isFullscreen, isLandscapeStyleMode, isPictureInPicture, exitPictureInPicture } = usePlayerControlState();
 const { t } = useUIKit();
@@ -81,15 +89,25 @@ const isInStreamMixerComp = computed(() => slots.localVideo);
 const { loginUserInfo } = useLoginState();
 const isPlayedVideo = ref(false);
 const isMounted = ref(false);
+const seatListWithRealSize = ref<Array<{ userInfo: SeatUserInfo; region: any }>>([]);
+// The distance of the horizontal video from the top and bottom edges.
+const topAndBottomMargin = 60;
+// The distance of the audio connect view from the right edge.
+const audioConnectRightPosition = 30;
+const audioConnectGap = 5;
+// The height ratio of the audio connect view in portrait container.
+const audioConnectHeightInPortraitContainerRatio = 156 / 1280;
+const isLandscapeVideoAndAudioConnect = computed(() => currentLive.value?.layoutTemplate >= 200 && currentLive.value?.layoutTemplate <= 399);
 const isAlignCenter = computed(() => {
+  if (isLandscapeVideoAndAudioConnect.value && isMobile) {
+    return false;
+  }
   if (!isInStreamMixerComp.value && isPortraitContainer.value && widthRatio.value < heightRatio.value && isMobile) {
     return false;
   }
   return true;
 });
-const isShowPlayerControl = computed(() => {
-  return currentLive.value?.liveId && !seatList.value.some(item => item.userInfo?.userId === loginUserInfo.value?.userId);
-});
+const isShowPlayerControl = computed(() => currentLive.value?.liveId && !seatList.value.some(item => item.userInfo?.userId === loginUserInfo.value?.userId));
 
 onMounted(async () => {
   isMounted.value = true;
@@ -127,6 +145,8 @@ const ratioLayoutList = computed(() => {
   if (!layoutList) {
     return [];
   }
+
+  handleLandscapeVideoLayoutForAudioConnect(layoutList);
   return layoutList.map((item: any) => ({
     userId: item.userId,
     x: item.x / layoutCanvas.width,
@@ -137,44 +157,97 @@ const ratioLayoutList = computed(() => {
   }));
 });
 
+function handleLandscapeVideoLayoutForAudioConnect(layoutList: any[]) {
+  if (!isLandscapeVideoAndAudioConnect.value) {
+    return;
+  }
+
+  if (layoutList.length - 1 <= 0) {
+    return;
+  }
+
+  const audioLayoutTemplate = [];
+  if (isMobile) {
+    audioLayoutTemplate.push({ x: 20, y: 460, w: 150, h: 150 });
+    audioLayoutTemplate.push({ x: 20, y: 300, w: 150, h: 150 });
+    audioLayoutTemplate.push({ x: 20, y: 140, w: 150, h: 150 });
+  } else {
+    audioLayoutTemplate.push({ x: 20, y: 510, w: 120, h: 120 });
+    audioLayoutTemplate.push({ x: 20, y: 380, w: 120, h: 120 });
+    audioLayoutTemplate.push({ x: 20, y: 250, w: 120, h: 120 });
+  }
+
+  for (let i = 1; i < layoutList.length && (i - 1) < audioLayoutTemplate.length; ++i) {
+    const layout = layoutList[i];
+    layout.w = audioLayoutTemplate[i - 1].w;
+    layout.h = audioLayoutTemplate[i - 1].h;
+    layout.x = audioLayoutTemplate[i - 1].x;
+    layout.y = audioLayoutTemplate[i - 1].y;
+  }
+}
+
 const streamViewSize = computed(() => ({
   width: Math.ceil(originStreamViewStyle.value.width * originStreamViewStyle.value.scale),
   height: Math.ceil(originStreamViewStyle.value.height * originStreamViewStyle.value.scale),
 }));
 
-const seatListWithRealSize = computed(() => seatList.value.map((item: SeatInfo, index: number) => {
-  const ratioLayout = ratioLayoutList.value[index];
-  const isPortraitAndFill = isPortraitContainer.value && fillMode.value === StreamFillMode.Fill;
-  const isSampleWithCanvas = seatList.value.length === 1 || (item.region?.w === canvas.value.width && item.region?.h === canvas.value.height);
-  if (!isInStreamMixerComp.value && isPortraitAndFill && isSampleWithCanvas) {
-    return {
-      userInfo: item.userInfo as SeatUserInfo,
-      region: {
-        position: 'absolute' as const,
-        left: '50%',
-        top: '50%',
-        width: `${liveCoreViewContainerSize.value.width}px`,
-        height: `${liveCoreViewContainerSize.value.height}px`,
-        transform: `translate(-50%, -50%)`,
-        zIndex: Number(ratioLayout.zOrder) || 0,
-      },
-    }
-  }
-  return {
-    userInfo: item.userInfo as SeatUserInfo,
+const handleLandscapeVideoForAudioConnectInPortraitContainer = (index: number): any => {
+  const layout = ratioLayoutList.value[index];
+  const seat = seatList.value[index];
+  const connectVideoHeight = liveCoreViewContainerSize.value.height * audioConnectHeightInPortraitContainerRatio;
+
+  seatListWithRealSize.value.push({
+    userInfo: seat.userInfo as SeatUserInfo,
     region: {
       position: 'absolute' as const,
-      left: `${Math.floor(streamViewSize.value.width * ratioLayout.x) - 1}px`,
-      top: `${Math.floor(streamViewSize.value.width * ratioLayout.y) - 1}px`,
-      width: `${Math.ceil(streamViewSize.value.width * ratioLayout.width) + 1}px`,
-      height:
+      right: `${audioConnectRightPosition}px`,
+      top: `${liveCoreViewContainerSize.value.height - topAndBottomMargin * 2 - index * (connectVideoHeight + audioConnectGap)}px`,
+      width: `${connectVideoHeight}px`,
+      height: `${connectVideoHeight}px`,
+      zIndex: Number(layout.zOrder) || 0,
+    },
+  });
+};
+
+watch(() => [seatList.value, streamViewSize.value, liveCoreViewContainerSize.value], () => {
+  seatListWithRealSize.value = [];
+  const isPortraitAndFill = isPortraitContainer.value && fillMode.value === StreamFillMode.Fill;
+  seatList.value.forEach((item: SeatInfo, index: number) => {
+    const ratioLayout = ratioLayoutList.value[index];
+    const isSampleWithCanvas = seatList.value.length === 1 || (item.region?.w === canvas.value.width && item.region?.h === canvas.value.height);
+    if (!isInStreamMixerComp.value && isPortraitAndFill && isSampleWithCanvas) {
+      seatListWithRealSize.value.push({
+        userInfo: item.userInfo as SeatUserInfo,
+        region: {
+          position: 'absolute' as const,
+          left: '50%',
+          top: '50%',
+          width: `${liveCoreViewContainerSize.value.width}px`,
+          height: `${liveCoreViewContainerSize.value.height}px`,
+          transform: 'translate(-50%, -50%)',
+          zIndex: Number(ratioLayout.zOrder) || 0,
+        },
+      });
+    } else if (isLandscapeVideoAndAudioConnect.value && isPortraitContainer.value && isMobile && item.region?.h === 0 && item.region?.w === 0) {
+      return handleLandscapeVideoForAudioConnectInPortraitContainer(index);
+    } else {
+      seatListWithRealSize.value.push({
+        userInfo: item.userInfo as SeatUserInfo,
+        region: {
+          position: 'absolute' as const,
+          left: `${Math.floor(streamViewSize.value.width * ratioLayout.x) - 1}px`,
+          top: `${Math.floor(streamViewSize.value.width * ratioLayout.y) - 1}px`,
+          width: `${Math.ceil(streamViewSize.value.width * ratioLayout.width) + 1}px`,
+          height:
             ratioLayout.height === -1
               ? `${Math.ceil(streamViewSize.value.height) + 1}px`
               : `${Math.ceil(streamViewSize.value.width * ratioLayout.height) + 1}px`,
-      zIndex: Number(ratioLayout.zOrder) || 0,
-    },
-  };
-}));
+          zIndex: Number(ratioLayout.zOrder) || 0,
+        },
+      });
+    }
+  });
+});
 
 const localStreamViewInfo = computed(() => seatListWithRealSize.value.find(item => item?.userInfo?.userId === loginUserInfo.value?.userId));
 
@@ -248,13 +321,25 @@ function handleStreamListTransform() {
   }
 }
 
-const streamViewStyle = computed(() => ({
-  width: `${Math.ceil(originStreamViewStyle.value.width * originStreamViewStyle.value.scale)}px`,
-  height: `${Math.ceil(originStreamViewStyle.value.height * originStreamViewStyle.value.scale)}px`,
-  transform: `translate(${originStreamViewStyle.value.transformX * originStreamViewStyle.value.scale}px, ${
-    originStreamViewStyle.value.transformY * originStreamViewStyle.value.scale
-  }px)`,
-}));
+const streamViewStyle = computed(() => {
+  if (isLandscapeVideoAndAudioConnect.value && isPortraitContainer.value) {
+    return {
+      top: `${topAndBottomMargin}px`,
+      width: `${Math.ceil(originStreamViewStyle.value.width * originStreamViewStyle.value.scale)}px`,
+      height: `${Math.ceil(originStreamViewStyle.value.height * originStreamViewStyle.value.scale)}px`,
+      transform: `translate(${originStreamViewStyle.value.transformX * originStreamViewStyle.value.scale}px, ${
+        originStreamViewStyle.value.transformY * originStreamViewStyle.value.scale
+      }px)`,
+    };
+  }
+  return {
+    width: `${Math.ceil(originStreamViewStyle.value.width * originStreamViewStyle.value.scale)}px`,
+    height: `${Math.ceil(originStreamViewStyle.value.height * originStreamViewStyle.value.scale)}px`,
+    transform: `translate(${originStreamViewStyle.value.transformX * originStreamViewStyle.value.scale}px, ${
+      originStreamViewStyle.value.transformY * originStreamViewStyle.value.scale
+    }px)`,
+  };
+});
 
 const aspectRatio = computed(() => {
   if (canvas.value.width && canvas.value.height) {
@@ -316,7 +401,7 @@ function handleStreamRegionSize() {
   const containerHeight = getContentSize(liveCoreViewContainerRef.value).height;
   let width = containerWidth;
   let height = containerHeight;
-  
+
   if (widthRatio.value && heightRatio.value) {
     const scaleWidth = containerWidth / widthRatio.value;
     const scaleHeight = containerHeight / heightRatio.value;
@@ -353,7 +438,7 @@ function handleStreamRegionSize() {
       }
     }
   }
-  
+
   originStreamViewStyle.value.width = width;
   originStreamViewStyle.value.height = height;
 }
@@ -377,6 +462,14 @@ const getContainerOrientation = () => {
   };
 };
 
+// The `region` property in the item uses SCSS styling and does not have a fixed format.
+const handleEmptySeatClick = (seatIndex: number, item: { userInfo: SeatUserInfo; region: object }) => {
+  if (item.userInfo && item.userInfo.userId) {
+    return;
+  }
+  emit('empty-seat-click', seatIndex);
+};
+
 const ro = new ResizeObserver(() => {
   getContainerOrientation();
   handleStreamRegionSize();
@@ -386,7 +479,7 @@ const ro = new ResizeObserver(() => {
 onMounted(() => {
   ro.observe(liveCoreViewContainerRef.value as Element);
   setGiftPlayerView({
-    view: SVGA_PLAYER_VIEW
+    view: SVGA_PLAYER_VIEW,
   });
   getContainerOrientation();
 });

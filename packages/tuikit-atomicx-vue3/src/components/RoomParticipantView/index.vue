@@ -39,5 +39,7 @@ defineProps<Props>();
   height: 100%;
   position: relative;
   overflow: hidden;
+  transform: translateZ(0);
+  will-change: transform;
 }
 </style>

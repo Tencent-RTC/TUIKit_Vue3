@@ -42,11 +42,15 @@
                   <span class="user-name">{{ user.userName || user.userId }}</span>
                 </div>
                 <div class="user-actions">
-                  <TUIButton @click="handleAcceptCoGuestRequest(user.userId)">
+                  <TUIButton
+                    :disabled="isProcessing[user.userId]"
+                    @click="handleAcceptCoGuestRequest(user.userId)"
+                  >
                     {{ t('Accept') }}
                   </TUIButton>
                   <TUIButton
                     color="red"
+                    :disabled="isProcessing[user.userId]"
                     @click="handleRejectCoGuestRequest(user.userId)"
                   >
                     {{
@@ -103,6 +107,7 @@
                 >
                   <TUIButton
                     color="gray"
+                    :disabled="isProcessing[user.userId]"
                     @click="handleDisconnect(user.userId)"
                   >
                     {{ t('Disconnect') }}
@@ -127,8 +132,8 @@
 import { ref } from 'vue';
 import { TUIButton, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useCoGuestState } from '../../states/CoGuestState';
-import { useLoginState } from '../../states/LoginState';
 import { useLiveSeatState } from '../../states/LiveSeatState';
+import { useLoginState } from '../../states/LoginState';
 import { Avatar } from '../Avatar';
 import { ERROR_MESSAGE } from './constants';
 
@@ -145,36 +150,47 @@ const {
 
 const { kickUserOutOfSeat } = useLiveSeatState();
 
+const isProcessing = ref<Record<string, boolean>>({});
+
 const activeTab = ref('applications');
 
 const handleAcceptCoGuestRequest = async (userId: string) => {
   try {
+    isProcessing.value[userId] = true;
     await acceptApplication({ userId });
   } catch (error: any) {
     const message = t(ERROR_MESSAGE[error.code as keyof typeof ERROR_MESSAGE] || 'Accept co-guest request failed');
     TUIToast.error({ message });
+  } finally {
+    isProcessing.value[userId] = false;
   }
 };
 
 const handleRejectCoGuestRequest = async (userId: string) => {
   try {
+    isProcessing.value[userId] = true;
     await rejectApplication({ userId });
   } catch (error) {
     console.error('[CoGuestPanel] handleRejectCoGuestRequest error', error);
     TUIToast.error({
       message: t('Reject co-guest request failed'),
     });
+  } finally {
+    isProcessing.value[userId] = false;
   }
 };
 
 const handleDisconnect = async (userId: string) => {
   try {
+    isProcessing.value[userId] = true;
     await kickUserOutOfSeat({ userId });
   } catch (error) {
     console.error('[CoGuestPanel] handleDisconnect error', error);
     TUIToast.error({
       message: t('Disconnect co-guest failed'),
     });
+  } finally {
+    isProcessing.value[userId] = false;
   }
 };
 </script>

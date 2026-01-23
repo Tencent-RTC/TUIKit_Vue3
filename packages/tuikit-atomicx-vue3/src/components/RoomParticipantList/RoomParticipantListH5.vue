@@ -63,6 +63,7 @@
         <TUIButton
           v-if="pendingParticipantList.length > 0"
           type="primary"
+          size="big"
           :style="{ minWidth: '80%' }"
           @click="handleCallAllPendingParticipant"
         >
@@ -91,6 +92,7 @@ import ParticipantActionH5 from './ParticipantActionH5.vue';
 import ParticipantItemH5 from './ParticipantItemH5.vue';
 import PendingParticipantItemH5 from './PendingParticipantItemH5.vue';
 import RoomActionH5 from './RoomActionH5.vue';
+import { useParticipantAction } from './useParticpantAction';
 import type { RoomParticipant } from '../../types';
 
 const { pendingParticipantList } = useRoomParticipantState();
@@ -161,10 +163,12 @@ const filteredParticipants = computed(() => {
 });
 
 const handleParticipantClick = (participant: RoomParticipant) => {
-  // Don't show popup for local participant
-  if (participant.userId === localParticipant.value?.userId) {
+  const { controlList } = useParticipantAction({ targetParticipant: participant });
+
+  if (controlList.value.length === 0) {
     return;
   }
+
   selectedParticipant.value = participant;
   showParticipantActionPopup.value = true;
 };
@@ -190,6 +194,7 @@ async function handleCallAllPendingParticipant() {
   min-width: 200px;
   display: flex;
   flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .search-container {
@@ -262,11 +267,13 @@ async function handleCallAllPendingParticipant() {
 }
 
 .participant-container, .unjoined-user-container {
-  flex: 1;
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 100%;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   padding: 10px 0;
 }
 

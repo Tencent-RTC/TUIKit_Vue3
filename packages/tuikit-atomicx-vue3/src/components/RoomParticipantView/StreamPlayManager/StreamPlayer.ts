@@ -1,4 +1,4 @@
-import { TRTCVideoFillMode, TRTCVideoMirrorType, TRTCVideoRotation } from '@tencentcloud/tuiroom-engine-js';
+import { TRTCVideoFillMode, TRTCVideoStreamType } from '@tencentcloud/tuiroom-engine-js';
 import { useRoomEngine } from '../../../hooks/useRoomEngine';
 import { useLoginState } from '../../../states/LoginState';
 import { TUIVideoStreamType, VideoStreamType, FillMode } from '../../../types';
@@ -143,7 +143,7 @@ export class StreamPlayer {
   }): Promise<void> {
     const { userId, streamType, renderParams } = options;
     const trtcCloud = roomEngine.instance?.getTRTCCloud();
-    const trtcStreamType = this.getPlayStreamType(streamType);
+    const trtcStreamType = this.getTRTCStreamType(streamType);
     const fillModeMap = {
       [FillMode.Fill]: TRTCVideoFillMode.TRTCVideoFillMode_Fill,
       [FillMode.Fit]: TRTCVideoFillMode.TRTCVideoFillMode_Fit,
@@ -152,14 +152,10 @@ export class StreamPlayer {
     try {
       if (userId === loginUserInfo.value?.userId) {
         await trtcCloud?.setLocalRenderParams({
-          mirrorType: TRTCVideoMirrorType.TRTCVideoMirrorType_Auto,
-          rotation: TRTCVideoRotation.TRTCVideoRotation0,
           fillMode,
         });
       } else {
         await trtcCloud?.setRemoteRenderParams(userId, trtcStreamType, {
-          mirrorType: TRTCVideoMirrorType.TRTCVideoMirrorType_Auto,
-          rotation: TRTCVideoRotation.TRTCVideoRotation0,
           fillMode,
         });
       }
@@ -177,6 +173,16 @@ export class StreamPlayer {
       return TUIVideoStreamType.kCameraStreamLow;
     }
     return TUIVideoStreamType.kCameraStream;
+  }
+
+  private getTRTCStreamType(streamType: VideoStreamType, videoQuality?: VideoStreamQuality): TRTCVideoStreamType {
+    if (streamType === VideoStreamType.Screen) {
+      return TRTCVideoStreamType.TRTCVideoStreamTypeSub;
+    }
+    if (videoQuality === VideoStreamQuality.LD) {
+      return TRTCVideoStreamType.TRTCVideoStreamTypeSmall;
+    }
+    return TRTCVideoStreamType.TRTCVideoStreamTypeBig;
   }
 }
 

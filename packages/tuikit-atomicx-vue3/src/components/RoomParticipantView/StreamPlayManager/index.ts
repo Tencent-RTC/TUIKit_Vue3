@@ -127,6 +127,39 @@ export class StreamPlayManager {
     }
   }
 
+  async updateView(options: {
+    userId: string;
+    streamType: VideoStreamType;
+    view: string | HTMLDivElement;
+    lazyLoad?: {
+      enable: boolean;
+      viewport?: string | HTMLDivElement;
+    };
+  }): Promise<void> {
+    const { userId, streamType, view, lazyLoad } = options;
+    const { enable: enableLazyLoad, viewport: lazyLoadViewport } = lazyLoad || { enable: true, viewport: null };
+    const viewElement = typeof view === 'string' ? document.getElementById(view) : view;
+    if (!viewElement) {
+      throw new Error('[StreamPlayManager] updateView failed: view not found');
+    }
+    if (enableLazyLoad) {
+      this.lazyLoadManager.initObserver({ root: lazyLoadViewport || null });
+      this.lazyLoadManager.observe({ userId, streamType, viewElement: viewElement as HTMLDivElement });
+    } else {
+      this.lazyLoadManager.unobserve(viewElement as HTMLDivElement);
+      this.streamInfoManager.setViewVisible({
+        userId,
+        streamType,
+        view: viewElement as HTMLDivElement,
+        isVisible: true,
+      });
+      const isPlaying = this.streamInfoManager.getStreamInfo(userId, streamType)?.isPlaying;
+      if (!isPlaying) {
+        await this.startPlayVideo({ userId, streamType });
+      }
+    }
+  }
+
   /**
    * 解绑视频流的指定视图
    * @param options 解绑选项
@@ -416,13 +449,6 @@ export class StreamPlayManager {
     };
   }): Promise<void> {
     const { userId, streamType, renderParams } = options;
-    const streamInfo = this.streamInfoManager.getStreamInfo(userId, streamType);
-    if (!streamInfo) {
-      return;
-    }
-    if (renderParams && renderParams.fillMode) {
-      this.streamInfoManager.updateStreamInfo({ userId, streamType, updates: { fillMode: renderParams.fillMode } });
-    }
     try {
       await this.streamPlayer.setRenderParams({
         userId,
@@ -496,6 +522,7 @@ export function useStreamPlayManager() {
   return {
     bindView: streamPlayManager?.bindView.bind(streamPlayManager),
     unbindView: streamPlayManager?.unbindView.bind(streamPlayManager),
+    updateView: streamPlayManager?.updateView.bind(streamPlayManager),
     setStreamConfig: streamPlayManager?.setStreamConfig.bind(streamPlayManager),
   };
 }

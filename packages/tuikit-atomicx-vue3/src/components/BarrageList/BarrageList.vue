@@ -196,7 +196,7 @@ onMounted(() => {
     scrollContainer.value.addEventListener('scroll', handleScroll);
   }
   initializeMessageList();
-  
+
   // Subscribe to gift message event
   subscribeEvent(LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE, handleGiftMessage);
 });
@@ -205,7 +205,7 @@ onUnmounted(() => {
   if (scrollContainer.value) {
     scrollContainer.value.removeEventListener('scroll', handleScroll);
   }
-  
+
   // Unsubscribe from gift message event
   unsubscribeEvent(LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE, handleGiftMessage);
 });
@@ -276,7 +276,28 @@ onUnmounted(() => {
   flex: 1;
   height: 100%;
   padding: 10px;
-  @include scrollbar.scrollbar-thin();
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--uikit-color-gray-3);
+    border-radius: 3px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+
+    &:hover {
+      background: var(--uikit-color-gray-3);
+    }
+  }
 }
 
 .message-chunk--container {

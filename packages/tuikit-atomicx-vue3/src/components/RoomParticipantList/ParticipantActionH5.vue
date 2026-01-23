@@ -1,36 +1,38 @@
 <template>
-  <Popup
+  <TUIPopup
     :visible="visible"
-    :title="title"
-    placement="bottom"
     @update:visible="handleUpdateVisible"
   >
-    <template #sidebarContent>
-      <div class="participant-action-h5">
-        <div
-          v-for="item in controlList"
-          :key="item.key"
-          class="action-item"
-          :style="item?.style || {}"
-          @click="handleActionClick(item.handler)"
-        >
-          <TUIIcon
-            v-if="item?.icon"
-            :icon="item?.icon"
-            size="20"
-            class="action-icon"
-          />
-          <span class="action-text">{{ item.label }}</span>
-        </div>
+    <PopUpArrowDown @click="handleUpdateVisible(false)" />
+    <div class="participant-action-h5">
+      <div class="participant-action-h5-header">
+        <Avatar :src="participant?.avatarUrl" />
+        <span class="participant-action-h5-header-title">{{ title }}</span>
       </div>
-    </template>
-  </Popup>
+      <div
+        v-for="item in controlList"
+        :key="item.key"
+        class="action-item"
+        :style="item?.style || {}"
+        @click="handleActionClick(item.handler)"
+      >
+        <TUIIcon
+          v-if="item?.icon"
+          :icon="item?.icon"
+          size="20"
+          class="action-icon"
+        />
+        <span class="action-text">{{ item.label }}</span>
+      </div>
+    </div>
+  </TUIPopup>
 </template>
 
 <script setup lang="ts">
-import { computed, defineOptions } from 'vue';
-import { useUIKit, TUIIcon } from '@tencentcloud/uikit-base-component-vue3';
-import Popup from './Popup.vue';
+import { computed } from 'vue';
+import { useUIKit, TUIIcon, TUIPopup } from '@tencentcloud/uikit-base-component-vue3';
+import Avatar from '../Avatar/Avatar.vue';
+import PopUpArrowDown from './PopUpArrowDown.vue';
 import { useParticipantAction } from './useParticpantAction';
 import type { RoomParticipant } from '../../types/participant';
 
@@ -82,7 +84,23 @@ const handleActionClick = (handler: () => void) => {
   display: flex;
   flex-direction: column;
   padding: 12px 20px;
-  gap: 12px;
+  -webkit-tap-highlight-color: transparent;
+
+  .participant-action-h5-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+
+    .participant-action-h5-header-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+  }
 }
 
 .action-item {
@@ -95,7 +113,7 @@ const handleActionClick = (handler: () => void) => {
   font-size: 16px;
   font-weight: 400;
   border-bottom: 1px solid var(--stroke-color-secondary);
-  padding: 6px;
+  padding: 16px 0;
 
   &:active {
     background: var(--list-color-hover);

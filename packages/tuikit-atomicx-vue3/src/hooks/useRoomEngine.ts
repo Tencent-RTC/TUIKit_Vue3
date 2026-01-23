@@ -16,7 +16,7 @@ TUIRoomEngine.once('ready', () => {
       },
     }),
   );
-  roomEngine.instance = new TUIRoomEngine({ isSharedInstance: true });
+  roomEngine.instance = TUIRoomEngine.getInstance();
   deviceManager.instance = roomEngine.instance?.getMediaDeviceManager();
 });
 

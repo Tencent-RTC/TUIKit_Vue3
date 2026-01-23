@@ -22,7 +22,7 @@ import { getNanoId } from '../../utils/utils';
 import { useStreamPlayManager } from './StreamPlayManager';
 import type { RoomParticipant, VideoStreamType } from '../../types';
 
-const { bindView, unbindView, setStreamConfig } = useStreamPlayManager();
+const { bindView, unbindView, updateView, setStreamConfig } = useStreamPlayManager();
 
 interface Props {
   participant: RoomParticipant;
@@ -79,19 +79,35 @@ watch(
         view: playRegionDomRef.value,
         lazyLoad: props.lazyLoad,
       });
+      await setStreamConfig({
+        userId: props.participant.userId,
+        streamType: props.streamType,
+        renderParams: {
+          fillMode: props.fillMode,
+        },
+      });
     }
   },
 );
 
+watch(() => props.lazyLoad, async () => {
+  await updateView({
+    userId: props.participant.userId,
+    streamType: props.streamType,
+    view: playRegionDomRef.value,
+    lazyLoad: props.lazyLoad,
+  });
+}, { deep: true });
+
 watch(() => props.fillMode, async () => {
-  setStreamConfig({
+  await setStreamConfig({
     userId: props.participant.userId,
     streamType: props.streamType,
     renderParams: {
       fillMode: props.fillMode,
     },
   });
-});
+}, { immediate: true });
 
 onMounted(async () => {
   if (!playRegionDomRef.value) {

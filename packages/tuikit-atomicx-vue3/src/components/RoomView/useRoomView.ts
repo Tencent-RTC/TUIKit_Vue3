@@ -27,7 +27,7 @@ export function useRoomView() {
     createComparator((userInfo: RoomParticipant) => Boolean(userInfo.microphoneStatus === DeviceStatus.On)),
   );
 
-  const participantCameraList = computed(
+  const sortedParticipantCameraList = computed(
     () => participantList.value.sort(defaultUserListCompareFunction).map(participant => ({ participant, streamType: VideoStreamType.Camera })),
   );
 
@@ -36,13 +36,13 @@ export function useRoomView() {
     if (participantWithScreen.value) {
       result.push({ participant: participantWithScreen.value, streamType: VideoStreamType.Screen });
     }
-    result.push(...participantCameraList.value);
+    result.push(...sortedParticipantCameraList.value);
     return result;
   });
 
   return {
     layoutTemplate,
-    participantCameraList,
+    sortedParticipantCameraList,
     participantStreamList,
   };
 }

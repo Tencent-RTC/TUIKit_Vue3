@@ -1,10 +1,11 @@
 import type { Ref } from 'vue';
 import { computed, ref, watch } from 'vue';
-import { TUIVideoQuality } from '@tencentcloud/tuiroom-engine-js';
+import { TRTCCloud, TUIVideoQuality } from '@tencentcloud/tuiroom-engine-js';
 import { TUIMessageBox, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import useRoomEngine from '../../../hooks/useRoomEngine';
 import { useLiveListState } from '../../../states/LiveListState';
 import { useLiveSeatState } from '../../../states/LiveSeatState';
+import { useLoginState } from '../../../states/LoginState';
 import {
   getDeviceType,
   shouldRotateToLandscapeForFullscreen,
@@ -118,6 +119,33 @@ const currentResolution = ref<Resolution | undefined>();
 
 const roomEngine = useRoomEngine();
 const { t } = useUIKit();
+const { loginUserInfo } = useLoginState();
+const { seatList } = useLiveSeatState();
+
+// Cloud control configuration for webrtc media control
+let enableWebrtcMediaControl = false;
+
+// Setup webrtc video event listeners for picture-in-picture state changes
+const setupWebrtcVideoEventListeners = (): void => {
+  const handleOnPictureInPictureStateChanged = (event: { isPictureInPicture: boolean }) => {
+    isPictureInPicture.value = event.isPictureInPicture;
+  };
+  roomEngine.instance?.getTRTCCloud()?.on('onPictureInPictureStateChanged', handleOnPictureInPictureStateChanged);
+};
+
+// Fetch cloud control configuration after login
+let webrtcListenersSetup = false;
+watch(loginUserInfo, (userInfo) => {
+  if (userInfo) {
+    enableWebrtcMediaControl = Boolean(roomEngine.instance?.getTIM()?.callExperimentalAPI('getServerConfig', 'enable_webrtc_media_control'));
+    if (!webrtcListenersSetup) {
+      setupWebrtcVideoEventListeners();
+      webrtcListenersSetup = true;
+    }
+  }
+}, { immediate: true });
+
+const isLocalUserOnSeat = computed(() => seatList.value.some(seat => seat.userInfo?.userId === loginUserInfo.value?.userId));
 
 /**
  * Player control state management hook
@@ -273,6 +301,18 @@ export function usePlayerControlState(): PlayerControlState {
    * Picture-in-picture control methods
    */
   const requestPictureInPicture = async (): Promise<boolean> => withErrorHandling(async () => {
+    console.log(`requestPictureInPicture: enableWebrtcMediaControl: [${enableWebrtcMediaControl}] isTCPlayer: [${isTcPlayer.value}].`);
+    if (enableWebrtcMediaControl && !isTcPlayer.value) {
+      const subClouds: TRTCCloud[]= Array.from(TRTCCloud.subCloudMap.values());
+      for (const subCloud of subClouds) {
+        subCloud.callExperimentalAPI(JSON.stringify({
+          api: 'requestPictureInPicture',
+          params: {},
+        }));
+      }
+      return true;
+    }
+
     const video = DOMElementGetter.getVideoElement();
     if (!video) {
       throw new Error('Video element not found');
@@ -288,6 +328,18 @@ export function usePlayerControlState(): PlayerControlState {
   }, 'Request picture-in-picture', false);
 
   const exitPictureInPicture = async (): Promise<boolean> => withErrorHandling(async () => {
+    console.log(`exitPictureInPicture: enableWebrtcMediaControl: [${enableWebrtcMediaControl}] isTCPlayer: [${isTcPlayer.value}].`);
+    if (enableWebrtcMediaControl && !isTcPlayer.value) {
+      const subClouds: TRTCCloud[]= Array.from(TRTCCloud.subCloudMap.values());
+      for (const subCloud of subClouds) {
+        subCloud.callExperimentalAPI(JSON.stringify({
+          api: 'exitPictureInPicture',
+          params: {},
+        }));
+      }
+      return true;
+    }
+
     if (!document.exitPictureInPicture) {
       throw new Error('Exit picture-in-picture not supported in current environment');
     }
@@ -528,6 +580,18 @@ export function usePlayerControlState(): PlayerControlState {
       updateIsTcPlayer();
     }
   }, { immediate: true });
+
+  // Reset playback state when local user takes seat
+  watch(isLocalUserOnSeat, (isOnSeat) => {
+    if (isOnSeat) {
+      if (!isPlaying.value) {
+        resume();
+      }
+      if (currentVolume.value !== VOLUME_CONSTANTS.DEFAULT_VOLUME) {
+        setVolume(VOLUME_CONSTANTS.DEFAULT_VOLUME);
+      }
+    }
+  });
 
   // Return interface implementation
   return {

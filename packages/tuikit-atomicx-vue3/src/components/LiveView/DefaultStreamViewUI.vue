@@ -1,37 +1,54 @@
 <template>
   <div class="stream-cover">
     <template v-if="userInfo.userId">
-      <div class="no-video-container" v-if="!isVideoAvailable">
-        <canvas v-if="needCanvasMaskList.length > 0" ref="canvasRef" class="canvas-mask" />
-        <div v-else class="mask"></div>
-        <Avatar class="avatar" :size="avatarSize" :src="userInfo.avatarUrl" :alt="displayName" />
+      <div v-if="!isVideoAvailable" class="no-video-container">
+        <canvas
+          v-if="needCanvasMaskList.length > 0"
+          ref="canvasRef"
+          class="canvas-mask"
+        />
+        <div v-else class="mask" />
+        <Avatar
+          class="avatar"
+          :size="avatarSize"
+          :src="userInfo.avatarUrl"
+        />
       </div>
-      <div class="user-details" v-if="seatListWithUser.length > 1">
+      <div v-if="seatListWithUser.length > 1" class="user-details">
         <AudioIcon
-          v-if="!isAudioAvailable"
+          v-if="shouldShowMutedAudioIcon"
           class="audio-icon"
-          :isMuted="!isAudioAvailable"
+          :isMuted="true"
           :audioVolume="speakingUsers.get(userInfo.userId) || 0"
         />
-        <div class="username">{{ displayName }}</div>
+        <div class="username">
+          {{ displayName }}
+        </div>
       </div>
     </template>
-    <div v-if="!userInfo.userId" class="empty-position">
-      <span class="text" :title="t('LiveView.WaitingForConnection')" v-if="connected.some(item => item.userId === loginUserInfo?.userId)">{{ t('LiveView.WaitingForConnection') }}</span>
-      <span class="text" :title="t('LiveView.WaitingForConnection')" v-else>{{ t('LiveView.WaitingForConnection') }}</span>
+    <div
+      v-if="!userInfo.userId"
+      class="empty-position"
+      :class="{ 'clickable': !isAnchor }"
+    >
+      <span
+        class="text"
+        :title="t('LiveView.WaitingForConnection')"
+      >{{ t('LiveView.WaitingForConnection') }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick, onUnmounted } from 'vue';
-import { DeviceStatus, SeatUserInfo } from '../../types';
-import { useCoGuestState } from '../../states/CoGuestState';
-import { Avatar } from '../Avatar';
+import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import AudioIcon from '../../baseComp/AudioIcon.vue';
+import { useLiveListState } from '../../states/LiveListState';
 import { useLiveSeatState } from '../../states/LiveSeatState';
 import { useLoginState } from '../../states/LoginState';
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { DeviceStatus } from '../../types';
+import { Avatar } from '../Avatar';
+import type { SeatUserInfo } from '../../types';
 
 interface Props {
   userInfo: SeatUserInfo;
@@ -41,7 +58,7 @@ interface Props {
     width: string;
     height: string;
     zIndex: number;
-  }}>;
+  }; }>;
 }
 
 const props = defineProps<Props>();
@@ -50,16 +67,18 @@ const { t } = useUIKit();
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 
 const { loginUserInfo } = useLoginState();
-const { connected } = useCoGuestState();
 const { speakingUsers, seatList } = useLiveSeatState();
+const { currentLive } = useLiveListState();
 
-const seatListWithUser = computed(() => {
-  return seatList.value.filter(item => item.userInfo && item.userInfo.userId !== '');
-});
+const isAnchor = computed(() => loginUserInfo.value?.userId === currentLive.value?.liveOwner.userId);
+
+const seatListWithUser = computed(() => seatList.value.filter(item => item.userInfo && item.userInfo.userId !== ''));
 
 const currentStreamViewSize = computed(() => {
   const currentStreamViewInfo = props.streamViewInfoList.find(item => item.userInfo?.userId === props.userInfo?.userId);
-  if (!currentStreamViewInfo) return { width: 0, height: 0 };
+  if (!currentStreamViewInfo) {
+    return { width: 0, height: 0 };
+  }
   return {
     width: parseInt(currentStreamViewInfo?.region.width),
     height: parseInt(currentStreamViewInfo?.region.height),
@@ -77,28 +96,32 @@ const avatarSize = computed(() => {
 
 const needCanvasMaskList = computed(() => {
   const currentStreamViewInfo = props.streamViewInfoList.find(item => item.userInfo?.userId === props.userInfo?.userId);
-  if (!currentStreamViewInfo) return [];
-  return props.streamViewInfoList.filter(item => {
+  if (!currentStreamViewInfo) {
+    return [];
+  }
+  return props.streamViewInfoList.filter((item) => {
     const isHigher = item.region.zIndex > currentStreamViewInfo?.region.zIndex;
     const isHorizontalOverlap = parseInt(item.region.left) > parseInt(currentStreamViewInfo?.region.left) && parseInt(item.region.left) < parseInt(currentStreamViewInfo?.region.left) + parseInt(currentStreamViewInfo?.region.width);
     const isVerticalOverlap = parseInt(item.region.top) > parseInt(currentStreamViewInfo?.region.top) && parseInt(item.region.top) < parseInt(currentStreamViewInfo?.region.top) + parseInt(currentStreamViewInfo?.region.height);
     return isHigher && isHorizontalOverlap && isVerticalOverlap;
-  }).map(item => {
-    return {
-      left: parseInt(item.region.left) - parseInt(currentStreamViewInfo?.region.left),
-      top: parseInt(item.region.top) - parseInt(currentStreamViewInfo?.region.top),
-      width: parseInt(item.region.width),
-      height: parseInt(item.region.height),
-    }
-  })
+  }).map(item => ({
+    left: parseInt(item.region.left) - parseInt(currentStreamViewInfo?.region.left),
+    top: parseInt(item.region.top) - parseInt(currentStreamViewInfo?.region.top),
+    width: parseInt(item.region.width),
+    height: parseInt(item.region.height),
+  }));
 });
 
 const drawCanvas = () => {
-  if (!canvasRef.value) return;
+  if (!canvasRef.value) {
+    return;
+  }
 
   const canvas = canvasRef.value;
   const ctx = canvas.getContext('2d');
-  if (!ctx) return;
+  if (!ctx) {
+    return;
+  }
 
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width;
@@ -107,7 +130,7 @@ const drawCanvas = () => {
   ctx.fillStyle = '#1F2024';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  needCanvasMaskList.value.forEach(item => {
+  needCanvasMaskList.value.forEach((item) => {
     ctx.clearRect(item.left, item.top, item.width, item.height);
   });
 };
@@ -124,10 +147,8 @@ watch(() => needCanvasMaskList.value.length, async () => {
       });
       resizeObserver.observe(canvasRef.value);
     }
-  } else {
-    if (resizeObserver && canvasRef.value) {
-      resizeObserver.unobserve(canvasRef.value);
-    }
+  } else if (resizeObserver && canvasRef.value) {
+    resizeObserver.unobserve(canvasRef.value);
   }
 }, { immediate: true });
 
@@ -137,16 +158,17 @@ onUnmounted(() => {
   }
 });
 
-const displayName = computed(() => {
-  return props.userInfo?.userName || props.userInfo?.userId;
-});
+const displayName = computed(() => props.userInfo?.userName || props.userInfo?.userId);
 
-const isAudioAvailable = computed(() => {
-  return props.userInfo?.microphoneStatus === DeviceStatus.On;
-});
+const isAudioAvailable = computed(() => props.userInfo?.microphoneStatus === DeviceStatus.On);
 
-const isVideoAvailable = computed(() => {
-  return props.userInfo?.cameraStatus === DeviceStatus.On;
+const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceStatus.On);
+
+const shouldShowMutedAudioIcon = computed(() => {
+  if (isAudioAvailable.value) {
+    return false;
+  }
+  return isVideoAvailable.value;
 });
 </script>
 
@@ -164,6 +186,7 @@ const isVideoAvailable = computed(() => {
   left: 0;
   pointer-events: none;
   box-sizing: border-box;
+  border: 1px solid var(--bg-color-topbar);
 
   .no-video-container {
     display: flex;
@@ -229,6 +252,10 @@ const isVideoAvailable = computed(() => {
     font-weight: bold;
     pointer-events: auto;
 
+    &.clickable {
+      cursor: pointer;
+    }
+
     .number {
       font-size: 18px;
       margin-bottom: 10px;
@@ -240,6 +267,8 @@ const isVideoAvailable = computed(() => {
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
+      color: var(--text-color-primary);
+      font-weight: 400;
     }
   }
 }

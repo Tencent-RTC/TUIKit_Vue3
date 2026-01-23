@@ -111,6 +111,7 @@ async function handleInvite({ userId }: { userId: string }) {
   color: var(--text-color-secondary);
   transition: background .2s ease;
   height: 50px;
+  -webkit-tap-highlight-color: transparent;
 
   &:active {
     background: var(--list-color-hover);

@@ -66,6 +66,12 @@ $message-bubble-border-radius: 8px;
 .message-bubble {
   border-radius: $message-bubble-border-radius;
   overflow: hidden;
+  // Prevent system context menu and text selection on long press
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  // Disable tap highlight on mobile webkit browsers
+  -webkit-tap-highlight-color: transparent;
 
   &.all-round-radius {
     border-radius: $message-bubble-border-radius;
