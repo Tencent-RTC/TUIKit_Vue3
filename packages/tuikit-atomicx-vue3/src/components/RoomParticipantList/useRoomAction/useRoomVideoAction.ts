@@ -25,7 +25,7 @@ export default function useRoomVideoAction(): {
       content: currentRoom.value?.isAllCameraDisabled
         ? t('ParticipantList.EnableAllVideoDesc')
         : t('ParticipantList.CameraDisabledTip'),
-      confirmText: t('ParticipantList.Confirm'),
+      confirmText: currentRoom.value?.isAllCameraDisabled ? t('ParticipantList.ConfirmUnlock') : t('ParticipantList.DisableAllVideo'),
       cancelText: t('ParticipantList.Cancel'),
       callback: async (action) => {
         if (action === 'confirm') {

@@ -44,7 +44,7 @@ export function transformTextWithEmojiNameToKey(text: string) {
           = Object.fromEntries(Object.entries(lngResource.translation.Emoji).map(([key, value]) => [value, key]));
       }
     }
-    transformResult = text.replace(reg, match => emojiTranslationMap[currentLanguage]?.match ?? match);
+    transformResult = text.replace(reg, match => emojiTranslationMap[currentLanguage]?.[match] ?? match);
   }
   return transformResult;
 }

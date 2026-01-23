@@ -17,6 +17,7 @@ import {
 } from '../../components/ConversationList';
 import {
   MessageInput as MessageInputComponent,
+  MessageInputH5 as MessageInputH5Component,
   EmojiPicker as EmojiPickerComponent,
   AttachmentPicker as AttachmentPickerComponent,
   FilePicker as FilePickerComponent,
@@ -39,14 +40,14 @@ import {
   SearchResults as SearchResultsComponent,
 } from '../../components/Search';
 import { useMessageActions as useMessageActionsHook } from '../../hooks/useMessageActions';
+import { useC2CSettingState as c2cSettingState } from '../../states/C2CSettingState';
+import { useContactListState as contactListState } from '../../states/ContactListState';
 import { useConversationListState as conversationListState } from '../../states/ConversationListState';
+import { useGroupSettingState as groupSettingState } from '../../states/GroupSettingState';
 import { useMessageActionState as messageActionState } from '../../states/MessageActionState';
 import { useMessageInputState as messageInputState } from '../../states/MessageInputState';
 import { useMessageListState as messageListState } from '../../states/MessageListState';
 import { useSearchState as searchState } from '../../states/SearchState';
-import { useContactListState as contactListState } from '../../states/ContactListState';
-import { useC2CSettingState as c2cSettingState } from '../../states/C2CSettingState';
-import { useGroupSettingState as groupSettingState } from '../../states/GroupSettingState';
 import ChatLoginServer from './server';
 
 ChatLoginServer.getInstance().init();
@@ -73,6 +74,7 @@ const ContactInfo = ContactInfoComponent;
 const MessageList = MessageListComponent;
 const Message = MessageComponent;
 const MessageInput = MessageInputComponent;
+const MessageInputH5 = MessageInputH5Component;
 const EmojiPicker = EmojiPickerComponent;
 const AttachmentPicker = AttachmentPickerComponent;
 const FilePicker = FilePickerComponent;
@@ -115,6 +117,7 @@ export {
   MessageList,
   Message,
   MessageInput,
+  MessageInputH5,
   EmojiPicker,
   AttachmentPicker,
   FilePicker,

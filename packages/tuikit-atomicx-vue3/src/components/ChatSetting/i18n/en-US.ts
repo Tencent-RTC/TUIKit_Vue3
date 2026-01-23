@@ -12,6 +12,8 @@ const ChatSetting = {
   remark: 'Remark',
   remark_placeholder: 'No remark set',
   remark_update_success: 'Remark updated successfully',
+  remark_update_failed: 'Failed to update remark',
+  you_are_not_friend: 'You are not friend',
   pin_conversation: 'Pin Conversation',
   mute_conversation: 'Mute Conversation',
   copied: 'Copied',

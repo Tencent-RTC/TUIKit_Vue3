@@ -15,6 +15,7 @@ const {
   remark,
   isMuted,
   isPinned,
+  isContact,
   setChatPinned,
   setChatMuted,
   setUserRemark,
@@ -29,9 +30,14 @@ function handleMutedChange(value: boolean) {
 }
 
 function handleRemarkConfirm(value: string) {
-  setUserRemark(value);
-  TUIToast.success({
-    message: t('ChatSetting.remark_update_success'),
+  setUserRemark(value).then(() => {
+    TUIToast.success({
+      message: t('ChatSetting.remark_update_success'),
+    });
+  }).catch((err) => {
+    TUIToast.error({
+      message: err.code === 2700 ? t('ChatSetting.you_are_not_friend') : t('ChatSetting.remark_update_failed'),
+    });
   });
 }
 
@@ -95,7 +101,7 @@ function handleCopyUserID() {
     </div>
 
     <!-- Remark Section -->
-    <div class="c2c-chat-setting__remark-section">
+    <div v-if="isContact" class="c2c-chat-setting__remark-section">
       <SettingItem
         type="input"
         :label="t('ChatSetting.remark')"

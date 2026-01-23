@@ -17,6 +17,15 @@
         <slot name="participantViewUI" v-bind="{ participant, streamType }" />
       </template>
     </SpeakerLayout>
+    <MobileLayout
+      v-if="layoutTemplate === RoomLayoutTemplate.MobileLayout"
+      :layout-template="layoutTemplate"
+      @stream-double-click="handleStreamDoubleClick"
+    >
+      <template #participantViewUI="{ participant, streamType }">
+        <slot name="participantViewUI" v-bind="{ participant, streamType }" />
+      </template>
+    </MobileLayout>
   </div>
 </template>
 
@@ -24,6 +33,7 @@
 import { ref, provide } from 'vue';
 import { RoomLayoutTemplate } from '../../types';
 import GridLayout from './GridLayout.vue';
+import MobileLayout from './MobileLayout.vue';
 import SpeakerLayout from './SpeakerLayout.vue';
 import { useRoomToolbar } from './useRoomToolbar';
 import type { RoomParticipant, VideoStreamType } from '../../types';

@@ -12,6 +12,8 @@ const ChatSetting = {
   remark: '备注',
   remark_placeholder: '未设置备注',
   remark_update_success: '备注修改成功',
+  remark_update_failed: '备注修改失败',
+  you_are_not_friend: '对方和您未成为好友',
   pin_conversation: '会话置顶',
   mute_conversation: '会话免打扰',
   copied: '已复制',

@@ -14,6 +14,13 @@ export interface StreamItemDimensionsOptions {
   gap?: number;
   // Aspect ratio (width / height)
   aspectRatio?: number;
+  // Additional padding to subtract from container (in pixels)
+  padding?: {
+    left?: number;
+    right?: number;
+    top?: number;
+    bottom?: number;
+  };
   // Watch dependencies that trigger recalculation
   watchDependencies?: Array<Ref<unknown> | (() => unknown)>;
 }
@@ -36,6 +43,7 @@ export function useStreamItemDimensions(options: StreamItemDimensionsOptions) {
     itemCount,
     gap = 0,
     aspectRatio = 16 / 9,
+    padding = {},
     watchDependencies = [],
   } = options;
 
@@ -72,9 +80,15 @@ export function useStreamItemDimensions(options: StreamItemDimensionsOptions) {
     const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
     const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
 
-    // Calculate available space (subtract padding from total dimensions)
-    const availableWidth = totalWidth - paddingLeft - paddingRight;
-    const availableHeight = totalHeight - paddingTop - paddingBottom;
+    // Additional padding from configuration
+    const extraPaddingLeft = padding.left || 0;
+    const extraPaddingRight = padding.right || 0;
+    const extraPaddingTop = padding.top || 0;
+    const extraPaddingBottom = padding.bottom || 0;
+
+    // Calculate available space (subtract both computed and configured padding from total dimensions)
+    const availableWidth = totalWidth - paddingLeft - paddingRight - extraPaddingLeft - extraPaddingRight;
+    const availableHeight = totalHeight - paddingTop - paddingBottom - extraPaddingTop - extraPaddingBottom;
 
     // Calculate item dimensions maintaining aspect ratio
     // Available space per item (considering gaps)

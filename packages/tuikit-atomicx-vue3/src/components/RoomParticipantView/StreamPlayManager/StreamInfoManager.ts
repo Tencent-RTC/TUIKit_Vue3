@@ -92,11 +92,12 @@ export class StreamInfoManager {
   }): StreamInfo | null {
     const { userId, streamType, updates } = options;
     const streamKey = this.getStreamKey(userId, streamType);
-    const streamInfo = this.streamInfoMap.get(streamKey);
-
-    if (!streamInfo) {
-      return null;
-    }
+    const streamInfo = this.streamInfoMap.get(streamKey) || {
+      views: new Map(),
+      isPlaying: false,
+      videoQuality: VideoStreamQuality.LD,
+      fillMode: FillMode.Fit,
+    };
 
     Object.assign(streamInfo, updates);
     this.streamInfoMap.set(streamKey, streamInfo);

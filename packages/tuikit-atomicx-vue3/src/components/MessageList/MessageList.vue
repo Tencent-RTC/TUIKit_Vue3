@@ -304,6 +304,10 @@ onUnmounted(() => {
     scrollContainer.value.removeEventListener('scroll', handleScroll);
   }
 });
+
+defineExpose({
+  scrollToBottom,
+});
 </script>
 
 <template>

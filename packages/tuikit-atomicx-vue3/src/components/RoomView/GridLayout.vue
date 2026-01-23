@@ -15,7 +15,7 @@
         class="participant-view"
         :participant="streamInfo.participant"
         :stream-type="streamInfo.streamType"
-        :fill-mode="FillMode.Fill"
+        :fill-mode="FillMode.Fit"
         @dblclick="handleStreamViewDblclick(streamInfo)"
       >
         <template #participantViewUI>
@@ -58,7 +58,7 @@ const emit = defineEmits(['stream-double-click']);
 const showToolbar = inject<Ref<boolean>>('showToolbar');
 
 const { participantWithScreen } = useRoomParticipantState();
-const { participantCameraList } = useRoomView();
+const { sortedParticipantCameraList } = useRoomView();
 
 const maxColumn = 3;
 const maxRow = 3;
@@ -74,8 +74,8 @@ const gridStreamInfoList = computed(() => {
   if (participantWithScreen.value) {
     result.push({ participant: participantWithScreen.value, streamType: VideoStreamType.Screen });
   }
-  if (participantCameraList.value.length > 0) {
-    result.push(...participantCameraList.value);
+  if (sortedParticipantCameraList.value.length > 0) {
+    result.push(...sortedParticipantCameraList.value);
   }
   return result;
 });

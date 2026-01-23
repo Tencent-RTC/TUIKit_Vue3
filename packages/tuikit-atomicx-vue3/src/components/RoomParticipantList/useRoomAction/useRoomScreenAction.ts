@@ -5,7 +5,7 @@ import { useRoomParticipantState } from '../../../states/RoomParticipantState';
 import { useRoomState } from '../../../states/RoomState';
 import { DeviceType, RoomParticipantRole } from '../../../types';
 
-const { participantWithScreen, disableAllDevices, closeParticipantDevice } = useRoomParticipantState();
+const { participantWithScreen, disableAllDevices } = useRoomParticipantState();
 const { currentRoom } = useRoomState();
 
 export default function useRoomScreenAction(): {
@@ -25,29 +25,25 @@ export default function useRoomScreenAction(): {
 
   function toggleRoomScreen() {
     stateForScreenShare = !currentRoom.value?.isAllScreenShareDisabled;
-    if (!participantWithScreen.value || participantWithScreen.value.role === RoomParticipantRole.GeneralUser) {
-      toggleAllScreenShare();
+    if (participantWithScreen.value && participantWithScreen.value.role === RoomParticipantRole.GeneralUser) {
+      TUIMessageBox.confirm({
+        title: t(
+          'ParticipantList.ConfirmHostAdminOnlyShare',
+        ),
+        content: t(
+          'ParticipantList.TerminateOtherShare',
+        ),
+        confirmText: t('ParticipantList.Confirm'),
+        cancelText: t('ParticipantList.Cancel'),
+        callback: async (action) => {
+          if (action === 'confirm') {
+            toggleAllScreenShare();
+          }
+        },
+      });
       return;
     }
-    TUIMessageBox.confirm({
-      title: t(
-        'ParticipantList.ConfirmHostAdminOnlyShare',
-      ),
-      content: t(
-        'ParticipantList.TerminateOtherShare',
-      ),
-      confirmText: t('ParticipantList.Confirm'),
-      cancelText: t('ParticipantList.Cancel'),
-      callback: async (action) => {
-        if (action === 'confirm') {
-          await closeParticipantDevice({
-            userId: participantWithScreen.value?.userId as string,
-            deviceType: DeviceType.ScreenShare,
-          });
-          toggleAllScreenShare();
-        }
-      },
-    });
+    toggleAllScreenShare();
   }
 
   const roomScreenAction = reactive({

@@ -26,7 +26,7 @@ export default function useRoomAudioAction(): {
       content: currentRoom.value?.isAllMicrophoneDisabled
         ? t('ParticipantList.UnmuteAllDesc')
         : t('ParticipantList.MicDisabledTip'),
-      confirmText: t('ParticipantList.Confirm'),
+      confirmText: currentRoom.value?.isAllMicrophoneDisabled ? t('ParticipantList.ConfirmUnlock') : t('ParticipantList.MuteAll'),
       cancelText: t('ParticipantList.Cancel'),
       callback: async (action) => {
         if (action === 'confirm') {

@@ -47,24 +47,36 @@ class TouchScale {
     this.touchDom?.removeEventListener(
       'touchstart',
       this.handleTouchStart,
-      false
+      false,
     );
     this.touchDom?.removeEventListener(
       'touchmove',
       this.handleTouchMove,
-      false
+      false,
     );
     this.touchDom?.removeEventListener('touchend', this.handleTouchEnd, false);
+    this.resetTransform();
+  }
+
+  public resetTransform() {
+    this.currentScale = 1;
+    this.currentTranslate = { x: 0, y: 0 };
+    this.tempScale = 1;
+    this.tempTranslate = { x: 0, y: 0 };
+    this.transformDom.style.transform = '';
   }
 
   private handleTouchStart(event: TouchEvent) {
     if (!this.isEnabled) {
       return;
     }
-    event.preventDefault();
-    if (this.currentScale !== 1) {
+
+    // Only prevent default if already zoomed in or multi-touch
+    if (this.currentScale > 1) {
+      event.preventDefault();
       event.stopPropagation();
     }
+
     if (event.touches.length === 2) {
       this.handleScaleStart(event);
       this.isTwoFingerControl = true;
@@ -79,15 +91,24 @@ class TouchScale {
     if (!this.isEnabled) {
       return;
     }
-    event.preventDefault();
-    if (this.tempScale !== 1) {
-      event.stopPropagation();
-    }
+
+    // Two-finger scaling: always handle and prevent default
     if (event.touches.length === 2 && this.isTwoFingerControl) {
+      event.preventDefault();
+      event.stopPropagation();
       this.handleScaleMove(event);
+      return;
     }
+
+    // One-finger panning: only handle when already scaled (zoomed in)
     if (event.touches.length === 1 && this.isOneFingerControl) {
-      this.handlePositionMove(event);
+      if (this.currentScale > 1) {
+        // Only allow panning when zoomed in
+        event.preventDefault();
+        event.stopPropagation();
+        this.handlePositionMove(event);
+      }
+      // When currentScale === 1, do nothing, let swiper handle it
     }
   }
 
@@ -95,10 +116,13 @@ class TouchScale {
     if (!this.isEnabled) {
       return;
     }
-    event.preventDefault();
-    if (this.currentScale !== 1) {
+
+    // Only prevent default when zoomed in or was two-finger gesture
+    if (this.currentScale > 1 || this.isTwoFingerControl) {
+      event.preventDefault();
       event.stopPropagation();
     }
+
     if (this.isTwoFingerControl) {
       this.handleScaleEnd();
     }
@@ -108,8 +132,8 @@ class TouchScale {
 
   private getDistance(touchTargetA: Touch, touchTargetB: Touch) {
     return Math.sqrt(
-      Math.pow(touchTargetA.pageX - touchTargetB.pageX, 2) +
-        Math.pow(touchTargetA.pageY - touchTargetB.pageY, 2)
+      (touchTargetA.pageX - touchTargetB.pageX) ** 2
+      + (touchTargetA.pageY - touchTargetB.pageY) ** 2,
     );
   }
 
@@ -122,7 +146,7 @@ class TouchScale {
 
   private getTranslateLimitedObj(
     translateObj: { x: number; y: number },
-    scale: number
+    scale: number,
   ) {
     const translateResult = { ...translateObj };
     if (translateObj.x > 0) {
@@ -156,21 +180,21 @@ class TouchScale {
       this.tempTranslate = { x: 0, y: 0 };
       this.tempScale = 1;
     } else {
-      const gapTop =
-        (moveDistance / this.lastDistance) *
-          (this.currentScale * this.lastCenterPosition.y) -
-        this.currentScale * centerPosition.y;
-      const gapLeft =
-        (moveDistance / this.lastDistance) *
-          (this.currentScale * this.lastCenterPosition.x) -
-        this.currentScale * centerPosition.x;
+      const gapTop
+        = (moveDistance / this.lastDistance)
+          * (this.currentScale * this.lastCenterPosition.y)
+          - this.currentScale * centerPosition.y;
+      const gapLeft
+        = (moveDistance / this.lastDistance)
+          * (this.currentScale * this.lastCenterPosition.x)
+          - this.currentScale * centerPosition.x;
       this.tempTranslate = {
         x: this.currentTranslate.x - gapLeft,
         y: this.currentTranslate.y - gapTop,
       };
       this.tempTranslate = this.getTranslateLimitedObj(
         this.tempTranslate,
-        this.tempScale
+        this.tempScale,
       );
     }
     this.transformDom.style.transform = `translate(${this.tempTranslate.x}px, ${this.tempTranslate.y}px) scale(${this.tempScale})`;
@@ -199,7 +223,7 @@ class TouchScale {
     };
     this.currentTranslate = this.getTranslateLimitedObj(
       this.currentTranslate,
-      this.currentScale
+      this.currentScale,
     );
     this.lastPosition = currentPosition;
     this.transformDom.style.transform = `translate(${this.currentTranslate.x}px, ${this.currentTranslate.y}px) scale(${this.currentScale})`;
@@ -214,8 +238,14 @@ const vDblTouch = {
     }
   },
   updated(el: HTMLElement, binding: any) {
-    if (touchScaleElementMap.get(el)) {
-      touchScaleElementMap.get(el)?.updateBinding(binding);
+    const existingInstance = touchScaleElementMap.get(el);
+    if (existingInstance) {
+      if (binding.value) {
+        existingInstance.updateBinding(binding);
+      } else {
+        existingInstance.destroy();
+        touchScaleElementMap.delete(el);
+      }
     } else if (binding.value) {
       const newTouchScale = new TouchScale(el, binding);
       touchScaleElementMap.set(el, newTouchScale);

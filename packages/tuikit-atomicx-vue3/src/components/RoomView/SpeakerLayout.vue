@@ -10,7 +10,7 @@
         :style="enlargedStreamStyle"
         :participant="enlargeStreamInfo.participant"
         :stream-type="enlargeStreamInfo.streamType"
-        :fill-mode="FillMode.Fill"
+        :fill-mode="FillMode.Fit"
         :lazy-load="{ enable: false }"
       >
         <template #participantViewUI>
@@ -26,7 +26,7 @@
           class="participant-view"
           :participant="streamInfo.participant"
           :stream-type="streamInfo.streamType"
-          :fill-mode="FillMode.Fill"
+          :fill-mode="FillMode.Fit"
           @dblclick="handleStreamViewDblclick(streamInfo)"
         >
           <template #participantViewUI>
@@ -57,7 +57,7 @@ import { useRoomView } from './useRoomView';
 import { useStreamItemDimensions } from './useStreamItemDimensions';
 import type { RoomParticipant, RoomUser } from '../../types';
 
-const { participantCameraList } = useRoomView();
+const { sortedParticipantCameraList } = useRoomView();
 const { subscribeEvent, unsubscribeEvent } = useRoomParticipantState();
 
 const {
@@ -106,8 +106,8 @@ const gridStreamInfoList = computed(() => {
       result.push({ participant: participantWithScreen.value, streamType: VideoStreamType.Screen });
     }
   }
-  if (participantCameraList.value.length > 0) {
-    result.push(...participantCameraList.value);
+  if (sortedParticipantCameraList.value.length > 0) {
+    result.push(...sortedParticipantCameraList.value);
   }
   return result;
 });
@@ -183,6 +183,19 @@ function handleParticipantLeft({ userInfo }: { userInfo: RoomUser }) {
     primaryStreamInfo.value = null;
   }
 }
+
+watch(participantWithScreen, (val, oldVal) => {
+  if (!primaryStreamInfo.value) {
+    return;
+  }
+  const { streamType, participant } = primaryStreamInfo.value;
+  if (!val && streamType === VideoStreamType.Screen && participant.userId === oldVal?.userId) {
+    primaryStreamInfo.value = null;
+  }
+  if (val && streamType !== VideoStreamType.Screen) {
+    primaryStreamInfo.value = null;
+  }
+}, { immediate: true });
 
 subscribeEvent(RoomParticipantEvent.onParticipantLeft, handleParticipantLeft);
 onUnmounted(() => {

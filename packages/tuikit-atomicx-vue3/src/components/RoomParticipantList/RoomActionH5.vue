@@ -27,31 +27,28 @@
     </TUIButton>
 
     <!-- More actions popup -->
-    <Popup
+    <TUIPopup
       :visible="showMorePopup"
-      :title="t('ParticipantList.More')"
-      placement="bottom"
       @update:visible="showMorePopup = $event"
     >
-      <template #sidebarContent>
-        <div class="more-actions-content">
-          <div
-            v-for="item in moreControlList"
-            :key="item.key"
-            class="action-item"
-            @click="handleMoreActionClick(item.handler)"
-          >
-            <TUIIcon
-              v-if="item.icon"
-              :icon="item.icon"
-              size="20"
-              class="action-icon"
-            />
-            <span class="action-text">{{ item.label }}</span>
-          </div>
+      <PopUpArrowDown @click="showMorePopup = false" />
+      <div class="more-actions-content">
+        <div
+          v-for="item in moreControlList"
+          :key="item.key"
+          class="action-item"
+          @click="handleMoreActionClick(item.handler)"
+        >
+          <TUIIcon
+            v-if="item.icon"
+            :icon="item.icon"
+            size="20"
+            class="action-icon"
+          />
+          <span class="action-text">{{ item.label }}</span>
         </div>
-      </template>
-    </Popup>
+      </div>
+    </TUIPopup>
   </div>
 </template>
 
@@ -59,11 +56,11 @@
 import { ref, computed } from 'vue';
 import {
   TUIButton,
-  IconArrowUp,
   useUIKit,
   TUIIcon,
+  TUIPopup,
 } from '@tencentcloud/uikit-base-component-vue3';
-import Popup from './Popup.vue';
+import PopUpArrowDown from './PopUpArrowDown.vue';
 import useRoomActions from './useRoomAction';
 
 defineOptions({
@@ -91,6 +88,7 @@ function handleMoreActionClick(handler: () => void) {
   align-items: center;
   gap: 12px;
   width: 100%;
+  -webkit-tap-highlight-color: transparent;
 
   .action-button {
     flex: 1;
@@ -106,12 +104,11 @@ function handleMoreActionClick(handler: () => void) {
 .more-actions-content {
   display: flex;
   flex-direction: column;
-  padding: 8px 0;
+  padding: 12px 16px;
 
   .action-item {
     display: flex;
     align-items: center;
-    padding: 16px 24px;
     cursor: pointer;
     transition: background 0.2s ease;
     gap: 12px;

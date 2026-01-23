@@ -1,6 +1,6 @@
 import type { Component } from 'vue';
 import { computed } from 'vue';
-import { TUIToast, TOAST_TYPE, IconVideoOpen, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIToast, TOAST_TYPE, IconVideoOpen, IconVideoClose, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useRoomParticipantState } from '../../../states/RoomParticipantState';
 import { DeviceType } from '../../../types';
 import type { RoomParticipant } from '../../../types';
@@ -42,7 +42,7 @@ export function useUnmuteVideoAction(
 
   return {
     key: 'unmuteVideo',
-    icon: IconVideoOpen,
+    icon: IconVideoClose,
     label: t('ParticipantList.EnableVideo'),
     handler: async () => {
       await inviteToOpenDevice({

@@ -978,7 +978,7 @@ export type TUIInvitation = {
  * @namespace TUIRoomEvents
  * @example
  * import TUIRoomEngine, { TUIRoomEvents } from '@tencentcloud/tuiroom-engine-js';
- * const roomEngine = new TUIRoomEngine();
+ * const roomEngine = TUIRoomEngine.getInstance();
  * roomEngine.on(TUIRoomEvents.onError, (error) => {
  *  console.log('roomEngine.error', error);
  * })
@@ -992,7 +992,7 @@ export enum TUIRoomEvents {
    * @param {number} options.code 错误代码
    * @param {string} options.message 错误信息
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onError, (error) => {
    *  console.log('TUIRoomError error', error);
    * })
@@ -1008,7 +1008,7 @@ export enum TUIRoomEvents {
    * @param {TUIKickedOutOfRoomReason} options.reason 用户被踢出房间枚举
    * @param {string} options.message 踢出房间信息
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onKickedOutOfRoom, ({ roomId, reason, message }) => {
    *   console.log('roomEngine.onKickedOutOfRoom', roomId, reason, message);
    * });
@@ -1021,7 +1021,7 @@ export enum TUIRoomEvents {
    * @event TUIRoomEvents#onKickedOffLine
    * @param {string} options.message 用户被踢下线信息
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onKickedOffLine, ({ message }) => {
    *   console.log('roomEngine.onKickedOffLine', message);
    * });
@@ -1033,7 +1033,7 @@ export enum TUIRoomEvents {
    * @default 'onUserSigExpired'
    * @event TUIRoomEvents#onUserSigExpired
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onUserSigExpired, () => {
    *   console.log('roomEngine.onUserSigExpired');
    * });
@@ -1048,7 +1048,7 @@ export enum TUIRoomEvents {
    * @param {string} options.roomId 房间号
    * @param {TUIRoomDismissedReason} options.reason 房间解散原因枚举，该字段自 v2.3.0 开始支持
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onRoomDismissed, ({ roomId,reason }) => {
    *   console.log('roomEngine.onRoomDismissed', roomId,reason);
    * });
@@ -1062,7 +1062,7 @@ export enum TUIRoomEvents {
    * @param {object} options
    * @param {string} options.roomName 房间名字
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onRoomNameChanged, ({ roomId, roomName }) =>{
    *    console.log('roomEngine.onRoomNameChanged', roomId, roomName);
    * });
@@ -1076,7 +1076,7 @@ export enum TUIRoomEvents {
    * @param {object} options
    * @param {TUISeatMode} options.seatMode 房间上麦模式
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onRoomSeatModeChanged, ({ roomId, seatMode }) =>{
    *    console.log('roomEngine.onRoomSeatModeChanged', roomId, seatMode);
    * });
@@ -1091,7 +1091,7 @@ export enum TUIRoomEvents {
    * @param {string} options.roomId 房间号
    * @param {number} options.userCount 房间内人数
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onRoomUserCountChanged, ({ roomId, userCount }) =>{
    *    console.log('roomEngine.onRoomUserCountChanged', roomId, userCount);
    * });
@@ -1105,7 +1105,7 @@ export enum TUIRoomEvents {
    * @param {object} options
    * @param {boolean} options.isDisable 是否允许使用摄像头
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onAllUserCameraDisableChanged, ({ isDisable }) =>{
    *    console.log('roomEngine.onAllUserCameraDisableChanged', isDisable);
    * });
@@ -1120,7 +1120,7 @@ export enum TUIRoomEvents {
    * @param {object} options
    * @param {boolean} options.isDisable 是否开启禁止屏幕分享
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onScreenShareForAllUserDisableChanged, ({ isDisable }) =>{
    *    console.log('roomEngine.onScreenShareForAllUserDisableChanged', isDisable);
    * });
@@ -1134,7 +1134,7 @@ export enum TUIRoomEvents {
    * @param {object} options
    * @param {boolean} options.isDisable 是否允许使用麦克风
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onAllUserMicrophoneDisableChanged, ({ isDisable }) =>{
    *    console.log('roomEngine.onAllUserMicrophoneDisableChanged', isDisable);
    * });
@@ -1148,7 +1148,7 @@ export enum TUIRoomEvents {
    * @param {object} options
    * @param {boolean} options.isDisable 是否被允许
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onSendMessageForAllUserDisableChanged, ({ isDisable }) =>{
    *    console.log('roomEngine.onSendMessageForAllUserDisableChanged', isDisable);
    * });
@@ -1162,7 +1162,7 @@ export enum TUIRoomEvents {
    * @param {object} options
    * @param {boolean} options.maxSeatNumber 最大麦位数
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onRoomMaxSeatCountChanged, ({ maxSeatNumber }) =>{
    *    console.log('roomEngine.onRoomMaxSeatCountChanged', maxSeatNumber);
    * });
@@ -1176,7 +1176,7 @@ export enum TUIRoomEvents {
    * @param {string} options.roomId 房间号
    * @param {TUIUserInfo} options.userInfo 用户信息
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onRemoteUserEnterRoom, ({ roomId, userInfo }) => {
    *   console.log('roomEngine.onRemoteUserEnterRoom', roomId, userInfo);
    * });
@@ -1191,7 +1191,7 @@ export enum TUIRoomEvents {
    * @param {string} options.roomId 房间号
    * @param {TUIUserInfo} options.userInfo 用户信息
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onRemoteUserLeaveRoom, ({ roomId, userInfo }) => {
    *   console.log('roomEngine.onRemoteUserLeaveRoom', roomId, userInfo);
    * });
@@ -1206,7 +1206,7 @@ export enum TUIRoomEvents {
    * @param {object} options
    * @param {TUIUserInfo} options.userInfo 用户信息
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onUserInfoChanged, ({ userInfo }) => {
    *   console.log('roomEngine.onUserInfoChanged', userInfo);
    * });
@@ -1223,7 +1223,7 @@ export enum TUIRoomEvents {
    * @param {TUIRole} options.userRole 用户变更后的角色
    * @param {TUIUserInfo} options.userInfo 用户信息,该字段自 v2.3.0 开始支持
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onUserRoleChanged, ({ userInfo }) => {
    *   console.log('roomEngine.onUserRoleChanged', userInfo);
    * });
@@ -1240,7 +1240,7 @@ export enum TUIRoomEvents {
    * @param {boolean} options.hasVideo 是否有视频流
    * @param {TUIChangeReason} options.reason 变更原因
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onUserVideoStateChanged, ({ userId, streamType, hasVideo, reason }) => {
    *   console.log('roomEngine.onUserVideoStateChanged', userId, streamType, hasVideo, reason);
    * });
@@ -1256,7 +1256,7 @@ export enum TUIRoomEvents {
    * @param {boolean} options.hasVideo 是否有音频流
    * @param {TUIChangeReason} options.reason 原因
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onUserAudioStateChanged, ({ userId, hasAudio, reason }) => {
    *   console.log('roomEngine.onUserAudioStateChanged', userId, hasAudio, reason);
    * });
@@ -1271,7 +1271,7 @@ export enum TUIRoomEvents {
    * @param {string} options.userId 成员 Id
    * @param {boolean} options.isDisable 是否被允许
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onSendMessageForUserDisableChanged, ({ userId, isDisable }) =>{
    *    console.log('roomEngine.onSendMessageForUserDisableChanged', isDisable);
    * });
@@ -1285,7 +1285,7 @@ export enum TUIRoomEvents {
    * @param {object} options
    * @param {Array<TRTCVolumeInfo>} options.userVolumeList 房间内所有用户的音量, 包含 userId 及 volume 信息，volume 区间为 1～100;
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onUserVoiceVolumeChanged, ({ userVolumeList }) => {
    *   userVolumeList.forEach(userVolume => {
    *     console.log('roomEngine.onUserVoiceVolumeChanged', userVolume.userId, userVolume.volume);
@@ -1301,7 +1301,7 @@ export enum TUIRoomEvents {
    * @param {object} options
    * @param {TUINetwork} options.userNetworkList 网络质量信息
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onUserNetworkQualityChanged, ({ userNetworkList }) => {
    *   userNetworkList.forEach(userNetwork => {
    *     console.log('roomEngine.onUserNetworkQualityChanged',
@@ -1320,7 +1320,7 @@ export enum TUIRoomEvents {
    * @param {Array<TUISeatInfo>} options.seatedList 新增麦位列表
    * @param {Array<TUISeatInfo>} options.leftList 离开的麦位列表
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onSeatListChanged, ({ seatList, seatedList, leftList }) => {
    *   console.log('roomEngine.onSeatListChanged',seatList, seatedList, leftList);
    * });
@@ -1334,7 +1334,7 @@ export enum TUIRoomEvents {
    * @param {number} options.seatIndex 麦位编号，该字段自 v2.3.0 开始支持
    * @param {TUIUserInfo} options.userInfo 操作踢人的（主持人/管理员）用户信息，该字段自 v2.3.0 开始支持
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onKickedOffSeat, ({ seatIndex, userInfo }) => {
    *   console.log('roomEngine.onKickedOffSeat', seatIndex, userInfo);
    * });
@@ -1348,7 +1348,7 @@ export enum TUIRoomEvents {
    * @param {object} options
    * @param {TUIRequest} options.request 请求接收
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onRequestReceived, ({ request }) => {
    *   console.log('roomEngine.onRequestReceived', request);
    * });
@@ -1365,7 +1365,7 @@ export enum TUIRoomEvents {
    * @param {TUIRequest} options.request 请求信息，该字段自 v2.3.0 开始支持
    * @param {TUIUserInfo} options.userInfo 处理该请求的 管理员/房主 的用户信息，该字段自 v2.3.0 开始支持
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onRequestCancelled, ({ request, userInfo }) => {
    *   console.log('roomEngine.onRequestCancelled', request, userInfo);
    * });
@@ -1382,7 +1382,7 @@ export enum TUIRoomEvents {
    * @param {TUIRequest} options.request 请求信息，该字段自 v2.3.0 开始支持
    * @param {TUIUserInfo} options.userInfo 处理该请求的 管理员/房主 的用户信息，该字段自 v2.3.0 开始支持
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onRequestProcessed, ({ request, userInfo }) => {
    *   console.log('roomEngine.onRequestProcessed', request, userInfo);
    * });
@@ -1398,7 +1398,7 @@ export enum TUIRoomEvents {
    * @param {string} options.roomId 房间Id
    * @param {TUIMessage} options.message 接收的文本消息
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onReceiveTextMessage, ({ roomId, message }) => {
    *   console.log('roomEngine.onReceiveTextMessage', roomId, message);
    * });
@@ -1414,7 +1414,7 @@ export enum TUIRoomEvents {
    * @param {string} options.roomId 房间Id
    * @param {TUIMessage} options.message 接收的自定义消息
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onReceiveCustomMessage, ({ roomId, message }) => {
    *   console.log('roomEngine.onReceiveCustomMessage', roomId, message);
    * });
@@ -1430,7 +1430,7 @@ export enum TUIRoomEvents {
    * @param {TRTCDeviceType} options.type 设备类型
    * @param {TRTCDeviceState} options.state 设备变更状态
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onDeviceChange, ({ deviceId, type, state }) => {
    *   console.log('roomEngine.onDeviceChange', deviceId, type, state);
    * });
@@ -1442,7 +1442,7 @@ export enum TUIRoomEvents {
    * @default 'onUserScreenCaptureStopped'
    * @event TUIRoomEvents#onUserScreenCaptureStopped
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * roomEngine.on(TUIRoomEvents.onUserScreenCaptureStopped, () => {
    *   console.log('roomEngine.onUserScreenCaptureStopped');
    * });
@@ -1464,7 +1464,7 @@ export enum TUIConferenceListManagerEvents {
    * @param {string} options.conferenceInfo 会议信息。
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceListManager = roomEngine.getConferenceListManager();
    * conferenceListManager.on(TUIConferenceListManagerEvents.onConferenceScheduled, ({ conferenceInfo }) => {
    *  console.log('conferenceListManager.onConferenceScheduled', conferenceInfo);
@@ -1480,7 +1480,7 @@ export enum TUIConferenceListManagerEvents {
    * @param {string} options.conferenceInfo 会议信息。
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceListManager = roomEngine.getConferenceListManager();
    * conferenceListManager.on(TUIConferenceListManagerEvents.onConferenceWillStart, ({ conferenceInfo }) => {
    *  console.log('conferenceListManager.onConferenceWillStart', conferenceInfo);
@@ -1497,7 +1497,7 @@ export enum TUIConferenceListManagerEvents {
    * @param {TUIUserInfo} options.operateUser 取消会议操作者信息。
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceListManager = roomEngine.getConferenceListManager();
    * conferenceListManager.on(TUIConferenceListManagerEvents.onConferenceCancelled, ({ roomId, reason, operateUser }) => {
    *  console.log('conferenceListManager.onConferenceCancelled', roomId, reason, operateUser);
@@ -1512,7 +1512,7 @@ export enum TUIConferenceListManagerEvents {
    * @param {TUIConferenceModifyInfo} options.conferenceModifyInfo 会议信息。
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceListManager = roomEngine.getConferenceListManager();
    * conferenceListManager.on(TUIConferenceListManagerEvents.onConferenceInfoChanged, ({ conferenceModifyInfo }) => {
    *  console.log('conferenceListManager.onConferenceInfoChanged', conferenceModifyInfo);
@@ -1529,7 +1529,7 @@ export enum TUIConferenceListManagerEvents {
    * @param {Array<TUIUserInfo>} options.joinedUsers 新加入成员列表。
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceListManager = roomEngine.getConferenceListManager();
    * conferenceListManager.on(TUIConferenceListManagerEvents.onScheduleAttendeesChanged, ({ roomId, leftUsers, joinedUsers }) => {
    *  console.log('conferenceListManager.onScheduleAttendeesChanged', roomId, leftUsers, joinedUsers);
@@ -1545,7 +1545,7 @@ export enum TUIConferenceListManagerEvents {
    * @param {TUIConferenceStatus} options.status 会议状态。
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceListManager = roomEngine.getConferenceListManager();
    * conferenceListManager.on(TUIConferenceListManagerEvents.onConferenceStatusChanged, ({ roomId, status }) => {
    *  console.log('conferenceListManager.onConferenceStatusChanged', roomId, status );
@@ -1571,7 +1571,7 @@ export enum TUIConferenceInvitationManagerEvents {
    *
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceInvitationManager = roomEngine.getConferenceInvitationManager();
    * conferenceInvitationManager.on(TUIConferenceInvitationManagerEvents.onReceiveInvitation, ({ roomInfo, invitation, extensionInfo }) => {
    *  console.log('conferenceInvitationManager.onReceiveInvitation', roomInfo, invitation, extensionInfo);
@@ -1589,7 +1589,7 @@ export enum TUIConferenceInvitationManagerEvents {
    *
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceInvitationManager = roomEngine.getConferenceInvitationManager();
    * conferenceInvitationManager.on(TUIConferenceInvitationManagerEvents.onInvitationHandledByOtherDevice, ({ roomInfo, accepted }) => {
    *  console.log('conferenceInvitationManager.onInvitationHandledByOtherDevice', roomInfo, accepted);
@@ -1607,7 +1607,7 @@ export enum TUIConferenceInvitationManagerEvents {
    *
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceInvitationManager = roomEngine.getConferenceInvitationManager();
    * conferenceInvitationManager.on(TUIConferenceInvitationManagerEvents.onInvitationCancelled, ({ roomInfo, invitation }) => {
    *  console.log('conferenceInvitationManager.onInvitationCancelled', roomInfo, invitation);
@@ -1625,7 +1625,7 @@ export enum TUIConferenceInvitationManagerEvents {
    *
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceInvitationManager = roomEngine.getConferenceInvitationManager();
    * conferenceInvitationManager.on(TUIConferenceInvitationManagerEvents.onInvitationAccepted, ({ roomInfo, invitation }) => {
    *  console.log('conferenceInvitationManager.onInvitationAccepted', roomInfo, invitation);
@@ -1645,7 +1645,7 @@ export enum TUIConferenceInvitationManagerEvents {
    *
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceInvitationManager = roomEngine.getConferenceInvitationManager();
    * conferenceInvitationManager.on(TUIConferenceInvitationManagerEvents.onInvitationRejected, ({ roomInfo, invitation, reason }) => {
    *  console.log('conferenceInvitationManager.onInvitationRejected', roomInfo, invitation, reason);
@@ -1663,7 +1663,7 @@ export enum TUIConferenceInvitationManagerEvents {
    *
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceInvitationManager = roomEngine.getConferenceInvitationManager();
    * conferenceInvitationManager.on(TUIConferenceInvitationManagerEvents.onInvitationTimeout, ({ roomInfo, invitation }) => {
    *  console.log('conferenceInvitationManager.onInvitationTimeout', roomInfo, invitation);
@@ -1682,7 +1682,7 @@ export enum TUIConferenceInvitationManagerEvents {
    *
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceInvitationManager = roomEngine.getConferenceInvitationManager();
    * conferenceInvitationManager.on(TUIConferenceInvitationManagerEvents.onInvitationRevokedByAdmin, ({ roomInfo, invitation, userRole }) => {
    *  console.log('conferenceInvitationManager.onInvitationRevokedByAdmin', roomInfo, invitation, operateUser);
@@ -1700,7 +1700,7 @@ export enum TUIConferenceInvitationManagerEvents {
    *
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceInvitationManager = roomEngine.getConferenceInvitationManager();
    * conferenceInvitationManager.on(TUIConferenceInvitationManagerEvents.onInvitationAdded, ({ roomInfo, invitation }) => {
    *  console.log('conferenceInvitationManager.onInvitationAdded', roomInfo, invitation);
@@ -1718,7 +1718,7 @@ export enum TUIConferenceInvitationManagerEvents {
    *
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceInvitationManager = roomEngine.getConferenceInvitationManager();
    * conferenceInvitationManager.on(TUIConferenceInvitationManagerEvents.onInvitationRemoved, ({ roomInfo, invitation }) => {
    *  console.log('conferenceInvitationManager.onInvitationRemoved', roomInfo, invitation);
@@ -1736,7 +1736,7 @@ export enum TUIConferenceInvitationManagerEvents {
    *
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const conferenceInvitationManager = roomEngine.getConferenceInvitationManager();
    * conferenceInvitationManager.on(TUIConferenceInvitationManagerEvents.onInvitationStatusChanged, ({ roomInfo, invitation }) => {
    *  console.log('conferenceInvitationManager.onInvitationStatusChanged', roomInfo, invitation);
@@ -1866,7 +1866,7 @@ export enum TUILiveListManagerEvents {
    * @param {TUILiveModifyFlag} options.modifyFlag 直播间修改标识
    *
    * @example
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const liveListManager = roomEngine.getLiveListManager();
    * liveListManager.on(TUILiveListManagerEvents.onLiveInfoChanged, ({ liveInfo, modifyFlag}) => {
    *   console.log('liveListManager.onLiveInfoChanged', liveInfo, modifyFlag);
@@ -1877,7 +1877,7 @@ export enum TUILiveListManagerEvents {
 
 export enum TUILiveLayoutManagerEvents {
   /**
-   * const roomEngine = new TUIRoomEngine();
+   * const roomEngine = TUIRoomEngine.getInstance();
    * const liveLayoutManager = roomEngine.getLiveLayoutManager();
    * const callback = (roomId, layoutInfo) => {
    *   console.log('liveLayoutManager.onLiveVideoLayoutListChanged', roomId, layoutInfo);

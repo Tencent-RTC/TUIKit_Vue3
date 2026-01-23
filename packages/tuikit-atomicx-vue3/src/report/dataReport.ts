@@ -70,12 +70,12 @@ export class DataReport {
 
   private createAtomicReportTask(metricKey: AtomicMetrics): Task {
     return () => {
-      const instance = TUIRoomEngine.getInstance();
-      if (!instance) {
+      const roomEngine = TUIRoomEngine.getInstance();
+      if (!roomEngine) {
         console.warn('TUIRoomEngine instance is not available');
         return;
       }
-      const tim = instance.getTIM();
+      const tim = roomEngine.getTIM();
       if (!tim) {
         console.warn('TIM instance is not available');
         return;
