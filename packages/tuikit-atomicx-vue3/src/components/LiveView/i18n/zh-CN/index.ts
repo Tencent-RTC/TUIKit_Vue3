@@ -1,6 +1,7 @@
 export const resource = {
   'LiveView.NoVideo': '暂无画面',
   'LiveView.WaitingForConnection': '等待连线',
+  'LiveView.ApplyForConnection': '申请连线',
   'LiveView.Play': '播放',
   'LiveView.Pause': '暂停',
   'LiveView.PictureInPicture': '画中画',

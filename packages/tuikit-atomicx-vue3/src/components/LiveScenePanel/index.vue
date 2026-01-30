@@ -1,24 +1,24 @@
 <template>
   <div class="live-scene-panel" :class="{ 'no-material': mediaSourceList.length === 0 }">
-    <LiveSceneSelect :displayMode="mediaSourceList.length === 0 ? 'panel' : 'button'" @addMaterial="selectMaterial" />
-    <!-- 素材列表区域 -->
+    <LiveSceneSelect :displayMode="mediaSourceList.length === 0 ? 'panel' : 'button'" @add-material="selectMaterial" />
+    <!-- Materials list area -->
     <div class="materials-list">
       <template v-for="material in mediaSourceListWithZOrderSort" :key="material.id">
         <MaterialItem
           :material="material"
-          @cameraSetting="updateCameraSetting(material)"
+          @camera-setting="updateCameraSetting(material)"
           @rename="updateMaterialName(material)"
         />
       </template>
     </div>
 
-    <!-- 摄像头设置弹窗 -->
+    <!-- Camera settings dialog -->
     <CameraSettingDialog
       v-if="showCameraSettingDialog"
       :mediaSource="cameraSettingMediaSource"
       @close="closeCameraSettingDialog"
-      @addCameraMaterial="addCameraMaterial"
-      @updateCameraMaterial="updateMaterial(cameraSettingMediaSource, $event)"
+      @add-camera-material="addCameraMaterial"
+      @update-camera-material="updateMaterial(cameraSettingMediaSource, $event)"
     />
 
     <MaterialRenameDialog
@@ -31,23 +31,25 @@
 </template>
 
 <script setup lang="ts">
+import { onBeforeUnmount, ref, computed } from 'vue';
 import TUIRoomEngine, {
   TRTCMediaSourceType,
   TRTCVideoResolution,
   TRTCVideoResolutionMode,
   TUIVideoQuality,
 } from '@tencentcloud/tuiroom-engine-js';
-import LiveSceneSelect from './LiveSceneSelect.vue';
 import { TUIToast, TOAST_TYPE, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { onBeforeUnmount, ref, computed } from 'vue';
-import CameraSettingDialog from './CameraSettingDialog.vue';
-import MaterialRenameDialog from './MaterialRenameDialog.vue';
-import MaterialItem from './MaterialItem.vue';
-import { useVideoMixerState } from '../../states/VideoMixerState';
 import { useDeviceState } from '../../states/DeviceState';
 import { useLiveListState } from '../../states/LiveListState';
+import { useVideoMixerState } from '../../states/VideoMixerState';
+import { LiveOrientation } from '../../types';
 import { getNanoId } from '../../utils/utils';
-import { LiveOrientation, MediaSource } from '../../types';
+import CameraSettingDialog from './CameraSettingDialog.vue';
+import LiveSceneSelect from './LiveSceneSelect.vue';
+import MaterialItem from './MaterialItem.vue';
+import MaterialRenameDialog from './MaterialRenameDialog.vue';
+import type { MediaSource } from '../../types';
+
 const { t } = useUIKit();
 
 const { currentLive } = useLiveListState();
@@ -60,11 +62,11 @@ TUIRoomEngine.once('ready', async () => {
 
 const mediaSourceListWithZOrderSort = computed(() =>
   [...mediaSourceList.value].sort(
-    (item1: MediaSource, item2: MediaSource) => item2.layout?.zOrder - item1.layout?.zOrder
-  )
+    (item1: MediaSource, item2: MediaSource) => item2.layout?.zOrder - item1.layout?.zOrder,
+  ),
 );
 
-// 状态数据
+// State data
 const showMaterialDialog = ref(false);
 const showCameraSettingDialog = ref(false);
 const showMaterialRenameDialog = ref(false);
@@ -81,8 +83,19 @@ const closeMaterialRenameDialog = () => {
   showMaterialRenameDialog.value = false;
 };
 
+// Reentrancy prevention flag
+const isAddingCameraMaterial = ref(false);
+
 const addCameraMaterial = async (material: Partial<MediaSource>) => {
+  // Reentrancy check
+  if (isAddingCameraMaterial.value) {
+    console.log('addCameraMaterial: function is already executing, skip');
+    return;
+  }
+
+  isAddingCameraMaterial.value = true;
   console.log('addCameraMaterial', material);
+
   try {
     await addMediaSource({
       id: material.id || `${TRTCMediaSourceType.kCamera}_${getNanoId(5)}`,
@@ -97,6 +110,9 @@ const addCameraMaterial = async (material: Partial<MediaSource>) => {
         message: t('Please check the current browser camera permission'),
       });
     }
+  } finally {
+    // Reset flag regardless of success or failure
+    isAddingCameraMaterial.value = false;
   }
 };
 
@@ -117,7 +133,7 @@ const cameraSettingMediaSource = ref<MediaSource | null>(null);
 
 function getCanvasSize(
   videoResolution: TUIVideoQuality,
-  resMode: TRTCVideoResolutionMode
+  resMode: TRTCVideoResolutionMode,
 ): { width: number; height: number } {
   const sizeMap = {
     [TUIVideoQuality.kVideoQuality_360p]: { width: 640, height: 360 },
@@ -144,9 +160,11 @@ function addImageMaterial() {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
-  input.onchange = async e => {
+  input.onchange = async (e) => {
     const file = (e.target as HTMLInputElement)?.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     const url = URL.createObjectURL(file);
     const image = new Image();
     image.src = url;
@@ -155,7 +173,7 @@ function addImageMaterial() {
       const imageHeight = image.height;
       const { width: canvasWidth, height: canvasHeight } = getCanvasSize(
         publishVideoQuality.value,
-        currentLiveOrientation.value === LiveOrientation.Landscape ? TRTCVideoResolutionMode.TRTCVideoResolutionModeLandscape : TRTCVideoResolutionMode.TRTCVideoResolutionModePortrait
+        currentLiveOrientation.value === LiveOrientation.Landscape ? TRTCVideoResolutionMode.TRTCVideoResolutionModeLandscape : TRTCVideoResolutionMode.TRTCVideoResolutionModePortrait,
       );
       const scale = Math.min(canvasWidth / imageWidth, canvasHeight / imageHeight);
       await addMediaSource({
@@ -182,7 +200,7 @@ function addImageMaterial() {
 
 const selectMaterial = async (type: TRTCMediaSourceType) => {
   closeMaterialDialog();
-  console.log('添加素材:', type);
+  console.log('Add material:', type);
 
   switch (type) {
     case TRTCMediaSourceType.kCamera:
@@ -244,7 +262,7 @@ const updateCameraSetting = (material: MediaSource) => {
 
 onBeforeUnmount(() => {
   clearMediaSource();
-})
+});
 </script>
 
 <style lang="scss" scoped>

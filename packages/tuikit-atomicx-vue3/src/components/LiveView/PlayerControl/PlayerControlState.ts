@@ -302,8 +302,11 @@ export function usePlayerControlState(): PlayerControlState {
    */
   const requestPictureInPicture = async (): Promise<boolean> => withErrorHandling(async () => {
     console.log(`requestPictureInPicture: enableWebrtcMediaControl: [${enableWebrtcMediaControl}] isTCPlayer: [${isTcPlayer.value}].`);
+    if (isFullscreen.value) {
+      await exitFullscreen();
+    }
     if (enableWebrtcMediaControl && !isTcPlayer.value) {
-      const subClouds: TRTCCloud[]= Array.from(TRTCCloud.subCloudMap.values());
+      const subClouds: TRTCCloud[] = Array.from(TRTCCloud.subCloudMap.values());
       for (const subCloud of subClouds) {
         subCloud.callExperimentalAPI(JSON.stringify({
           api: 'requestPictureInPicture',
@@ -330,7 +333,7 @@ export function usePlayerControlState(): PlayerControlState {
   const exitPictureInPicture = async (): Promise<boolean> => withErrorHandling(async () => {
     console.log(`exitPictureInPicture: enableWebrtcMediaControl: [${enableWebrtcMediaControl}] isTCPlayer: [${isTcPlayer.value}].`);
     if (enableWebrtcMediaControl && !isTcPlayer.value) {
-      const subClouds: TRTCCloud[]= Array.from(TRTCCloud.subCloudMap.values());
+      const subClouds: TRTCCloud[] = Array.from(TRTCCloud.subCloudMap.values());
       for (const subCloud of subClouds) {
         subCloud.callExperimentalAPI(JSON.stringify({
           api: 'exitPictureInPicture',
@@ -589,6 +592,13 @@ export function usePlayerControlState(): PlayerControlState {
       }
       if (currentVolume.value !== VOLUME_CONSTANTS.DEFAULT_VOLUME) {
         setVolume(VOLUME_CONSTANTS.DEFAULT_VOLUME);
+      }
+      if (isPictureInPicture.value) {
+        exitPictureInPicture();
+        isPictureInPicture.value = false;
+      }
+      if (isFullscreen.value) {
+        exitFullscreen();
       }
     }
   });

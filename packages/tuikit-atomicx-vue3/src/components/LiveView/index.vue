@@ -37,6 +37,7 @@
             v-if="!$slots.streamViewUI"
             :streamViewInfoList="needPlayStreamViewInfo"
             :userInfo="item.userInfo"
+            :seatIndex="index + 1"
           />
         </div>
       </div>
@@ -63,10 +64,14 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount, useSlots, Teleport } from 'vue';
 import type { ComputedRef } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { useCoGuestState } from '../../states/CoGuestState';
+import { useCoHostState } from '../../states/CoHostState';
+import { useDeviceState } from '../../states/DeviceState';
 import { setGiftPlayerView } from '../../states/LiveGiftState';
 import { useLiveListState } from '../../states/LiveListState';
 import { useLiveSeatState } from '../../states/LiveSeatState';
 import { useLoginState } from '../../states/LoginState';
+import { CoHostStatus } from '../../types';
 import { isMobile } from '../../utils';
 import { getContentSize } from '../../utils/domOperation';
 import LiveCoreDecorate from './CoreViewDecorate/LiveCoreDecorate.vue';
@@ -77,10 +82,13 @@ import type { SeatInfo, SeatUserInfo } from '../../types';
 
 const emit = defineEmits(['empty-seat-click']);
 
-const { isFullscreen, isLandscapeStyleMode, isPictureInPicture, exitPictureInPicture } = usePlayerControlState();
+const { isFullscreen, isLandscapeStyleMode, isPictureInPicture, exitPictureInPicture, exitFullscreen } = usePlayerControlState();
 const { t } = useUIKit();
 const { seatList, canvas, startPlayStream, stopPlayStream } = useLiveSeatState();
 const { currentLive } = useLiveListState();
+const { coHostStatus } = useCoHostState();
+const { disConnect } = useCoGuestState();
+const { setCaptureVolume, setOutputVolume } = useDeviceState();
 
 const slots = useSlots();
 const SVGA_PLAYER_VIEW = 'svga-player-view';
@@ -97,6 +105,7 @@ const audioConnectRightPosition = 30;
 const audioConnectGap = 5;
 // The height ratio of the audio connect view in portrait container.
 const audioConnectHeightInPortraitContainerRatio = 156 / 1280;
+const isLocalUserOnSeat = computed(() => seatList.value.some(seat => seat.userInfo?.userId === loginUserInfo.value?.userId));
 const isLandscapeVideoAndAudioConnect = computed(() => currentLive.value?.layoutTemplate >= 200 && currentLive.value?.layoutTemplate <= 399);
 const isAlignCenter = computed(() => {
   if (isLandscapeVideoAndAudioConnect.value && isMobile) {
@@ -108,11 +117,16 @@ const isAlignCenter = computed(() => {
   return true;
 });
 const isShowPlayerControl = computed(() => currentLive.value?.liveId && !seatList.value.some(item => item.userInfo?.userId === loginUserInfo.value?.userId));
+const isAnchor = computed(() => loginUserInfo.value?.userId === currentLive.value?.liveOwner.userId);
 
 onMounted(async () => {
   isMounted.value = true;
   await startPlayStream({ view: 'atomicx-live-stream-content' });
   isPlayedVideo.value = true;
+  if (!isAnchor.value) {
+    setCaptureVolume(100);
+    setOutputVolume(100);
+  }
 });
 
 onBeforeUnmount(async () => {
@@ -467,7 +481,21 @@ const handleEmptySeatClick = (seatIndex: number, item: { userInfo: SeatUserInfo;
   if (item.userInfo && item.userInfo.userId) {
     return;
   }
+  if (isFullscreen.value) {
+    exitFullscreen();
+  }
   emit('empty-seat-click', seatIndex);
+};
+
+const handleBeforeUnload = async (event: Event) => {
+  if (isLocalUserOnSeat.value) {
+    event.preventDefault();
+    // @ts-ignore - Compatible with older browser versions: https://developer.mozilla.org/zh-CN/docs/Web/API/Window/beforeunload_event
+    event.returnValue = '';
+    if (coHostStatus.value !== CoHostStatus.Connected && loginUserInfo.value?.userId !== currentLive.value?.liveOwner.userId) {
+      await disConnect();
+    }
+  }
 };
 
 const ro = new ResizeObserver(() => {
@@ -482,10 +510,12 @@ onMounted(() => {
     view: SVGA_PLAYER_VIEW,
   });
   getContainerOrientation();
+  window.addEventListener('beforeunload', handleBeforeUnload);
 });
 
 onBeforeUnmount(() => {
   ro.unobserve(liveCoreViewContainerRef.value as Element);
+  window.removeEventListener('beforeunload', handleBeforeUnload);
 });
 </script>
 
@@ -497,7 +527,7 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: center;
   overflow: hidden;
-  background-color: var(--bg-color-operate);
+  background-color: var(--uikit-color-gray-1);
 
   &.align-center {
     align-items: center;
