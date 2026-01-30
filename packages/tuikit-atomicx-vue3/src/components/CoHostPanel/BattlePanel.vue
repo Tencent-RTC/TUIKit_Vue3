@@ -188,13 +188,11 @@ const handleCoHostRequestRejected = ({ invitee }: { invitee: SeatUserInfo }) => 
     return;
   }
   pkUserIds.delete(invitee.userId);
-  TUIToast({ type: TOAST_TYPE.INFO, message: t('Battle request rejected by user', { userName: invitee.userName || invitee.userId }) });
 };
 
 const handleCoHostRequestTimeout = ({ inviter, invitee }: { inviter: SeatUserInfo; invitee: SeatUserInfo }) => {
   if (inviter.userId === loginUserInfo.value?.userId && pkUserIds.has(invitee.userId)) {
     pkUserIds.delete(invitee.userId);
-    TUIToast({ type: TOAST_TYPE.INFO, message: t('Battle request timeout for user', { userName: invitee.userName || invitee.userId}) });
   }
 };
 

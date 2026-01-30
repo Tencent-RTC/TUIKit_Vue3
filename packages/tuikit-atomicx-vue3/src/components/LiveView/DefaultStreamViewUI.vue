@@ -16,9 +16,9 @@
       </div>
       <div v-if="seatListWithUser.length > 1" class="user-details">
         <AudioIcon
-          v-if="shouldShowMutedAudioIcon"
+          v-if="!isAudioAvailable"
           class="audio-icon"
-          :isMuted="true"
+          :isMuted="!isAudioAvailable"
           :audioVolume="speakingUsers.get(userInfo.userId) || 0"
         />
         <div class="username">
@@ -31,17 +31,18 @@
       class="empty-position"
       :class="{ 'clickable': !isAnchor }"
     >
-      <span
-        class="text"
-        :title="t('LiveView.WaitingForConnection')"
-      >{{ t('LiveView.WaitingForConnection') }}</span>
+      <div class="seat-display">
+        <IconPlus v-if="!isAnchor" />
+        <span v-else class="seat-index">{{ props.seatIndex }}</span>
+        <span class="text">{{ isAnchor ? t('LiveView.WaitingForConnection') : t('LiveView.ApplyForConnection') }}</span>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick, onUnmounted } from 'vue';
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { useUIKit, IconPlus } from '@tencentcloud/uikit-base-component-vue3';
 import AudioIcon from '../../baseComp/AudioIcon.vue';
 import { useLiveListState } from '../../states/LiveListState';
 import { useLiveSeatState } from '../../states/LiveSeatState';
@@ -59,6 +60,7 @@ interface Props {
     height: string;
     zIndex: number;
   }; }>;
+  seatIndex: number;
 }
 
 const props = defineProps<Props>();
@@ -164,12 +166,6 @@ const isAudioAvailable = computed(() => props.userInfo?.microphoneStatus === Dev
 
 const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceStatus.On);
 
-const shouldShowMutedAudioIcon = computed(() => {
-  if (isAudioAvailable.value) {
-    return false;
-  }
-  return isVideoAvailable.value;
-});
 </script>
 
 <style lang="scss" scoped>
@@ -186,7 +182,6 @@ const shouldShowMutedAudioIcon = computed(() => {
   left: 0;
   pointer-events: none;
   box-sizing: border-box;
-  border: 1px solid var(--bg-color-topbar);
 
   .no-video-container {
     display: flex;
@@ -209,7 +204,7 @@ const shouldShowMutedAudioIcon = computed(() => {
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: var(--uikit-color-gray-3);
+      background-color: var(--uikit-color-gray-2);
     }
   }
 
@@ -251,6 +246,7 @@ const shouldShowMutedAudioIcon = computed(() => {
     color: #fff;
     font-weight: bold;
     pointer-events: auto;
+    box-shadow: 0 0 0 1px var(--bg-color-topbar);
 
     &.clickable {
       cursor: pointer;
@@ -269,6 +265,20 @@ const shouldShowMutedAudioIcon = computed(() => {
       overflow: hidden;
       color: var(--text-color-primary);
       font-weight: 400;
+    }
+
+    .seat-display {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .seat-index {
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--text-color-secondary);
     }
   }
 }
