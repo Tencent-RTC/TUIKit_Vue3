@@ -39,6 +39,8 @@ export const resource = {
   // Success messages with parameters - using simple strings for now
   'Co-host invitation sent to user': '已向{{ userName }}发送连线邀请',
   'Co-host request cancelled by user': '{{ userName }}取消了连线请求',
+  'Co-host request rejected by user': '{{ userName }}已拒绝连线',
+  'Co-host request timeout for user': '发给{{ userName }}的连线请求无应答',
   'Co-host user joined event': '{{ userName }}已加入连线',
   'Co-host user left event': '{{ userName }}已离开连线',
   // Battle Panel content
@@ -68,6 +70,8 @@ export const resource = {
   'Send battle request failed': '发起PK失败',
   'Battle invitation sent to user': '已向{{ userName }}发送PK邀请',
   'Battle request cancelled by user': '{{ userName }}取消了PK请求',
+  'Battle request rejected by user': '{{ userName }}已拒绝PK',
+  'Battle request timeout for user': '发给{{ userName }}的PK请求无应答',
   'Anchor battle settings': '主播PK设置',
   'Battle duration': '发起 PK 时长',
   'Number minutes': '{{number}} 分钟',

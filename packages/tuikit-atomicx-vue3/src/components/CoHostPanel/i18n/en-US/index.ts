@@ -38,6 +38,8 @@ export const resource = {
   'Co-host invitation sent to user': 'Co-host invitation sent',
   'Co-host invitation cancelled for user': 'Co-host invitation cancelled',
   'Co-host request cancelled by user': 'Co-host request cancelled',
+  'Co-host request rejected by user': 'Co-host request rejected',
+  'Co-host request timeout for user': 'Co-host request timeout',
   'Co-host user joined event': 'Co-host user joined',
   'Co-host user left event': '{{ userName }} Co-host user left',
   // Battle Panel content
@@ -67,6 +69,8 @@ export const resource = {
   'Send battle request failed': 'Send battle request failed',
   'Battle invitation sent to user': 'PK invitation has been sent to {{ userName }}',
   'Battle request cancelled by user': '{{ userName }} canceled the PK request',
+  'Battle request rejected by user': '{{ userName }} rejected the PK request',
+  'Battle request timeout for user': 'PK request timeout for {{ userName }}',
   'Anchor battle settings': 'Anchor battle settings',
   'Battle duration': 'Battle duration',
   'Number minutes': '{{number}} minutes',

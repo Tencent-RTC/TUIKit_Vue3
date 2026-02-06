@@ -41,23 +41,14 @@ export enum SeatApplicationErrorCode {
   // Seat index does not exist
   SEAT_INDEX_NOT_EXIST = -2344,
 
-  // Insufficient operation permissions
-  INSUFFICIENT_OPERATION_PERMISSIONS = 100006,
-
   // Seat is locked
   SEAT_LOCKED = 100200,
 
   // Seat is already occupied
-  SEAT_OCCUPIED = 100201,
-
-  // User is already in the seat queue
-  ALREADY_ON_THE_SEAT_QUEUE = 100202,
+  SEAT_OCCUPIED = 100210,
 
   // User is already in a seat
   ALREADY_IN_SEAT = 100203,
-
-  // User is not on the seat queue
-  NOT_ON_THE_SEAT_QUEUE = 100204,
 
   // All seats are occupied
   ALL_SEAT_OCCUPIED = 100205,
@@ -65,14 +56,8 @@ export enum SeatApplicationErrorCode {
   // User is not in a seat
   USER_NOT_IN_SEAT = 100206,
 
-  // User is already on seat
-  USER_ALREADY_ON_SEAT = 100210,
-
   // Seat does not support link mic
   SEAT_NOT_SUPPORT_LINK_MIC = 100211,
-
-  // empty seat list
-  EMPTY_SEAT_LIST = 100251,
 }
 
 interface GuestApplicationReceivedEventInfo {

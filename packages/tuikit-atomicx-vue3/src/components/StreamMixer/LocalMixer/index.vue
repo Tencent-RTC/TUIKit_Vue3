@@ -43,7 +43,7 @@ const { t } = useUIKit();
 const { currentLive } = useLiveListState();
 
 const mixControlRef = ref<InstanceType<typeof MixerControl> | null>(null);
-const { publishVideoQuality, activeMediaSource, enableLocalVideoMixer, mediaSourceList, isVideoMixerEnabled } = useVideoMixerState();
+const { publishVideoQuality, activeMediaSource, enableLocalVideoMixer, mediaSourceList } = useVideoMixerState();
 enableLocalVideoMixer();
 
 const currentLiveOrientation = computed(() => {
@@ -233,7 +233,6 @@ onMounted(() => {
 
 onBeforeUnmount(async () => {
   re.unobserve(localMixerRef.value);
-  isVideoMixerEnabled.value = false;
   const mediaSourceManager = roomEngine.instance?.getTRTCCloud().getMediaMixingManager();
   await mediaSourceManager?.destroy();
 });

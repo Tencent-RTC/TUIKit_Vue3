@@ -1,4 +1,4 @@
-const DEFAULT_USER_AVATAR = 'https://web.sdk.qcloud.com/component/TUIKit/assets/avatar_01.png';
+const DEFAULT_USER_AVATAR = 'https://web.sdk.qcloud.com/component/TUIKit/assets/avatar_16.png';
 const DEFAULT_GROUP_AVATAR_WORK = 'https://web.sdk.qcloud.com/im/demo/TUIkit/react-static/images/group_avatar_work.png';
 const DEFAULT_GROUP_AVATAR_PUBLIC = 'https://web.sdk.qcloud.com/im/demo/TUIkit/react-static/images/group_avatar_public.png';
 const DEFAULT_GROUP_AVATAR_MEETING = 'https://web.sdk.qcloud.com/im/demo/TUIkit/react-static/images/group_avatar_meeting.png';

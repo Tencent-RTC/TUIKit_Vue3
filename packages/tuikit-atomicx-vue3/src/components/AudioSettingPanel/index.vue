@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onUnmounted } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useUIKit, TUIButton, TUISlider } from '@tencentcloud/uikit-base-component-vue3';
 import { useDeviceState } from '../../states/DeviceState';
 import MicrophoneSelect from './MicrophoneSelect.vue';
@@ -151,15 +151,6 @@ watch(captureVolumeValue, async (value) => {
 
 watch(outputVolumeValue, async (value) => {
   await setOutputVolume(value);
-});
-
-onUnmounted(() => {
-  if (isMicrophoneTesting.value) {
-    stopMicrophoneTest();
-  }
-  if (isSpeakerTesting.value) {
-    stopSpeakerTest();
-  }
 });
 </script>
 
