@@ -35,6 +35,8 @@ const { t } = useUIKit();
 const {
   resolutionList,
   currentResolution,
+  isPictureInPicture,
+  exitPictureInPicture,
   switchResolution,
 } = usePlayerControlState();
 
@@ -78,6 +80,9 @@ const handleClickResolution = async (event: MouseEvent) => {
       }
       try {
         isResolutionSwitching.value = true;
+        if (isPictureInPicture.value) {
+          await exitPictureInPicture();
+        }
         await switchResolution(resolutionValue);
       } catch (error) {
         console.error('[MultiResolution] Failed to switch resolution:', error);

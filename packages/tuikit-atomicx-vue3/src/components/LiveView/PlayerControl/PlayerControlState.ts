@@ -15,7 +15,6 @@ import {
 import {
   DOMElementGetter,
   EventListenerManager,
-  waitForVideoMounted,
 } from './utils/domHelpers';
 import {
   FullscreenManager,
@@ -53,7 +52,10 @@ export interface PlayerControlState {
   currentVolume: Ref<number>;
   isMuted: Ref<boolean>;
   isSafari: Ref<boolean>;
-  isTcPlayer: Ref<boolean>;
+
+  // Player type detection methods
+  hasTCPlayer: () => boolean;
+  hasLEBPlayer: () => boolean;
 
   // Resolution state properties
   resolutionList: Ref<Resolution[]>;
@@ -108,7 +110,6 @@ const isPictureInPicture = ref(false);
 const currentVolume = ref(VOLUME_CONSTANTS.DEFAULT_VOLUME);
 const isMuted = ref(false); // Mute state - synced across all rooms
 const isSafari = ref(isSafariBrowser());
-const isTcPlayer = ref(false);
 
 // Internal storage for volume restoration (not reactive)
 let restoreVolume = VOLUME_CONSTANTS.DEFAULT_VOLUME;
@@ -171,6 +172,16 @@ export function usePlayerControlState(): PlayerControlState {
 
   // Device information
   const deviceType = getDeviceType();
+
+    /**
+   * Check if TcPlayer element exists in DOM
+   */
+  const hasTCPlayer = (): boolean => DOMElementGetter.hasTCPlayerElement();
+
+  /**
+   * Check if LEBPlayer element exists in DOM
+   */
+  const hasLEBPlayer = (): boolean => DOMElementGetter.hasLEBPlayerElement();
 
   /**
    * Error handling wrapper
@@ -299,16 +310,40 @@ export function usePlayerControlState(): PlayerControlState {
 
   /**
    * Picture-in-picture control methods
+   *
+   * Note: Safari requires PiP requests to be in the synchronous context of user activation.
+   * When in fullscreen mode, we must request PiP BEFORE exiting fullscreen to preserve
+   * the user activation state. Awaiting exitFullscreen() would cause the user activation
+   * to expire, resulting in NotAllowedError.
    */
   const requestPictureInPicture = async (): Promise<boolean> => withErrorHandling(async () => {
-    console.log(`requestPictureInPicture: enableWebrtcMediaControl: [${enableWebrtcMediaControl}] isTCPlayer: [${isTcPlayer.value}].`);
-    if (enableWebrtcMediaControl && !isTcPlayer.value) {
-      const subClouds: TRTCCloud[]= Array.from(TRTCCloud.subCloudMap.values());
-      for (const subCloud of subClouds) {
-        subCloud.callExperimentalAPI(JSON.stringify({
-          api: 'requestPictureInPicture',
-          params: {},
-        }));
+    const isTCPlayer = hasTCPlayer();
+    const isLEBPlayer = hasLEBPlayer();
+    console.log(`requestPictureInPicture: enableWebrtcMediaControl: [${enableWebrtcMediaControl}] [${isTCPlayer}] [${isLEBPlayer}]`);
+
+    if (enableWebrtcMediaControl && !isTCPlayer && !isLEBPlayer) {
+      const subClouds: TRTCCloud[] = Array.from(TRTCCloud.subCloudMap.values());
+      const results = await Promise.allSettled(
+        subClouds.map(subCloud =>
+          subCloud.callExperimentalAPI(JSON.stringify({
+            api: 'requestPictureInPicture',
+            params: {},
+          }))
+        )
+      );
+
+      // Check if at least one succeeded, throw last error if all failed
+      const hasSuccess = results.some(r => r.status === 'fulfilled');
+      if (!hasSuccess) {
+        const rejected = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+        if (rejected.length > 0) {
+          throw rejected[rejected.length - 1].reason;
+        }
+      }
+
+      // Exit fullscreen after PiP request to preserve user activation
+      if (isFullscreen.value) {
+        exitFullscreen();
       }
       return true;
     }
@@ -323,20 +358,42 @@ export function usePlayerControlState(): PlayerControlState {
     }
 
     setupVideoEventListeners();
+    // Request PiP first to preserve user activation, then exit fullscreen
+    // Safari loses user activation after async exitFullscreen(), causing NotAllowedError
     await video.requestPictureInPicture();
+
+    // Exit fullscreen after PiP is successfully activated
+    if (isFullscreen.value) {
+      exitFullscreen();
+    }
     return true;
   }, 'Request picture-in-picture', false);
 
   const exitPictureInPicture = async (): Promise<boolean> => withErrorHandling(async () => {
-    console.log(`exitPictureInPicture: enableWebrtcMediaControl: [${enableWebrtcMediaControl}] isTCPlayer: [${isTcPlayer.value}].`);
-    if (enableWebrtcMediaControl && !isTcPlayer.value) {
-      const subClouds: TRTCCloud[]= Array.from(TRTCCloud.subCloudMap.values());
-      for (const subCloud of subClouds) {
-        subCloud.callExperimentalAPI(JSON.stringify({
-          api: 'exitPictureInPicture',
-          params: {},
-        }));
+    const isTCPlayer = hasTCPlayer();
+    const isLEBPlayer = hasLEBPlayer();
+    console.log(`exitPictureInPicture: enableWebrtcMediaControl: [${enableWebrtcMediaControl}] [${isTCPlayer}] [${isLEBPlayer}].`);
+    if (enableWebrtcMediaControl && !isTCPlayer && !isLEBPlayer) {
+      const subClouds: TRTCCloud[] = Array.from(TRTCCloud.subCloudMap.values());
+      const results = await Promise.allSettled(
+        subClouds.map(subCloud =>
+          subCloud.callExperimentalAPI(JSON.stringify({
+            api: 'exitPictureInPicture',
+            params: {},
+          }))
+        )
+      );
+
+      // Check if at least one succeeded, throw last error if all failed
+      const hasSuccess = results.some(r => r.status === 'fulfilled');
+      if (!hasSuccess) {
+        const rejected = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+        if (rejected.length > 0) {
+          throw rejected[rejected.length - 1].reason;
+        }
       }
+
+      isPictureInPicture.value = false;
       return true;
     }
 
@@ -345,6 +402,7 @@ export function usePlayerControlState(): PlayerControlState {
     }
 
     await document.exitPictureInPicture();
+    isPictureInPicture.value = false;
     return true;
   }, 'Exit picture-in-picture', false);
 
@@ -534,18 +592,6 @@ export function usePlayerControlState(): PlayerControlState {
   setupVideoEventListeners();
   OrientationManager.addOrientationListener(orientationListenerId, handleOrientationChange);
 
-  const updateIsTcPlayer = async () => {
-    try {
-      await waitForVideoMounted();
-    } finally {
-      const hasTcPlayer = DOMElementGetter.hasTcPlayerElement();
-      if (hasTcPlayer !== isTcPlayer.value) {
-        isTcPlayer.value = hasTcPlayer;
-        console.log('[PlayerControl] isTcPlayer:', isTcPlayer.value);
-      }
-    }
-  };
-
   watch(
     () => currentLive.value?.liveId,
     async (newLiveId) => {
@@ -558,7 +604,6 @@ export function usePlayerControlState(): PlayerControlState {
         // When pulling a TRTC stream, this interface has a cache, but when using TCPlayer, there is no cache
         await setVolume(currentVolume.value);
         await initializeResolution(newLiveId, false);
-        updateIsTcPlayer();
 
         // Print player control state after entering room
         console.log('[PlayerControl] State after entering room:', JSON.stringify({
@@ -575,12 +620,6 @@ export function usePlayerControlState(): PlayerControlState {
     },
   );
 
-  watch(() => isPlaying.value, (newIsPlaying) => {
-    if (newIsPlaying) {
-      updateIsTcPlayer();
-    }
-  }, { immediate: true });
-
   // Reset playback state when local user takes seat
   watch(isLocalUserOnSeat, (isOnSeat) => {
     if (isOnSeat) {
@@ -589,6 +628,13 @@ export function usePlayerControlState(): PlayerControlState {
       }
       if (currentVolume.value !== VOLUME_CONSTANTS.DEFAULT_VOLUME) {
         setVolume(VOLUME_CONSTANTS.DEFAULT_VOLUME);
+      }
+      if (isPictureInPicture.value) {
+        exitPictureInPicture();
+        isPictureInPicture.value = false;
+      }
+      if (isFullscreen.value) {
+        exitFullscreen();
       }
     }
   });
@@ -605,7 +651,8 @@ export function usePlayerControlState(): PlayerControlState {
     resolutionList,
     currentResolution,
     isSafari,
-    isTcPlayer,
+    hasTCPlayer,
+    hasLEBPlayer,
     resume,
     pause,
     requestFullscreen,

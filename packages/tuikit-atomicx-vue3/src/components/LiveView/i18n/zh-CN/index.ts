@@ -1,6 +1,7 @@
 export const resource = {
   'LiveView.NoVideo': '暂无画面',
   'LiveView.WaitingForConnection': '等待连线',
+  'LiveView.ApplyForConnection': '申请连线',
   'LiveView.Play': '播放',
   'LiveView.Pause': '暂停',
   'LiveView.PictureInPicture': '画中画',
@@ -19,6 +20,8 @@ export const resource = {
   'LiveView.1080P': '超清',
   'LiveView.Connecting': '连线中',
   'LiveView.NotAllowPauseInPIP': '画中画模式下不允许暂停操作',
+  'LiveView.NotAllowFullscreenInPIP': '画中画模式下不允许全屏操作',
   'LiveView.NotAllowPIPInNonPlaying': '暂停状态下不允许进入画中画模式',
+  'LiveView.NotAllowPIPInFullscreen': '全屏模式下不允许进入画中画模式',
   'LiveView.BattleEnded': 'PK结束',
 };

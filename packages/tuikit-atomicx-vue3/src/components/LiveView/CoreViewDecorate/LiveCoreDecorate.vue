@@ -31,7 +31,7 @@ watch(() => props.seatListWithRealSize, (val) => {
   if (val.length > 0) {
     showLiveCoreDecorate.value = true;
   }
-});
+}, { immediate: true });
 
 const minTop = computed(() => {
   return props.seatListWithRealSize.reduce((min, item) => {

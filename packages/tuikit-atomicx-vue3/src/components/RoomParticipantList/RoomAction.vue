@@ -1,46 +1,57 @@
 <template>
   <div v-if="canOperate" class="room-action-container">
-    <TUIButton
-      type="primary"
-      color="gray"
-      style="width: 112px"
-      @click="roomAudioAction.handler"
-    >
-      {{ roomAudioAction.label }}
-    </TUIButton>
-    <TUIButton
-      type="primary"
-      color="gray"
-      style="width: 112px"
-      @click="roomVideoAction.handler"
-    >
-      {{ roomVideoAction.label }}
-    </TUIButton>
-    <div ref="moreContainerRef" class="more-container">
+    <template v-if="!isWebinar">
       <TUIButton
         type="primary"
         color="gray"
         style="width: 112px"
-        @click="toggleClickMoreBtn"
+        @click="roomAudioAction.handler"
       >
-        {{ t('ParticipantList.More') }}
-        <IconArrowUp
-          size="12"
-          :class="['more-arrow', showMoreControl ? 'down' : 'up']"
-        />
+        {{ roomAudioAction.label }}
       </TUIButton>
-      <div v-show="showMoreControl" class="drop-down">
-        <div
-          v-for="item in moreControlList"
-          :key="item.key"
-          class="user-operate-item"
-          @click="item.handler"
+      <TUIButton
+        type="primary"
+        color="gray"
+        style="width: 112px"
+        @click="roomVideoAction.handler"
+      >
+        {{ roomVideoAction.label }}
+      </TUIButton>
+      <div ref="moreContainerRef" class="more-container">
+        <TUIButton
+          type="primary"
+          color="gray"
+          style="width: 112px"
+          @click="toggleClickMoreBtn"
         >
-          <TUIIcon v-if="item.icon" :icon="item.icon" />
-          <span class="operate-text">{{ item.label }}</span>
+          {{ t('ParticipantList.More') }}
+          <IconArrowUp
+            size="12"
+            :class="['more-arrow', showMoreControl ? 'down' : 'up']"
+          />
+        </TUIButton>
+        <div v-show="showMoreControl" class="drop-down">
+          <div
+            v-for="item in moreControlList"
+            :key="item.key"
+            class="user-operate-item"
+            @click="item.handler"
+          >
+            <TUIIcon v-if="item.icon" :icon="item.icon" />
+            <span class="operate-text">{{ item.label }}</span>
+          </div>
         </div>
       </div>
-    </div>
+    </template>
+    <TUIButton
+      v-else
+      type="primary"
+      color="gray"
+      style="width: 100%"
+      @click="roomAudioAction.handler"
+    >
+      {{ roomAudioAction.label }}
+    </TUIButton>
   </div>
 </template>
 
@@ -52,11 +63,15 @@ import {
   useUIKit,
   TUIIcon,
 } from '@tencentcloud/uikit-base-component-vue3';
+import { useRoomState } from '../../states/RoomState';
+import { RoomType } from '../../types';
 import useRoomActions from './useRoomAction';
 
 const { t } = useUIKit();
 const { canOperate, roomActionList } = useRoomActions();
+const { currentRoom } = useRoomState();
 
+const isWebinar = computed(() => currentRoom.value?.roomType === RoomType.Webinar);
 const roomAudioAction = computed(() => roomActionList.value[0]);
 const roomVideoAction = computed(() => roomActionList.value[1]);
 const moreControlList = computed(() => roomActionList.value.slice(2));
@@ -93,6 +108,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
 }
 
 .more-container {

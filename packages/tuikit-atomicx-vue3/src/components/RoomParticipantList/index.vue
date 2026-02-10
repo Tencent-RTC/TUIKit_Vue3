@@ -1,6 +1,6 @@
 <template>
   <div class="participant-list">
-    <div class="search-container">
+    <div v-if="!isWebinar" class="search-container">
       <div class="search-box">
         <IconSearch class="search-icon" size="20" />
         <input
@@ -11,9 +11,10 @@
         >
       </div>
     </div>
+    <div v-else style="padding-top: 16px;" />
 
     <!-- 标签页 -->
-    <div class="tabs">
+    <div v-if="!isWebinar" class="tabs">
       <div
         :class="['tab', { active: activeTab === 'joined' }]"
         @click="activeTab = 'joined'"
@@ -28,7 +29,22 @@
       </div>
     </div>
 
-    <template v-if="activeTab === 'joined'">
+    <div v-else class="tabs">
+      <div
+        :class="['tab', { active: activeTabWebinar === 'Guest' }]"
+        @click="activeTabWebinar = 'Guest'"
+      >
+        <span class="title">{{ t('ParticipantList.Guest') }}({{ currentRoom?.participantCount || 0 }})</span>
+      </div>
+      <div
+        :class="['tab', { active: activeTabWebinar === 'Audience' }]"
+        @click="activeTabWebinar = 'Audience'"
+      >
+        <span class="title">{{ t('ParticipantList.Audience') }}({{ currentRoom?.audienceCount || 0 }})</span>
+      </div>
+    </div>
+
+    <template v-if="activeTab === 'joined' && !isWebinar">
       <!-- 成员列表 -->
       <div class="participant-container">
         <div v-if="filteredParticipants.length === 0" class="empty-state">
@@ -58,7 +74,7 @@
       </div>
     </template>
 
-    <template v-if="activeTab === 'unjoined'">
+    <template v-if="activeTab === 'unjoined' && !isWebinar">
       <div class="unjoined-user-container">
         <PendingParticipantItem
           v-for="userInfo in filteredParticipants"
@@ -79,6 +95,66 @@
         </TUIButton>
       </div>
     </template>
+
+    <template v-if="activeTabWebinar === 'Guest' && isWebinar">
+      <!-- 成员列表 -->
+      <div class="participant-container">
+        <div v-if="filteredParticipants.length === 0" class="empty-state">
+          {{ t('ParticipantList.NoMember') }}
+        </div>
+        <ParticipantItem
+          v-for="participant in filteredParticipants"
+          :key="participant.userId"
+          :participant="participant"
+          :is-local="participant.userId === localParticipant?.userId"
+          :is-hovered="hoveredUserId === participant.userId"
+          @hover="handleParticipantHover"
+          @leave="handleParticipantLeave"
+        >
+          <template #actions>
+            <ParticipantAction
+              :participant="participant"
+              :is-local="participant.userId === localParticipant?.userId"
+            />
+          </template>
+        </ParticipantItem>
+      </div>
+
+      <!-- 底部操作 -->
+      <div class="footer">
+        <RoomAction />
+      </div>
+    </template>
+
+    <template v-if="activeTabWebinar === 'Audience' && isWebinar">
+      <!-- 成员列表 -->
+      <div class="participant-container">
+        <div v-if="audienceList.length === 0" class="empty-state">
+          {{ t('ParticipantList.NoMember') }}
+        </div>
+        <AudienceItem
+          v-for="audience in audienceList"
+          :key="audience.userId"
+          :audience="audience"
+          :is-local="audience.userId === localParticipant?.userId"
+          :is-hovered="hoveredUserId === audience.userId"
+          @hover="handleParticipantHover"
+          @leave="handleParticipantLeave"
+        >
+          <template #actions>
+            <AudienceAction
+              :audience="audience"
+              :is-local="audience.userId === localParticipant?.userId"
+            />
+          </template>
+        </AudienceItem>
+      </div>
+
+      <!-- 底部操作 -->
+      <div class="footer">
+        <RoomAction />
+      </div>
+    </template>
   </div>
 </template>
 
@@ -87,15 +163,15 @@ import { ref, computed, watch } from 'vue';
 import { IconSearch, useUIKit, TUIButton } from '@tencentcloud/uikit-base-component-vue3';
 import { useRoomParticipantState } from '../../states/RoomParticipantState';
 import { useRoomState } from '../../states/RoomState';
-import { RoomParticipantStatus, RoomParticipantRole, DeviceStatus } from '../../types';
+import { RoomParticipantStatus, RoomParticipantRole, DeviceStatus, RoomType } from '../../types';
 import { combineComparators, createComparator } from '../../utils/compare';
+import AudienceAction from './AudienceAction.vue';
+import AudienceItem from './AudienceItem.vue';
 import ParticipantAction from './ParticipantAction.vue';
 import ParticipantItem from './ParticipantItem.vue';
 import PendingParticipantItem from './PendingParticipantItem.vue';
 import RoomAction from './RoomAction.vue';
 import type { RoomParticipant } from '../../types';
-
-const { pendingParticipantList } = useRoomParticipantState();
 
 const { t } = useUIKit();
 const {
@@ -103,20 +179,31 @@ const {
   callUserToRoom,
 } = useRoomState();
 const {
+  pendingParticipantList,
   participantList,
+  audienceList,
   localParticipant,
   participantListCursor,
+  audienceListCursor,
   getParticipantList,
+  getAudienceList,
 } = useRoomParticipantState();
+
+const isWebinar = computed(() => currentRoom.value?.roomType === RoomType.Webinar);
 
 watch(() => currentRoom.value?.roomId, (newVal, oldVal) => {
   if (newVal && newVal !== oldVal && participantListCursor.value === '') {
     getParticipantList({ cursor: participantListCursor.value });
   }
+  if (newVal && newVal !== oldVal && audienceListCursor.value === '') {
+    getAudienceList({ cursor: audienceListCursor.value });
+  }
 }, { immediate: true });
 
 const searchText = ref('');
 const activeTab = ref<'joined' | 'unjoined'>('joined');
+const activeTabWebinar = ref<'Guest' | 'Audience'>('Guest');
+
 const hoveredUserId = ref<string | null>(null);
 
 const defaultUserListCompareFunction = combineComparators(

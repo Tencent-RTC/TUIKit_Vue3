@@ -13,6 +13,8 @@ export const resource = {
     Host: '房主',
     Me: '我',
     Admin: '管理员',
+    Guest: '嘉宾',
+    Audience: '观众',
 
     More: '更多',
     Mute: '静音',
@@ -71,5 +73,10 @@ export const resource = {
 
     InviteSuccess: '邀请信息已发出，等待成员加入',
     InviteFailed: '邀请成员失败',
+
+    PromoteToParticipant: '设为嘉宾',
+    DemoteToAudience: '设为观众',
+    PromoteToParticipantSuccess: '已将{{ name }}设为嘉宾',
+    DemoteToAudienceSuccess: '已将{{ name }}设为观众',
   },
 };

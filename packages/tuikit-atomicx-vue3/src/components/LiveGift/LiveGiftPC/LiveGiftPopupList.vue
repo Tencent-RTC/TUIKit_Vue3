@@ -8,7 +8,7 @@
         :key="item.giftID"
         :gift="item"
         :is-active="selectedGiftId === item.giftID"
-        :size="88"
+        :size="80"
         @interact="handleGiftInteract"
       />
     </div>

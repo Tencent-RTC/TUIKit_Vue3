@@ -86,7 +86,7 @@ const handleSendClick = () => {
   align-items: center;
   flex-shrink: 0;
   width: calc(100% - 6px);
-  aspect-ratio: 1 / 1.1;
+  aspect-ratio: 4 / 5;
   border-radius: 10px;
   padding: 2px;
   box-sizing: border-box;
@@ -103,8 +103,8 @@ const handleSendClick = () => {
     align-items: center;
     justify-content: center;
     width: 100%;
-    aspect-ratio: 76 / 62;
-    border-radius: 10px;
+    aspect-ratio: 76 / 74;
+    border-radius: 8px;
     background-color: var(--bg-color-operate);
 
     img {

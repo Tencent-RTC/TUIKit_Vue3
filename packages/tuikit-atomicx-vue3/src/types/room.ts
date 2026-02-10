@@ -10,6 +10,12 @@ import type { Ref } from 'vue';
  * import { RoomStatus, RoomCallStatus } from 'tuikit-atomicx-vue3';
  */
 
+export enum RoomType {
+  /** 会议类型 */
+  Standard = 1,
+  /** 网络研讨会类型 */
+  Webinar = 2,
+}
 /**
  * 房间状态枚举
  * @enum {number}
@@ -66,12 +72,16 @@ export interface RoomUser {
 export interface RoomInfo {
   /** 房间唯一标识 */
   readonly roomId: string;
+  /** 房间类型 */
+  roomType: RoomType;
   /** 房间显示名称 */
   roomName: string;
   /** 房间所有者/创建者 */
   roomOwner: RoomUser;
-  /** 房间参与者数量 */
+  /** 房间嘉宾数量 */
   readonly participantCount?: number;
+  /** 房间观众数量 */
+  readonly audienceCount?: number;
   /** 房间创建时间戳 */
   readonly createTime?: number;
   /** 房间当前状态 */
@@ -341,7 +351,7 @@ export interface IRoomState {
    * @param options.roomId - 房间 ID
    * @param options.options - 房间创建配置
    */
-  createAndJoinRoom(options: { roomId: string; options: CreateRoomOptions }): Promise<void>;
+  createAndJoinRoom(options: { roomId: string; roomType?: RoomType; options: CreateRoomOptions }): Promise<void>;
 
   /**
    * 加入现有房间
@@ -349,7 +359,7 @@ export interface IRoomState {
    * @param options.roomId - 房间 ID
    * @param options.password - 房间密码（如需要）
    */
-  joinRoom(options: { roomId: string; password?: string }): Promise<void>;
+  joinRoom(options: { roomId: string; roomType?: RoomType; password?: string }): Promise<void>;
 
   /**
    * 离开当前房间

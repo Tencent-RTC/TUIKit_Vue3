@@ -9,9 +9,12 @@
       <span class="material-name">{{ material.name }}</span>
     </div>
     <div class="material-controls">
-      <div class="control-button mirror-control" @click.stop="handleMirrorToggle" :title="t('Mirror')">
+      <div
+        class="control-button mirror-control"
+        @click.stop="toggleMirror"
+        :title="t('Mirror')"
+      >
         <svg-icon
-          @click="toggleMirror"
           :icon="
             material.layout.mirror === TRTCVideoMirrorType.TRTCVideoMirrorType_Enable ? CameraMirror : CameraUnMirror
           "
@@ -88,17 +91,17 @@ function toggleMirror() {
   });
 }
 
-// 处理鼠标离开事件
+// Handle mouse leave event
 const handleMouseLeave = () => {
-  // 添加延迟，防止鼠标快速移动时菜单闪烁
+  // Add delay to prevent menu flicker on fast mouse move
   hideTimeout = setTimeout(() => {
     showDropdown.value = false;
   }, 150);
 };
 
-// 处理鼠标进入事件
+// Handle mouse enter event
 const handleMouseEnter = () => {
-  // 清除隐藏定时器
+  // Clear hide timer
   if (hideTimeout) {
     clearTimeout(hideTimeout);
     hideTimeout = null;
@@ -106,18 +109,10 @@ const handleMouseEnter = () => {
   showDropdown.value = true;
 };
 
-// 处理材料选择
 const handleSelectMaterial = () => {
   updateMediaSource(props.material, { isSelected: true });
 };
 
-// 处理镜像切换
-const handleMirrorToggle = () => {
-  // 实现镜像切换逻辑
-  console.log('切换镜像:', props.material);
-};
-
-// 获取材料图标
 const getMaterialIcon = (mediaSourceType: TRTCMediaSourceType) => {
   const iconMap = {
     [TRTCMediaSourceType.kCamera]: CameraIcon,
@@ -127,21 +122,10 @@ const getMaterialIcon = (mediaSourceType: TRTCMediaSourceType) => {
   return iconMap[mediaSourceType];
 };
 
-// 获取材料类型名称
-const getMaterialTypeName = (mediaSourceType: TRTCMediaSourceType) => {
-  const typeNames = {
-    [TRTCMediaSourceType.kCamera]: t('Camera'),
-    [TRTCMediaSourceType.kScreen]: t('Screen Share'),
-  };
-  return typeNames[mediaSourceType] || t('Unknown');
-};
-
-// 重命名材料
 const renameMaterial = (material: MediaSource) => {
   emits('rename', material);
 };
 
-// 获取材料控制选项
 const getMaterialControls = (mediaSourceType: TRTCMediaSourceType) => {
   const commonControls = [
     {
@@ -177,19 +161,16 @@ const getMaterialControls = (mediaSourceType: TRTCMediaSourceType) => {
   return controlsMap[mediaSourceType] || commonControls;
 };
 
-// 处理删除材料
 const handleDeleteMaterial = (material: MediaSource) => {
   removeMediaSource(material);
   showDropdown.value = false;
 };
 
-// 摄像头设置
 const handleCameraSetting = (material: MediaSource) => {
   emits('cameraSetting', material);
   showDropdown.value = false;
 };
 
-// 处理控制选项点击
 const handleControlClick = (control: any, material: MediaSource) => {
   control.onClick(material);
 };
@@ -205,7 +186,6 @@ const handleControlClick = (control: any, material: MediaSource) => {
   cursor: pointer;
   padding: 4px 8px;
   z-index: 1;
-  // 当显示下拉菜单时，提升层级
   &.show-dropdown {
     z-index: 1000;
   }
@@ -317,7 +297,6 @@ const handleControlClick = (control: any, material: MediaSource) => {
   }
 }
 
-// 动画
 @keyframes fadeInScale {
   from {
     opacity: 0;

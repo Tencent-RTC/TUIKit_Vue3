@@ -76,9 +76,10 @@ const handleScroll = () => {
 };
 
 const transcribedMessageList = computed((): MessageGroup[] => {
-  const completedMessages = [...realtimeMessageList.value
-    .filter(msg => msg.sourceText?.trim() && typeof msg.timestamp === 'number' && Number.isFinite(msg.timestamp)),
-  ].sort((a, b) => (a.timestamp ?? 0) - (b.timestamp ?? 0));
+  // Filter only completed messages and sort by timestamp
+  const completedMessages = realtimeMessageList.value
+    .filter(msg => msg.sourceText?.trim())
+    .sort((a, b) => a.timestamp - b.timestamp);
 
   if (completedMessages.length === 0) {
     return [];
@@ -90,17 +91,16 @@ const transcribedMessageList = computed((): MessageGroup[] => {
 
   completedMessages.forEach((message) => {
     const speakerId = message.speakerUserId || 'unknown';
-    const msgTs = message.timestamp ?? 0;
 
     if (
       !currentGroup
       || speakerId !== currentGroup.sender
-      || msgTs - currentGroup.startMsTs > timeInterval
+      || message.timestamp - currentGroup.startMsTs > timeInterval
     ) {
       // Create a new group
       currentGroup = {
         sender: speakerId,
-        startMsTs: msgTs,
+        startMsTs: message.timestamp,
         messages: [message],
       };
       aggregatedMessageList.push(currentGroup);

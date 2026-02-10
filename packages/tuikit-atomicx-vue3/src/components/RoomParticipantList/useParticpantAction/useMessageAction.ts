@@ -2,40 +2,40 @@ import type { Component } from 'vue';
 import { computed, reactive, markRaw } from 'vue';
 import { TUIToast, TOAST_TYPE, IconChatForbidden, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useRoomParticipantState } from '../../../states/RoomParticipantState';
-import type { RoomParticipant } from '../../../types';
+import type { RoomParticipant, RoomUser } from '../../../types';
 
 const { t } = useUIKit();
-const { muteParticipantMessage } = useRoomParticipantState();
+const { muteParticipantMessage, messageDisabledUserList } = useRoomParticipantState();
+
 export function useMessageAction(
-  { targetParticipant }: { targetParticipant: RoomParticipant },
+  { targetParticipant }: { targetParticipant: RoomParticipant | RoomUser },
 ): {
     key: string;
     icon: Component;
     label: string;
     handler: () => void;
   } {
-  async function disableUserChat() {
-    const { isMessageDisabled } = targetParticipant;
-    try {
-      await muteParticipantMessage({
-        userId: targetParticipant.userId,
-        mute: !isMessageDisabled,
-      });
-    } catch (error: any) {
-      TUIToast({
-        type: TOAST_TYPE.ERROR,
-        message: t('ParticipantList.DisableChatFailed'),
-      });
-    }
-  }
-
+  const isMessageDisabled = computed(() => (targetParticipant as RoomParticipant)?.isMessageDisabled
+    || messageDisabledUserList.value?.some(user => user.userId === targetParticipant.userId));
   const chatControl = reactive({
     key: 'chatAction',
     icon: markRaw(IconChatForbidden),
     label: computed(() =>
-      targetParticipant.isMessageDisabled ? t('ParticipantList.EnableChat') : t('ParticipantList.DisableChat'),
+      isMessageDisabled.value ? t('ParticipantList.EnableChat') : t('ParticipantList.DisableChat'),
     ),
-    handler: disableUserChat,
+    handler: async () => {
+      try {
+        await muteParticipantMessage({
+          userId: targetParticipant.userId,
+          mute: !isMessageDisabled.value,
+        });
+      } catch (_error: any) {
+        TUIToast({
+          type: TOAST_TYPE.ERROR,
+          message: t('ParticipantList.DisableChatFailed'),
+        });
+      }
+    },
   });
 
   return chatControl;

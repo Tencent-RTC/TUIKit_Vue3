@@ -105,7 +105,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { TUIBattleInfo, TUIConnectionCode } from '@tencentcloud/tuiroom-engine-js';
+import { TUIConnectionCode } from '@tencentcloud/tuiroom-engine-js';
 import { TUIButton, TUIToast, useUIKit, TOAST_TYPE, TUIDialog } from '@tencentcloud/uikit-base-component-vue3';
 import { useBattleState } from '../../states/BattleState';
 import { useCoHostState } from '../../states/CoHostState';
@@ -253,14 +253,12 @@ const handleCoHostRequestAccepted = ({ invitee }: { invitee: SeatUserInfo }) => 
 
 const handleCoHostRequestRejected = ({ invitee }: { invitee: SeatUserInfo }) => {
   if (sentCoHostRequestUserList.value.has(invitee.userId)) {
-    TUIToast({ type: TOAST_TYPE.INFO, message: t('Co-host request rejected by user', { userName: invitee.userName || invitee.userId }) });
     sentCoHostRequestUserList.value.delete(invitee.userId);
   }
 };
 
 const handleCoHostRequestTimeout = ({ inviter, invitee }: { inviter: SeatUserInfo; invitee: SeatUserInfo }) => {
   if (inviter.userId === loginUserInfo.value?.userId && sentCoHostRequestUserList.value.has(invitee.userId)) {
-    TUIToast({ type: TOAST_TYPE.INFO, message: t('Co-host request timeout for user', { userName: invitee.userName || invitee.userId }) });
     sentCoHostRequestUserList.value.delete(invitee.userId);
   }
 };
@@ -273,7 +271,6 @@ const onBattleRequestAccept = (eventInfo: { battleId: string, inviter: SeatUserI
 
 const onBattleRequestRejected = (eventInfo: { battleId: string, inviter: SeatUserInfo, invitee: SeatUserInfo }) => {
   if (eventInfo.inviter.userId === loginUserInfo.value?.userId) {
-    TUIToast({ type: TOAST_TYPE.INFO, message: t('Battle request rejected by user', { userName: eventInfo.invitee.userName || eventInfo.invitee.userId }) });
     battleRequestList.value.delete(eventInfo.invitee.userId);
   }
 };

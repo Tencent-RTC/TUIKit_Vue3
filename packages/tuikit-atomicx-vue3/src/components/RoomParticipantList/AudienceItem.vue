@@ -5,11 +5,11 @@
     @mouseleave="handleMouseLeave"
   >
     <div class="user-info">
-      <Avatar :src="participant.avatarUrl" :size="40" />
+      <Avatar :src="audience.avatarUrl" :size="40" />
       <span class="user-name">{{ displayName }}</span>
       <div class="role-info">
         <IconUser
-          v-if="isOwner || isAdmin"
+          v-if="isAdmin"
           size="20"
           :class="isAdmin ? 'admin-icon' : 'master-icon'"
         />
@@ -21,17 +21,8 @@
       </div>
     </div>
 
-    <div v-if="!isHovered" class="member-av-state">
-      <component
-        :is="item.icon"
-        v-for="(item, index) in iconList"
-        :key="index"
-        :class="['state-icon']"
-      />
-    </div>
-
     <div v-if="isHovered" class="action-area">
-      <slot name="actions" :participant="participant" />
+      <slot name="actions" :audience="audience" />
     </div>
   </div>
 </template>
@@ -39,41 +30,27 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { IconUser, useUIKit,
-  IconVideoOpen,
-  IconVideoClose,
-  IconAudioOpen,
-  IconAudioClose,
-  IconScreenOpen,
 } from '@tencentcloud/uikit-base-component-vue3';
 import { useRoomParticipantState } from '../../states/RoomParticipantState';
-import { useRoomState } from '../../states/RoomState';
-import { RoomParticipantRole, DeviceStatus, RoomType } from '../../types';
 import { Avatar } from '../Avatar';
-import type { RoomParticipant } from '../../types/participant';
+import type { RoomUser } from '../../types';
 
 interface Props {
-  participant: RoomParticipant;
+  audience: RoomUser;
 }
 
 const props = defineProps<Props>();
 
-const { localParticipant } = useRoomParticipantState();
+const { localParticipant, adminList } = useRoomParticipantState();
 
 const { t } = useUIKit();
 
-const displayName = computed(() => props.participant?.nameCard || props.participant?.userName || props.participant?.userId);
+const displayName = computed(() => props.audience?.userName || props.audience?.userId);
 
-const isOwner = computed(() => props.participant?.role === RoomParticipantRole.Owner);
-const isAdmin = computed(() => props.participant?.role === RoomParticipantRole.Admin);
-const isMe = computed(() => localParticipant.value?.userId === props.participant.userId);
+const isAdmin = computed(() => adminList.value?.find(admin => admin.userId === props.audience.userId));
+const isMe = computed(() => localParticipant.value?.userId === props.audience.userId);
 
 const roleLabel = computed(() => {
-  if (isOwner.value && isMe.value) {
-    return `${t('ParticipantList.Host')}, ${t('ParticipantList.Me')}`;
-  }
-  if (isOwner.value) {
-    return t('ParticipantList.Host');
-  }
   if (isAdmin.value && isMe.value) {
     return `${t('ParticipantList.Admin')}, ${t('ParticipantList.Me')}`;
   }
@@ -94,36 +71,6 @@ const handleMouseEnter = () => {
 const handleMouseLeave = () => {
   isHovered.value = false;
 };
-
-const { currentRoom } = useRoomState();
-const isWebinar = computed(() => currentRoom.value?.roomType === RoomType.Webinar);
-const iconList = computed(() => {
-  const list = [];
-  if (!isWebinar.value) {
-    if (props.participant?.screenShareStatus && props.participant?.screenShareStatus === DeviceStatus.On) {
-      list.push({ icon: IconScreenOpen });
-    }
-    list.push({
-      icon: props.participant?.microphoneStatus && props.participant?.microphoneStatus === DeviceStatus.On ? IconAudioOpen : IconAudioClose,
-    });
-    list.push({
-      icon: props.participant?.cameraStatus && props.participant?.cameraStatus === DeviceStatus.On ? IconVideoOpen : IconVideoClose,
-    });
-  } else {
-    if (props.participant?.screenShareStatus && props.participant?.screenShareStatus === DeviceStatus.On) {
-      list.push({ icon: IconScreenOpen });
-    }
-    list.push({
-      icon: props.participant?.microphoneStatus && props.participant?.microphoneStatus === DeviceStatus.On ? IconAudioOpen : IconAudioClose,
-    });
-    if (props.participant?.role === RoomParticipantRole.Owner) {
-      list.push({
-        icon: props.participant?.cameraStatus && props.participant?.cameraStatus === DeviceStatus.On ? IconVideoOpen : IconVideoClose,
-      });
-    }
-  }
-  return list;
-});
 </script>
 
 <style scoped lang="scss">

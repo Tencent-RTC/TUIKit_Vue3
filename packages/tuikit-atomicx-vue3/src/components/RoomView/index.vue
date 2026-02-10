@@ -26,13 +26,25 @@
         <slot name="participantViewUI" v-bind="{ participant, streamType }" />
       </template>
     </MobileLayout>
+    <FloatMixLayout v-if="layoutTemplate === RoomLayoutTemplate.FloatMixLayout">
+      <template #participantViewUI="{ participant, streamType }">
+        <slot name="participantViewUI" v-bind="{ participant, streamType }" />
+      </template>
+    </FloatMixLayout>
+    <LiveAudienceLayout v-if="layoutTemplate === RoomLayoutTemplate.LiveAudienceLayout">
+      <template #participantViewUI="{ participant, streamType }">
+        <slot name="participantViewUI" v-bind="{ participant, streamType }" />
+      </template>
+    </LiveAudienceLayout>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, provide } from 'vue';
 import { RoomLayoutTemplate } from '../../types';
+import FloatMixLayout from './FloatMixLayout.vue';
 import GridLayout from './GridLayout.vue';
+import LiveAudienceLayout from './LiveAudienceLayout.vue';
 import MobileLayout from './MobileLayout.vue';
 import SpeakerLayout from './SpeakerLayout.vue';
 import { useRoomToolbar } from './useRoomToolbar';

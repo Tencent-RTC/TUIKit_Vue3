@@ -35,6 +35,7 @@ import { useBattleState } from '../../../states/BattleState';
 import { useLiveSeatState } from '../../../states/LiveSeatState';
 import { useLiveListState } from '../../../states/LiveListState';
 import { convertSecondsToHMS } from '../../../utils/utils';
+import { useCoHostState } from '../../../states/CoHostState';
 import defeatResult from '../assets/img/defeat.png';
 import victoryResult from '../assets/img/victory.png';
 import drawResult from '../assets/img/draw.png';
@@ -68,6 +69,9 @@ watch(() => currentBattleInfo.value?.battleId, (newVal) => {
         showBattleStartDisappearAnimation.value = false;
       }, 300);
     }, 2000);
+  } else {
+    showBattleDecorate.value = false;
+    showBattleStart.value = false;
   }
 }, { immediate: true });
 

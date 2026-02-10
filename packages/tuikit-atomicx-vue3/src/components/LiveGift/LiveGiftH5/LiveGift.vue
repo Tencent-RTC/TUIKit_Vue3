@@ -1,5 +1,5 @@
 <template>
-  <div class="live-gift-h5-container">
+  <div class="live-gift-h5-container" v-if="hasGifts">
     <!-- Only show "More Gift" button -->
     <div class="more-gift-button" @click="handleOpenDrawer">
       <div class="icon">
@@ -19,7 +19,7 @@
       <Transition name="drawer">
         <div v-if="drawerVisible" class="live-gift-drawer-mask" @click="handleCloseDrawer">
           <div class="live-gift-drawer-wrapper" @click.stop>
-            <LiveGiftDrawer :giftList="giftList" />
+            <LiveGiftDrawer />
           </div>
         </div>
       </Transition>
@@ -40,9 +40,8 @@ const { currentLive } = useLiveListState();
 
 const drawerVisible = ref(false);
 
-const giftList = computed(() =>
-  giftInfoList.value.flatMap((category) => category.giftList)
-);
+// Check if there are any gifts available
+const hasGifts = computed(() => giftInfoList.value.length > 0);
 
 const handleOpenDrawer = () => {
   drawerVisible.value = true;
@@ -110,7 +109,7 @@ watch(
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--uikit-color-black-4);
+  background: var(--uikit-color-black-6);
   z-index: 99;
 
   @media screen and (orientation: landscape) {

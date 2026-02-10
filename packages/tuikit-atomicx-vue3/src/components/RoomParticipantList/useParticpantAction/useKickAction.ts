@@ -2,19 +2,19 @@ import type { Component } from 'vue';
 import { reactive, markRaw, computed } from 'vue';
 import { useUIKit, IconKickOut, TUIMessageBox } from '@tencentcloud/uikit-base-component-vue3';
 import { useRoomParticipantState } from '../../../states/RoomParticipantState';
-import type { RoomParticipant } from '../../../types';
+import type { RoomParticipant, RoomUser } from '../../../types';
 
 const { t } = useUIKit();
 const { kickParticipant } = useRoomParticipantState();
 export function useKickAction(
-  { targetParticipant }: { targetParticipant: RoomParticipant },
+  { targetParticipant }: { targetParticipant: RoomParticipant | RoomUser },
 ): {
     key: string;
     icon: Component;
     label: string;
     handler: () => void;
   } {
-  const displayName = computed(() => targetParticipant.nameCard || targetParticipant.userName || targetParticipant.userId);
+  const displayName = computed(() => (targetParticipant as RoomParticipant).nameCard || targetParticipant.userName || targetParticipant.userId);
 
   async function kickUserFunc() {
     TUIMessageBox.confirm({

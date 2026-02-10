@@ -1,15 +1,25 @@
 <template>
   <div class="live-gift-drawer-container">
-    <!-- Header -->
+    <!-- Header with tabs -->
     <div class="drawer-header">
-      <span class="drawer-title">{{ t("LiveGift.Gift") }}</span>
+      <div class="tab-container">
+        <div
+          v-for="category in giftCategories"
+          :key="category.categoryID"
+          class="tab-item"
+          :class="{ active: activeCategoryId === category.categoryID }"
+          @click="handleTabClick(category.categoryID)"
+        >
+          {{ category.name }}
+        </div>
+      </div>
     </div>
 
     <!-- Content -->
     <div ref="contentRef" class="gift-content">
       <div class="gift-list" :style="{ gridTemplateColumns: gridTemplateColumns }">
         <GiftItem
-          v-for="item in giftList"
+          v-for="item in currentGiftList"
           :key="item.giftID"
           :gift="item"
           :is-active="selectedGiftId === item.giftID"
@@ -24,28 +34,44 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useUIKit, TUIToast, TOAST_TYPE } from "@tencentcloud/uikit-base-component-vue3";
-import type { GiftInfo } from "@tencentcloud/tuiroom-engine-js";
 import { useLiveGiftState } from "../../../states/LiveGiftState";
 import GiftItem from "../GiftItem.vue";
 
-interface LiveGiftDrawerProps {
-  giftList: GiftInfo[];
-}
-
-const props = defineProps<LiveGiftDrawerProps>();
-
 const { t } = useUIKit();
-const { sendGift } = useLiveGiftState();
+const { giftInfoList, sendGift } = useLiveGiftState();
+
 const selectedGiftId = ref("");
 const contentRef = ref<HTMLDivElement>();
 const gridTemplateColumns = ref("repeat(3, 1fr)");
-const giftItemSize = ref(96);
+const giftItemSize = ref(80);
+const activeCategoryId = ref("");
+
+// Gift categories from state
+const giftCategories = computed(() => giftInfoList.value);
+
+// Current category's gift list
+const currentGiftList = computed(() => {
+  const category = giftCategories.value.find(c => c.categoryID === activeCategoryId.value);
+  return category?.giftList || [];
+});
+
+// Initialize active category when categories load
+watch(giftCategories, (categories) => {
+  if (categories.length > 0 && !activeCategoryId.value) {
+    activeCategoryId.value = categories[0].categoryID;
+  }
+}, { immediate: true });
+
+const handleTabClick = (categoryId: string) => {
+  activeCategoryId.value = categoryId;
+  selectedGiftId.value = "";
+};
 
 // Constants for calculation
 const DEFAULT_GIFT_ITEM_SIZE = 96; // Default gift item size
-const MIN_COLUMNS = 3; // Minimum columns to display
+const MIN_COLUMNS = 4; // Minimum columns to display
 const HORIZONTAL_PADDING = 24; // Content left + right padding (12px * 2)
 const LIST_PADDING = 8; // List left + right padding (4px * 2)
 const GAP = 12; // Gap between items
@@ -128,22 +154,70 @@ onUnmounted(() => {
   height: 100%;
   background: var(--bg-color-operate);
   padding-bottom: env(safe-area-inset-bottom);
+  border-top-left-radius: 20px;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+
+  @media screen and (orientation: portrait){
+    border-top-right-radius: 20px;
+  }
+
+  @media screen and (orientation: landscape){
+    border-bottom-left-radius: 20px;
+  }
 
   .drawer-header {
+    position: relative;
     display: flex;
-    justify-content: center;
     align-items: center;
     flex-shrink: 0;
     width: 100%;
     height: 48px;
+    padding: 8px 20px 0 20px;
     border-bottom: 1px solid var(--stroke-color-primary);
     
-    .drawer-title {
-      font-size: 16px;
-      font-weight: 500;
-      color: var(--text-color-primary);
-      line-height: 1.5;
+    .tab-container {
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      height: 100%;
+      box-sizing: border-box;
+
+      .tab-item {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        font-size: 14px;
+        font-weight: 400;
+        margin-right: 20px;
+        color: var(--text-color-secondary);
+        cursor: pointer;
+        transition: color 0.2s ease;
+        white-space: nowrap;
+        
+        &.active {
+          font-weight: 500;
+          color: var(--text-color-primary);
+          
+          &::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 55px;
+            height: 2px;
+            background: var(--text-color-primary);
+            border-radius: 1px;
+          }
+        }
+        
+        &:active {
+          opacity: 0.7;
+        }
+      }
     }
   }
 

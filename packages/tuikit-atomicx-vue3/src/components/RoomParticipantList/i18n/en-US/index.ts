@@ -13,6 +13,8 @@ export const resource = {
     Host: 'Host',
     Me: 'Me',
     Admin: 'Admin',
+    Guest: 'Participant',
+    Audience: 'Audience',
 
     More: 'More',
     Mute: 'Mute',
@@ -71,5 +73,10 @@ export const resource = {
 
     InviteSuccess: 'Invitation sent successfully, waiting for member to join',
     InviteFailed: 'Failed to invite member',
+
+    PromoteToParticipant: 'Promote to participant',
+    DemoteToAudience: 'Demote to audience',
+    PromoteToParticipantSuccess: '{{ name }} has been promoted to a participant',
+    DemoteToAudienceSuccess: '{{ name }} has been demoted to an audience',
   },
 };

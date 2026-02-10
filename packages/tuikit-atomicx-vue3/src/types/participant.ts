@@ -43,34 +43,34 @@ export enum RoomParticipantRole {
 export enum RoomParticipantStatus {
   /**
    * 未定义
-   * @default 'None'
+   * @default 0
    */
-  None = 'None',
+  None = 0,
   /**
    * 预约房间
-   * @default 'Scheduled'
+   * @default 1
    */
-  Scheduled = 'Scheduled',
+  Scheduled = 1,
   /**
    * 呼叫中
-   * @default 'InCalling'
+   * @default 2
    */
-  InCalling = 'InCalling',
+  InCalling = 2,
   /**
    * 呼叫超时
-   * @default 'CallTimeout'
+   * @default 3
    */
-  CallTimeout = 'CallTimeout',
+  CallTimeout = 3,
   /**
    * 呼叫被拒绝
-   * @default 'CallRejected'
+   * @default 4
    */
-  CallRejected = 'CallRejected',
+  CallRejected = 4,
   /**
    * 在房间内
-   * @default 'InRoom'
+   * @default 5
    */
-  InRoom = 'InRoom',
+  InRoom = 5,
 }
 
 /**
@@ -238,12 +238,26 @@ export enum RoomLayoutTemplate {
    * @default 'mobileLayout'
    */
   MobileLayout = 'MobileLayout',
+  /**
+   * 浮动混合布局
+   * @default 'floatMixLayout'
+   */
+  FloatMixLayout = 'floatMixLayout',
+  /**
+   * 观众布局
+   * @default 'liveAudienceLayout'
+   */
+  LiveAudienceLayout = 'liveAudienceLayout',
 }
 
 export interface IRoomParticipantState {
   // data:
   participantList: Ref<RoomParticipant[]>;
   participantListCursor: Ref<string>;
+  adminList: Ref<RoomUser[]>;
+  audienceList: Ref<RoomUser[]>;
+  audienceListCursor: Ref<string>;
+  messageDisabledUserList: Ref<RoomUser[]>;
   participantListWithVideo: Ref<RoomParticipant[]>;
   participantWithScreen: Ref<RoomParticipant | null>;
   pendingDeviceApplications: Ref<DeviceRequestInfo[]>;
@@ -256,6 +270,11 @@ export interface IRoomParticipantState {
 
   // functions:
   getParticipantList(options: { cursor?: string }): Promise<{ participantList: RoomParticipant[]; cursor: string }>;
+  getAudienceList(options: { cursor?: string }): Promise<{ audienceList: RoomUser[]; cursor: string }>;
+
+  searchUser(options: { keyword: string }): Promise<RoomUser[] | null>;
+  promoteToParticipant(options: { userId: string }): Promise<void>;
+  demoteToAudience(options: { userId: string }): Promise<void>;
 
   transferOwner(options: { userId: string }): Promise<void>;
   setAdmin(options: { userId: string }): Promise<void>;
@@ -617,6 +636,10 @@ export enum RoomParticipantEvent {
    * unsubscribeEvent(RoomParticipantEvent.onDeviceInvitationDeclined, onDeviceInvitationDeclined);
    */
   onDeviceInvitationDeclined = 'onDeviceInvitationDeclined',
+
+  onUserMessageDisabled = 'onUserMessageDisabled',
+  onAudiencePromotedToParticipant = 'onAudiencePromotedToParticipant',
+  onParticipantDemotedToAudience = 'onParticipantDemotedToAudience',
 }
 
 export interface RoomParticipantEventPayloads {
@@ -641,4 +664,21 @@ export interface RoomParticipantEventPayloads {
   onDeviceInvitationTimeout: (options: { invitation: DeviceRequestInfo }) => void;
   onDeviceInvitationAccepted: (options: { invitation: DeviceRequestInfo; operator: RoomUser }) => void;
   onDeviceInvitationDeclined: (options: { invitation: DeviceRequestInfo; operator: RoomUser }) => void;
+
+  onUserMessageDisabled: (options: { targetUser: RoomUser; disable: boolean; operator: RoomUser }) => void;
+  onAudiencePromotedToParticipant: (options: { userInfo: RoomUser }) => void;
+  onParticipantDemotedToAudience: (options: { userInfo: RoomUser }) => void;
+}
+
+export enum ListModifyType {
+  /** 无修改 */
+  None = 0,
+  /** 全量修改 */
+  Full = 1,
+  /** 添加 */
+  Add = 2,
+  /** 删除 */
+  Remove = 3,
+  /** 替换 */
+  Replace = 4,
 }

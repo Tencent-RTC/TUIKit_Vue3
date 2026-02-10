@@ -33,6 +33,7 @@ module.exports = {
     'class-methods-use-this': 0,
     '@typescript-eslint/no-useless-constructor': 'off',
     'no-await-in-loop': 0,
+    'no-bitwise': 0,
   },
   ignorePatterns: ['node_modules', 'public', 'dist', '*.d.ts', '!.*.cjs', '!.storybook', '*.cjs', 'test-app'],
 };

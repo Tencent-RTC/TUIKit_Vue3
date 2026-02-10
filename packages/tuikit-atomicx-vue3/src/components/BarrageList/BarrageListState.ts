@@ -3,6 +3,7 @@ import { TUIRoomEvents } from '@tencentcloud/tuiroom-engine-js';
 import { useRoomEngine } from '../../hooks/useRoomEngine';
 import { useBarrageState } from '../../states/BarrageState';
 import { useLiveListState } from '../../states/LiveListState';
+import { useRoomState } from '../../states/RoomState';
 import type { Barrage } from '../../types/barrage';
 
 interface IMessageGroupTip {
@@ -18,6 +19,7 @@ interface IMessageGroupTip {
 const roomEngine = useRoomEngine();
 
 const { currentLive } = useLiveListState();
+const { currentRoom } = useRoomState();
 const { messageList } = useBarrageState();
 
 const messageGroupTipRef = ref<IMessageGroupTip>();
@@ -209,6 +211,14 @@ watch(() => currentLive.value?.liveId, (newVal, oldVal) => {
   }
 });
 
+watch(() => currentRoom.value?.roomId, (newVal, oldVal) => {
+  if (!newVal && oldVal) {
+    resetState();
+  } else {
+    initWatchers();
+  }
+});
+
 onUnmounted(() => {
   clearEventListeners();
 });
@@ -220,7 +230,7 @@ function useBarrageListState() {
   };
 }
 
-function isGiftMessage (message: Barrage): boolean {
+function isGiftMessage(message: Barrage): boolean {
   if (!message.data) {
     return false;
   }
@@ -228,9 +238,9 @@ function isGiftMessage (message: Barrage): boolean {
   try {
     const data = JSON.parse(message.data);
     return data.type === 'gift';
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
-};
+}
 
 export { useBarrageListState, isGiftMessage };

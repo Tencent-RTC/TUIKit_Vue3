@@ -102,6 +102,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 6px;
   pointer-events: none;
+  z-index: 9;
   text-align: initial;
 }
 
