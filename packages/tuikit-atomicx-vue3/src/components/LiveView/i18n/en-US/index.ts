@@ -20,6 +20,8 @@ export const resource = {
   'LiveView.1080P': '1080P',
   'LiveView.Connecting': 'Connecting',
   'LiveView.NotAllowPauseInPIP': 'Not allow to "Pause" in picture-in-picture mode',
+  'LiveView.NotAllowFullscreenInPIP': 'Not allow to "Fullscreen" in picture-in-picture mode',
   'LiveView.NotAllowPIPInNonPlaying': 'Not allow to "Picture in Picture" in non-playing mode',
+  'LiveView.NotAllowPIPInFullscreen': 'Not allow to "Picture in Picture" in fullscreen mode',
   'LiveView.BattleEnded': 'Battle ended',
 };

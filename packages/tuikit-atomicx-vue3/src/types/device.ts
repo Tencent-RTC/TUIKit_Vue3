@@ -19,9 +19,9 @@ export enum MirrorType {
 }
 
 export enum DeviceType {
-  Microphone = 'Microphone',
-  Camera = 'Camera',
-  ScreenShare = 'ScreenShare',
+  Microphone = 0,
+  Camera = 1,
+  ScreenShare = 2,
 }
 
 export enum VideoQuality {
@@ -29,12 +29,6 @@ export enum VideoQuality {
   Quality540P = 2,
   Quality720P = 3,
   Quality1080P = 4,
-}
-
-export enum DevicePermission {
-  PublishAudio = 'PublishAudio',
-  PublishVideo = 'PublishVideo',
-  ScreenShare = 'ScreenShare',
 }
 
 export enum MediaSettingDisplayMode {

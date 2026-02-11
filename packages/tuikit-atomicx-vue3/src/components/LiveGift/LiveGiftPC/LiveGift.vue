@@ -1,5 +1,5 @@
 <template>
-  <div class="live-gift-container">
+  <div class="live-gift-container" v-if="giftList.length">
     <div ref="giftRef" class="gift-item-container">
       <GiftItem
         v-for="item in displayGiftList"
@@ -180,6 +180,15 @@ watch(
   },
   { immediate: true }
 );
+
+// Recalculate max display gifts when gift list changes
+watch(giftList, (newList) => {
+  if (newList.length > 0) {
+    nextTick(() => {
+      calculateMaxDisplayGifts();
+    });
+  }
+});
 
 // Watch popup visibility to recalculate position
 watch(moreGiftVisible, async (visible) => {

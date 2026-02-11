@@ -43,13 +43,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, toRef, onUnmounted } from 'vue';
+import { ref, computed, onUnmounted } from 'vue';
 import { TUIButton, IconArrowUp, useUIKit, TUIIcon } from '@tencentcloud/uikit-base-component-vue3';
-import { useParticipantAction } from './useParticpantAction';
-import type { RoomParticipant } from '../../types/participant';
+import { useAudienceAction } from './useParticpantAction';
+import type { RoomUser } from '../../types';
 
 interface Props {
-  participant: RoomParticipant;
+  audience: RoomUser;
   isLocal: boolean;
 }
 
@@ -63,7 +63,7 @@ const toggleMoreMenu = () => {
   showMenu.value = !showMenu.value;
 };
 
-const { controlList } = useParticipantAction({ targetParticipant: toRef(props, 'participant') });
+const { controlList } = useAudienceAction({ targetAudience: props.audience });
 const singleControl = computed(() => !props.isLocal ? controlList.value[0] : null);
 const moreControlList = computed(() => !props.isLocal ? controlList.value.slice(1) : controlList.value);
 const showMoreActions = computed(() => moreControlList.value.length >= 1);

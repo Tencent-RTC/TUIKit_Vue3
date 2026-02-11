@@ -8,6 +8,7 @@ export const DOM_SELECTORS = {
   LIVE_CORE_VIEW: '.live-core-view',
   VIDEO_ELEMENT: '#atomicx-live-stream-content video',
   TCPLAYER_ELEMENT: '.tcplayer',
+  LEB_PLAYER_ELEMENT: '#video_vp',
 };
 
 /**
@@ -53,12 +54,23 @@ export class DOMElementGetter {
   /**
    * Check if tcplayer element exists in live-core-view-container
    */
-  static hasTcPlayerElement(): boolean {
+  static hasTCPlayerElement(): boolean {
     const container = DOMElementGetter.getLiveCoreViewContainer();
     if (!container) {
       return false;
     }
     return container.querySelector(DOM_SELECTORS.TCPLAYER_ELEMENT) !== null;
+  }
+
+  /**
+   * Check if leb player element exists in live-core-view-container
+   */
+  static hasLEBPlayerElement(): boolean {
+    const container = DOMElementGetter.getLiveCoreViewContainer();
+    if (!container) {
+      return false;
+    }
+    return container.querySelector(DOM_SELECTORS.LEB_PLAYER_ELEMENT) !== null;
   }
 
   /**

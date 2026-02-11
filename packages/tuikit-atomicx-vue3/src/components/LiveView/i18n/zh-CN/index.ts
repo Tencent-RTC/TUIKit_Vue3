@@ -20,6 +20,8 @@ export const resource = {
   'LiveView.1080P': '超清',
   'LiveView.Connecting': '连线中',
   'LiveView.NotAllowPauseInPIP': '画中画模式下不允许暂停操作',
+  'LiveView.NotAllowFullscreenInPIP': '画中画模式下不允许全屏操作',
   'LiveView.NotAllowPIPInNonPlaying': '暂停状态下不允许进入画中画模式',
+  'LiveView.NotAllowPIPInFullscreen': '全屏模式下不允许进入画中画模式',
   'LiveView.BattleEnded': 'PK结束',
 };

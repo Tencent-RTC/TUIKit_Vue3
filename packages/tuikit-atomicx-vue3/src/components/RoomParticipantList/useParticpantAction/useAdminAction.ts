@@ -2,20 +2,20 @@ import type { Component } from 'vue';
 import { computed } from 'vue';
 import { TUIToast, TOAST_TYPE, IconSetAdmin, IconRevokeAdmin, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useRoomParticipantState } from '../../../states/RoomParticipantState';
-import type { RoomParticipant } from '../../../types';
+import type { RoomParticipant, RoomUser } from '../../../types';
 
 const { t } = useUIKit();
 const { setAdmin, revokeAdmin } = useRoomParticipantState();
 
 export function useSetAdminAction(
-  { targetParticipant }: { targetParticipant: RoomParticipant },
+  { targetParticipant }: { targetParticipant: RoomParticipant | RoomUser },
 ): {
     key: string;
     icon: Component;
     label: string;
     handler: () => void;
   } {
-  const displayName = computed(() => targetParticipant.nameCard || targetParticipant.userName || targetParticipant.userId);
+  const displayName = computed(() => (targetParticipant as RoomParticipant).nameCard || targetParticipant.userName || targetParticipant.userId);
 
   return {
     key: 'setAdmin',
@@ -32,14 +32,14 @@ export function useSetAdminAction(
 }
 
 export function useRevokeAdminAction(
-  { targetParticipant }: { targetParticipant: RoomParticipant },
+  { targetParticipant }: { targetParticipant: RoomParticipant | RoomUser },
 ): {
     key: string;
     icon: Component;
     label: string;
     handler: () => void;
   } {
-  const displayName = computed(() => targetParticipant.nameCard || targetParticipant.userName || targetParticipant.userId);
+  const displayName = computed(() => (targetParticipant as RoomParticipant).nameCard || targetParticipant.userName || targetParticipant.userId);
 
   return {
     key: 'revokeAdmin',

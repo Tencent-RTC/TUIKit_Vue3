@@ -46,7 +46,7 @@
         name="localVideo"
         v-bind="{ style: localStreamViewInfo?.region }"
       />
-      <LiveCoreDecorate :seatListWithRealSize="seatListWithRealSize" />
+      <LiveCoreDecorate v-if="!isPictureInPicture" :seatListWithRealSize="seatListWithRealSize" />
     </div>
     <Teleport
       v-if="!isFullscreen"
@@ -567,6 +567,7 @@ onBeforeUnmount(() => {
     .live-core-ui {
       width: 100%;
       height: 100%;
+      z-index: 1;
       position: absolute;
       pointer-events: auto;
       top: 0;

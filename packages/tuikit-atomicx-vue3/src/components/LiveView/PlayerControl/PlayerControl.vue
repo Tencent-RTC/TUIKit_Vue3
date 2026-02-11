@@ -11,9 +11,9 @@
     >
       <div class="control-buttons">
         <span
-          v-if="!isSafari || !isTcPlayer"
+          v-if="!isSafari || !hasTCPlayer()"
           class="control-btn play-pause-btn"
-          :class="{disabled: isPictureInPicture}"
+          :class="{disabled: isPlayPauseDisabled}"
           :title="isPlaying ? t('LiveView.Pause') : t('LiveView.Play')"
           @click="handlePlayPause"
         >
@@ -23,7 +23,7 @@
         <div class="center-controls" />
         <div class="right-controls">
           <MultiResolution />
-          <span v-if="!isSafari || !isTcPlayer" class="control-btn audio-control-btn">
+          <span v-if="!isSafari || !hasTCPlayer()" class="control-btn audio-control-btn">
             <AudioControl
               class="audio-control-icon"
               :icon-size="20"
@@ -35,7 +35,7 @@
           </span>
           <span
             class="control-btn"
-            :class="{disabled: !isPlaying && !isPictureInPicture}"
+            :class="{disabled: isPictureInPictureDisabled}"
             :title="isPictureInPicture ? t('LiveView.ExitPictureInPicture') : t('LiveView.PictureInPicture')"
             @click="handlePictureInPicture"
           >
@@ -43,6 +43,7 @@
           </span>
           <span
             class="control-btn fullscreen-btn"
+            :class="{disabled: isFullscreenDisabled}"
             :title="isFullscreen ? t('LiveView.ExitFullscreen') : t('LiveView.Fullscreen')"
             @click="handleFullscreen"
           >
@@ -55,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, onBeforeUnmount } from 'vue';
+import { computed, onMounted, ref, onBeforeUnmount } from 'vue';
 import {
   IconFullScreen,
   IconPictureInPicture,
@@ -86,7 +87,7 @@ const {
   setMute,
   cleanup,
   isSafari,
-  isTcPlayer,
+  hasTCPlayer,
 } = usePlayerControlState();
 
 const props = defineProps<{
@@ -100,8 +101,18 @@ const hideTimeout = ref<number | null>(null);
 
 const AUTO_HIDE_DELAY = 1500; // ms
 
+/**
+ * Disabled state computed properties for control buttons
+ * - Play/Pause: disabled in PiP mode (pause not allowed in PiP)
+ * - PiP: disabled when paused (must be playing to enter PiP) or in fullscreen mode
+ * - Fullscreen: disabled in PiP mode (fullscreen not allowed in PiP)
+ */
+const isPlayPauseDisabled = computed(() => isPictureInPicture.value);
+const isPictureInPictureDisabled = computed(() => (!isPlaying.value && !isPictureInPicture.value) || (isFullscreen.value && !isPictureInPicture.value));
+const isFullscreenDisabled = computed(() => isPictureInPicture.value);
+
 const handlePlayPause = () => {
-  if (isPictureInPicture.value) {
+  if (isPlayPauseDisabled.value) {
     TUIToast({
       type: TOAST_TYPE.WARNING,
       message: t('LiveView.NotAllowPauseInPIP'),
@@ -116,11 +127,20 @@ const handlePlayPause = () => {
   }
 };
 
+// Picture-in-picture is not allowed in paused state or fullscreen mode
 const handlePictureInPicture = async () => {
   if (!isPlaying.value && !isPictureInPicture.value) {
     TUIToast({
       type: TOAST_TYPE.WARNING,
       message: t('LiveView.NotAllowPIPInNonPlaying'),
+    });
+    return;
+  }
+
+  if (isFullscreen.value && !isPictureInPicture.value) {
+    TUIToast({
+      type: TOAST_TYPE.WARNING,
+      message: t('LiveView.NotAllowPIPInFullscreen'),
     });
     return;
   }
@@ -140,8 +160,15 @@ const handlePictureInPicture = async () => {
   }
 };
 
+// Full-screen mode is not allowed in picture-in-picture mode
 const handleFullscreen = () => {
-  console.log('handleFullscreen');
+  if (isFullscreenDisabled.value) {
+    TUIToast({
+      type: TOAST_TYPE.WARNING,
+      message: t('LiveView.NotAllowFullscreenInPIP'),
+    });
+    return;
+  }
   if (isFullscreen.value) {
     exitFullscreen();
   } else {
