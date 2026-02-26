@@ -1,23 +1,27 @@
 # RTCube
 
-RTCube 是展现 TencentCloud RTC 场景下多产品能力的示例工程，包括 Chat 等产品的示例代码。既可以快速体验 RTC 场景下多产品能力，也可以作为 RTC 场景下多产品能力接入的参考。
+[简体中文](./README_ZH.md) | English
 
-## 🚀 推荐：使用更高效的 AI 集成助手
-我们为您提供了全新的 AI 集成方式，如果您不需要完整的 Demo 工程, 只想快速开始集成，推荐您使用更高效的 AI 集成助手，只需要简单描述您的需求，即可自动生成集成代码，大幅提升开发效率。</br>
-[点击这里，立即体验 AI 集成](https://cloud.tencent.com/document/product/269/124481)
+RTCube is a sample project demonstrating multi-product capabilities in TencentCloud RTC scenarios, including sample code for products like Chat. You can quickly experience multi-product capabilities in RTC scenarios and use it as a reference for integration.
 
-## 目录结构
+## 🚀 Recommended: AI Integration Assistant
 
-RTCube 目前包含三个页面：
+We provide a brand-new AI integration approach. If you don't need the complete Demo project and just want to get started quickly with integration, we recommend using our more efficient AI Integration Assistant. Simply describe your requirements, and it will automatically generate integration code, significantly improving development efficiency.</br>
 
-- `src/pages/Home`: 首页，产品简介并提供各个场景的入口。
-- `src/pages/stages`: 舞台页，用于展示 RTCube 的各个场景，目前包含 Chat 场景。
-- `src/pages/login`: 登录页，用于登录 RTCube，目前支持通过输入 UserID\SDKAppID\SecretKey 登录。
-- `src/scenes/Chat`: 聊天场景，用于展示 Chat 产品，也是 Chat Demo 代码的入口。
+[Click here to experience AI Integration](https://trtc.io/document/72277?product=chat&menulabel=uikit&platform=react)
 
-## 快速开始
+## Directory Structure
 
-1. 安装依赖并跑通项目
+RTCube currently includes the following pages:
+
+- `src/pages/Home`: Home page, providing product introduction and entry points to various scenarios.
+- `src/pages/stages`: Stages page, displaying various RTCube scenarios, currently including the Chat scenario.
+- `src/pages/login`: Login page, for logging into RTCube, currently supporting login via UserID\SDKAppID\SecretKey.
+- `src/scenes/Chat`: Chat scenario, demonstrating the Chat product and serving as the entry point for Chat Demo code.
+
+## Quick Start
+
+1. Install dependencies and run the project
 
   ```bash
   git clone https://github.com/Tencent-RTC/TUIKit_Vue3.git
@@ -26,27 +30,31 @@ RTCube 目前包含三个页面：
   npm run dev
   ```
 
-2. 创建腾讯云即时通讯IM应用
+2. Create a Tencent Cloud IM Application
+
+  Log in to the [IM Console](https://console.trtc.io/) and create a new application (if you don't have one).
+
+  ![Create Application](https://cloudcache.intl.tencent-cloud.com/cms/backend-cms/7ff233feab4811f0b5345254005ef0f7.png)
+
+3. Get SDKAppID and SecretKey
+
+  Get the SDKAppID from the SDKAppID column on the application management page.
+  Get the SecretKey from the Key column on the application management page.
+
+  ![Get SDKAppID](https://cloudcache.intl.tencent-cloud.com/cms/backend-cms/8e31513bab4811f09b75525400bf7822.png)
 
 
-  登录[即时通信 IM 控制台](https://console.cloud.tencent.com/im)，创建新应用（如果没有）。
+4. Create Users and Get userID
 
-  ![创建新应用](https://qcloudimg.tencent-cloud.cn/image/document/d3f4ffc645958a2175c7e3446a5704ab.png)
+  Go to the user [management page](https://console.trtc.io/chat/account-management), create 2–3 test accounts for experience in C2C chat and group chat capacities.
 
-3. 获取 SDKAppID 和 SecretKey
+  ![Create Users](https://cloudcache.intl.tencent-cloud.com/cms/backend-cms/27ca22a6adb411f0a68e5254001c06ec.png)
 
-  在应用管理页面的 SDKAppID 列获取 SDKAppID 信息。
+5. Get UserSig
 
-  ![获取 SDKAppID](https://qcloudimg.tencent-cloud.cn/image/document/df612dd991adfe652a791dae5f113fbd.png)
+  userSig info. Click Chat console > Development tool > userSig tool, fill in the created userID to generate userSig.
 
-  在应用管理页面的密钥列获取 SecretKey 信息。
+  ![Create Users](https://cloudcache.intl.tencent-cloud.com/cms/backend-cms/2f29a385c07911f0b4a7525400454e06.png)
 
-  ![获取 SecretKey](https://qcloudimg.tencent-cloud.cn/image/document/4069a2d18a878491b4a63fccd266ec9b.png)
 
-4. 创建用户并获取 userID
-
-可单击 即时通信 IM 控制台 > 账号管理，切换至目标应用所在账号，创建 2 个 userID 方便后续体验聊天功能。
-
-  ![创建用户](https://qcloudimg.tencent-cloud.cn/image/document/09ed4e322fa8128992c8cc6a16337bab.png)
-
-5. 在登录页填入 SDKAppID、userID、SecretKey，并点击登录。
+5. Enter SDKAppID, userID, and SecretKey on the login page, then click Login.

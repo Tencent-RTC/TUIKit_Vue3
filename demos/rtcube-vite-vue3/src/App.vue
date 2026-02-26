@@ -11,7 +11,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <UIKitProvider theme="light" language="zh-CN">
+  <UIKitProvider theme="light">
     <router-view />
   </UIKitProvider>
 </template>
