@@ -2,6 +2,8 @@
  * 时区和时间相关的工具函数
  */
 
+import { RoomType } from '../../types';
+
 /**
  * 获取指定时区的当前时间
  */
@@ -247,7 +249,7 @@ export async function copyText(text: string): Promise<boolean> {
   }
 }
 
-export function generateRoomLink(roomId: string, password?: string): string {
+export function generateRoomLink(roomId: string, password?: string, roomType: RoomType = RoomType.Standard): string {
   if (!roomId) {
     return '';
   }
@@ -261,8 +263,8 @@ export function generateRoomLink(roomId: string, password?: string): string {
 
   // Build room parameters
   const roomParams = password
-    ? `roomId=${roomId}&password=${password}`
-    : `roomId=${roomId}`;
+    ? `roomId=${roomId}&roomType=${roomType}&password=${password}`
+    : `roomId=${roomId}&roomType=${roomType}`;
 
   // Generate link based on router mode
   if (isHashRouter) {

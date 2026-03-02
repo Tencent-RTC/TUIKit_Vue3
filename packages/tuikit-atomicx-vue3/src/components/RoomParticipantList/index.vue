@@ -129,11 +129,11 @@
     <template v-if="activeTabWebinar === 'Audience' && isWebinar">
       <!-- 成员列表 -->
       <div class="participant-container">
-        <div v-if="audienceList.length === 0" class="empty-state">
+        <div v-if="sortedAudienceList.length === 0" class="empty-state">
           {{ t('ParticipantList.NoMember') }}
         </div>
         <AudienceItem
-          v-for="audience in audienceList"
+          v-for="audience in sortedAudienceList"
           :key="audience.userId"
           :audience="audience"
           :is-local="audience.userId === localParticipant?.userId"
@@ -171,7 +171,7 @@ import ParticipantAction from './ParticipantAction.vue';
 import ParticipantItem from './ParticipantItem.vue';
 import PendingParticipantItem from './PendingParticipantItem.vue';
 import RoomAction from './RoomAction.vue';
-import type { RoomParticipant } from '../../types';
+import type { RoomParticipant, RoomUser } from '../../types';
 
 const { t } = useUIKit();
 const {
@@ -182,6 +182,7 @@ const {
   pendingParticipantList,
   participantList,
   audienceList,
+  adminList,
   localParticipant,
   participantListCursor,
   audienceListCursor,
@@ -206,6 +207,12 @@ const activeTabWebinar = ref<'Guest' | 'Audience'>('Guest');
 
 const hoveredUserId = ref<string | null>(null);
 
+const getParticipantSortName = (p: RoomParticipant) =>
+  (p?.nameCard || p?.userName || p?.userId || '').trim();
+const getAudienceSortName = (u: RoomUser) =>
+  (u?.userName || u?.userId || '').trim();
+
+// participant list sort: 1. Current user first, 2. Room owner, 3. Admin, 4. Others, 5. By name (Unicode order)
 const defaultUserListCompareFunction = combineComparators(
   createComparator((userInfo: RoomParticipant) =>
     Boolean(userInfo.userId === localParticipant.value?.userId),
@@ -223,6 +230,23 @@ const defaultUserListCompareFunction = combineComparators(
   createComparator((userInfo: RoomParticipant) => Boolean(userInfo.cameraStatus === DeviceStatus.On)),
   createComparator((userInfo: RoomParticipant) => Boolean(userInfo.microphoneStatus === DeviceStatus.On)),
   createComparator((userInfo: RoomParticipant) => Boolean(userInfo.roomStatus === RoomParticipantStatus.InCalling)),
+  createComparator((a: RoomParticipant, b: RoomParticipant) =>
+    getParticipantSortName(a) < getParticipantSortName(b),
+  ),
+);
+
+// Audience list sort: 1. Current user first, 2. Room owner, 3. Admin, 4. Others, 5. By name (Unicode order)
+const audienceListCompareFunction = combineComparators(
+  createComparator((user: RoomUser) => Boolean(user.userId === localParticipant.value?.userId)),
+  createComparator((user: RoomUser) => Boolean(user.userId === currentRoom.value?.roomOwner?.userId)),
+  createComparator((user: RoomUser) => Boolean(adminList.value?.some(admin => admin.userId === user.userId))),
+  createComparator((a: RoomUser, b: RoomUser) =>
+    getAudienceSortName(a) < getAudienceSortName(b),
+  ),
+);
+
+const sortedAudienceList = computed(() =>
+  [...audienceList.value].sort(audienceListCompareFunction),
 );
 
 const showParticipantList = computed(() => {

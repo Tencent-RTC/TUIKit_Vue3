@@ -10,45 +10,19 @@ import { RTCStreamManager } from './RTCStreamManager';
 import { useStreamPosition } from './useStreamPostion';
 import type { TUIVideoStreamType } from '@tencentcloud/tuiroom-engine-js';
 
-let hasInit = false;
-let initResult = {
-  startPlayStream: async ({ view }: { view: string }) => {},
-  stopPlayStream: () => {},
-};
-
 const { hasVideoUserList } = useRoomStore();
 
-function initPlayStream() {
-  if (hasInit) {
-    return initResult;
-  }
-
+export function usePlayStream() {
   const roomEngine = useRoomEngine();
   const { positionList, createResizeObserver, deleteResizeObserver } = useStreamPosition();
   const { currentRoom } = useRoomState();
 
   const isNeedPlayStream = ref(false);
-  const containerId = ref<string | null>(null);
-
+  const mixUserInfo: Ref<{ userId: string; cameraStatus: DeviceStatus } | null> = ref(null);
+  const rtcUserInfoList: Ref<{ userId: string; cameraStatus: DeviceStatus; rect: { left: number; top: number; width: number; height: number } }[]> = ref([]);
   const mixStreamPlayer = new MixStreamPlayer();
   const rtcStreamManager = new RTCStreamManager();
-
   let playContainerId = '';
-
-  const mixUserInfo: Ref<{ userId: string; cameraStatus: DeviceStatus } | null> = ref(null);
-
-  const rtcUserInfoList = ref<{ userId: string; cameraStatus: DeviceStatus; rect: { left: number; top: number; width: number; height: number } }[]>([]);
-
-  async function startPlayStream({ view }: { view: string }) {
-    playContainerId = view;
-    isNeedPlayStream.value = true;
-    createResizeObserver({ view });
-    if (mixUserInfo.value?.userId && mixUserInfo.value?.cameraStatus === DeviceStatus.On) {
-      await mixStreamPlayer?.start({ view, userInfo: mixUserInfo.value });
-    } else if (rtcUserInfoList.value.length > 0) {
-      await rtcStreamManager?.start({ view, userList: rtcUserInfoList.value });
-    }
-  }
 
   watch(positionList, (newPositionList) => {
     rtcUserInfoList.value.forEach((item) => {
@@ -61,53 +35,16 @@ function initPlayStream() {
     }
   });
 
-  async function stopPlayStream() {
-    mixStreamPlayer?.stop();
-    rtcStreamManager?.stop();
-    containerId.value = null;
-    isNeedPlayStream.value = false;
-    playContainerId = '';
-    deleteResizeObserver();
-  }
-
-  async function handleUserVideoStateChanged(event: { userId: string; streamType: TUIVideoStreamType; hasVideo: boolean }) {
-    const { userId, hasVideo } = event;
-    if (userId.indexOf('livekit_') === 0) {
-      if (hasVideo) {
-        mixUserInfo.value = {
-          userId,
-          cameraStatus: DeviceStatus.On,
-        };
-        rtcUserInfoList.value = [];
-        await mixStreamPlayer?.start({ view: playContainerId, userInfo: mixUserInfo.value });
-      } else {
-        mixUserInfo.value = null;
-        await mixStreamPlayer?.stop();
-      }
-    } else if (hasVideo) {
-      rtcUserInfoList.value.push({ userId, cameraStatus: DeviceStatus.On, rect: positionList.value.find(item => item.userId === userId) });
-    } else {
-      rtcUserInfoList.value = rtcUserInfoList.value.filter(item => item.userId !== userId);
+  watch(() => mixUserInfo.value, (newUserInfo) => {
+    if (!isNeedPlayStream.value) {
+      return;
     }
-  }
-
-  // 根据记录数据进行初始化调用
-  if (hasVideoUserList.value.length > 0) {
-    const mixUser = hasVideoUserList.value.find(item => item.userId.indexOf('livekit_') === 0);
-    if (mixUser && mixUser.hasVideo) {
-      mixUserInfo.value = {
-        userId: mixUser.userId,
-        cameraStatus: DeviceStatus.On,
-      };
-      mixStreamPlayer?.start({ view: playContainerId, userInfo: mixUserInfo.value });
+    if (newUserInfo) {
+      mixStreamPlayer.start({ view: playContainerId, userInfo: mixUserInfo.value });
     } else {
-      rtcUserInfoList.value = hasVideoUserList.value.filter(item => item.hasVideo).map(item => ({
-        userId: item.userId,
-        cameraStatus: DeviceStatus.On,
-        rect: positionList.value.find(positionItem => positionItem.userId === item.userId),
-      }));
+      mixStreamPlayer.stop();
     }
-  }
+  });
 
   watch(
     () => rtcUserInfoList.value.length,
@@ -139,20 +76,67 @@ function initPlayStream() {
     },
   );
 
+  if (hasVideoUserList.value.length > 0) {
+    const mixUser = hasVideoUserList.value.find(item => item.userId.indexOf('livekit_') === 0);
+    if (mixUser && mixUser.hasVideo) {
+      mixUserInfo.value = {
+        userId: mixUser.userId,
+        cameraStatus: DeviceStatus.On,
+      };
+    } else {
+      rtcUserInfoList.value = hasVideoUserList.value.filter(item => item.hasVideo).map(item => ({
+        userId: item.userId,
+        cameraStatus: DeviceStatus.On,
+        rect: positionList.value.find(positionItem => positionItem.userId === item.userId),
+      }));
+    }
+    hasVideoUserList.value = [];
+  }
+
+  async function startPlayStream({ view }: { view: string }) {
+    playContainerId = view;
+    isNeedPlayStream.value = true;
+    createResizeObserver({ view });
+    if (mixUserInfo.value?.userId && mixUserInfo.value?.cameraStatus === DeviceStatus.On) {
+      await mixStreamPlayer?.start({ view, userInfo: mixUserInfo.value });
+    } else if (rtcUserInfoList.value.length > 0) {
+      await rtcStreamManager?.start({ view, userList: rtcUserInfoList.value });
+    }
+  }
+
+  async function stopPlayStream() {
+    mixStreamPlayer?.stop();
+    rtcStreamManager?.stop();
+    isNeedPlayStream.value = false;
+    playContainerId = '';
+    deleteResizeObserver();
+  }
+
+  async function handleUserVideoStateChanged(event: { userId: string; streamType: TUIVideoStreamType; hasVideo: boolean }) {
+    const { userId, hasVideo } = event;
+    if (userId.indexOf('livekit_') === 0) {
+      if (hasVideo) {
+        mixUserInfo.value = {
+          userId,
+          cameraStatus: DeviceStatus.On,
+        };
+        rtcUserInfoList.value = [];
+      } else {
+        mixUserInfo.value = null;
+        // Attention: stop 必需同步调用，保障观众使用的 trtc 子实例先退房
+        mixStreamPlayer.stop();
+      }
+    } else if (hasVideo) {
+      rtcUserInfoList.value.push({ userId, cameraStatus: DeviceStatus.On, rect: positionList.value.find(item => item.userId === userId) });
+    } else {
+      rtcUserInfoList.value = rtcUserInfoList.value.filter(item => item.userId !== userId);
+    }
+  }
+
   TUIRoomEngine.once('ready', () => {
     roomEngine.instance?.on(TUIRoomEvents.onUserVideoStateChanged, handleUserVideoStateChanged);
   });
 
-  hasInit = true;
-  initResult = {
-    startPlayStream,
-    stopPlayStream,
-  };
-  return initResult;
-}
-
-export function usePlayStream() {
-  const { startPlayStream, stopPlayStream } = initPlayStream();
   return {
     startPlayStream,
     stopPlayStream,

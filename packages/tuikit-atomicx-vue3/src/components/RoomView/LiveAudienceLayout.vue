@@ -3,11 +3,9 @@
     <div :style="streamItemStyle" class="live-audience-layout-content">
       <div
         id="live-audience-stream"
-        :style="streamItemStyle"
-        class="local-video-mixer-content"
+        class="live-audience-stream-content"
       />
       <slot
-        v-if="roomOwnerParticipant"
         name="participantViewUI"
         v-bind="{ participant: roomOwnerParticipant, streamType: VideoStreamType.Camera }"
       />
@@ -71,10 +69,14 @@ onBeforeUnmount(async () => {
   position: relative;
   overflow: hidden;
   background-color: #000;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.local-video-mixer-content {
+.live-audience-stream-content {
   width: 100%;
   height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 </style>

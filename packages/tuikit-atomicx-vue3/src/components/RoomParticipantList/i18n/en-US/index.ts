@@ -78,5 +78,11 @@ export const resource = {
     DemoteToAudience: 'Demote to audience',
     PromoteToParticipantSuccess: '{{ name }} has been promoted to a participant',
     DemoteToAudienceSuccess: '{{ name }} has been demoted to an audience',
+
+    ParticipantCountLimit: 'The number of participants has reached the limit',
+    AdminCountLimit: 'The number of administrators has reached the limit',
+    PromoteToParticipantFailed: 'Failed to promote to participant',
+    DemoteToAudienceFailed: 'Failed to demote to audience',
+    SetAdminFailed: 'Failed to set as admin',
   },
 };

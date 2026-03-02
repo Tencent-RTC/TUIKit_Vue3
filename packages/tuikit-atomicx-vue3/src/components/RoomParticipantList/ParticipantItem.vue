@@ -110,17 +110,9 @@ const iconList = computed(() => {
       icon: props.participant?.cameraStatus && props.participant?.cameraStatus === DeviceStatus.On ? IconVideoOpen : IconVideoClose,
     });
   } else {
-    if (props.participant?.screenShareStatus && props.participant?.screenShareStatus === DeviceStatus.On) {
-      list.push({ icon: IconScreenOpen });
-    }
     list.push({
       icon: props.participant?.microphoneStatus && props.participant?.microphoneStatus === DeviceStatus.On ? IconAudioOpen : IconAudioClose,
     });
-    if (props.participant?.role === RoomParticipantRole.Owner) {
-      list.push({
-        icon: props.participant?.cameraStatus && props.participant?.cameraStatus === DeviceStatus.On ? IconVideoOpen : IconVideoClose,
-      });
-    }
   }
   return list;
 });

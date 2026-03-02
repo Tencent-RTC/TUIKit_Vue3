@@ -548,7 +548,7 @@ defineExpose({
   &__action-icon {
     width: 28px;
     height: 28px;
-    color: var(--text-color-primary);
+    color: var(--icon-color-primary);
   }
 
   &__action-label {

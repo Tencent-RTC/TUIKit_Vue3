@@ -78,5 +78,11 @@ export const resource = {
     DemoteToAudience: '设为观众',
     PromoteToParticipantSuccess: '已将{{ name }}设为嘉宾',
     DemoteToAudienceSuccess: '已将{{ name }}设为观众',
+
+    ParticipantCountLimit: '嘉宾数量已达上限',
+    AdminCountLimit: '管理员数量已达上限',
+    PromoteToParticipantFailed: '设为嘉宾失败',
+    DemoteToAudienceFailed: '设为观众失败',
+    SetAdminFailed: '设为管理员失败',
   },
 };

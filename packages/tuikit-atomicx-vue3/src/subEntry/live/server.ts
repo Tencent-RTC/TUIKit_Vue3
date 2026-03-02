@@ -4,7 +4,6 @@ import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import TUICore, { TUILogin, TUIConstants } from '@tencentcloud/tui-core-lite';
 import TUIRoomEngine from '@tencentcloud/tuiroom-engine-js';
 import { dataReport, MetricsKey } from '../../report';
-import { useLoginState } from '../../states/LoginState';
 import { isMobile } from '../../utils';
 
 export default class RTCLoginServer {
@@ -32,6 +31,11 @@ export default class RTCLoginServer {
       TUICore.registerEvent(
         TUIConstants.TUILogin.EVENT.LOGIN_STATE_CHANGED,
         TUIConstants.TUILogin.EVENT_SUB_KEY.USER_LOGIN_SUCCESS,
+        this,
+      );
+      TUICore.registerEvent(
+        TUIConstants.TUILogin.EVENT.LOGIN_STATE_CHANGED,
+        TUIConstants.TUILogin.EVENT_SUB_KEY.USER_LOGOUT_SUCCESS,
         this,
       );
     }
@@ -91,17 +95,6 @@ export default class RTCLoginServer {
       });
       this.rejectList = [];
       this.resolveList = [];
-      const { loginUserInfo } = useLoginState();
-      const result = await chat.getUserProfile({ userIDList: [userID] });
-      const localUserInfo = result.data[0];
-      if (!localUserInfo.value) {
-        loginUserInfo.value = {
-          userId: localUserInfo.userID,
-          userName: localUserInfo.nick,
-          avatarUrl: localUserInfo.avatar,
-          customInfo: localUserInfo.profileCustomField,
-        };
-      }
       return res;
     } catch (error) {
       this.rejectList.forEach((reject) => {

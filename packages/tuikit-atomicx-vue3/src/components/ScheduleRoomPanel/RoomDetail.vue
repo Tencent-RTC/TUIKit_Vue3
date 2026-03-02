@@ -80,13 +80,13 @@
 </template>
 
 <script lang="ts" setup>
-import { IconCopy, IconLoadingSchedule, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { IconCopy, IconLoadingSchedule, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { RoomStatus } from '../../types';
-import { copyText } from './utils';
+import { useCopy } from './useCopy';
 import type { RoomInfo } from '../../types';
 
 const { t } = useUIKit();
-
+const { copy } = useCopy();
 interface Props {
   roomInfo: RoomInfo | null;
   isLoadingAttendees?: boolean;
@@ -122,14 +122,6 @@ const getRoomStatusText = (status: RoomStatus): string => {
   }
 };
 
-const copy = async (value: string) => {
-  const success = await copyText(value);
-  if (success) {
-    TUIToast.success({ message: t('Copy Success') });
-  } else {
-    TUIToast.error({ message: t('Copy Failed') });
-  }
-};
 </script>
 
 <style lang="scss" scoped>

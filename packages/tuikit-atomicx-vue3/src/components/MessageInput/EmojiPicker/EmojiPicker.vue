@@ -143,7 +143,7 @@ function insertEmojiToInput(emojiKey: string) {
   }
 
   &__icon {
-    color: var(--text-color-primary);
+    color: var(--icon-color-primary);
   }
 
   &__list {
