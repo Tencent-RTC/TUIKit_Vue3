@@ -105,14 +105,14 @@ const handleFileClick = async (event: MouseEvent) => {
 
   &__icon {
     flex-shrink: 0;
-    color: var(--text-color-primary);
+    color: var(--icon-color-primary);
   }
 
   &__download {
     flex-shrink: 0;
     opacity: 0;
     transition: opacity 0.2s ease;
-    color: var(--text-color-primary);
+    color: var(--icon-color-primary);
   }
 
   &:hover {

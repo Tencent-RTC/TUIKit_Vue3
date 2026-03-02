@@ -69,11 +69,12 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { IconCopy, TUIButton, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { copyText, generateRoomLink } from './utils';
+import { useCopy } from './useCopy';
+import { generateRoomLink } from './utils';
 import type { RoomInfo } from '../../types';
 
 const { t } = useUIKit();
-
+const { copy } = useCopy();
 interface Props {
   roomInfo: RoomInfo | null;
 }
@@ -99,17 +100,8 @@ const roomLink = computed(() => {
   if (!props.roomInfo?.roomId) {
     return '';
   }
-  return generateRoomLink(props.roomInfo.roomId, props.roomInfo.password);
+  return generateRoomLink(props.roomInfo.roomId, props.roomInfo.password, props.roomInfo.roomType);
 });
-
-const copy = async (value: string) => {
-  const success = await copyText(value);
-  if (success) {
-    TUIToast.success({ message: t('Copy Success') });
-  } else {
-    TUIToast.error({ message: t('Copy Failed') });
-  }
-};
 
 const copyRoomInfoAndLink = async () => {
   if (!props.roomInfo) {
@@ -127,12 +119,7 @@ const copyRoomInfoAndLink = async () => {
 
   const roomInfoText = roomInfoLines.join('\n');
 
-  const success = await copyText(roomInfoText);
-  if (success) {
-    TUIToast.success({ message: t('Copy Success') });
-  } else {
-    TUIToast.error({ message: t('Copy Failed') });
-  }
+  await copy(roomInfoText);
 };
 </script>
 

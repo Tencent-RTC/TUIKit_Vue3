@@ -1,5 +1,6 @@
 import type { Component } from 'vue';
 import { computed } from 'vue';
+import { TUIErrorCode } from '@tencentcloud/tuiroom-engine-js';
 import { TUIToast, TOAST_TYPE, IconSetAdmin, IconRevokeAdmin, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useRoomParticipantState } from '../../../states/RoomParticipantState';
 import type { RoomParticipant, RoomUser } from '../../../types';
@@ -21,12 +22,24 @@ export function useSetAdminAction(
     key: 'setAdmin',
     icon: IconSetAdmin,
     label: t('ParticipantList.SetAdmin'),
-    handler: () => {
-      setAdmin({ userId: targetParticipant.userId });
-      TUIToast({
-        type: TOAST_TYPE.SUCCESS,
-        message: t('ParticipantList.SetAdminSuccess', { name: displayName.value }),
-      });
+    handler: async () => {
+      try {
+        await setAdmin({ userId: targetParticipant.userId });
+        TUIToast({
+          type: TOAST_TYPE.SUCCESS,
+          message: t('ParticipantList.SetAdminSuccess', { name: displayName.value }),
+        });
+      } catch (_error) {
+        if (_error && typeof _error === 'object' && 'code' in _error && _error?.code === TUIErrorCode.ERR_ADMIN_COUNT_LIMIT) {
+          TUIToast.error({
+            message: t('ParticipantList.AdminCountLimit'),
+          });
+          return;
+        }
+        TUIToast.error({
+          message: t('ParticipantList.SetAdminFailed'),
+        });
+      }
     },
   };
 }

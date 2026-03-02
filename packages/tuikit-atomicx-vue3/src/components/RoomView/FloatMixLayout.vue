@@ -195,16 +195,6 @@ watch(
   { immediate: true, deep: true },
 );
 
-// Watch for quality changes to update all active media source layouts
-watch(() => localVideoQuality.value, async () => {
-  if (hasCameraTrack.value) {
-    await updateMediaSourceLayout('camera');
-  }
-  if (hasScreenTrack.value) {
-    await updateMediaSourceLayout('screen');
-  }
-}, { deep: true });
-
 watch(() => localMirrorType.value, async (val) => {
   if (val !== undefined && hasCameraTrack.value) {
     await updateMediaSourceLayout('camera');
@@ -234,6 +224,7 @@ onMounted(async () => {
       },
       interaction: {
         draggable: false,
+        selectable: false,
         showBorder: false,
         showResizeAnchors: false,
         canExceedCanvas: false,
@@ -254,6 +245,7 @@ onMounted(async () => {
       },
       interaction: {
         draggable: false,
+        selectable: false,
         showBorder: false,
         showResizeAnchors: false,
         canExceedCanvas: false,
@@ -270,16 +262,6 @@ onUnmounted(() => {
   trtcCloud?.getMediaMixingManager()?.destroy();
 });
 
-function transformTRTCVideoProfile(quality: VideoQuality) {
-  const profileMap = {
-    [VideoQuality.Quality1080P]: { width: 1920, height: 1080, frameRate: 20, bitrate: 3000 },
-    [VideoQuality.Quality720P]: { width: 1280, height: 720, frameRate: 15, bitrate: 1800 },
-    [VideoQuality.Quality540P]: { width: 960, height: 540, frameRate: 15, bitrate: 1200 },
-    [VideoQuality.Quality360P]: { width: 640, height: 360, frameRate: 15, bitrate: 800 },
-  };
-  return profileMap[quality];
-}
-
 watch(() => [hasCameraTrack.value, hasScreenTrack.value], async ([newCameraStatus, newScreenStatus], [oldCameraStatus, oldScreenStatus]) => {
   const oldHasAnyTrack = oldCameraStatus || oldScreenStatus;
   const newHasAnyTrack = newCameraStatus || newScreenStatus;
@@ -291,12 +273,6 @@ watch(() => [hasCameraTrack.value, hasScreenTrack.value], async ([newCameraStatu
     await trtcCloud?.getMediaMixingManager()?.startPublish();
   } else if ((!newCameraStatus && newScreenStatus) && (oldCameraStatus && oldScreenStatus)) {
     await trtcCloud?.getMediaMixingManager()?.startPublish();
-    await trtcCloud._trtc.updateLocalVideo({
-      option: {
-        profile: transformTRTCVideoProfile(localVideoQuality.value),
-        mirror: false,
-      },
-    });
   }
 });
 
@@ -362,7 +338,8 @@ async function updateMediaSourceLayout(type: 'camera' | 'screen') {
       },
       isSelected: false,
       interaction: {
-        draggable: layoutMode === LayoutMode.Corner,
+        draggable: type === 'camera' && layoutMode === LayoutMode.Corner,
+        selectable: type === 'camera' && layoutMode === LayoutMode.Corner,
         showBorder: false,
         showResizeAnchors: false,
         canExceedCanvas: false,
@@ -389,7 +366,7 @@ async function ensureMediaSourceAdded(type: 'camera' | 'screen') {
   // Update layout for the newly added source
   await updateMediaSourceLayout(type);
 
-  // If both sources are active, also update the other source's layout
+  // If both sources are active, also update thdeve other source's layout
   if (type === 'camera' && hasScreenTrack.value) {
     await updateMediaSourceLayout('screen');
   } else if (type === 'screen' && hasCameraTrack.value) {
@@ -458,6 +435,8 @@ TUIRoomEngine.once('ready', async () => {
   justify-content: center;
   align-items: center;
   position: relative;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .local-video-mixer-content {
@@ -465,7 +444,5 @@ TUIRoomEngine.once('ready', async () => {
   height: 100%;
   object-fit: cover;
   object-position: center;
-  border-radius: 8px;
-  overflow: hidden;
 }
 </style>

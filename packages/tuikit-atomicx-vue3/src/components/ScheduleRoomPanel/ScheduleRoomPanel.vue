@@ -297,7 +297,7 @@ const initializeForm = () => {
   const nextIntervalTime = getNext15MinuteInterval(now);
 
   formData.value = {
-    roomName: `${loginUserInfo.value?.userName}${t('Temporary Meeting')}`,
+    roomName: `${loginUserInfo.value?.userName || loginUserInfo.value?.userId}${t('Temporary Meeting')}`,
     startDate: Math.floor(startDate.getTime() / 1000),
     startTime: Math.floor(nextIntervalTime.getTime() / 1000),
     duration: 1800,
