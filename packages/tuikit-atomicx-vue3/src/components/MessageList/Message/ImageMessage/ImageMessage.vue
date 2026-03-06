@@ -282,6 +282,7 @@ onUnmounted(() => {
 
     <!-- image -->
     <img
+      v-else
       ref="imageRef"
       :class="cs('image', {
         'image--visible': loadingState === 'loaded',

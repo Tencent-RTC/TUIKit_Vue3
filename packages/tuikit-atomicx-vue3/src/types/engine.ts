@@ -1,5 +1,6 @@
 import ChatEngine from '@tencentcloud/chat-uikit-engine-lite';
-import type { IConversationModel, IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
+import type { ChatOfflinePushInfo } from '../hooks/useOfflinePushInfo';
+import type { IConversationModel, IMessageModel, MessageControlInfo } from '@tencentcloud/chat-uikit-engine-lite';
 
 enum ConversationType {
   C2C = ChatEngine.TYPES.CONV_C2C,
@@ -26,6 +27,13 @@ enum SearchType {
   USER = 'user',
   GROUP = 'group',
 }
+
+enum MessagePriority {
+  LOWEST = ChatEngine.TYPES.MSG_PRIORITY_LOWEST,
+  LOW = ChatEngine.TYPES.MSG_PRIORITY_LOW,
+  NORMAL = ChatEngine.TYPES.MSG_PRIORITY_NORMAL,
+  HIGH = ChatEngine.TYPES.MSG_PRIORITY_HIGH,
+}
 interface ConversationModel extends Omit<IConversationModel, 'type'> {
   type: ConversationType;
 }
@@ -33,6 +41,22 @@ interface ConversationModel extends Omit<IConversationModel, 'type'> {
 interface MessageModel extends Omit<IMessageModel, 'type' | 'conversationType'> {
   type: MessageType;
   conversationType: ConversationType;
+}
+
+interface SendMessageParams {
+  priority?: MessagePriority;
+  to?: string;
+  conversationType?: ConversationType.C2C | ConversationType.GROUP;
+  payload: any;
+  cloudCustomData?: string;
+  needReadReceipt?: boolean;
+  receiverList?: string[];
+}
+
+interface SendMessageOptions {
+  onlineUserOnly?: boolean;
+  offlinePushInfo?: ChatOfflinePushInfo;
+  messageControlInfo?: MessageControlInfo;
 }
 
 export type {
@@ -48,6 +72,8 @@ export type {
 export type {
   ConversationModel,
   MessageModel,
+  SendMessageParams,
+  SendMessageOptions,
 };
 
 export {

@@ -187,6 +187,7 @@ const handleReferenceClick = () => {
       vertical-align: middle;
       line-height: 1;
       margin: 0 1px;
+      user-select: text;
     }
   }
 }

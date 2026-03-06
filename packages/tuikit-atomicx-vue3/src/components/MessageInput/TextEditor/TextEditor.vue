@@ -16,11 +16,12 @@
 
 <script setup lang="ts">
 import { computed, watch, onBeforeUnmount } from 'vue';
+import { TUIChatService } from '@tencentcloud/chat-uikit-engine-lite';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import { useConversationListState } from '../../../states/ConversationListState';
 import { useMessageInputState } from '../../../states/MessageInputState';
-import { createExtensions, convertEditorContent } from './EditorCore';
+import { createExtensions } from './EditorCore';
 import styles from './TextEditor.module.scss';
 
 interface TextEditorProps {
@@ -39,7 +40,9 @@ const props = withDefaults(defineProps<TextEditorProps>(), {
 
 const { t, language } = useUIKit();
 const { activeConversation } = useConversationListState();
-const { updateRawValue, sendMessage, setEditorInstance, setContent } = useMessageInputState();
+const { sendMessage, setEditorInstance, setContent } = useMessageInputState();
+
+let typingTimer: ReturnType<typeof setTimeout> | null = null;
 
 const computedPlaceholder = computed(() => props.placeholder ?? t('MessageInput.enter_a_message'));
 
@@ -59,9 +62,15 @@ const editor = useEditor({
     showPlaceholderOnlyWhenEditable: props.placeholder === undefined,
     onEnter: handleEnter,
   }),
-  onUpdate: ({ editor: editorInstance }) => {
-    const content = convertEditorContent(editorInstance.getJSON());
-    updateRawValue(content);
+  onUpdate: () => {
+    TUIChatService.enterTypingState();
+    if (typingTimer) {
+      clearTimeout(typingTimer);
+    }
+    typingTimer = setTimeout(() => {
+      TUIChatService.leaveTypingState();
+      typingTimer = null;
+    }, 3000);
   },
 });
 
