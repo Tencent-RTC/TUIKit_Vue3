@@ -4,20 +4,20 @@ import { ref, onMounted, onUnmounted, nextTick, watch, provide, useSlots } from 
 import type { Component, CSSProperties } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useScroll } from '../../hooks/useScroll';
+import { useBarrageState } from '../../states/BarrageState';
+import { useLiveGiftState } from '../../states/LiveGiftState';
 import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
-import { useLiveGiftState } from '../../states/LiveGiftState';
-import { useBarrageState } from '../../states/BarrageState';
+import { BarrageType } from '../../types/barrage';
+import { LiveGiftEvents } from '../../types/gift';
 import { throttle } from '../../utils/lodash';
 import { useBarrageListState, isGiftMessage } from './BarrageListState';
 import UserActionMenu from './ClickAction/UserActionMenu.vue';
 import { Message as DefaultMessage } from './Message';
 import { GiftMessage } from './Message/GiftMessage';
 import { MessageListContextSymbol } from './MessageListContext';
-import { LiveGiftEvents } from '../../types/gift';
-import { BarrageType } from '../../types/barrage';
-import type { Barrage } from '../../types/barrage';
 import type { LiveGiftEventMap } from '../../types';
+import type { Barrage } from '../../types/barrage';
 
 const { t } = useUIKit();
 
@@ -52,6 +52,10 @@ const { appendLocalTip } = useBarrageState();
 const { subscribeEvent, unsubscribeEvent } = useLiveGiftState();
 
 const { scrollToBottom } = useScroll();
+
+defineExpose({
+  scrollToBottom,
+});
 
 // Handle gift message received event
 const handleGiftMessage = (gift: LiveGiftEventMap[LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE]) => {
@@ -196,6 +200,7 @@ onMounted(() => {
     scrollContainer.value.addEventListener('scroll', handleScroll);
   }
   initializeMessageList();
+  scrollToBottom({ behavior: 'smooth' });
 
   // Subscribe to gift message event
   subscribeEvent(LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE, handleGiftMessage);
@@ -227,8 +232,8 @@ onUnmounted(() => {
             :message="message"
           />
           <component
-            v-else
             :is="props.Message || DefaultMessage"
+            v-else
             :style="props.itemStyle"
             :message="message"
             :is-last-in-chunk="true"

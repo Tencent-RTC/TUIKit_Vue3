@@ -223,7 +223,7 @@ const handleConfirmGroupCall = () => initiateGroupCall();
   }
 
   &__icon {
-    color: var(--text-color-primary);
+    color: var(--icon-color-primary);
     transition: color 0.2s ease;
   }
 }

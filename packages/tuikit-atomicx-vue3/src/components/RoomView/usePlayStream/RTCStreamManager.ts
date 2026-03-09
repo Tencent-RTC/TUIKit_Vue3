@@ -64,6 +64,9 @@ export class RTCStreamManager {
 
   public async update(options: { userList: UserPlayOption[] }) {
     console.log('RTCStreamManger.update: ', options);
+    if (this.view === null) {
+      return;
+    }
     const { userList } = options;
     userList.forEach(async (item) => {
       if (item.cameraStatus === DeviceStatus.On && !this.playerMap.has(item.userId)) {

@@ -1,7 +1,7 @@
 <template>
   <div ref="roomViewContainerRef" class="room-view-container">
     <GridLayout
-      v-if="layoutTemplate === RoomLayoutTemplate.GridLayout"
+      v-if="isStandardRoom && layoutTemplate === RoomLayoutTemplate.GridLayout"
       @stream-double-click="handleStreamDoubleClick"
     >
       <template #participantViewUI="{ participant, streamType }">
@@ -9,7 +9,7 @@
       </template>
     </GridLayout>
     <SpeakerLayout
-      v-if="layoutTemplate === RoomLayoutTemplate.SidebarLayout || layoutTemplate === RoomLayoutTemplate.CinemaLayout"
+      v-if="isStandardRoom && (layoutTemplate === RoomLayoutTemplate.SidebarLayout || layoutTemplate === RoomLayoutTemplate.CinemaLayout)"
       :layout-template="layoutTemplate"
       @stream-double-click="handleStreamDoubleClick"
     >
@@ -18,7 +18,7 @@
       </template>
     </SpeakerLayout>
     <MobileLayout
-      v-if="layoutTemplate === RoomLayoutTemplate.MobileLayout"
+      v-if="isStandardRoom && layoutTemplate === RoomLayoutTemplate.MobileLayout"
       :layout-template="layoutTemplate"
       @stream-double-click="handleStreamDoubleClick"
     >
@@ -26,12 +26,12 @@
         <slot name="participantViewUI" v-bind="{ participant, streamType }" />
       </template>
     </MobileLayout>
-    <FloatMixLayout v-if="layoutTemplate === RoomLayoutTemplate.FloatMixLayout">
+    <FloatMixLayout v-if="isWebinarHost">
       <template #participantViewUI="{ participant, streamType }">
         <slot name="participantViewUI" v-bind="{ participant, streamType }" />
       </template>
     </FloatMixLayout>
-    <LiveAudienceLayout v-if="layoutTemplate === RoomLayoutTemplate.LiveAudienceLayout">
+    <LiveAudienceLayout v-if="isWebinarNonHost">
       <template #participantViewUI="{ participant, streamType }">
         <slot name="participantViewUI" v-bind="{ participant, streamType }" />
       </template>
@@ -40,8 +40,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, provide } from 'vue';
-import { RoomLayoutTemplate } from '../../types';
+import { ref, provide, computed } from 'vue';
+import { useLoginState } from '../../states/LoginState';
+import { useRoomState } from '../../states/RoomState';
+import { RoomLayoutTemplate, RoomType } from '../../types';
 import FloatMixLayout from './FloatMixLayout.vue';
 import GridLayout from './GridLayout.vue';
 import LiveAudienceLayout from './LiveAudienceLayout.vue';
@@ -58,6 +60,8 @@ withDefaults(defineProps<Props>(), {
   layoutTemplate: RoomLayoutTemplate.GridLayout,
 });
 
+const { currentRoom } = useRoomState();
+const { loginUserInfo } = useLoginState();
 const roomViewContainerRef = ref<HTMLDivElement | null>(null);
 
 const { showToolbar } = useRoomToolbar(roomViewContainerRef);
@@ -68,6 +72,10 @@ const emits = defineEmits(['stream-double-click']);
 function handleStreamDoubleClick(streamInfo: { participant: RoomParticipant; streamType: VideoStreamType }) {
   emits('stream-double-click', streamInfo);
 }
+
+const isStandardRoom = computed(() => currentRoom.value?.roomType === RoomType.Standard);
+const isWebinarHost = computed(() => currentRoom.value?.roomType === RoomType.Webinar && currentRoom.value?.roomOwner.userId === loginUserInfo.value?.userId);
+const isWebinarNonHost = computed(() => currentRoom.value?.roomType === RoomType.Webinar && currentRoom.value?.roomOwner.userId !== loginUserInfo.value?.userId);
 
 </script>
 

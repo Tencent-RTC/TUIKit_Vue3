@@ -100,7 +100,7 @@ function handleFileInput(e: Event) {
   }
 
   &__icon {
-    color: var(--text-color-primary);
+    color: var(--icon-color-primary);
   }
 }
 </style>

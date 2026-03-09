@@ -83,7 +83,7 @@ const props = withDefaults(defineProps<MessageInputProps>(), {
   actions: () => ['EmojiPicker', 'ImagePicker', 'FilePicker', 'VideoPicker'],
 });
 
-const { inputRawValue, setContent, sendMessage } = useMessageInputState();
+const { setContent, sendMessage } = useMessageInputState();
 
 const pickProps = <T extends object, K extends keyof T>(
   sourceObject: T,
@@ -118,9 +118,7 @@ const actionList = computed(() =>
 );
 
 const sendInputMessage = () => {
-  if (inputRawValue.value) {
-    sendMessage();
-    setContent('');
-  }
+  sendMessage();
+  setContent('');
 };
 </script>

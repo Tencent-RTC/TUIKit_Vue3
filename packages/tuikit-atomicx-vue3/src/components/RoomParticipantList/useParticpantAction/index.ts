@@ -42,6 +42,11 @@ export function useParticipantAction({ targetParticipant }: { targetParticipant:
 
   const controlList = computed(() => {
     const controlListResult: { key: string; label: string; handler: () => void }[] = [];
+    // 设置观众：是大房间，我是房主并且目标用户不是我自己/我是管理员并且目标用户是普通用户或者我自己
+    if (isWebinar.value && ((isLocalOwner.value && !targetIsMe.value) || (isLocalAdmin.value && (targetIsGeneralUser.value || targetIsMe.value)))) {
+      const demoteToAudienceAction = useDemoteToAudienceAction({ targetParticipant: targetParticipant.value });
+      controlListResult.push(demoteToAudienceAction);
+    }
     // 音视频操作：我是房主/我是管理员且操作用户是普通用户
     if ((isLocalOwner.value || (isLocalAdmin.value && targetIsGeneralUser.value)) && !targetIsMe.value) {
       if (hasAudio.value) {
@@ -76,11 +81,7 @@ export function useParticipantAction({ targetParticipant }: { targetParticipant:
       const revokeAdminAction = useRevokeAdminAction({ targetParticipant: targetParticipant.value });
       controlListResult.push(revokeAdminAction);
     }
-    // 设置观众：是大房间，我是房主并且目标用户不是我自己/我是管理员并且目标用户是普通用户或者我自己
-    if (isWebinar.value && ((isLocalOwner.value && !targetIsMe.value) || (isLocalAdmin.value && (targetIsGeneralUser.value || targetIsMe.value)))) {
-      const demoteToAudienceAction = useDemoteToAudienceAction({ targetParticipant: targetParticipant.value });
-      controlListResult.push(demoteToAudienceAction);
-    }
+
     // 修改昵称：不是大房间 && 我是房主/我是管理员，目标用户是普通用户/目标用户是我自己
     if (!isWebinar.value && ((isLocalOwner.value || (isLocalAdmin.value && targetIsGeneralUser.value) || targetIsMe.value))) {
       controlListResult.push(nameCardAction);
@@ -115,6 +116,10 @@ export function useAudienceAction({ targetAudience }: { targetAudience: RoomUser
 
   const controlList = computed(() => {
     const controlListResult: { key: string; label: string; handler: () => void }[] = [];
+    // 设为嘉宾：是大房间，我是房主/我是管理员，目标用户不是管理员
+    if (isWebinar.value && (isLocalOwner.value || (isLocalAdmin.value && !isLocalOwner.value))) {
+      controlListResult.push(promoteToParticipantAction);
+    }
     // 设置管理员：我是房主，目标用户不是管理员并且不是我自己
     if (isLocalOwner.value && !targetIsAdmin.value && !targetIsMe.value) {
       controlListResult.push(setAdminAction);
@@ -122,10 +127,6 @@ export function useAudienceAction({ targetAudience }: { targetAudience: RoomUser
     // 撤销管理员：我是房主，目标用户是管理员
     if (isLocalOwner.value && targetIsAdmin.value) {
       controlListResult.push(revokeAdminAction);
-    }
-    // 提升为参与者：是大房间，我是房主/我是管理员，目标用户不是管理员
-    if (isWebinar.value && (isLocalOwner.value || (isLocalAdmin.value && !isLocalOwner.value))) {
-      controlListResult.push(promoteToParticipantAction);
     }
     // 禁止聊天：不是我自己 && （我是房主/我是管理员，目标用户不是管理员）
     if (!targetIsMe.value && (isLocalOwner.value || (isLocalAdmin.value && !targetIsAdmin.value))) {

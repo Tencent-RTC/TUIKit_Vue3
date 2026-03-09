@@ -1,5 +1,5 @@
 // common
-export type * from './login';
+export * from './login';
 export * from './device';
 // chat
 export * from './message';

@@ -13,8 +13,14 @@ import MessageInputH5Component from './MessageInputH5.vue';
 import { TextEditor as TextEditorComponent } from './TextEditor';
 import { VideoCallPicker as VideoCallPickerComponent } from './VideoCallPicker';
 
-addI18n('en-US', { translation: { MessageInput: resources['en-US'] } });
-addI18n('zh-CN', { translation: { MessageInput: resources['zh-CN'] } });
+addI18n('en-US', { translation: {
+  MessageInput: resources['en-US'].MessageInput,
+  OfflinePush: resources['en-US'].OfflinePush,
+} });
+addI18n('zh-CN', { translation: {
+  MessageInput: resources['zh-CN'].MessageInput,
+  OfflinePush: resources['zh-CN'].OfflinePush,
+} });
 
 const MessageInput = MessageInputComponent;
 const MessageInputH5 = MessageInputH5Component;
