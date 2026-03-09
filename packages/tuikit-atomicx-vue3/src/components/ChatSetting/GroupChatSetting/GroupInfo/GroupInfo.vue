@@ -200,11 +200,6 @@ const avatarUrl = computed<string>(() => {
 .group-info {
   &__item {
     padding: 10px 0;
-    border-bottom: 0.5px solid var(--stroke-color-module);
-
-    &:last-child {
-      border-bottom: none;
-    }
   }
 
   &__label {

@@ -308,7 +308,7 @@ const userPickerDataSource = computed(() => {
 
   return filteredMembers.map(member => ({
     key: member.userID,
-    label: `${member.nick || member.userID} (${member.userID === currentUserID.value ? 'Me' : member.role})`,
+    label: `${member.nick || member.userID} (${member.userID === currentUserID.value ? t('ChatSetting.me') : t(`ChatSetting.group_member_role_${member.role.toLowerCase()}`)})`,
     avatarUrl: member.avatar,
   }));
 });
@@ -316,10 +316,9 @@ const userPickerDataSource = computed(() => {
 
 <style lang="scss" scoped>
 .group-management {
-  padding: 0 20px;
-
   &__header {
-    padding: 16px 0;
+    padding: 16px 20px;
+    margin-left: -8px;
     border-bottom: 1px solid var(--border-color-light);
   }
 
@@ -359,6 +358,7 @@ const userPickerDataSource = computed(() => {
 
   &__mute-all-desc {
     font-size: 14px;
+    padding: 0 20px;
     color: var(--text-color-secondary);
   }
 }

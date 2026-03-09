@@ -1,12 +1,20 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { TUIDialog, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { IconCopy, TUIDialog, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { View } from '../../../baseComp/View';
 import { useContactListState } from '../../../states/ContactListState';
-import { useGroupSettingState, GroupMemberRole, GroupPermission, GroupInviteType } from '../../../states/GroupSettingState';
+import {
+  useGroupSettingState,
+  GroupMemberRole,
+  GroupPermission,
+  GroupInviteType,
+  GroupType,
+} from '../../../states/GroupSettingState';
+import { copyTextToClipboard } from '../../../utils';
 import { UserPicker } from '../../UserPicker';
+import { Divider } from '../Divider';
+import { SettingItem } from '../SettingItem';
 import { GroupActions } from './GroupActions';
-import { GroupInfo } from './GroupInfo';
 import { GroupManagement } from './GroupManagement';
 import { GroupManagementEntry } from './GroupManagementEntry';
 import { GroupMembers } from './GroupMembers';
@@ -20,15 +28,18 @@ enum ViewMode {
 
 const {
   groupID,
+  groupName,
+  notification,
+  groupType,
   allMembers,
   memberCount,
   isInGroup,
   currentUserID,
   currentUserRole,
   inviteOption,
-  // Business GroupActions
   hasPermission,
   getGroupMemberList,
+  updateGroupProfile,
   addGroupMember,
   deleteGroupMember,
 } = useGroupSettingState();
@@ -48,35 +59,111 @@ const memberActionType = ref<'remove' | 'add' | null>(null);
 
 const userPickerRef = ref<UserPickerRef>();
 
-// Initialize member list when component mounts
+const getGroupTypeText = () => {
+  if (!groupType.value) {
+    return t('ChatSetting.group_type_unknown');
+  }
+
+  const groupTypeTextMap: Record<GroupType, string> = {
+    [GroupType.WORK]: t('ChatSetting.group_type_work'),
+    [GroupType.PUBLIC]: t('ChatSetting.group_type_public'),
+    [GroupType.MEETING]: t('ChatSetting.group_type_meeting'),
+    [GroupType.COMMUNITY]: t('ChatSetting.group_type_community'),
+    [GroupType.AVCHATROOM]: t('ChatSetting.group_type_avchatroom'),
+  };
+
+  return groupTypeTextMap[groupType.value] || t('ChatSetting.group_type_unknown');
+};
+
+const validateGroupName = (value: string, originalValue?: string) => {
+  if (typeof value !== 'string') {
+    return t('ChatSetting.group_name_required_string');
+  }
+  if (value.length === 0) {
+    return t('ChatSetting.group_name_required');
+  }
+  if (value.length > 30) {
+    return t('ChatSetting.group_name_max_length');
+  }
+  if (value === (originalValue || '')) {
+    return t('ChatSetting.group_name_unchanged');
+  }
+  return null;
+};
+
+const validateNotification = (value: string, originalValue?: string) => {
+  if (typeof value !== 'string') {
+    return t('ChatSetting.group_notification_required_string');
+  }
+  if (value.length > 130) {
+    return t('ChatSetting.group_notification_max_length');
+  }
+  if (value === (originalValue || '')) {
+    return t('ChatSetting.group_notification_unchanged');
+  }
+  return null;
+};
+
+const handleGroupNameConfirm = async (value: string) => {
+  try {
+    await updateGroupProfile({ name: value });
+    TUIToast.success({
+      message: t('ChatSetting.group_name_update_success'),
+    });
+  } catch {
+    TUIToast.error({
+      message: t('ChatSetting.group_name_update_failed'),
+    });
+  }
+};
+
+const handleNotificationConfirm = async (value: string) => {
+  try {
+    await updateGroupProfile({ notification: value });
+    TUIToast.success({
+      message: t('ChatSetting.group_notification_update_success'),
+    });
+  } catch {
+    TUIToast.error({
+      message: t('ChatSetting.group_notification_update_failed'),
+    });
+  }
+};
+
+const handleCopyGroupID = () => {
+  if (groupID.value) {
+    copyTextToClipboard(groupID.value).then(() => {
+      TUIToast.success({
+        message: t('ChatSetting.copied'),
+      });
+    });
+  }
+};
+
 onMounted(() => {
   if (groupID.value && prevGroupID.value !== groupID.value) {
     setHasMore(true);
     loading.value = false;
     currentView.value = ViewMode.MAIN;
     prevGroupID.value = groupID.value;
-    // Reset and load initial members
     setTimeout(() => {
       getGroupMemberList({ offset: 0, count: 100 });
     }, 1000);
   }
 });
 
-// Watch for groupID changes
 watch(groupID, (newGroupID) => {
   if (newGroupID && prevGroupID.value !== newGroupID) {
     setHasMore(true);
     loading.value = false;
     currentView.value = ViewMode.MAIN;
     prevGroupID.value = newGroupID;
-    // Reset and load initial members
     setTimeout(() => {
       getGroupMemberList({ offset: 0, count: 100 });
     }, 1000);
   }
 });
 
-// Update hasMore based on member count
 watch([allMembers, memberCount], () => {
   if (allMembers.value && memberCount.value !== undefined) {
     setHasMore(allMembers.value.length < memberCount.value);
@@ -87,7 +174,6 @@ function setHasMore(value: boolean) {
   hasMore.value = value;
 }
 
-// Handle load more members
 const handleLoadMoreMembers = async () => {
   if (loading.value || !hasMore.value || !groupID.value) {
     return;
@@ -96,11 +182,11 @@ const handleLoadMoreMembers = async () => {
   try {
     await getGroupMemberList({
       offset: allMembers.value?.length || 0,
-      count: 100, // Load 100 more members each time
+      count: 100,
     });
   } catch {
     TUIToast.error({
-      message: 'Failed to load more members',
+      message: t('ChatSetting.failed_to_load_more_members'),
     });
   } finally {
     loading.value = false;
@@ -230,7 +316,7 @@ const userPickerDialogTitle = computed(() => {
 </script>
 
 <template>
-  <!-- Render different views based on current view mode -->
+  <Divider variant="line" :full-width="true" />
   <GroupManagement
     v-if="currentView === ViewMode.GROUP_MANAGEMENT"
     @back="() => currentView = ViewMode.MAIN"
@@ -239,8 +325,35 @@ const userPickerDialogTitle = computed(() => {
     v-else-if="groupID"
     :class="['group-chat-setting']"
   >
-    <GroupInfo />
+    <SettingItem
+      type="input"
+      :label="t('ChatSetting.group_name')"
+      :value="groupName || ''"
+      :placeholder="t('ChatSetting.group_name_placeholder')"
+      :editable="Boolean(hasPermission(GroupPermission.EDIT_GROUP_PROFILE_NAME) && isInGroup)"
+      :validator="validateGroupName"
+      @confirm="handleGroupNameConfirm"
+    />
+    <Divider variant="line" />
+    <div class="group-chat-setting__group-id-row">
+      <div class="group-chat-setting__label">
+        {{ t('ChatSetting.group_id') }}
+      </div>
+      <div class="group-chat-setting__value-row">
+        <div class="group-chat-setting__value">
+          {{ groupID }}
+        </div>
+        <IconCopy
+          v-if="groupID"
+          class="unique-icon-btn"
+          size="24px"
+          @click="handleCopyGroupID"
+        />
+      </div>
+    </div>
+
     <template v-if="isInGroup">
+      <Divider variant="section" />
       <GroupMembers
         :key="groupID"
         :members="allMembers"
@@ -254,11 +367,40 @@ const userPickerDialogTitle = computed(() => {
         @remove-button-click="() => onUserPickerDialogOpen('remove')"
         @add-button-click="() => onUserPickerDialogOpen('add')"
       />
+    </template>
+
+    <Divider variant="section" />
+    <SettingItem
+      type="textarea"
+      :label="t('ChatSetting.group_notification')"
+      :value="notification || ''"
+      :placeholder="t('ChatSetting.group_notification_placeholder')"
+      :rows="4"
+      :editable="Boolean(hasPermission(GroupPermission.EDIT_GROUP_PROFILE_NOTIFICATION) && isInGroup)"
+      :validator="validateNotification"
+      @confirm="handleNotificationConfirm"
+    />
+
+    <template v-if="isInGroup">
       <GroupManagementEntry
         @click="() => currentView = ViewMode.GROUP_MANAGEMENT"
       />
+    </template>
+
+    <Divider variant="line" />
+    <SettingItem
+      type="display"
+      :label="t('ChatSetting.group_type')"
+      :value="getGroupTypeText()"
+    />
+
+    <template v-if="isInGroup">
+      <Divider variant="section" />
       <PersonalSettings />
+
+      <Divider variant="section" />
       <GroupActions />
+
       <TUIDialog
         appendTo="body"
         :visible="isShowUserPickerDialog"
@@ -285,8 +427,33 @@ const userPickerDialogTitle = computed(() => {
 
 <style lang="scss" scoped>
 .group-chat-setting {
-  gap: 16px;
-  padding: 16px;
+  &__group-id-row {
+    padding: 14px 20px 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__label {
+    font-size: 14px;
+    color: var(--text-color-primary);
+  }
+
+  &__value-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  &__value {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+    color: var(--text-color-secondary);
+  }
 }
 </style>
 

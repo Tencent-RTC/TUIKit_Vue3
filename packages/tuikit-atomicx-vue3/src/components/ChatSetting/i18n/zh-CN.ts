@@ -19,6 +19,8 @@ const ChatSetting = {
   copied: '已复制',
 
   // GroupChatSetting
+  chat_setting_title: '聊天设置',
+  group_setting_title: '群设置',
   remove_member_dialog_title: '移除群成员',
   add_member_dialog_title: '添加群成员',
   failed_to_load_more_members: '加载更多成员失败',

@@ -238,16 +238,6 @@ export enum RoomLayoutTemplate {
    * @default 'mobileLayout'
    */
   MobileLayout = 'MobileLayout',
-  /**
-   * 浮动混合布局
-   * @default 'floatMixLayout'
-   */
-  FloatMixLayout = 'floatMixLayout',
-  /**
-   * 观众布局
-   * @default 'liveAudienceLayout'
-   */
-  LiveAudienceLayout = 'liveAudienceLayout',
 }
 
 export interface IRoomParticipantState {
