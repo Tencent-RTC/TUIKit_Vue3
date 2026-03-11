@@ -1,0 +1,1 @@
+export { default as GiftMessage } from './GiftMessage.vue';

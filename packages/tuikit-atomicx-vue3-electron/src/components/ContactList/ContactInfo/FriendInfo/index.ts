@@ -1,0 +1,1 @@
+export { default as FriendInfo } from './FriendInfo.vue';

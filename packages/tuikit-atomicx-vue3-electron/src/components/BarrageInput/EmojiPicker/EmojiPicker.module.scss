@@ -1,0 +1,55 @@
+.emoji-picker {
+  &__icon {
+    cursor: pointer;
+  }
+
+  &__list {
+    display: flex;
+    flex-flow: row wrap;
+    gap: 8px;
+    width: var(--emoji-panel-width, 310px);
+    max-width: calc(100vw - 24px);
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 10px;
+    background-color: var(--dropdown-color-default);
+    box-shadow: 0 0 10px 0 var(--shadow-color);
+    user-select: none;
+    scrollbar-width: none; // Firefox
+    -ms-overflow-style: none; // IE/Edge Legacy
+    justify-content: space-around;
+
+    &::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      display: none;
+    }
+
+    &-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      cursor: pointer;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    &__list {
+      width: 100vw;
+      height: 28vh;
+      overflow-y: auto;
+      box-sizing: border-box;
+      flex-flow: wrap;
+
+      &-item {
+        width: 32px;
+        height: 32px;
+      }
+    }
+  }
+}
