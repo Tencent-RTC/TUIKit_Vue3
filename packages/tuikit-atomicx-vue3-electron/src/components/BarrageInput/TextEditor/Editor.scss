@@ -1,0 +1,89 @@
+.tiptap.ProseMirror {
+  height: 100%;
+  word-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+  -webkit-user-select: text;
+  user-select: text;
+  overflow-y: auto;
+  overflow-x: hidden !important;
+  border: none !important;
+  outline: none !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--uikit-color-white-6);
+    border-radius: 3px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+
+    &:hover {
+      background: var(--uikit-color-white-5);
+    }
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  p {
+      margin: 0;
+      padding: 0;
+      font-style: normal;
+      outline: none !important;
+      line-height: 1.5;
+  }
+
+  img {
+      &.ProseMirror-selectednode {
+          outline: 2px solid var(--uikit-color-theme-6);
+      }
+  }
+
+  .is-editor-empty {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .message-emoji {
+    display: inline-block;
+    width: 26px;
+    height: 26px;
+    user-select: text;
+    pointer-events: none;
+    vertical-align: middle;
+  }
+
+  .message-image {
+    display: inline-block;
+    width: 100px;
+    user-select: text;
+    vertical-align: middle;
+  }
+}
+
+
+
+.tiptap p.is-editor-empty:first-child::before {
+  color: var(--text-color-secondary);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+

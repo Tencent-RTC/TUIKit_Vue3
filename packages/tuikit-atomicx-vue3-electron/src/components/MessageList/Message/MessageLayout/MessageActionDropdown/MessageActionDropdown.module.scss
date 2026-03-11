@@ -1,0 +1,44 @@
+.message-action-dropdown {
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  padding: 8px 0;
+  background-color: var(--dropdown-color-default);
+  border-radius: 8px;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  transform-origin: var(--radix-context-menu-content-transform-origin);
+  animation-duration: 0.2s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+
+  &[data-state="open"] {
+    animation-name: slideIn;
+  }
+
+  &[data-state="closed"] {
+    animation-name: slideOut;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes slideOut {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+}

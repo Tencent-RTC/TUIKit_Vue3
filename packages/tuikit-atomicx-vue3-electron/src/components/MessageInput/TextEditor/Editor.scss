@@ -1,0 +1,84 @@
+@use '../../../styles//mixins/scrollbar' as scrollbar;
+
+
+.message-input .tiptap.ProseMirror {
+  height: auto;
+  flex: 1;
+  word-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+  -webkit-user-select: text;
+  user-select: text;
+  overflow-y: auto;
+  border: none !important;
+  outline: none !important;
+  justify-content: flex-start;
+
+  @include scrollbar.scrollbar-base();
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  p {
+      margin: 0;
+      padding: 0;
+      font-style: normal;
+      outline: none !important;
+  }
+
+  img {
+      &.ProseMirror-selectednode {
+          outline: 2px solid #68cef8;
+      }
+  }
+
+  .message-emoji {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    user-select: text;
+    pointer-events: none;
+    vertical-align: bottom;
+  }
+
+  .message-image {
+    display: inline-block;
+    width: 100px;
+    user-select: text;
+  }
+}
+
+
+
+.tiptap p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+// Mention tag styles (Telegram-style)
+.uikit-message-input-mention-tag {
+  display: inline;
+  padding: 2px 4px;
+  margin: 0 2px;
+  border-radius: 4px;
+  background-color: rgba(0, 122, 255, 0.1);
+  color: #007AFF;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: rgba(0, 122, 255, 0.15);
+  }
+
+  // Selected state (when backspacing)
+  &.ProseMirror-selectednode {
+    background-color: rgba(0, 122, 255, 0.2);
+  }
+}
+

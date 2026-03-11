@@ -1,0 +1,1 @@
+export { default as GroupApplicationItem } from './GroupApplicationItem.vue';
