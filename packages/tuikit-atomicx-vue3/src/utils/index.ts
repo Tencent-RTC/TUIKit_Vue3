@@ -5,4 +5,3 @@ export * from './downFile';
 export * from './copyText';
 export * from './emoji';
 export * from './json';
-export * from './seatLayoutMapper';

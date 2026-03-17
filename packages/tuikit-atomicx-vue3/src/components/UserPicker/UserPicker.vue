@@ -206,8 +206,6 @@ defineExpose(refMethods);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  height: 100%;
-  width: 100%;
 
   &__panel {
     flex: 1;

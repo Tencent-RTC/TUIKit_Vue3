@@ -13,10 +13,6 @@
       :value="isMuted"
       @change="(value: boolean) => setChatMuted(Boolean(value))"
     />
-    <Divider
-      v-if="isMuted !== undefined && isPinned !== undefined"
-      variant="line"
-    />
 
     <!-- Pin conversation setting - available to all users -->
     <SettingItem
@@ -33,7 +29,6 @@
 <script lang="ts" setup>
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useGroupSettingState } from '../../../../states/GroupSettingState';
-import { Divider } from '../../Divider';
 import { SettingItem } from '../../SettingItem';
 
 const { t } = useUIKit();

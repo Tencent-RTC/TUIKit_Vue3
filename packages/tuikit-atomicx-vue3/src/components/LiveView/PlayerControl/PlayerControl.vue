@@ -1,7 +1,7 @@
 <template>
   <Transition name="player-control">
     <div
-      v-show="controlBarVisible"
+      v-show="showControls"
       ref="playerControlRef"
       :class="[
         'playback-controls',
@@ -10,26 +10,45 @@
       ]"
     >
       <div class="control-buttons">
-        <div class="left-controls">
-          <ControlBarItem
-            v-for="item in leftControlItems"
-            :key="item.key"
-            :item="item"
-          />
-        </div>
-        <div class="center-controls">
-          <ControlBarItem
-            v-for="item in centerControlItems"
-            :key="item.key"
-            :item="item"
-          />
-        </div>
+        <span
+          v-if="!isSafari || !hasTCPlayer()"
+          class="control-btn play-pause-btn"
+          :class="{disabled: isPlayPauseDisabled}"
+          :title="isPlaying ? t('LiveView.Pause') : t('LiveView.Play')"
+          @click="handlePlayPause"
+        >
+          <IconPause v-if="isPlaying" size="20" />
+          <IconPlay v-else size="20" />
+        </span>
+        <div class="center-controls" />
         <div class="right-controls">
-          <ControlBarItem
-            v-for="item in rightControlItems"
-            :key="item.key"
-            :item="item"
-          />
+          <MultiResolution />
+          <span v-if="!isSafari || !hasTCPlayer()" class="control-btn audio-control-btn">
+            <AudioControl
+              class="audio-control-icon"
+              :icon-size="20"
+              :volume="currentVolume"
+              :is-muted="isMuted"
+              @volume-change="handleVolumeChange"
+              @mute-change="handleMuteChange"
+            />
+          </span>
+          <span
+            class="control-btn"
+            :class="{disabled: isPictureInPictureDisabled}"
+            :title="isPictureInPicture ? t('LiveView.ExitPictureInPicture') : t('LiveView.PictureInPicture')"
+            @click="handlePictureInPicture"
+          >
+            <IconPictureInPicture size="20" />
+          </span>
+          <span
+            class="control-btn fullscreen-btn"
+            :class="{disabled: isFullscreenDisabled}"
+            :title="isFullscreen ? t('LiveView.ExitFullscreen') : t('LiveView.Fullscreen')"
+            @click="handleFullscreen"
+          >
+            <IconFullScreen size="20" />
+          </span>
         </div>
       </div>
     </div>
@@ -37,183 +56,160 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref, onBeforeUnmount } from 'vue';
 import {
-  computed,
-  onMounted,
-  ref,
-  onBeforeUnmount,
-} from 'vue';
+  IconFullScreen,
+  IconPictureInPicture,
+  IconPause,
+  IconPlay,
+  useUIKit,
+  TUIToast,
+  TOAST_TYPE,
+} from '@tencentcloud/uikit-base-component-vue3';
 import { isMobile } from '../../../utils';
-import ControlBarItem from './ControlBarItem.vue';
+import AudioControl from './AudioControl.vue';
+import MultiResolution from './MultiResolution.vue';
 import { usePlayerControlState } from './PlayerControlState';
-import { PlayerControlButton } from '../../../types/player';
-import type { CustomButton } from '../../../types/player';
-import type { ControlItem } from './types';
 
 const {
-  controlBarVisible,
-  buttons,
-  customButtons,
+  isMuted,
+  isPlaying,
+  isFullscreen,
+  isPictureInPicture,
+  currentVolume,
+  pause,
+  resume,
+  requestPictureInPicture,
+  exitPictureInPicture,
+  requestFullscreen,
+  exitFullscreen,
+  setVolume,
+  setMute,
   cleanup,
-  setControlBarVisible,
-  startAutoHide,
-  stopAutoHide,
+  isSafari,
+  hasTCPlayer,
 } = usePlayerControlState();
 
 const props = defineProps<{
   isLandscapeStyleMode?: boolean;
 }>();
 
+const { t } = useUIKit();
 const playerControlRef = ref<HTMLElement>();
+const showControls = ref(false);
+const hideTimeout = ref<number | null>(null);
 
-type ControlZone = 'left' | 'center' | 'right';
-type CustomButtonPlacement = 'prepend' | 'append' | 'before' | 'after';
+const AUTO_HIDE_DELAY = 1500; // ms
 
-type NormalizedCustomButton = {
-  key: string;
-  button: CustomButton;
-  zone: ControlZone;
-  placement: CustomButtonPlacement;
-  anchor?: PlayerControlButton;
-};
+/**
+ * Disabled state computed properties for control buttons
+ * - Play/Pause: disabled in PiP mode (pause not allowed in PiP)
+ * - PiP: disabled when paused (must be playing to enter PiP) or in fullscreen mode
+ * - Fullscreen: disabled in PiP mode (fullscreen not allowed in PiP)
+ */
+const isPlayPauseDisabled = computed(() => isPictureInPicture.value);
+const isPictureInPictureDisabled = computed(() => (!isPlaying.value && !isPictureInPicture.value) || (isFullscreen.value && !isPictureInPicture.value));
+const isFullscreenDisabled = computed(() => isPictureInPicture.value);
 
-const BUILTIN_CONTROL_LAYOUT: Record<ControlZone, PlayerControlButton[]> = {
-  left: [PlayerControlButton.Play],
-  center: [],
-  right: [
-    PlayerControlButton.Resolution,
-    PlayerControlButton.Volume,
-    PlayerControlButton.PictureInPicture,
-    PlayerControlButton.Fullscreen,
-  ],
-};
-
-const BUILTIN_CONTROL_ZONE_MAP: Record<PlayerControlButton, ControlZone> = {
-  [PlayerControlButton.Play]: 'left',
-  [PlayerControlButton.Resolution]: 'right',
-  [PlayerControlButton.Volume]: 'right',
-  [PlayerControlButton.PictureInPicture]: 'right',
-  [PlayerControlButton.Fullscreen]: 'right',
-};
-
-const toCustomControlItem = (button: NormalizedCustomButton): ControlItem => ({
-  kind: 'custom',
-  key: button.key,
-  button: button.button,
-});
-
-const normalizeCustomButton = (button: CustomButton): NormalizedCustomButton => {
-  const position = button.position ?? 'end';
-  const key = `custom-${button.id}`;
-
-  if (position === 'start') {
-    return {
-      key,
-      button,
-      zone: 'left',
-      placement: 'prepend',
-    };
+const handlePlayPause = () => {
+  if (isPlayPauseDisabled.value) {
+    TUIToast({
+      type: TOAST_TYPE.WARNING,
+      message: t('LiveView.NotAllowPauseInPIP'),
+    });
+    return;
   }
 
-  if (position === 'end') {
-    return {
-      key,
-      button,
-      zone: 'right',
-      placement: 'append',
-    };
+  if (isPlaying.value) {
+    pause();
+  } else {
+    resume();
   }
-
-  if ('slot' in position) {
-    return {
-      key,
-      button,
-      zone: position.slot,
-      placement: 'append',
-    };
-  }
-
-  return {
-    key,
-    button,
-    zone: BUILTIN_CONTROL_ZONE_MAP[position.anchor],
-    placement: position.position,
-    anchor: position.anchor,
-  };
 };
 
-const normalizedCustomButtons = computed<NormalizedCustomButton[]>(() =>
-  customButtons.value
-    .filter((button: CustomButton) => button.visible !== false)
-    .map(normalizeCustomButton),
-);
+// Picture-in-picture is not allowed in paused state or fullscreen mode
+const handlePictureInPicture = async () => {
+  if (!isPlaying.value && !isPictureInPicture.value) {
+    TUIToast({
+      type: TOAST_TYPE.WARNING,
+      message: t('LiveView.NotAllowPIPInNonPlaying'),
+    });
+    return;
+  }
 
-const buildControlItems = (zone: ControlZone): ControlItem[] => {
-  const builtinButtons = BUILTIN_CONTROL_LAYOUT[zone];
-  const builtinButtonSet = new Set(builtinButtons);
-  const prependItems: ControlItem[] = [];
-  const appendItems: ControlItem[] = [];
-  const beforeAnchorItems = new Map<PlayerControlButton, ControlItem[]>();
-  const afterAnchorItems = new Map<PlayerControlButton, ControlItem[]>();
+  if (isFullscreen.value && !isPictureInPicture.value) {
+    TUIToast({
+      type: TOAST_TYPE.WARNING,
+      message: t('LiveView.NotAllowPIPInFullscreen'),
+    });
+    return;
+  }
 
-  normalizedCustomButtons.value.forEach((button) => {
-    if (button.zone !== zone) {
-      return;
-    }
+  let flag = false;
+  if (isPictureInPicture.value) {
+    flag = await exitPictureInPicture();
+  } else {
+    flag = await requestPictureInPicture();
+  }
 
-    if (button.placement === 'prepend') {
-      prependItems.push(toCustomControlItem(button));
-      return;
-    }
-
-    if (button.placement === 'append') {
-      appendItems.push(toCustomControlItem(button));
-      return;
-    }
-
-    if (!button.anchor || !builtinButtonSet.has(button.anchor)) {
-      appendItems.push(toCustomControlItem(button));
-      return;
-    }
-
-    const targetMap = button.placement === 'before' ? beforeAnchorItems : afterAnchorItems;
-    const targetList = targetMap.get(button.anchor) ?? [];
-    targetList.push(toCustomControlItem(button));
-    targetMap.set(button.anchor, targetList);
-  });
-
-  const items: ControlItem[] = [...prependItems];
-
-  builtinButtons.forEach((buttonId) => {
-    items.push(...(beforeAnchorItems.get(buttonId) ?? []));
-
-    if (buttons[buttonId].visible) {
-      items.push({
-        kind: 'default',
-        key: `default-${buttonId}`,
-        id: buttonId,
-      });
-    }
-
-    items.push(...(afterAnchorItems.get(buttonId) ?? []));
-  });
-
-  items.push(...appendItems);
-
-  return items;
+  if (!flag) {
+    TUIToast({
+      type: TOAST_TYPE.ERROR,
+      message: t('LiveView.SystemNotSupportPIP'),
+    });
+  }
 };
 
-const leftControlItems = computed(() => buildControlItems('left'));
-const centerControlItems = computed(() => buildControlItems('center'));
-const rightControlItems = computed(() => buildControlItems('right'));
+// Full-screen mode is not allowed in picture-in-picture mode
+const handleFullscreen = () => {
+  if (isFullscreenDisabled.value) {
+    TUIToast({
+      type: TOAST_TYPE.WARNING,
+      message: t('LiveView.NotAllowFullscreenInPIP'),
+    });
+    return;
+  }
+  if (isFullscreen.value) {
+    exitFullscreen();
+  } else {
+    requestFullscreen();
+  }
+};
+
+const handleVolumeChange = async (volume: number) => {
+  // When the mouse is placed in the liveCoreView area on a pc, playerControls will always be displayed
+  if (isMobile) {
+    startAutoHideControl();
+  }
+  await setVolume(volume);
+};
+
+const handleMuteChange = async () => {
+  await setMute(!isMuted.value);
+};
+
+const startAutoHideControl = () => {
+  stopAutoHideControl();
+  hideTimeout.value = window.setTimeout(() => {
+    showControls.value = false;
+    hideTimeout.value = null;
+  }, AUTO_HIDE_DELAY);
+};
+
+const stopAutoHideControl = () => {
+  if (hideTimeout.value) {
+    clearTimeout(hideTimeout.value);
+    hideTimeout.value = null;
+  }
+};
 
 const onMouseOver = () => {
-  stopAutoHide();
-  setControlBarVisible(true);
+  stopAutoHideControl();
+  showControls.value = true;
 };
 
 const onMouseOut = () => {
-  startAutoHide();
+  startAutoHideControl();
 };
 
 const setupParentMouseListener = () => {
@@ -250,17 +246,15 @@ const isLiveCoreViewTarget = (target: Node) => {
 
 // Handle the touch in the player control area
 const handlePlayerControlTouch = () => {
-  stopAutoHide();
-  startAutoHide();
+  stopAutoHideControl();
+  startAutoHideControl();
 };
 
 // Handle the touch in the core view area of the live broadcast
 const handleLiveCoreViewTouch = () => {
-  if (controlBarVisible.value) {
-    setControlBarVisible(false);
-  } else {
-    setControlBarVisible(true);
-    startAutoHide();
+  showControls.value = !showControls.value;
+  if (showControls.value) {
+    startAutoHideControl();
   }
 };
 
@@ -276,7 +270,7 @@ const handleScreenTouchStart = (event: TouchEvent) => {
 
 const handleScreenTouchMove = (event: TouchEvent) => {
   if (playerControlRef.value && playerControlRef.value.contains(event.target as Node)) {
-    stopAutoHide();
+    stopAutoHideControl();
   }
 };
 
@@ -301,7 +295,7 @@ const handleScreenTouchEnd = (event: TouchEvent) => {
   } else if (isLiveCoreViewTarget(target)) {
     handleLiveCoreViewTouch();
   } else {
-    setControlBarVisible(false);
+    showControls.value = false;
   }
 
   touchStartCoords.value = null;
@@ -326,7 +320,7 @@ const removeTouchEventListeners = () => {
 const cleanupEventListeners = () => {
   removeTouchEventListeners();
   removeParentMouseListener();
-  stopAutoHide();
+  stopAutoHideControl();
 };
 
 onMounted(() => {
@@ -417,33 +411,86 @@ onBeforeUnmount(() => {
 .control-buttons {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  justify-content: space-around;
   width: 100%;
   pointer-events: all;
 }
 
-.left-controls,
-.center-controls,
+.center-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.control-btn {
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  .btn-icon {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
+.play-pause-btn {
+  .tui-icon {
+    transform: scale(1.5);
+  }
+}
+
+.audio-control-btn {
+  &:active {
+    transform: unset;
+  }
+}
+
+.playback-time {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 16px;
+}
+
 .right-controls {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-.left-controls,
-.right-controls {
-  min-width: 0;
+.fullscreen-btn {
+  .btn-icon {
+    width: 18px;
+    height: 18px;
+  }
 }
 
-.center-controls {
-  flex: 1;
-  justify-content: center;
-  min-width: 0;
-}
-
-.right-controls {
-  justify-content: flex-end;
+.more-btn {
+  .btn-icon {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .player-control-enter-active,

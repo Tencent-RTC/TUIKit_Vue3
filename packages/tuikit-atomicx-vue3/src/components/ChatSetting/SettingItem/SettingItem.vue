@@ -48,7 +48,7 @@ type SettingItemProps =
   | TextareaSettingItemProps
   | DisplaySettingItemProps;
 
-const props = defineProps(['label', 'type', 'value', 'disabled', 'placeholder', 'editable', 'validator', 'rows', 'isWrap']);
+const props = defineProps(['label', 'type', 'value', 'disabled', 'placeholder', 'editable', 'validator', 'rows']);
 
 const emit = defineEmits(['change', 'confirm']);
 
@@ -156,11 +156,10 @@ function handleSwitchChange(event: Event) {
     :class="[
       classes['setting-item'],
       {
-        [classes[`setting-item--${props.type}`]]: !!props.type,
+        [classes[`setting-item--${type}`]]: !!type,
         [classes['setting-item--disabled']]: disabled,
         [classes['setting-item--editing']]: isEditing,
         [classes['setting-item--error']]: !!errorMessage,
-        [classes['setting-item--display-wrap']]: props.type === SettingItemType.DISPLAY && !!props.isWrap,
       }
     ]"
   >
@@ -327,12 +326,18 @@ function handleSwitchChange(event: Event) {
   display: flex;
   flex: 1;
   flex-direction: column;
-  padding: 14px 20px 11px;
+  padding: 10px 0;
   color: var(--text-color-primary);
-  gap: 4px;
+  border-bottom: 0.5px solid var(--stroke-color-module);
+  gap: 8px;
+
+  &:last-child {
+    border-bottom: none;
+  }
 
   &--disabled {
     color: var(--text-color-disabled);
+
     pointer-events: none;
 
     .setting-item__switch-slider {
@@ -344,31 +349,11 @@ function handleSwitchChange(event: Event) {
     gap: 16px;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
-  }
-
-  &--display {
-    gap: 16px;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  &--display-wrap {
-    gap: 4px;
-    flex-direction: column;
-    align-items: flex-start;
-
-    .setting-item__content-wrapper {
-      width: 100%;
-      justify-content: flex-start;
-      align-items: center;
-    }
   }
 
   &__label {
     font-size: 14px;
-    font-weight: 400;
+    font-weight: 500;
     color: var(--text-color-primary);
   }
 
@@ -395,6 +380,7 @@ function handleSwitchChange(event: Event) {
     color: var(--text-color-secondary);
 
     &--placeholder {
+      font-style: italic;
       color: var(--text-color-tertiary);
     }
   }
@@ -404,7 +390,7 @@ function handleSwitchChange(event: Event) {
     position: relative;
     display: inline-block;
     width: 40px;
-    height: 24px;
+    height: 20px;
     cursor: pointer;
   }
 
@@ -417,7 +403,7 @@ function handleSwitchChange(event: Event) {
       background-color: var(--switch-color-on);
 
       &:before {
-        transform: translateX(16px);
+        transform: translateX(20px);
       }
     }
 
@@ -443,12 +429,13 @@ function handleSwitchChange(event: Event) {
     &:before {
       position: absolute;
       content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
       border-radius: 50%;
       transition: 0.2s;
+
       background-color: white;
     }
   }
@@ -534,11 +521,11 @@ span.unique-icon-btn {
 
   color: var(--text-color-secondary);
   &:hover {
-    // color: var(--text-color-button);
-    background-color: var(--button-color-secondary-default);
+    color: var(--text-color-button);
+    background-color: var(--button-color-primary-hover);
   }
   &:active {
-    background-color: var(--button-color-secondary-active);
+    background-color: var(--button-color-primary-active);
   }
 }
 </style>

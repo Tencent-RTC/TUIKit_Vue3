@@ -19,8 +19,6 @@
       :placeholder="placeholderText"
       :disabled="disabled"
       :maxLength="props.maxLength"
-      :onWillSendBarrage="props.onWillSendBarrage"
-      :onDidSendBarrage="props.onDidSendBarrage"
       @focus="handleFocus"
       @blur="handleBlur"
     />
@@ -44,7 +42,6 @@ import { useMessageInputState } from './MessageInputState';
 import BarrageInput from './BarrageInput.vue';
 import EmojiPicker from './EmojiPicker/EmojiPicker.vue';
 import { ERROR_MESSAGE } from './constants';
-import type { OnWillSendBarrage, OnDidSendBarrage } from '../../types/barrage';
 
 const emit = defineEmits<{
   (e: 'focus'): void;
@@ -62,8 +59,6 @@ interface Props {
   disabled?: boolean;
   autoFocus?: boolean;
   maxLength?: number;
-  onWillSendBarrage?: OnWillSendBarrage;
-  onDidSendBarrage?: OnDidSendBarrage;
 }
 
 const { t } = useUIKit();

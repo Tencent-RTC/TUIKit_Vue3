@@ -20,48 +20,39 @@
           <component
             :is="Avatar"
             :src="conversation?.getAvatar?.()"
-            size="sm"
-            :unreadCount="avatarUnreadCount"
-            :isDotUnreadCount="avatarIsDotUnread"
+            :unreadCount="conversation?.isMuted && conversation?.markList?.includes(TUIChatEngine.TYPES.CONV_MARK_TYPE_UNREAD) ? 1 : undefined"
+            :isDotUnreadCount="conversation?.isMuted && conversation?.markList?.includes(TUIChatEngine.TYPES.CONV_MARK_TYPE_UNREAD)"
           />
         </div>
 
         <div :class="$style['conversationPreview__content']">
-          <div :class="$style['conversationPreview__header']">
-            <component
-              :is="Title"
-              :conversation="conversation"
-            />
-            <component
-              :is="LastMessageTimestamp"
-              v-if="!isActionMenuActive"
-              :conversation="conversation"
-            />
-          </div>
-          <div :class="$style['conversationPreview__footer']">
-            <component
-              :is="LastMessageAbstract"
-              :conversation="conversation"
-            />
-            <div
-              v-if="conversation?.isMuted && !isActionMenuActive"
-              :class="$style['conversationPreview__mute-icon']"
-            >
-              <IconMute />
-            </div>
-          </div>
+          <component
+            :is="Title"
+            :conversation="conversation"
+          />
+          <component
+            :is="LastMessageAbstract"
+            :conversation="conversation"
+          />
         </div>
 
-        <div
-          v-if="enableActions && isActionMenuActive && !isH5"
-          :class="$style['conversationPreview__actions-wrapper']"
-        >
+        <div :class="$style['conversationPreview__external']">
+          <component
+            :is="Unread"
+            :conversation="conversation"
+          />
           <component
             :is="ConversationActions"
+            v-if="enableActions && isActionMenuActive && !isH5"
             :conversation="conversation"
             v-bind="actionsConfig"
             @close="handleCloseActionsModal"
             @dropdown-visible-change="handleDropdownVisibleChange"
+          />
+          <component
+            :is="LastMessageTimestamp"
+            v-else
+            :conversation="conversation"
           />
         </div>
       </slot>
@@ -78,12 +69,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch } from 'vue';
+import { ref, watch } from 'vue';
 import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import { useLongPress, useMouseHover } from '../../../hooks';
 import { useConversationListState } from '../../../states/ConversationListState';
 import { isH5 } from '../../../utils';
-import { IconMute } from '@tencentcloud/uikit-base-component-vue3';
 import { Avatar as DefaultAvatar } from '../../Avatar';
 import { ConversationActions as DefaultConversationActions } from '../ConversationActions';
 import { default as DefaultLastMessageAbstract } from './ConversationPreviewAbstract.vue';
@@ -111,22 +101,6 @@ const emit = defineEmits<{
 }>();
 
 const { activeConversation } = useConversationListState();
-
-const avatarUnreadCount = computed(() => {
-  const conv = props.conversation;
-  if (!conv) return 0;
-  const hasUnreadMark = conv.markList?.includes(TUIChatEngine.TYPES.CONV_MARK_TYPE_UNREAD);
-  if (conv.isMuted) {
-    return (conv.unreadCount > 0 || hasUnreadMark) ? 1 : 0;
-  }
-  if (conv.unreadCount > 0) return conv.unreadCount;
-  if (hasUnreadMark) return 1;
-  return 0;
-});
-
-const avatarIsDotUnread = computed(() => {
-  return !!(props.conversation?.isMuted && avatarUnreadCount.value > 0);
-});
 
 const conversationPreviewRef = ref<HTMLElement>();
 const isActionMenuActive = ref(false);

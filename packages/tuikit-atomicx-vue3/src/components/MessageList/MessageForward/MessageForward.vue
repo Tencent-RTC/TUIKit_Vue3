@@ -2,12 +2,14 @@
 import { ref, computed } from 'vue';
 import ChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import { useUIKit, IconClose, TUIToast, TUIButton } from '@tencentcloud/uikit-base-component-vue3';
+import { DialogTitle } from 'reka-ui';
 import { Modal } from '../../../baseComp/Modal';
 import { View } from '../../../baseComp/View';
 import { useConversationListState } from '../../../states/ConversationListState';
 import { useMessageActionState } from '../../../states/MessageActionState';
 import { UserPicker } from '../../UserPicker';
 import type { UserPickerRef, UserPickerRow } from '../../UserPicker/type';
+import type { IConversationModel } from '@tencentcloud/chat-uikit-engine-lite';
 
 const { t } = useUIKit();
 const {
@@ -30,7 +32,7 @@ const forwardListDataSource = computed((): any[] => {
     return [];
   }
 
-  return conversationList.value.map((conversation) => {
+  return conversationList.value.map((conversation: IConversationModel) => {
     const { type, remark, groupProfile, userProfile } = conversation;
     const userPickerRow: UserPickerRow<undefined> = {
       key: conversation.conversationID,

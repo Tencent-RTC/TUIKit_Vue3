@@ -1,13 +1,9 @@
 import { ref } from 'vue';
 import type { Ref } from 'vue';
 import { useBarrageState } from '../../states/BarrageState';
-import { useLoginState } from '../../states/LoginState';
-import { useLiveListState } from '../../states/LiveListState';
-import { BarrageType } from '../../types/barrage';
 import { transformTextWithEmojiNameToKey } from '../../utils';
 import { MessageContentType } from './type';
 import { convertInputContentToEditorNode } from './utils';
-import type { OnWillSendBarrage, OnDidSendBarrage, Barrage } from '../../types/barrage';
 import type { InputContent } from './type';
 import type { Editor } from '@tiptap/vue-3';
 
@@ -24,11 +20,6 @@ interface MessageInputState {
   inputRawValue: Ref<string | InputContent[]>;
 }
 
-interface SendHooks {
-  onWillSendBarrage?: OnWillSendBarrage;
-  onDidSendBarrage?: OnDidSendBarrage;
-}
-
 interface MessageInputAction {
   updateRawValue: (value: string | InputContent[]) => void;
   setEditorInstance: (editor: Editor | null) => void;
@@ -36,29 +27,13 @@ interface MessageInputAction {
   insertContent: (value: string | InputContent[], focus?: boolean) => void;
   focusEditor: () => void;
   blurEditor: () => void;
-  sendMessage: (msg?: string | InputContent[]) => Promise<void>;
-  setSendHooks: (instanceId: string, hooks: SendHooks) => void;
-  clearSendHooks: (instanceId: string) => void;
+  sendMessage: (msg?: string | InputContent[]) => void;
 }
 
 const { sendTextMessage } = useBarrageState();
 
-const { loginUserInfo } = useLoginState();
-const { currentLive } = useLiveListState();
-
 const editor = ref<Editor | null>(null);
 const inputRawValue = ref<string | InputContent[]>('');
-
-// Map of instance ID -> hooks, allowing multiple BarrageInput instances to coexist.
-const sendHooksMap = new Map<string, SendHooks>();
-
-const setSendHooks = (instanceId: string, hooks: SendHooks) => {
-  sendHooksMap.set(instanceId, hooks);
-};
-
-const clearSendHooks = (instanceId: string) => {
-  sendHooksMap.delete(instanceId);
-};
 
 /* =====================================================
  * MessageInputActions begin
@@ -118,81 +93,25 @@ const blurEditor = () => {
   editor.value?.commands.blur();
 };
 
-/**
- * Build a preview Barrage object for will/did send hooks.
- * Fields like sequence and timestampInSecond are best-effort since the server assigns final values.
- */
-const buildSendBarrage = (text: string, extensionInfo?: Record<string, string>): Barrage => ({
-  liveId: currentLive.value?.liveId || '',
-  sender: {
-    userId: loginUserInfo.value?.userId || '',
-    userName: loginUserInfo.value?.userName || '',
-    nameCard: '',
-    avatarUrl: loginUserInfo.value?.avatarUrl || ''
-  },
-  sequence: 0,
-  timestampInSecond: Math.floor(Date.now() / 1000),
-  messageType: BarrageType.text,
-  textContent: text,
-  extensionInfo: extensionInfo ?? null,
-});
-
 const sendMessage = async (msg?: string | InputContent[]) => {
   const messageToSend = msg ?? inputRawValue.value;
   if (!messageToSend) {
     return;
   }
 
-  /**
-   * Resolve the final text to send and call sendTextMessage with will/did hooks.
-   * Restores editor content if onWillSendBarrage blocks the send.
-   */
-  const sendTextWithHooks = async (text: string) => {
-    const barrage = buildSendBarrage(text);
-
-    // Snapshot current hooks so that async iteration is not affected by concurrent map mutations.
-    const sendHooksMapSnapshot = [...sendHooksMap.values()];
-
-    // Iterate all registered hooks. Any `onWillSendBarrage` returning `false` blocks the send.
-    // If a callback throws, we log the error and proceed (fail-open).
-    for (const hooks of sendHooksMapSnapshot) {
-      if (hooks.onWillSendBarrage) {
-        try {
-          const allowed = await hooks.onWillSendBarrage(barrage);
-          if (allowed === false) {
-            setContent(messageToSend);
-            return;
-          }
-        } catch (error) {
-          console.error('[BarrageInput] onWillSendBarrage callback error:', error);
-        }
-      }
-    }
-
-    await sendTextMessage({ text });
-
-    // Notify all registered didSend hooks. Wrap in try-catch so a faulty callback
-    // never breaks the already-sent state.
-    for (const hooks of sendHooksMapSnapshot) {
-      if (hooks.onDidSendBarrage) {
-        try {
-          hooks.onDidSendBarrage(barrage);
-        } catch (error) {
-          console.error('[BarrageInput] onDidSendBarrage callback error:', error);
-        }
-      }
-    }
-  };
-
   if (typeof messageToSend === 'string') {
-    await sendTextWithHooks(transformTextWithEmojiNameToKey(messageToSend));
+    sendTextMessage({
+      text: transformTextWithEmojiNameToKey(messageToSend),
+    });
     return;
   }
 
   let mergedText = '';
   const sendAccumulatedText = async () => {
     if (mergedText) {
-      await sendTextWithHooks(transformTextWithEmojiNameToKey(mergedText));
+      await sendTextMessage({
+        text: transformTextWithEmojiNameToKey(mergedText),
+      });
       mergedText = '';
     }
   };
@@ -234,8 +153,6 @@ function useMessageInputState(): MessageInputState & MessageInputAction {
     focusEditor,
     blurEditor,
     sendMessage,
-    setSendHooks,
-    clearSendHooks,
   };
 }
 

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { IconLiveLoading, IconSuccess, IconErrorToast } from '@tencentcloud/uikit-base-component-vue3';
+import { IconLoading, IconSuccess, IconErrorToast } from '@tencentcloud/uikit-base-component-vue3';
 import { View } from '../../../../../baseComp/View';
 
 defineProps<{
@@ -9,18 +9,18 @@ defineProps<{
 
 <template>
   <View>
-    <IconLiveLoading
+    <IconLoading
       v-if="status === 'unSend'"
       class="message-meta__status--unSend"
-      :size="16"
+      :size="14"
     />
     <IconSuccess
       v-else-if="status === 'success'"
-      :size="16"
+      :size="14"
     />
     <IconErrorToast
       v-else-if="status === 'fail'"
-      :size="16"
+      :size="14"
     />
   </View>
 </template>

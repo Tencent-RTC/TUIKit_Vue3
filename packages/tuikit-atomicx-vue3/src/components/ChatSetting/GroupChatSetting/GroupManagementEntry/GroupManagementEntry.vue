@@ -1,9 +1,4 @@
 <template>
-  <Divider
-    v-if="shouldShowGroupManagement"
-    variant="line"
-    data-show="'management'"
-  />
   <div
     v-if="shouldShowGroupManagement"
     :class="[
@@ -43,7 +38,7 @@ const handleClick = () => {
 
 <style lang="scss" scoped>
 .group-management-entry {
-  padding: 16.5px 20px 10.5px;
+  padding: 16px 0;
   cursor: pointer;
   transition: background-color 0.2s ease;
 
@@ -56,6 +51,7 @@ const handleClick = () => {
 
   &__title {
     font-size: 14px;
+    font-weight: 500;
     color: var(--text-color-primary);
   }
 

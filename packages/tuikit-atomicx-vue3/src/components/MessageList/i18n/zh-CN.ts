@@ -16,7 +16,6 @@ const MessageList = {
   was_muted: '被禁言',
   was_unmuted: '被取消禁言',
   group_tip_message: '群提示消息',
-  people: '人',
 
   // TUIChat
   download_failed: '下载失败',

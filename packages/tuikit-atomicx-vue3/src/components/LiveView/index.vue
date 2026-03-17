@@ -16,16 +16,9 @@
       :style="streamViewStyle"
     >
       <div
-        :id="LIVE_STREAM_CONTENT_VIEW"
+        id="atomicx-live-stream-content"
         class="stream-content"
       />
-      <!-- Center overlay slot for custom content (pause button, watermark, etc.) -->
-      <div
-        v-if="$slots['center-overlay']"
-        class="center-overlay"
-      >
-        <slot name="center-overlay" />
-      </div>
       <div
         v-if="needPlayStreamViewInfo.length > 0 && !isPictureInPicture"
         class="live-core-ui"
@@ -84,7 +77,6 @@ import { getContentSize } from '../../utils/domOperation';
 import LiveCoreDecorate from './CoreViewDecorate/LiveCoreDecorate.vue';
 import DefaultStreamViewUI from './DefaultStreamViewUI.vue';
 import { usePlayerControlState } from './PlayerControl';
-import { LIVE_STREAM_CONTENT_VIEW } from './index';
 import PlayerControl from './PlayerControl/PlayerControl.vue';
 import type { SeatInfo, SeatUserInfo } from '../../types';
 
@@ -129,7 +121,7 @@ const isAnchor = computed(() => loginUserInfo.value?.userId === currentLive.valu
 
 onMounted(async () => {
   isMounted.value = true;
-  await startPlayStream({ view: LIVE_STREAM_CONTENT_VIEW });
+  await startPlayStream({ view: 'atomicx-live-stream-content' });
   isPlayedVideo.value = true;
   if (!isAnchor.value) {
     setCaptureVolume(100);
@@ -570,25 +562,6 @@ onBeforeUnmount(() => {
       top: 0;
       left: 0;
       overflow: hidden;
-    }
-
-    .center-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      // z-index must be between stream-content (auto) and PlayerControl (.pc-mode: 10)
-      z-index: 5;
-
-      // Allow child elements to receive pointer events
-      > * {
-        pointer-events: auto;
-      }
     }
 
     .live-core-ui {

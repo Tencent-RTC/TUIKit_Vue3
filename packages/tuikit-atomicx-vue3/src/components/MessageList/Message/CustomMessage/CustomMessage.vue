@@ -59,6 +59,6 @@ const textLinkData = computed<{ text?: string; link?: string } | null>(() => {
 
 <style lang="scss" module>
 .custom-message {
-  padding: 10px 12px;
+  padding: 8px 16px;
 }
 </style>

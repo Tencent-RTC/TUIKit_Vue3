@@ -52,8 +52,6 @@ interface MessageListProps {
   MessageTimeDivider?: Component | undefined;
   /** conversation id */
   conversationID?: string | undefined;
-  /** custom renderers to override built-in message bubble content by MessageType */
-  messageRenderers?: Record<MessageType, Component> | undefined;
 }
 
 const props = withDefaults(defineProps<MessageListProps>(), {
@@ -67,16 +65,10 @@ const props = withDefaults(defineProps<MessageListProps>(), {
   Message: undefined,
   MessageTimeDivider: undefined,
   conversationID: undefined,
-  messageRenderers: undefined,
 });
 
 const slots = useSlots();
-provide(MessageListContextSymbol, {
-  slots,
-  get messageRenderers() {
-    return props.messageRenderers;
-  },
-});
+provide(MessageListContextSymbol, { slots });
 
 const autoScrollThreshold = 150;
 const isFinishFirstRender = ref<boolean>(false);
@@ -361,23 +353,29 @@ defineExpose({
               :is-first-in-chunk="Boolean(messageIndex === 0)"
               :is-last-in-chunk="Boolean(messageIndex === chunk.messages.length - 1)"
               :isHiddenMessageAvatar="
-                Boolean(enableMessageAggregation && messageIndex !== 0)
-              "
-              :removeAvatar="
-                Boolean(alignment === 'two-sided' && message.flow === 'out')
+                Boolean(
+                  alignment === 'two-sided'
+                    ? (enableMessageAggregation && messageIndex !== 0 || message.flow === 'out')
+                    : (enableMessageAggregation && messageIndex !== 0 )
+                )
               "
               :is-hidden-message-nick="
                 Boolean(
-                  (alignment === 'two-sided'
-                    ? enableMessageAggregation && messageIndex !== 0 || message.flow === 'out'
-                    : enableMessageAggregation && messageIndex !== 0)
+                  !isGroup
+                    || (alignment === 'two-sided'
+                      ? enableMessageAggregation && messageIndex !== 0 || message.flow === 'out'
+                      : enableMessageAggregation && messageIndex !== 0)
+                )
+              "
+              :isHiddenMessageMeta="
+                Boolean(
+                  enableMessageAggregation && messageIndex !== chunk.messages.length - 1
                 )
               "
             />
           </template>
         </div>
       </View>
-      <div style="height: 10px;" />
     </div>
     <MessageForward />
     <ScrollToBottom

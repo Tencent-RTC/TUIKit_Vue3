@@ -1,14 +1,8 @@
 <template>
   <div class="audio-control" :style="iconSizeStyle" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
     <span class="control-btn volume-btn" :title="props.isMuted ? t('LiveView.OpenSpeaker') : t('LiveView.CloseSpeaker')" @click="handleVolumeIconClick">
-      <template v-if="props.isMuted">
-        <component v-if="props.customActiveIcon" :is="renderButtonIcon(props.customActiveIcon, props.iconSize)" />
-        <IconSpeakerOff v-else :size="props.iconSize" />
-      </template>
-      <template v-else>
-        <component v-if="props.customIcon" :is="renderButtonIcon(props.customIcon, props.iconSize)" />
-        <IconSpeakerOn v-else :size="props.iconSize" />
-      </template>
+      <IconSpeakerOff :size="props.iconSize" v-if="props.isMuted" />
+      <IconSpeakerOn :size="props.iconSize" v-else />
     </span>
     <div v-show="isVolumeSliderVisible" class="volume-slider-container">
       <div
@@ -42,10 +36,8 @@
 
 <script setup lang="ts">
 import { computed, ref, onUnmounted } from 'vue';
-import type { Component as VueComponent } from 'vue';
 import { IconSpeakerOn, IconSpeakerOff, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { isMobile } from '../../../utils';
-import { renderButtonIcon } from './utils/renderIcon';
 
 // Constants
 const VOLUME_CONSTANTS = {
@@ -64,14 +56,6 @@ interface AudioControlProps {
   iconSize?: number;
   isMuted?: boolean;
   volume?: number; // Volume range: 0-100
-  /**
-   * Custom icon for unmuted state. When provided, replaces the default IconSpeakerOn.
-   */
-  customIcon?: VueComponent | (() => any);
-  /**
-   * Custom icon for muted state. When provided, replaces the default IconSpeakerOff.
-   */
-  customActiveIcon?: VueComponent | (() => any);
 }
 
 const props = withDefaults(defineProps<AudioControlProps>(), {

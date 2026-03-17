@@ -18,42 +18,33 @@ export function useMessageLayoutClasses({
     isRightAligned ? 'message-layout--right' : 'message-layout--left',
   );
 
-  const contentClasses = cs(
-    'message-layout__content',
-    isRightAligned ? 'message-layout__content--right' : 'message-layout__content--left',
-  );
-
-  const headerClasses = cs(
-    'message-layout__header',
-    isRightAligned && 'message-layout__header--right',
-  );
-
-  const bodyClasses = cs(
-    'message-layout__body',
-    isRightAligned ? 'message-layout__body--right' : 'message-layout__body--left',
+  const wrapperClasses = cs(
+    'message-layout__wrapper',
+    isRightAligned ? 'message-layout__wrapper--right' : 'message-layout__wrapper--left',
+    isAggregated ? 'message-layout__wrapper--aggregated' : '',
+    alignment === 'two-sided' && isMessageOwner ? 'message-layout__wrapper--no-padding' : '',
   );
 
   const bubbleClasses = cs(
     'message-layout__bubble',
     isRightAligned ? 'message-layout__bubble--right' : 'message-layout__bubble--left',
-    isAggregated && 'message-layout__bubble--aggregated',
+    isAggregated ? 'message-layout__bubble--aggregated' : '',
   );
 
   const avatarClasses = cs(
     'message-layout__avatar',
   );
 
-  const statusClasses = cs(
-    'message-layout__status',
+  const metaClasses = cs(
+    'message-layout__meta',
+    isRightAligned ? 'message-layout__meta--right' : 'message-layout__meta--left',
   );
 
   return {
     layoutClasses,
-    contentClasses,
-    headerClasses,
-    bodyClasses,
+    wrapperClasses,
     bubbleClasses,
     avatarClasses,
-    statusClasses,
+    metaClasses,
   };
 }

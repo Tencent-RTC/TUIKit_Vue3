@@ -82,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, toRef } from 'vue';
 import { IconSearch, useUIKit, TUIButton } from '@tencentcloud/uikit-base-component-vue3';
 import { useRoomParticipantState } from '../../states/RoomParticipantState';
 import { useRoomState } from '../../states/RoomState';
@@ -163,7 +163,7 @@ const filteredParticipants = computed(() => {
 });
 
 const handleParticipantClick = (participant: RoomParticipant) => {
-  const { controlList } = useParticipantAction({ targetParticipant: participant });
+  const { controlList } = useParticipantAction({ targetParticipant: toRef(participant) });
 
   if (controlList.value.length === 0) {
     return;

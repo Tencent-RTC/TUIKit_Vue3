@@ -1,3 +1,3 @@
-import LocationMessage from './LocationMessage.vue';
+import LocationMessage from "./LocationMessage.vue";
 
 export { LocationMessage };

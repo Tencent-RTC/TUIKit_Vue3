@@ -84,7 +84,6 @@ $animationDuration: 200ms;
   box-shadow:
     0px 10px 38px -10px rgba(22, 23, 24, 0.35),
     0px 10px 20px -15px rgba(22, 23, 24, 0.2);
-  z-index: 999;
 
   &[data-state="open"] {
     animation: contentIn $animationDuration ease-out;

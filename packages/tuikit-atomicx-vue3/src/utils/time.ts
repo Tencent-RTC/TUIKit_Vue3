@@ -57,11 +57,6 @@ function getTimeStamp({ time, language = 'en-US' }: GetTimeStampOptions) {
     });
   }
 
-  if (language.startsWith('zh')) {
-    return format(time, 'yyyy年M月d日 HH:mm', {
-      locale,
-    });
-  }
   return format(time, 'yyyy/MM/dd HH:mm', {
     locale,
   });

@@ -120,7 +120,7 @@ const handleReferenceClick = () => {
 <style lang="scss" scoped>
 .text-message {
   font-size: 14px;
-  padding: 10px 12px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   word-break: break-word;
@@ -187,7 +187,6 @@ const handleReferenceClick = () => {
       vertical-align: middle;
       line-height: 1;
       margin: 0 1px;
-      user-select: text;
     }
   }
 }
