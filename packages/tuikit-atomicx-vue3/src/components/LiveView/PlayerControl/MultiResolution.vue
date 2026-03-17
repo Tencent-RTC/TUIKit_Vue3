@@ -3,6 +3,7 @@
     v-if="resolutionList.length > 0 && currentResolution"
     v-click-outside="handleClickOutside"
     class="multi-resolution"
+    :class="{ disabled: isDisabled }"
   >
     <span
       v-show="isShowResolutionList"
@@ -26,10 +27,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import vClickOutside from '../../../directives/vClickOutside';
 import { usePlayerControlState, Resolution } from './PlayerControlState';
+import { PlayerControlButton } from '../../../types/player';
 
 const { t } = useUIKit();
 const {
@@ -38,7 +40,11 @@ const {
   isPictureInPicture,
   exitPictureInPicture,
   switchResolution,
+  buttons,
 } = usePlayerControlState();
+
+// Disabled state: respects external buttons configuration
+const isDisabled = computed(() => buttons[PlayerControlButton.Resolution].disabled);
 
 // Resolution mapping for UI display
 const resolutionMap: Record<Resolution, string> = {
@@ -50,6 +56,13 @@ const resolutionMap: Record<Resolution, string> = {
 
 const isShowResolutionList = ref<boolean>(false);
 
+// Auto-collapse the resolution list when the button becomes disabled
+watch(isDisabled, (disabled) => {
+  if (disabled) {
+    isShowResolutionList.value = false;
+  }
+});
+
 // Throttle state for resolution switching
 const isResolutionSwitching = ref<boolean>(false);
 const RESOLUTION_SWITCH_COOLDOWN = 1000; // 1 second cooldown
@@ -59,11 +72,18 @@ const handleClickOutside = () => {
 };
 
 const handleClickCurrentResolution = () => {
+  if (isDisabled.value) {
+    return;
+  }
   isShowResolutionList.value = !isShowResolutionList.value;
 };
 
 const handleClickResolution = async (event: MouseEvent) => {
   event.stopPropagation();
+
+  if (isDisabled.value) {
+    return;
+  }
   
   if (isResolutionSwitching.value) {
     console.warn('[MultiResolution] Resolution switching in progress, please wait...');
@@ -103,6 +123,11 @@ const handleClickResolution = async (event: MouseEvent) => {
   cursor: pointer;
   color: #ffffff;
   user-select: none;
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
 
   .multi-resolution-list {
     position: absolute;

@@ -37,7 +37,6 @@ const isHighlighted = computed(() => highlightMessageIDSet.value.has(props.messa
     class="message-bubble"
     :class="cs({
       [`bubble-${message.flow}`]: message.flow && true,
-      'all-round-radius': !isLastInChunk,
       'media-bubble': MEDIA_MESSAGE_TYPE.includes(message.type),
       'highlight--normal': isHighlighted,
       'highlight--media': isHighlighted && isMediaMessage

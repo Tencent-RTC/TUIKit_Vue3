@@ -120,7 +120,7 @@ const handleReferenceClick = () => {
 <style lang="scss" scoped>
 .text-message {
   font-size: 14px;
-  padding: 12px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   word-break: break-word;

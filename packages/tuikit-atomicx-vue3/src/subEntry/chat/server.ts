@@ -2,10 +2,6 @@ import type { Ref } from 'vue';
 import { ref } from 'vue';
 import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import TUICore, { TUILogin, TUIConstants } from '@tencentcloud/tui-core-lite';
-import { ChatSceneType, useStatistical } from '../../statistical';
-import { isPC } from '../../utils';
-
-const { setChatScene } = useStatistical();
 
 export default class ChatLoginServer {
   static instance: ChatLoginServer;
@@ -27,7 +23,6 @@ export default class ChatLoginServer {
   }
 
   public init() {
-    setChatScene(isPC ? ChatSceneType.CHAT_WEB : ChatSceneType.CHAT_H5);
     if (!this.isReady) {
       this.isReady = true;
       TUICore.registerEvent(

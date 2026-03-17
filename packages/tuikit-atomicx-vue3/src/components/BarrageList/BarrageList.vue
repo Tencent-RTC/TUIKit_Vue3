@@ -6,9 +6,9 @@ import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useScroll } from '../../hooks/useScroll';
 import { useBarrageState } from '../../states/BarrageState';
 import { useLiveGiftState } from '../../states/LiveGiftState';
+import { BarrageEvent, BarrageType } from '../../types/barrage';
 import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
-import { BarrageType } from '../../types/barrage';
 import { LiveGiftEvents } from '../../types/gift';
 import { throttle } from '../../utils/lodash';
 import { useBarrageListState, isGiftMessage } from './BarrageListState';
@@ -48,9 +48,8 @@ const isDisableAutoScroll = ref<boolean>(false);
 const distanceToBottom = ref<number>(0);
 
 const { messageList, messageGroupTip } = useBarrageListState();
-const { appendLocalTip } = useBarrageState();
-const { subscribeEvent, unsubscribeEvent } = useLiveGiftState();
-
+const { subscribeEvent: subscribeGiftEvent, unsubscribeEvent: unsubscribeGiftEvent } = useLiveGiftState();
+const { appendLocalTip, subscribeEvent: subscribeBarrageEvent, unsubscribeEvent: unsubscribeBarrageEvent } = useBarrageState();
 const { scrollToBottom } = useScroll();
 
 defineExpose({
@@ -168,32 +167,27 @@ watch(() => currentLive.value?.liveId, () => {
   initializeMessageList();
 });
 
-watch(() => messageList.value?.length, (length) => {
-  const newMessage = messageList.value[length - 1];
-  const oldMessage = messageList.value[length - 2];
-
-  if (oldMessage === undefined && newMessage && !isFinishFirstRender.value) {
-    // Switch to a new conversation
+// Handle new barrage message for auto-scrolling
+const handleBarrageReceived = (message: Barrage) => {
+  if (!isFinishFirstRender.value) {
     nextTick(() => {
       scrollToBottom({ behavior: 'instant' });
       isFinishFirstRender.value = true;
     });
-  }
-
-  if (!oldMessage || !newMessage || !length) {
     return;
   }
 
-  if (newMessage?.sequence !== oldMessage?.sequence) {
-    const shouldAutoScroll
-      = newMessage.sender.userId === loginUserInfo.value?.userId || (!isDisableAutoScroll.value && distanceToBottom.value < autoScrollThreshold);
-    if (shouldAutoScroll) {
+  const shouldAutoScroll
+    = message.sender.userId === loginUserInfo.value?.userId
+    || (!isDisableAutoScroll.value && distanceToBottom.value < autoScrollThreshold);
+  if (shouldAutoScroll) {
+    nextTick(() => {
       scrollToBottom({ behavior: 'smooth' });
-    } else {
-      // TODO: new message notification
-    }
+    });
+  } else {
+    // TODO: new message notification
   }
-});
+};
 
 onMounted(() => {
   if (scrollContainer.value) {
@@ -203,7 +197,10 @@ onMounted(() => {
   scrollToBottom({ behavior: 'smooth' });
 
   // Subscribe to gift message event
-  subscribeEvent(LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE, handleGiftMessage);
+  subscribeGiftEvent(LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE, handleGiftMessage);
+
+  // Subscribe to barrage received event for auto-scrolling
+  subscribeBarrageEvent(BarrageEvent.onBarrageReceived, handleBarrageReceived);
 });
 
 onUnmounted(() => {
@@ -212,7 +209,10 @@ onUnmounted(() => {
   }
 
   // Unsubscribe from gift message event
-  unsubscribeEvent(LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE, handleGiftMessage);
+  unsubscribeGiftEvent(LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE, handleGiftMessage);
+
+  // Unsubscribe from barrage received event
+  unsubscribeBarrageEvent(BarrageEvent.onBarrageReceived, handleBarrageReceived);
 });
 </script>
 
@@ -226,18 +226,28 @@ onUnmounted(() => {
     >
       <div class="message-chunk">
         <template v-for="message in messageList" :key="message.sequence + message.timestampInSecond">
-          <GiftMessage
-            v-if="isGiftMessage(message)"
-            :style="props.itemStyle"
+          <!-- Custom message-item slot handles ALL messages (including gift) when provided -->
+          <slot
+            v-if="$slots['message-item']"
+            name="message-item"
             :message="message"
+            :sender="message.sender"
           />
-          <component
-            :is="props.Message || DefaultMessage"
-            v-else
-            :style="props.itemStyle"
-            :message="message"
-            :is-last-in-chunk="true"
-          />
+          <!-- Default rendering: GiftMessage for gift, DefaultMessage/props.Message for others -->
+          <template v-else>
+            <GiftMessage
+              v-if="isGiftMessage(message)"
+              :style="props.itemStyle"
+              :message="message"
+            />
+            <component
+              :is="props.Message || DefaultMessage"
+              v-else
+              :style="props.itemStyle"
+              :message="message"
+              :is-last-in-chunk="true"
+            />
+          </template>
         </template>
       </div>
       <div v-if="!messageList?.length" class="empty-message">

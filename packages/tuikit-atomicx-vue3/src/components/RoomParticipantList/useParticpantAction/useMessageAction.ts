@@ -5,7 +5,7 @@ import { useRoomParticipantState } from '../../../states/RoomParticipantState';
 import type { RoomParticipant, RoomUser } from '../../../types';
 
 const { t } = useUIKit();
-const { muteParticipantMessage, messageDisabledUserList } = useRoomParticipantState();
+const { disableUserMessage, messageDisabledUserList } = useRoomParticipantState();
 
 export function useMessageAction(
   { targetParticipant }: { targetParticipant: RoomParticipant | RoomUser },
@@ -25,9 +25,9 @@ export function useMessageAction(
     ),
     handler: async () => {
       try {
-        await muteParticipantMessage({
+        await disableUserMessage({
           userId: targetParticipant.userId,
-          mute: !isMessageDisabled.value,
+          disable: !isMessageDisabled.value,
         });
       } catch (_error: any) {
         TUIToast({

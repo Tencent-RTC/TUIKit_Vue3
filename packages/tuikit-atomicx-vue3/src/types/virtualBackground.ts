@@ -91,3 +91,21 @@ export enum VirtualBackgroundEvent {
  * @description 虚拟背景事件的回调函数类型定义。
  */
 export type VirtualBackgroundEventCallback = () => void;
+
+/**
+ * Custom background image item for VirtualBackgroundPanel
+ * @interface CustomBackgroundImage
+ * @description Represents a custom background image option in the virtual background panel.
+ *
+ * @example
+ * const images: CustomBackgroundImage[] = [
+ *   { url: 'https://example.com/bg1.jpg', label: 'Office' },
+ *   { url: 'https://example.com/bg2.jpg', label: () => t('Custom') },
+ * ];
+ */
+export interface CustomBackgroundImage {
+  /** URL of the background image */
+  url: string;
+  /** Display label, can be a string or a function returning a string (for i18n) */
+  label?: string | (() => string);
+}

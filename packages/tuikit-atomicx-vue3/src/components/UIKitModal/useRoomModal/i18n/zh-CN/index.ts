@@ -1,7 +1,7 @@
 export const resource = {
   // Modal
   Room: {
-    'Modal.Title': '错误',
+    'Modal.Title': '开发环境错误提示',
     'Modal.UserSigExpired': '用户签名已过期，建议生成的签名有效期不少于 24 小时。可参阅 <a target="_blank" href="https://cloud.tencent.com/document/product/269/32688">生成 UserSig(用户鉴权)</a>。',
     'Modal.InvalidSignature': '非法的用户签名，请重新生成。可参阅 <a target="_blank" href="https://cloud.tencent.com/document/product/269/32688">生成 UserSig(用户鉴权)</a>。',
     'Modal.UserIdNotMatchUserSig': '用户 ID 与用户签名不匹配，请检查。可前往腾讯云控制台验证：<a target="_blank" href="https://console.cloud.tencent.com/trtc/usersigtool">验证签名</a>。',
@@ -14,5 +14,8 @@ export const resource = {
     'Modal.MicrophonePermissionDenied': '麦克风权限被拒绝，请检查浏览器设置，确保已允许使用您的麦克风。如果您确认已授予权限， 请前往 [音视频能力检测工具] 检查您的设备和环境是否支持通话： https://web.sdk.qcloud.com/trtc/webrtc/demo/detect/index.html',
     'Modal.CameraStartFailed': '打开摄像头失败，请检查浏览器设置，确保已允许使用您的摄像头。如果您确认已授予权限， 请前往 [音视频能力检测工具] 检查您的设备和环境是否支持： https://web.sdk.qcloud.com/trtc/webrtc/demo/detect/index.html',
     'Modal.MicrophoneStartFailed': '打开麦克风失败，请检查浏览器设置，确保已允许使用您的麦克风。如果您确认已授予权限， 请前往 [音视频能力检测工具] 检查您的设备和环境是否支持： https://web.sdk.qcloud.com/trtc/webrtc/demo/detect/index.html',
+    'Modal.PleaseCreateRoomFirst': '加入房间失败，当前房间不存在，请先创建房间后再加入。开发建议：您可以使用 <a target="_blank" href="https://web.sdk.qcloud.com/trtc/live/web/doc/zh/index.html#getRoomInfo">getRoomInfo</a> 检查房间是否存在。',
+    'Modal.PleaseCreateRoomByOtherRoomId': '创建房间失败，当前房间号已占用，您可以加入该房间，或更换 roomId 后重新创建房间。开发建议：您可以使用 <a target="_blank" href="https://web.sdk.qcloud.com/trtc/live/web/doc/zh/index.html#getRoomInfo">getRoomInfo</a> 检查房间是否已存在。',
+    'Modal.PleaseCreateOrJoinRoomBeforeDismiss': '结束房间失败，当前用户未进入房间，请先创建或加入房间后再执行解散操作。',
   },
 };

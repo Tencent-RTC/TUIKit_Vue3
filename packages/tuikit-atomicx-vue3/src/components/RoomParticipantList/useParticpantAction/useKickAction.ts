@@ -5,7 +5,7 @@ import { useRoomParticipantState } from '../../../states/RoomParticipantState';
 import type { RoomParticipant, RoomUser } from '../../../types';
 
 const { t } = useUIKit();
-const { kickParticipant } = useRoomParticipantState();
+const { kickUser } = useRoomParticipantState();
 export function useKickAction(
   { targetParticipant }: { targetParticipant: RoomParticipant | RoomUser },
 ): {
@@ -26,7 +26,7 @@ export function useKickAction(
       cancelText: t('ParticipantList.Cancel'),
       callback: async (action) => {
         if (action === 'confirm') {
-          await kickParticipant({
+          await kickUser({
             userId: targetParticipant.userId,
           });
         }

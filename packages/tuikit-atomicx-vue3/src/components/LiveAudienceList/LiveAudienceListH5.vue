@@ -2,16 +2,26 @@
   <div class="viewers-panel" :style="{ height: props.height, ...props.style }">
     <div class="viewers-list">
       <div
-        v-for="viewer in audienceList"
+        v-for="(viewer, index) in audienceList"
         :key="viewer.userId"
         class="viewer-item"
         @click="handleViewerClick(viewer, $event)"
       >
-        <Avatar :src="viewer.avatarUrl" :size="40" />
-        <slot name="audience-mark" :audience="viewer"></slot>
-        <div class="viewer-info">
-          <span class="viewer-name">{{ viewer.userName || viewer.userId }}</span>
-        </div>
+        <!-- Custom audience-item slot replaces entire item (audience-mark will not render) -->
+        <slot
+          v-if="$slots['audience-item']"
+          name="audience-item"
+          :index="index"
+          :audience="viewer"
+        />
+        <!-- Default rendering with audience-mark slot support (H5 version without rank number) -->
+        <template v-else>
+          <Avatar :src="viewer.avatarUrl" :size="40" />
+          <slot name="audience-mark" :audience="viewer"></slot>
+          <div class="viewer-info">
+            <span class="viewer-name">{{ viewer.userName || viewer.userId }}</span>
+          </div>
+        </template>
       </div>
       <div class="viewer-bottom-line" v-if="audienceCount >= MAX_AUDIENCE_COUNT">{{ t('Only show 200 viewers') }}</div>
 

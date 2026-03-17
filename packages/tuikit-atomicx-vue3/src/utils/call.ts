@@ -1,6 +1,8 @@
 import { TUIFriendService, TUIUserService, TUIChatEngine } from '@tencentcloud/chat-uikit-engine-lite';
 import TUICore, { TUIConstants } from '@tencentcloud/tui-core-lite';
+import { reportStateUsageData, StateUsageType } from '../report/stateUsageReport';
 import { safeJSONParse } from './json';
+import { enableSampleTaskStatus } from './enableSampleTaskStatus';
 import { showChatErrorModalById, ChatErrorModalId } from '../components/UIKitModal/chatErrorModal';
 import { useOfflinePushInfo } from '../hooks/useOfflinePushInfo';
 import type { StartCallParams, CallMessagePayload } from '../types/call';
@@ -22,6 +24,7 @@ function isCallMessage(message: MessageModel) {
 }
 
 function startCall(params: StartCallParams) {
+  reportStateUsageData({ type: StateUsageType.ChatEvokeCall });
   const result = TUICore.getService(TUIConstants.TUICalling.SERVICE.NAME);
 
   if (!result) {
@@ -43,6 +46,7 @@ function startCall(params: StartCallParams) {
       ...(callOfflinePushInfo && !params.offlinePushInfo ? { offlinePushInfo: callOfflinePushInfo } : {}),
     },
   });
+  enableSampleTaskStatus('call');
 }
 
 function parseCallMessage(message: MessageModel): CallMessagePayload | undefined {

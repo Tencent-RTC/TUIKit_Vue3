@@ -1,11 +1,13 @@
 import type { Ref } from 'vue';
-import { computed, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { TRTCCloud, TUIVideoQuality } from '@tencentcloud/tuiroom-engine-js';
 import { TUIMessageBox, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import useRoomEngine from '../../../hooks/useRoomEngine';
 import { useLiveListState } from '../../../states/LiveListState';
 import { useLiveSeatState } from '../../../states/LiveSeatState';
 import { useLoginState } from '../../../states/LoginState';
+import { PlayerControlButton } from '../../../types/player';
+import type { ButtonState, PlayerControlButtons, CustomButton } from '../../../types/player';
 import {
   getDeviceType,
   shouldRotateToLandscapeForFullscreen,
@@ -52,6 +54,11 @@ export interface PlayerControlState {
   currentVolume: Ref<number>;
   isMuted: Ref<boolean>;
   isSafari: Ref<boolean>;
+  controlBarVisible: Ref<boolean>;
+
+  // Built-in button states
+  buttons: PlayerControlButtons;
+  customButtons: Ref<CustomButton[]>;
 
   // Player type detection methods
   hasTCPlayer: () => boolean;
@@ -80,6 +87,14 @@ export interface PlayerControlState {
   setVolume: (volume: number) => Promise<boolean>; // Volume range: 0-100
   setMute: (muted: boolean) => Promise<boolean>;
   changeFillMode: (fillMode: FillMode) => Promise<boolean>;
+
+  // Control bar visibility methods
+  setAutoHideDelay: (delay: number) => void;
+  setControlBarVisible: (visible: boolean) => void;
+  startAutoHide: () => void;
+  stopAutoHide: () => void;
+  upsertCustomButtons: (buttons: CustomButton[]) => void;
+
   // Cleanup method
   cleanup: () => void;
 }
@@ -110,6 +125,108 @@ const isPictureInPicture = ref(false);
 const currentVolume = ref(VOLUME_CONSTANTS.DEFAULT_VOLUME);
 const isMuted = ref(false); // Mute state - synced across all rooms
 const isSafari = ref(isSafariBrowser());
+const controlBarVisible = ref(false);
+
+// User overrides: tracks properties explicitly set by external consumers.
+// When resetButtonDefaults() runs, it re-applies these overrides after computing
+// environment defaults, so consumers can configure buttons at any time (including
+// during setup) without worrying about internal reset timing.
+// The map key is "buttonKey.property" (e.g. "play.visible"), and the value can be
+// any ButtonState property type (boolean, string, Component, etc.).
+const buttonUserOverrides = new Map<string, unknown>();
+
+// Internal flag: suppresses user-override recording while resetButtonDefaults() runs.
+let isResettingButtons = false;
+
+/**
+ * Create a Proxy-wrapped ButtonState that intercepts property assignments.
+ * When an external consumer sets any property on a button (e.g. visible, disabled,
+ * icon, activeIcon, tooltip), the proxy records it as a user override so it
+ * survives resetButtonDefaults() calls.
+ *
+ * NOTE: The returned Proxy is wrapped inside Vue's `reactive()`, forming a
+ * dual-layer Proxy (Vue reactive outer → tracking Proxy inner). This works
+ * correctly in Vue 3 because Vue's reactive system preserves custom Proxy
+ * traps when wrapping nested objects. However, this relies on Vue 3's
+ * internal Proxy handling behavior — keep this in mind when upgrading Vue.
+ */
+function createTrackedButtonState(buttonKey: PlayerControlButton, initial: ButtonState) {
+  return new Proxy(initial, {
+    set(target, prop, value) {
+      if (!isResettingButtons && typeof prop === 'string') {
+        buttonUserOverrides.set(`${buttonKey}.${prop}`, value);
+      }
+      (target as any)[prop] = value;
+      return true;
+    },
+  });
+}
+
+// Built-in button states (reactive so external consumers can modify them).
+// Each ButtonState is wrapped in a tracking proxy to capture user overrides.
+const buttons: PlayerControlButtons = reactive({
+  [PlayerControlButton.Play]: createTrackedButtonState(PlayerControlButton.Play, { visible: true, disabled: false }),
+  [PlayerControlButton.Volume]: createTrackedButtonState(PlayerControlButton.Volume, { visible: true, disabled: false }),
+  [PlayerControlButton.Resolution]: createTrackedButtonState(PlayerControlButton.Resolution, { visible: true, disabled: false }),
+  [PlayerControlButton.PictureInPicture]: createTrackedButtonState(PlayerControlButton.PictureInPicture, { visible: true, disabled: false }),
+  [PlayerControlButton.Fullscreen]: createTrackedButtonState(PlayerControlButton.Fullscreen, { visible: true, disabled: false }),
+});
+const customButtons = ref<CustomButton[]>([]);
+
+const upsertCustomButtons = (incomingButtons: CustomButton[]): void => {
+  incomingButtons.forEach((incomingButton) => {
+    const existingIndex = customButtons.value.findIndex(button => button.id === incomingButton.id);
+
+    if (existingIndex >= 0) {
+      customButtons.value[existingIndex] = incomingButton;
+      return;
+    }
+
+    customButtons.value.push(incomingButton);
+  });
+};
+
+/**
+ * Recalculate default visibility for buttons based on current environment.
+ * Safari + TCPlayer does not support programmatic play/volume control,
+ * so we hide these buttons in that scenario.
+ *
+ * After computing environment defaults, any user overrides (set via
+ * `buttons[key].visible = ...` / `buttons[key].disabled = ...`) are
+ * re-applied so that consumer configuration always takes precedence.
+ */
+const resetButtonDefaults = (): void => {
+  isResettingButtons = true;
+  try {
+    const safariTCPlayerRestricted = isSafari.value && DOMElementGetter.hasTCPlayerElement();
+    buttons[PlayerControlButton.Play].visible = !safariTCPlayerRestricted;
+    buttons[PlayerControlButton.Volume].visible = !safariTCPlayerRestricted;
+    buttons[PlayerControlButton.Resolution].visible = true;
+    buttons[PlayerControlButton.PictureInPicture].visible = true;
+    buttons[PlayerControlButton.Fullscreen].visible = true;
+
+    // Reset disabled states
+    buttons[PlayerControlButton.Play].disabled = false;
+    buttons[PlayerControlButton.Volume].disabled = false;
+    buttons[PlayerControlButton.Resolution].disabled = false;
+    buttons[PlayerControlButton.PictureInPicture].disabled = false;
+    buttons[PlayerControlButton.Fullscreen].disabled = false;
+  } finally {
+    isResettingButtons = false;
+  }
+
+  // Re-apply user overrides so consumer configuration survives the reset.
+  // Overrides may include any ButtonState property (visible, disabled, icon, activeIcon, tooltip).
+  // NOTE: isResettingButtons is already false here, so the Proxy set trap will
+  // re-record these assignments into buttonUserOverrides. This is intentional and
+  // harmless — Map.set() is idempotent when key and value are identical.
+  for (const [key, value] of buttonUserOverrides) {
+    const dotIndex = key.indexOf('.');
+    const buttonKey = key.slice(0, dotIndex) as PlayerControlButton;
+    const prop = key.slice(dotIndex + 1);
+    (buttons[buttonKey] as any)[prop] = value;
+  }
+};
 
 // Internal storage for volume restoration (not reactive)
 let restoreVolume = VOLUME_CONSTANTS.DEFAULT_VOLUME;
@@ -147,6 +264,9 @@ watch(loginUserInfo, (userInfo) => {
 }, { immediate: true });
 
 const isLocalUserOnSeat = computed(() => seatList.value.some(seat => seat.userInfo?.userId === loginUserInfo.value?.userId));
+
+// Guard flag to prevent duplicate side effect registration across multiple calls
+let isListenersRegistered = false;
 
 /**
  * Player control state management hook
@@ -581,63 +701,102 @@ export function usePlayerControlState(): PlayerControlState {
   };
 
   /**
+   * Control bar visibility management
+   */
+  let AUTO_HIDE_DELAY = 1500;
+  let hideTimeout: number | null = null;
+
+  const setAutoHideDelay = (delay: number): void => {
+    AUTO_HIDE_DELAY = delay;
+  };
+
+  const setControlBarVisible = (visible: boolean): void => {
+    controlBarVisible.value = visible;
+  };
+
+  const stopAutoHide = (): void => {
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+      hideTimeout = null;
+    }
+  };
+
+  const startAutoHide = (): void => {
+    stopAutoHide();
+    hideTimeout = window.setTimeout(() => {
+      controlBarVisible.value = false;
+      hideTimeout = null;
+    }, AUTO_HIDE_DELAY);
+  };
+
+  /**
    * Cleanup method
    */
   const cleanup = (): void => {
+    stopAutoHide();
     OrientationManager.removeOrientationListener(orientationListenerId);
     eventManager.removeAllListeners();
+    isListenersRegistered = false;
   };
 
-  setupFullscreenEventListeners();
-  setupVideoEventListeners();
-  OrientationManager.addOrientationListener(orientationListenerId, handleOrientationChange);
+  // Only install event listeners, watchers, and orientation listeners on the first call.
+  // Subsequent calls reuse the same side effects to avoid duplicate registrations.
+  if (!isListenersRegistered) {
+    isListenersRegistered = true;
 
-  watch(
-    () => currentLive.value?.liveId,
-    async (newLiveId) => {
-      if (newLiveId) {
-        isPlaying.value = true;
-        isPictureInPicture.value = false;
-        isFullscreen.value = false;
-        resolutionList.value = [];
-        currentResolution.value = undefined;
-        // When pulling a TRTC stream, this interface has a cache, but when using TCPlayer, there is no cache
-        await setVolume(currentVolume.value);
-        await initializeResolution(newLiveId, false);
+    setupFullscreenEventListeners();
+    setupVideoEventListeners();
+    OrientationManager.addOrientationListener(orientationListenerId, handleOrientationChange);
 
-        // Print player control state after entering room
-        console.log('[PlayerControl] State after entering room:', JSON.stringify({
-          isPlaying: isPlaying.value,
-          currentFillMode: currentFillMode.value,
-          isFullscreen: isFullscreen.value,
-          isLandscapeStyleMode: isLandscapeStyleMode.value,
-          isPictureInPicture: isPictureInPicture.value,
-          currentVolume: currentVolume.value,
-          resolutionList: resolutionList.value,
-          currentResolution: currentResolution.value,
-        }));
-      }
-    },
-  );
+    watch(
+      () => currentLive.value?.liveId,
+      async (newLiveId) => {
+        if (newLiveId) {
+          isPlaying.value = true;
+          isPictureInPicture.value = false;
+          isFullscreen.value = false;
+          resolutionList.value = [];
+          currentResolution.value = undefined;
+          // Recalculate button default visibility based on current player type
+          resetButtonDefaults();
+          // When pulling a TRTC stream, this interface has a cache, but when using TCPlayer, there is no cache
+          await setVolume(currentVolume.value);
+          await initializeResolution(newLiveId, false);
 
-  // Reset playback state when local user takes seat
-  watch(isLocalUserOnSeat, (isOnSeat) => {
-    if (isOnSeat) {
-      if (!isPlaying.value) {
-        resume();
+          // Print player control state after entering room
+          console.log('[PlayerControl] State after entering room:', JSON.stringify({
+            isPlaying: isPlaying.value,
+            currentFillMode: currentFillMode.value,
+            isFullscreen: isFullscreen.value,
+            isLandscapeStyleMode: isLandscapeStyleMode.value,
+            isPictureInPicture: isPictureInPicture.value,
+            currentVolume: currentVolume.value,
+            resolutionList: resolutionList.value,
+            currentResolution: currentResolution.value,
+          }));
+        }
+      },
+    );
+
+    // Reset playback state when local user takes seat
+    watch(isLocalUserOnSeat, (isOnSeat) => {
+      if (isOnSeat) {
+        if (!isPlaying.value) {
+          resume();
+        }
+        if (currentVolume.value !== VOLUME_CONSTANTS.DEFAULT_VOLUME) {
+          setVolume(VOLUME_CONSTANTS.DEFAULT_VOLUME);
+        }
+        if (isPictureInPicture.value) {
+          exitPictureInPicture();
+          isPictureInPicture.value = false;
+        }
+        if (isFullscreen.value) {
+          exitFullscreen();
+        }
       }
-      if (currentVolume.value !== VOLUME_CONSTANTS.DEFAULT_VOLUME) {
-        setVolume(VOLUME_CONSTANTS.DEFAULT_VOLUME);
-      }
-      if (isPictureInPicture.value) {
-        exitPictureInPicture();
-        isPictureInPicture.value = false;
-      }
-      if (isFullscreen.value) {
-        exitFullscreen();
-      }
-    }
-  });
+    });
+  }
 
   // Return interface implementation
   return {
@@ -651,6 +810,9 @@ export function usePlayerControlState(): PlayerControlState {
     resolutionList,
     currentResolution,
     isSafari,
+    controlBarVisible,
+    buttons,
+    customButtons,
     hasTCPlayer,
     hasLEBPlayer,
     resume,
@@ -663,6 +825,11 @@ export function usePlayerControlState(): PlayerControlState {
     setVolume,
     setMute,
     changeFillMode,
+    setAutoHideDelay,
+    setControlBarVisible,
+    startAutoHide,
+    stopAutoHide,
+    upsertCustomButtons,
     cleanup,
   };
 }

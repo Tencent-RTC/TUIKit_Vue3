@@ -13,18 +13,28 @@
         class="viewer-item"
         @click="handleViewerClick(viewer, $event)"
       >
-        <span
-          class="rank"
-          :class="getRankClass(index + 1)"
-        >{{ index < 10 ? index + 1 : '-' }}</span>
-        <Avatar :src="viewer.avatarUrl" :size="26" />
+        <!-- Custom audience-item slot replaces entire item (audience-mark will not render) -->
         <slot
-          name="audience-mark"
+          v-if="$slots['audience-item']"
+          name="audience-item"
+          :index="index"
           :audience="viewer"
         />
-        <div class="viewer-info">
-          <span class="viewer-name">{{ viewer.userName || viewer.userId }}</span>
-        </div>
+        <!-- Default rendering with audience-mark slot support -->
+        <template v-else>
+          <span
+            class="rank"
+            :class="getRankClass(index + 1)"
+          >{{ index < 10 ? index + 1 : '-' }}</span>
+          <Avatar :src="viewer.avatarUrl" :size="26" />
+          <slot
+            name="audience-mark"
+            :audience="viewer"
+          />
+          <div class="viewer-info">
+            <span class="viewer-name">{{ viewer.userName || viewer.userId }}</span>
+          </div>
+        </template>
       </div>
 
       <div

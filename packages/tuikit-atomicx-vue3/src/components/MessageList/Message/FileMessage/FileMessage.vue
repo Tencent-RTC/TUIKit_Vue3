@@ -99,7 +99,7 @@ const handleFileClick = async (event: MouseEvent) => {
   background-color: var(--background-color-secondary);
   border-radius: 8px;
   gap: 12px;
-  padding: 12px;
+  padding: 10px 12px;
   cursor: pointer;
   transition: background-color 0.2s ease;
   max-width: 250px;

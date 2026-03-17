@@ -8,4 +8,5 @@ export const resource = {
   'VirtualBackground.Blurred': '模糊',
   'VirtualBackground.Save': '保存',
   'VirtualBackground.Cancel': '取消',
+  'VirtualBackground.Custom': '自定义',
 };

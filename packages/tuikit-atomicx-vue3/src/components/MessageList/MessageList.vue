@@ -73,7 +73,9 @@ const props = withDefaults(defineProps<MessageListProps>(), {
 const slots = useSlots();
 provide(MessageListContextSymbol, {
   slots,
-  get messageRenderers() { return props.messageRenderers; },
+  get messageRenderers() {
+    return props.messageRenderers;
+  },
 });
 
 const autoScrollThreshold = 150;
@@ -359,29 +361,23 @@ defineExpose({
               :is-first-in-chunk="Boolean(messageIndex === 0)"
               :is-last-in-chunk="Boolean(messageIndex === chunk.messages.length - 1)"
               :isHiddenMessageAvatar="
-                Boolean(
-                  alignment === 'two-sided'
-                    ? (enableMessageAggregation && messageIndex !== 0 || message.flow === 'out')
-                    : (enableMessageAggregation && messageIndex !== 0 )
-                )
+                Boolean(enableMessageAggregation && messageIndex !== 0)
+              "
+              :removeAvatar="
+                Boolean(alignment === 'two-sided' && message.flow === 'out')
               "
               :is-hidden-message-nick="
                 Boolean(
-                  !isGroup
-                    || (alignment === 'two-sided'
-                      ? enableMessageAggregation && messageIndex !== 0 || message.flow === 'out'
-                      : enableMessageAggregation && messageIndex !== 0)
-                )
-              "
-              :isHiddenMessageMeta="
-                Boolean(
-                  enableMessageAggregation && messageIndex !== chunk.messages.length - 1
+                  (alignment === 'two-sided'
+                    ? enableMessageAggregation && messageIndex !== 0 || message.flow === 'out'
+                    : enableMessageAggregation && messageIndex !== 0)
                 )
               "
             />
           </template>
         </div>
       </View>
+      <div style="height: 10px;" />
     </div>
     <MessageForward />
     <ScrollToBottom

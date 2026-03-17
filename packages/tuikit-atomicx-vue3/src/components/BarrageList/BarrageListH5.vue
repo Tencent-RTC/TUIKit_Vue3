@@ -4,8 +4,10 @@ import { ref, onMounted, onUnmounted, nextTick, watch, provide, useSlots } from 
 import type { Component, CSSProperties } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useScroll } from '../../hooks/useScroll';
+import { useBarrageState } from '../../states/BarrageState';
 import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
+import { BarrageEvent } from '../../types/barrage';
 import { throttle } from '../../utils/lodash';
 import { useBarrageListState, isGiftMessage } from './BarrageListState';
 import UserActionMenu from './ClickAction/UserActionMenu.vue';
@@ -42,6 +44,10 @@ const distanceToBottom = ref<number>(0);
 const scrollContainer = ref<HTMLElement | null>(null);
 
 const { messageList, messageGroupTip } = useBarrageListState();
+const {
+  subscribeEvent: subscribeBarrageEvent,
+  unsubscribeEvent: unsubscribeBarrageEvent,
+} = useBarrageState();
 
 const { scrollToBottom } = useScroll();
 
@@ -129,32 +135,27 @@ watch(() => currentLive.value?.liveId, () => {
   initializeMessageList();
 });
 
-watch(() => messageList.value?.length, (length) => {
-  const newMessage = messageList.value[length - 1];
-  const oldMessage = messageList.value[length - 2];
-
-  if (oldMessage === undefined && newMessage && !isFinishFirstRender.value) {
-    // Switch to a new conversation
+// Handle new barrage message for auto-scrolling
+const handleBarrageReceived = (message: Barrage) => {
+  if (!isFinishFirstRender.value) {
     nextTick(() => {
       scrollToBottom({ behavior: 'instant' });
       isFinishFirstRender.value = true;
     });
-  }
-
-  if (!oldMessage || !newMessage || !length) {
     return;
   }
 
-  if (newMessage?.sequence !== oldMessage?.sequence) {
-    const shouldAutoScroll
-      = newMessage.sender.userId === loginUserInfo.value?.userId || (!isDisableAutoScroll.value && distanceToBottom.value < autoScrollThreshold);
-    if (shouldAutoScroll) {
+  const shouldAutoScroll
+    = message.sender.userId === loginUserInfo.value?.userId
+    || (!isDisableAutoScroll.value && distanceToBottom.value < autoScrollThreshold);
+  if (shouldAutoScroll) {
+    nextTick(() => {
       scrollToBottom({ behavior: 'smooth' });
-    } else {
-      // TODO: new message notification
-    }
+    });
+  } else {
+    // TODO: new message notification
   }
-});
+};
 
 const handleTouchStart = () => {
   const activeElement = document.activeElement as HTMLElement;
@@ -168,12 +169,18 @@ onMounted(() => {
     scrollContainer.value.addEventListener('scroll', handleScroll);
   }
   initializeMessageList();
+
+  // Subscribe to barrage received event for auto-scrolling
+  subscribeBarrageEvent(BarrageEvent.onBarrageReceived, handleBarrageReceived);
 });
 
 onUnmounted(() => {
   if (scrollContainer.value) {
     scrollContainer.value.removeEventListener('scroll', handleScroll);
   }
+
+  // Unsubscribe from barrage received event
+  unsubscribeBarrageEvent(BarrageEvent.onBarrageReceived, handleBarrageReceived);
 });
 </script>
 
@@ -188,13 +195,22 @@ onUnmounted(() => {
     >
       <div class="message-chunk">
         <template v-for="message in messageList" :key="message.sequence + message.timestampInSecond">
-          <component
-            v-if="!isGiftMessage(message)"
-            :is="props.Message || DefaultMessage"
-            :style="props.itemStyle"
+          <!-- Custom message-item slot handles ALL messages (including gift) when provided -->
+          <slot
+            v-if="$slots['message-item']"
+            name="message-item"
             :message="message"
-            :is-last-in-chunk="true"
+            :sender="message.sender"
           />
+          <!-- Default rendering: gift messages are filtered out (displayed in separate gift area) -->
+          <template v-else-if="!isGiftMessage(message)">
+            <component
+              :is="props.Message || DefaultMessage"
+              :style="props.itemStyle"
+              :message="message"
+              :is-last-in-chunk="true"
+            />
+          </template>
         </template>
       </div>
       <div v-if="messageGroupTip" class="message-group-tip">
