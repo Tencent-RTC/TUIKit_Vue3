@@ -103,6 +103,7 @@ onUnmounted(() => {
   gap: 6px;
   pointer-events: none;
   text-align: initial;
+  width: 90%;
 }
 
 .subtitle-item {

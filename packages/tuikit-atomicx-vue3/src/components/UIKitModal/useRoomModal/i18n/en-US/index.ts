@@ -1,7 +1,7 @@
 export const resource = {
   // Modal
   Room: {
-    'Modal.Title': 'Error',
+    'Modal.Title': 'Developer Tip',
     'Modal.UserSigExpired': 'The user signature has expired. It is recommended to set the signature validity period to at least 24 hours. You can check our online document: <a target="_blank" href="https://trtc.io/document/35166?product=live&menulabel=uikit&platform=web">Generating UserSig</a>.',
     'Modal.InvalidSignature': 'Invalid signature. Please regenerate it. You can check our online document: <a target="_blank" href="https://trtc.io/document/35166?product=live&menulabel=uikit&platform=web">Generating UserSig</a>.',
     'Modal.UserIdNotMatchUserSig': 'The user ID does not match the user signature. Please check. You can verify your ID and signature on <a target="_blank" href="https://console.trtc.io/usersig">RTC Console</a>.',
@@ -14,6 +14,8 @@ export const resource = {
     'Modal.MicrophonePermissionDenied': 'Microphone access was denied. Please check your browser settings to ensure this site is allowed to use your microphone. If you have confirmed permission is granted, please use the [A/V Capability Test Tool] to check your device and environment for call compatibility: https://web.sdk.qcloud.com/trtc/webrtc/demo/detect/index.html',
     'Modal.CameraStartFailed': 'Camera access failed. Please check your browser settings to ensure this site is allowed to use your camera. If you have confirmed permission is granted, please use the [A/V Capability Test Tool] to check your device and environment for call compatibility: https://web.sdk.qcloud.com/trtc/webrtc/demo/detect/index.html',
     'Modal.MicrophoneStartFailed': 'Microphone access failed. Please check your browser settings to ensure this site is allowed to use your microphone. If you have confirmed permission is granted, please use the [A/V Capability Test Tool] to check your device and environment for call compatibility: https://web.sdk.qcloud.com/trtc/webrtc/demo/detect/index.html',
-
+    'Modal.PleaseCreateRoomFirst': 'Join room failed: The room does not exist. Please create the room first before joining. Tip: Use <a target="_blank" href="https://web.sdk.qcloud.com/trtc/live/web/doc/zh/index.html#getRoomInfo">getRoomInfo</a> to check whether the room exists.',
+    'Modal.PleaseCreateRoomByOtherRoomId': 'Create room failed: The room ID is already in use. You can call joinRoom to join the existing room, or use a different roomId and call createAndJoinRoom again. Tip: Use <a target="_blank" href="https://web.sdk.qcloud.com/trtc/live/web/doc/zh/index.html#getRoomInfo">getRoomInfo</a> to check whether the room exists.',
+    'Modal.PleaseCreateOrJoinRoomBeforeDismiss': 'End room failed: You have not joined any room. Please call createAndJoinRoom or joinRoom to enter a room before ending it.',
   },
 };

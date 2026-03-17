@@ -90,7 +90,7 @@ export const getLatestMessagePreview = (conversation: ConversationModel, t: (key
             messageContent = `[${t('TUIConversation.call_message')}]`;
           }
         } else {
-          messageContent = lastMessage.payload.description || `[${t('TUIConversation.Custom')}]`;
+          messageContent = `[${t('TUIConversation.Custom')}]`;
         }
         break;
       }

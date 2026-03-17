@@ -19,8 +19,6 @@ const ChatSetting = {
   copied: 'Copied',
 
   // GroupChatSetting
-  chat_setting_title: 'Chat Settings',
-  group_setting_title: 'Group Settings',
   remove_member_dialog_title: 'Remove Group Member',
   add_member_dialog_title: 'Add Group Member',
   failed_to_load_more_members: 'Failed to load more members',

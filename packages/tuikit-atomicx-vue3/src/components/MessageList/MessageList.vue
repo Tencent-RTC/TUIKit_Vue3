@@ -52,8 +52,6 @@ interface MessageListProps {
   MessageTimeDivider?: Component | undefined;
   /** conversation id */
   conversationID?: string | undefined;
-  /** custom renderers to override built-in message bubble content by MessageType */
-  messageRenderers?: Record<MessageType, Component> | undefined;
 }
 
 const props = withDefaults(defineProps<MessageListProps>(), {
@@ -67,14 +65,10 @@ const props = withDefaults(defineProps<MessageListProps>(), {
   Message: undefined,
   MessageTimeDivider: undefined,
   conversationID: undefined,
-  messageRenderers: undefined,
 });
 
 const slots = useSlots();
-provide(MessageListContextSymbol, {
-  slots,
-  get messageRenderers() { return props.messageRenderers; },
-});
+provide(MessageListContextSymbol, { slots });
 
 const autoScrollThreshold = 150;
 const isFinishFirstRender = ref<boolean>(false);

@@ -2,7 +2,7 @@
  * Emoji Extension - Display inline emojis as images
  */
 import Image from '@tiptap/extension-image';
-import { MessageContentType } from '../../../../states/MessageInputState/type';
+import { MessageContentType } from '../../../../states/MessageInputState';
 
 export function createEmojiExtension() {
   return Image.extend({

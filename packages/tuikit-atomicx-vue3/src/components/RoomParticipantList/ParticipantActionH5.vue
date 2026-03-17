@@ -29,7 +29,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import type { Ref } from 'vue';
+import { computed, toRef } from 'vue';
 import { useUIKit, TUIIcon, TUIPopup } from '@tencentcloud/uikit-base-component-vue3';
 import Avatar from '../Avatar/Avatar.vue';
 import PopUpArrowDown from './PopUpArrowDown.vue';
@@ -65,7 +66,8 @@ const controlList = computed(() => {
   if (!props.participant) {
     return [];
   }
-  const { controlList: list } = useParticipantAction({ targetParticipant: props.participant });
+  const { controlList: list } = useParticipantAction({ targetParticipant: toRef(props, 'participant') as Ref<RoomParticipant> });
+
   return list.value;
 });
 

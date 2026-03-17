@@ -270,12 +270,15 @@ export interface IRoomParticipantState {
   setAdmin(options: { userId: string }): Promise<void>;
   revokeAdmin(options: { userId: string }): Promise<void>;
   kickParticipant(options: { userId: string }): Promise<void>;
+  kickUser(options: { userId: string }): Promise<void>;
   updateParticipantNameCard(options: { userId: string; nameCard: string }): Promise<void>;
   updateParticipantMetaData(options: { userId: string; metaData: Record<string, string> }): Promise<void>;
 
   closeParticipantDevice(options: { userId: string; deviceType: DeviceType }): Promise<void>;
-  muteParticipantMessage(options: { userId: string; mute: boolean }): Promise<void>;
   disableAllDevices(options: { deviceType: DeviceType; disable: boolean }): Promise<void>;
+
+  muteParticipantMessage(options: { userId: string; mute: boolean }): Promise<void>;
+  disableUserMessage(options: { userId: string; disable: boolean }): Promise<void>;
   disableAllMessages(options: { disable: boolean }): Promise<void>;
 
   requestToOpenDevice(options: { device: DeviceType; timeout?: number }): Promise<void>;
@@ -626,9 +629,55 @@ export enum RoomParticipantEvent {
    * unsubscribeEvent(RoomParticipantEvent.onDeviceInvitationDeclined, onDeviceInvitationDeclined);
    */
   onDeviceInvitationDeclined = 'onDeviceInvitationDeclined',
-
+  /**
+   * 用户消息被禁用/解禁时触发
+   * @since 5.4.0
+   * @event
+   * @example
+   * import { useRoomParticipantState, RoomParticipantEvent } from '@tuikit-atomicx-vue3/room';
+   * const { subscribeEvent, unsubscribeEvent } = useRoomParticipantState();
+   *
+   * const onUserMessageDisabled = (options: { targetUser: RoomUser; disable: boolean; operator: RoomUser }) => {
+   *   const { userName: targetUserName } = options.targetUser;
+   *   const { disable } = options;
+   *   const { userName: operatorUserName } = options.operator;
+   *   console.log(`${operatorUserName} 禁止了 ${targetUserName} 的消息发送`);
+   * };
+   * subscribeEvent(RoomParticipantEvent.onUserMessageDisabled, onUserMessageDisabled);
+   * unsubscribeEvent(RoomParticipantEvent.onUserMessageDisabled, onUserMessageDisabled);
+   */
   onUserMessageDisabled = 'onUserMessageDisabled',
+  /**
+   * 观众被晋升为嘉宾时触发
+   * @since 5.4.0
+   * @event
+   * @example
+   * import { useRoomParticipantState, RoomParticipantEvent } from '@tuikit-atomicx-vue3/room';
+   * const { subscribeEvent, unsubscribeEvent } = useRoomParticipantState();
+   *
+   * const onAudiencePromotedToParticipant = (options: { userInfo: RoomUser }) => {
+   *   const { userName } = options.userInfo;
+   *   console.log(`${userName} 被晋升为嘉宾`);
+   * };
+   * subscribeEvent(RoomParticipantEvent.onAudiencePromotedToParticipant, onAudiencePromotedToParticipant);
+   * unsubscribeEvent(RoomParticipantEvent.onAudiencePromotedToParticipant, onAudiencePromotedToParticipant);
+   */
   onAudiencePromotedToParticipant = 'onAudiencePromotedToParticipant',
+  /**
+   * 嘉宾被降级为观众时触发
+   * @since 5.4.0
+   * @event
+   * @example
+   * import { useRoomParticipantState, RoomParticipantEvent } from '@tuikit-atomicx-vue3/room';
+   * const { subscribeEvent, unsubscribeEvent } = useRoomParticipantState();
+   *
+   * const onParticipantDemotedToAudience = (options: { userInfo: RoomUser }) => {
+   *   const { userName } = options.userInfo;
+   *   console.log(`${userName} 被降级为观众`);
+   * };
+   * subscribeEvent(RoomParticipantEvent.onParticipantDemotedToAudience, onParticipantDemotedToAudience);
+   * unsubscribeEvent(RoomParticipantEvent.onParticipantDemotedToAudience, onParticipantDemotedToAudience);
+   */
   onParticipantDemotedToAudience = 'onParticipantDemotedToAudience',
 }
 

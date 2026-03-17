@@ -15,22 +15,6 @@ const MessageInput = {
   loading: '加载中...',
   no_matching_members: '暂无匹配成员',
   at_all_members: '所有人',
-  invalid_image_type: '无效的图片类型',
 };
 
-const OfflinePush = {
-  text: '[文本消息]',
-  image: '[图片消息]',
-  video: '[视频消息]',
-  file: '[文件消息]',
-  audio: '[语音消息]',
-  face: '[动画表情]',
-  location: '[地理位置]',
-  merger: '[转发消息]',
-  custom: '[自定义消息]',
-};
-
-export default {
-  MessageInput,
-  OfflinePush,
-};
+export default MessageInput;

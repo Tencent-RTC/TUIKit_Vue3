@@ -18,23 +18,15 @@ interface GiftCountChanged {
 	totalUniqueGiftSenders: number;
 }
 
-interface LikesMessage {
-	liveId: string;
-	totalLikesReceived: number;
-	sender: TUIUserInfo;
-}
-
 enum LiveGiftEvents {
 	ON_RECEIVE_GIFT_MESSAGE = 'ON_RECEIVE_GIFT_MESSAGE',
 	ON_GIFT_COUNT_CHANGED = 'ON_GIFT_COUNT_CHANGED',
-	ON_RECEIVE_LIKES_MESSAGE = 'ON_RECEIVE_LIKES_MESSAGE',
 }
 
 // Map event type to corresponding data type
 type LiveGiftEventMap = {
 	[LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE]: Gift;
 	[LiveGiftEvents.ON_GIFT_COUNT_CHANGED]: GiftCountChanged;
-	[LiveGiftEvents.ON_RECEIVE_LIKES_MESSAGE]: LikesMessage;
 };
 
 // Event callback type that maps event to correct data type
@@ -49,7 +41,6 @@ export {
 export type {
 	Gift,
 	GiftCountChanged,
-	LikesMessage,
 	LiveGiftEventCallback,
 	LiveGiftEventMap,
 }

@@ -8,4 +8,5 @@ export const resource = {
   'VirtualBackground.Blurred': 'Blurred',
   'VirtualBackground.Save': 'Save',
   'VirtualBackground.Cancel': 'Cancel',
+  'VirtualBackground.Custom': 'Custom',
 };

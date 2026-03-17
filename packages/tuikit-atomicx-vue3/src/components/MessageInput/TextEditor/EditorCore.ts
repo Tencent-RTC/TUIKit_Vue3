@@ -4,6 +4,7 @@
  */
 import Placeholder from '@tiptap/extension-placeholder';
 import StarterKit from '@tiptap/starter-kit';
+import { MessageContentType } from '../../../states/MessageInputState';
 import {
   CharacterCount,
   createEmojiExtension,
@@ -11,7 +12,8 @@ import {
   createImageExtension,
   createMentionExtension,
 } from './extensions';
-import type { Extensions } from '@tiptap/vue-3';
+import type { InputContent } from '../../../states/MessageInputState';
+import type { JSONContent, Extensions } from '@tiptap/vue-3';
 import './Editor.scss';
 
 // ============================================================================
@@ -38,15 +40,6 @@ function createExtensions(options: ExtensionOptions = {}): Extensions {
 
   return [
     StarterKit.configure({
-      // Disable all Markdown block nodes
-      heading: false,
-      blockquote: false,
-      codeBlock: false,
-      bulletList: false,
-      orderedList: false,
-      listItem: false,
-      horizontalRule: false,
-      // Disable all Markdown inline marks
       bold: false,
       italic: false,
       strike: false,
@@ -66,6 +59,73 @@ function createExtensions(options: ExtensionOptions = {}): Extensions {
   ];
 }
 
+// ============================================================================
+// Content Conversion
+// ============================================================================
+
+/**
+ * Convert Tiptap JSON content to business InputContent array
+ * Uses simple switch-case for clarity (no over-engineered registry pattern)
+ */
+function convertEditorContent(node: JSONContent): InputContent[] {
+  if (!node?.content) {
+    return [];
+  }
+
+  return node.content.flatMap((child: JSONContent) => {
+    switch (child.type) {
+      case 'text':
+        return child.text
+          ? [{
+            type: MessageContentType.TEXT,
+            content: child.text,
+          }]
+          : [];
+
+      case 'image':
+        return [{
+          type: MessageContentType.IMAGE,
+          content: child.attrs?.fileData,
+        }];
+
+      case 'emoji':
+        return [{
+          type: MessageContentType.EMOJI,
+          content: {
+            url: child.attrs?.src,
+            key: child.attrs?.alt,
+            text: child.attrs?.title,
+          },
+        }];
+
+      case 'hardBreak':
+        return [{
+          type: MessageContentType.TEXT,
+          content: '\n',
+        }];
+
+      case 'mention':
+        return [{
+          type: MessageContentType.MENTION,
+          content: {
+            id: child.attrs?.id,
+            label: child.attrs?.label,
+            mentionSuggestionChar: child.attrs?.mentionSuggestionChar,
+          },
+        }];
+
+      default:
+        // Recursively handle nested content (e.g., paragraph nodes)
+        return convertEditorContent(child);
+    }
+  });
+}
+
+// ============================================================================
+// Exports
+// ============================================================================
+
 export {
   createExtensions,
+  convertEditorContent,
 };

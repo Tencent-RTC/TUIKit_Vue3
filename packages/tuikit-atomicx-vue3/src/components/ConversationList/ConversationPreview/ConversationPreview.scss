@@ -68,7 +68,6 @@
   &__abstract {
     flex: 1;
     font-size: 12px;
-    padding-top: 4px;
     color: var(--text-color-secondary, #666);
 
     @include mixins.text-ellipsis();

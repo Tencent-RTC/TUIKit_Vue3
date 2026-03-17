@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
 import {
   IconFile,
   IconDownload,
@@ -8,13 +7,13 @@ import {
 } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
-import type { MessageModel } from '../../../../types/engine';
+import type { IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
 
-interface FileMessageProps {
-  message: MessageModel;
+interface IFileMessageProps {
+  message: IMessageModel;
 }
 
-interface FileMessageContent {
+interface IFileMessageContent {
   /** sender show name */
   showName: string;
   /** file name */
@@ -29,21 +28,21 @@ interface FileMessageContent {
 
 const { t } = useUIKit();
 
-const props = withDefaults(defineProps<FileMessageProps>(), {
-  message: () => ({} as MessageModel),
+const props = withDefaults(defineProps<IFileMessageProps>(), {
+  message: () => ({} as IMessageModel),
 });
 
-const messageContent = computed(() => props.message.getMessageContent() as FileMessageContent);
+const messageContent = props.message.getMessageContent() as IFileMessageContent;
 
 const handleFileClick = async (event: MouseEvent) => {
   // If ctrl key (Windows) or command key (Mac) is pressed, open in new tab
   if (event.metaKey || event.ctrlKey) {
-    window.open(messageContent.value.url, '_blank');
+    window.open(messageContent.url, '_blank');
   } else {
     try {
       event.preventDefault();
 
-      const response = await fetch(messageContent.value.url);
+      const response = await fetch(messageContent.url);
       if (!response.ok) {
         throw new Error('Download failed');
       }
@@ -53,7 +52,7 @@ const handleFileClick = async (event: MouseEvent) => {
 
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = messageContent.value.name;
+      link.download = messageContent.name;
       link.click();
 
       // Clean up blob url

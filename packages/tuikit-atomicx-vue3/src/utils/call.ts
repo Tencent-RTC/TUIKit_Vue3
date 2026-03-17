@@ -2,7 +2,6 @@ import { TUIFriendService, TUIUserService, TUIChatEngine } from '@tencentcloud/c
 import TUICore, { TUIConstants } from '@tencentcloud/tui-core-lite';
 import { safeJSONParse } from './json';
 import { showChatErrorModalById, ChatErrorModalId } from '../components/UIKitModal/chatErrorModal';
-import { useOfflinePushInfo } from '../hooks/useOfflinePushInfo';
 import type { StartCallParams, CallMessagePayload } from '../types/call';
 import type { MessageModel } from '../types/engine';
 
@@ -29,20 +28,15 @@ function startCall(params: StartCallParams) {
     return;
   }
 
-  // Inject offlinePushInfo for CALL scene if configured
-  const { createCallOfflinePushInfo } = useOfflinePushInfo();
-  const callOfflinePushInfo = createCallOfflinePushInfo();
-
   TUICore.callService({
     serviceName: TUIConstants.TUICalling.SERVICE.NAME,
     method: TUIConstants.TUICalling.SERVICE.METHOD.START_CALL,
     params: {
       ...params,
       version: 'v3',
-      // Merge offlinePushInfo: caller's value takes precedence
-      ...(callOfflinePushInfo && !params.offlinePushInfo ? { offlinePushInfo: callOfflinePushInfo } : {}),
     },
   });
+  // offlinePushInfo doc: https://cloud.tencent.com/document/product/269/105713
 }
 
 function parseCallMessage(message: MessageModel): CallMessagePayload | undefined {

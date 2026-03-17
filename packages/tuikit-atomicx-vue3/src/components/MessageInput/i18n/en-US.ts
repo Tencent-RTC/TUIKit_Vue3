@@ -15,22 +15,6 @@ const MessageInput = {
   loading: 'Loading...',
   no_matching_members: 'No matching members',
   at_all_members: 'All members',
-  invalid_image_type: 'Invalid image type',
 };
 
-const OfflinePush = {
-  text: '[Text Message]',
-  image: '[Image Message]',
-  video: '[Video Message]',
-  file: '[File Message]',
-  audio: '[Audio Message]',
-  face: '[Sticker Message]',
-  location: '[Location Message]',
-  merger: '[Forward Message]',
-  custom: '[Custom Message]',
-};
-
-export default {
-  OfflinePush,
-  MessageInput,
-};
+export default MessageInput;

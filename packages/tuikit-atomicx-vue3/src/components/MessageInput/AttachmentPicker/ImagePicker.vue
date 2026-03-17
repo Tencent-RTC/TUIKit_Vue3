@@ -17,7 +17,7 @@
     <input
       ref="fileInputRef"
       type="file"
-      :accept="AcceptFileTypes.join(',')"
+      :accept="PICKER_CONSTANTS.ACCEPT_TYPE"
       hidden
       @change="handleFileInput"
     >
@@ -26,25 +26,14 @@
 
 <script setup lang="ts">
 import { ref, useCssModule } from 'vue';
-import { IconImage, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { IconImage } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../baseComp/View';
 import { MessageContentType, useMessageInputState } from '../../../states/MessageInputState';
 
-const { t } = useUIKit();
-
-const AcceptFileTypes = [
-  'image/jpg',
-  'image/jpeg',
-  'image/gif',
-  'image/bmp',
-  'image/png',
-  'image/webp',
-];
-
-function validFileType(file: File) {
-  return AcceptFileTypes.includes(file.type);
-}
+const PICKER_CONSTANTS = {
+  ACCEPT_TYPE: '.jpg,.jpeg,.gif,.png,.bmp,.webp',
+};
 
 interface Props {
   label?: string;
@@ -73,15 +62,7 @@ function handleButtonClick() {
 function handleFileInput(e: Event) {
   const target = e.target as HTMLInputElement;
   const file = target.files?.[0];
-
   if (!file) {
-    return;
-  }
-
-  if (!validFileType(file)) {
-    TUIToast.error({
-      message: t('MessageInput.invalid_image_type'),
-    });
     return;
   }
 

@@ -1,12 +1,10 @@
 <script lang="ts" setup>
 import { ref, computed } from 'vue';
-import type { Component } from 'vue';
 import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
 import { MessageType, ConversationType } from '../../../../types/engine';
 import { isCallMessage } from '../../../../utils/call';
 import { Avatar } from '../../../Avatar';
-import { useMessageListContext } from '../../MessageListContext';
 import { ReadReceiptInfo } from '../../ReadReceiptInfo';
 import { AudioMessage } from '../AudioMessage';
 import { CustomMessage } from '../CustomMessage';
@@ -71,7 +69,7 @@ const shouldRenderAsGroupTip = computed(() => {
   return false;
 });
 
-const MessageComponentsFactory: Record<MessageType, Component> = {
+const MessageComponentsFactory = {
   [MessageType.TEXT]: TextMessage,
   [MessageType.IMAGE]: ImageMessage,
   [MessageType.AUDIO]: AudioMessage,
@@ -84,16 +82,7 @@ const MessageComponentsFactory: Record<MessageType, Component> = {
   [MessageType.GRP_TIP]: GroupTipMessage,
 };
 
-const messageListContext = useMessageListContext('MessageLayout');
-
-const MessageComponent = computed(() => {
-  const renderers = messageListContext?.messageRenderers;
-  const { type } = props.message;
-  if (renderers?.[type]) {
-    return renderers[type];
-  }
-  return MessageComponentsFactory[type];
-});
+const MessageComponent = computed(() => MessageComponentsFactory[props.message.type]);
 
 const isMessageOwner = computed(() => props.message.flow === 'out');
 

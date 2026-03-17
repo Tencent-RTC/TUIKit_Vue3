@@ -16,6 +16,7 @@ import VirtualBackgroundPanelComponent from './VirtualBackgroundPanel.vue';
  *
  * @props
  * @prop {string} assetsPath - 虚拟背景资源文件路径，用于加载虚拟背景所需的模型和图片资源
+ * @prop {CustomBackgroundImage[]} customImages - 自定义背景图片列表，用于展示用户自定义的虚拟背景图片
  *
  * @emits
  * @emit {void} close - 面板关闭时触发，用于通知父组件关闭面板
@@ -24,6 +25,7 @@ import VirtualBackgroundPanelComponent from './VirtualBackgroundPanel.vue';
  * <template>
  *   <VirtualBackgroundPanel
  *     :assets-path="assetsPath"
+ *     :custom-images="customImages"
  *     @close="handleClose"
  *   />
  * </template>
@@ -32,6 +34,10 @@ import VirtualBackgroundPanelComponent from './VirtualBackgroundPanel.vue';
  * import { VirtualBackgroundPanel } from 'tuikit-atomicx-vue3';
  *
  * const assetsPath = 'https://web.sdk.qcloud.com/hybrid/trtc-sdk-v5/assets';
+ * const customImages = [
+ *   { url: 'https://example.com/bg1.jpg', label: 'Office' },
+ *   { url: 'https://example.com/bg2.jpg' },
+ * ];
  *
  * function handleClose() {
  *   console.log('Panel closed');

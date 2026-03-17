@@ -17,7 +17,7 @@
           <img
             :src="CloseVirtualBackground"
             alt="close"
-            style="width: 32px"
+            style="width: 32px; height: 32px;"
           >
         </i>
         <span class="setting-item-text">{{ t('VirtualBackground.Close') }}</span>
@@ -34,6 +34,24 @@
           <img :src="BlurredBackground" alt="blurred">
         </i>
         <span class="setting-item-text">{{ t('VirtualBackground.Blurred') }}</span>
+      </div>
+      <div
+        v-for="(img, index) in customImages"
+        :key="img.url"
+        :class="[
+          'setting-item',
+          selectedBackground === `image-${index}` ? 'active' : '',
+          !isInitialized ? 'disabled' : '',
+        ]"
+        @click="applyVirtualBackground(`image-${index}`)"
+      >
+        <i class="setting-item-icon">
+          <img
+            :src="img.url"
+            :alt="resolveLabel(img.label) || `${t('VirtualBackground.Custom')} ${index + 1}`"
+          >
+        </i>
+        <span class="setting-item-text">{{ resolveLabel(img.label) || `${t('VirtualBackground.Custom')} ${index + 1}` }}</span>
       </div>
     </div>
     <div class="footer">
@@ -62,14 +80,25 @@ import { VirtualBackgroundEvent, VirtualBackgroundType } from '../../types/virtu
 // Asset imports
 import BlurredBackground from './assets/blurred-background.png';
 import CloseVirtualBackground from './assets/close-virtual-background.png';
+import type { CustomBackgroundImage } from '../../types/virtualBackground';
 
 // Hooks and composables
 const { t } = useUIKit();
+
+function resolveLabel(label?: string | (() => string)): string | undefined {
+  if (typeof label === 'function') {
+    return label();
+  }
+  return label;
+}
+
 const emit = defineEmits(['close']);
 const props = withDefaults(defineProps<{
   assetsPath: string;
+  customImages?: CustomBackgroundImage[];
 }>(), {
   assetsPath: 'https://web.sdk.qcloud.com/hybrid/trtc-sdk-v5/assets',
+  customImages: () => [],
 });
 
 const {
@@ -87,12 +116,30 @@ const {
 } = useVirtualBackgroundState();
 
 // Types
-type BackgroundType = 'close' | 'blur';
+type BackgroundType = 'close' | 'blur' | `image-${number}`;
+
+/**
+ * Resolve initial selection from saved config
+ */
+function resolveInitialSelection(): BackgroundType {
+  const config = virtualBackgroundConfig.value;
+  if (!config?.enable) {
+    return 'close';
+  }
+  if (config.type === VirtualBackgroundType.blur) {
+    return 'blur';
+  }
+  if (config.type === VirtualBackgroundType.image && config.imagePath) {
+    const idx = props.customImages.findIndex(img => img.url === config.imagePath);
+    if (idx >= 0) {
+      return `image-${idx}`;
+    }
+  }
+  return 'close';
+}
 
 // State references
-const selectedBackground = ref<BackgroundType>(
-  virtualBackgroundConfig.value?.enable ? 'blur' : 'close',
-);
+const selectedBackground = ref<BackgroundType>(resolveInitialSelection());
 const isLoading = ref(false);
 const isInitialized = ref(false);
 
@@ -101,14 +148,23 @@ const isInitialized = ref(false);
  * Get virtual background configuration based on type
  */
 function getVirtualBackgroundConfig(type: BackgroundType) {
-  switch (type) {
-    case 'close':
-      return { enable: false };
-    case 'blur':
-      return { enable: true, type: VirtualBackgroundType.blur };
-    default:
-      return { enable: false };
+  if (type === 'close') {
+    return { enable: false };
   }
+  if (type === 'blur') {
+    return { enable: true, type: VirtualBackgroundType.blur };
+  }
+  // Handle image-N pattern
+  const index = Number(type.replace('image-', ''));
+  const img = props.customImages[index];
+  if (img) {
+    return {
+      enable: true,
+      type: VirtualBackgroundType.image,
+      imagePath: img.url,
+    };
+  }
+  return { enable: false };
 }
 
 /**
@@ -138,8 +194,9 @@ async function initializeVirtualBackground() {
     await initVirtualBackground({ assetsPath: props.assetsPath });
     await startCameraTest({ view: 'stream-preview' });
 
-    const { enable, type } = virtualBackgroundConfig.value || {};
-    await setVirtualBackground({ enable, type });
+    selectedBackground.value = resolveInitialSelection();
+    const config = getVirtualBackgroundConfig(selectedBackground.value);
+    await setVirtualBackground(config);
     isInitialized.value = true;
   } catch (error) {
     console.error('Failed to initialize virtual background:', error);
@@ -248,21 +305,44 @@ onUnmounted(() => {
   display: flex;
   gap: 16px;
   padding: 1rem;
-  align-items: center;
+  align-items: flex-start;
   margin-top: 10px;
   border-radius: 8px;
   border: 1px solid var(--stroke-color-primary);
+  flex-wrap: wrap;
+  max-height: 200px;
+  overflow: auto;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(144, 147, 153, 0.3);
+    border-radius: 2px;
+
+    &:hover {
+      background-color: rgba(144, 147, 153, 0.6);
+    }
+  }
 
   &-item {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
     font-size: 12px;
     text-align: center;
     cursor: pointer;
     border: 1px solid transparent;
     border-radius: 8px;
     color: var(--text-color-secondary);
+    max-width: 70px;
 
     &-icon {
       display: flex;
@@ -274,10 +354,21 @@ onUnmounted(() => {
       border-radius: 8px;
       background-color: var(--bg-color-dialog);
       border: 1px solid var(--stroke-color-primary);
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+      }
     }
 
     &-text {
       padding: 3px 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
     }
   }
 
