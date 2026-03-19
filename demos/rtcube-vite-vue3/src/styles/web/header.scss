@@ -1,0 +1,211 @@
+$header-height: 72px;
+$header-bg-color: #E8F0F9;
+
+.maintenance-tips {
+  padding-left: 50px!important;
+  padding-right: 50px!important;
+}
+
+.header {
+  height: $header-height;
+  opacity: 1;
+  border-bottom: #F4F6FF 1px solid;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 20px;
+  padding-right: 30px;
+  flex-shrink: 0;
+  background-color: #FFFFFF;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    opacity: 1;
+    .header-button{
+      min-width: 186px;
+      justify-content: center;
+      border: none;
+      background-color: rgb(255,255,255);
+      cursor: pointer;
+      font-family: RobotoTRTC;
+      font-style: normal;
+      font-weight: 400;
+      font-size: 18px;
+      line-height: 30px;
+      color: #383F54;
+    }
+    button:focus{
+      outline: 0;
+    }
+
+    img {
+      width: 158px;
+      margin-right: 9px;
+    }
+    .header-logo,.header-title{
+      width: 36px;
+      height: 36px;
+    }
+    .header-title{
+      width: 120px;
+    }
+    .header-logo:hover,.header-title:hover {
+      cursor: pointer;
+    }
+
+    .header-word, .header-word-logo, .header-word-document{
+      // width: 175px;
+      font-size: 16px;
+      font-weight: 400;
+      text-align: left;
+      letter-spacing: 0.2px;
+      margin-left: 9px;
+      color: #000000;
+    }
+    .header-word {
+      min-width: 114px;
+      font-family: 'PingFang SC';
+      font-style: normal;
+      font-weight: 400;
+      font-size: 20px;
+      line-height: 20px;
+      /* identical to box height, or 150% */
+      display: flex;
+      align-items: center;
+      letter-spacing: 0.2px;
+      background: linear-gradient(0deg, #000000, #000000), linear-gradient(90deg, #0045E7 0%, #0087FF 55.73%, #1CBFFF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      border-left: 1.5px solid #C1C9DC;
+      padding-left: 16px;
+    }
+    .header-word-logo {
+      width: 360px;
+    }
+    .header-word-document, .header-word-International, .header-select{
+      margin-left: 20px;
+    }
+    .header-word-International {
+      font-size: 18px;
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    .header-select {
+      width: auto;
+    }
+    &:focus{
+      outline: 0;
+    }
+    .header-detect {
+      width: 118px;
+    }
+    .device-detect-btn {
+      white-space: nowrap;
+      margin-right: 20px;
+      margin-left: 3px;
+      opacity: 1;
+      color: rgba(0,0,0,1);
+      font-size: 16px;
+      font-weight: 400;
+      font-family: RobotoTRTC;
+      text-align: left;
+      justify-content: center;
+      border: none;
+      background-color: rgb(255,255,255);
+      cursor: pointer;
+      &:hover {
+        cursor: pointer;
+      }
+      &:focus{
+        outline: 0;
+      }
+    }
+
+    // tdesign 样式重写
+    .t-select {
+      background-color: transparent;
+    }
+
+    .t-input {
+      border: none;
+      font-size: 16px;
+      font-weight: 400;
+    }
+
+    .t-select .t-fake-arrow {
+      color: black;
+    }
+
+    .t-input--focused {
+      box-shadow: none;
+    }
+
+    .t-input.t-input--suffix > .t-input__suffix-icon {
+      margin-right: 20px;
+    }
+    .t-button {
+      padding-left: 0px;
+    }
+    .t-input {
+      padding: 0 0px;
+    }
+    .t-button--variant-text {
+      padding-right: 0;
+    }
+    .header-login {
+      width: 72px;
+      white-space: nowrap;
+      height: 33px;
+      border-radius: 4px;
+      background-color: transparent;
+      border: 1px solid #0052D9;
+      color: rgba(0,82,217,1);
+      font-size: 16px;
+      font-weight: 400;
+      font-family: RobotoTRTC;
+      text-align: center;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+    .user-info-section {
+      white-space: nowrap;
+      opacity: 1;
+      color: rgba(0,0,0,1);
+      font-size: 16px;
+      font-weight: 400;
+      font-family: RobotoTRTC;
+      text-align: left;
+      justify-content: center;
+      border: none;
+      background-color: rgb(255,255,255);
+      padding:0;
+      cursor: pointer;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+  }
+}
+.en-image {
+  background-image: url("https://qcloudimg.tencent-cloud.cn/raw/db3644c403e45f6ded0f9d7711e6e792.png");
+  background-size: cover;
+}
+
+#header-login-detail{
+  background-color: white;
+  border: 1px solid black;
+  color: black;
+  font-size: 16px;
+  font-weight: 400;
+  text-align: center;
+  &:hover {
+    cursor: pointer;
+  }
+}

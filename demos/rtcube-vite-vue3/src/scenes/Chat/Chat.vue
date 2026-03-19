@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { h, ref, watch } from 'vue';
-import { TUICallKit } from '@tencentcloud/call-uikit-vue';
+import { TUICallKit } from '@trtc/calls-uikit-vue';
 import {
   ConversationList,
   Chat,
@@ -19,7 +19,7 @@ import {
   VideoCallPicker,
   useUIKit,
   ChatHeader,
-  useConversationListState,
+  useConversationListState
 } from '@tencentcloud/chat-uikit-vue3';
 import { IconMenu, IconHistory3 } from '@tencentcloud/uikit-base-component-vue3';
 import { PlaceholderEmpty } from './components/PlaceholderEmpty';
@@ -33,7 +33,6 @@ const isSearchInChatShow = ref(false);
 const { t, theme } = useUIKit();
 const { activeConversation } = useConversationListState();
 
-// Close sidebar when switching conversations
 watch(() => activeConversation.value?.conversationID, (newVal, oldVal) => {
   if (newVal !== oldVal) {
     isChatSettingShow.value = false;
@@ -119,16 +118,9 @@ const enterChat = () => {
         class="chat-sidebar"
         :class="{ dark: theme === 'dark' }"
       >
-        <div class="chat-sidebar-header">
-          <span class="chat-sidebar-title">{{ t('chat.Setting') }}</span>
-          <button
-            class="icon-button"
-            @click="isChatSettingShow = false"
-          >
-            ✕
-          </button>
-        </div>
-        <ChatSetting />
+        <ChatSetting
+          @close="isChatSettingShow = false"
+        />
       </div>
 
       <!-- Search in Chat Sidebar -->
@@ -169,36 +161,27 @@ const enterChat = () => {
 @use '../../styles/mixins' as mixins;
 
 .chat-layout {
+  max-width: 900px;
+  max-height: 640px;
+  margin: auto;
   flex: 1;
   display: flex;
   flex-direction: row;
   overflow: hidden;
+  min-height: 0;
   background-color: var(--bg-color-operate);
   color: var(--text-color-primary);
   box-shadow: 0 4px 24px rgba(0,0,0,0.08), inset 0 -1px 0 rgba(255,255,255,0.05);
   border-radius: 24px;
-
-  @include mixins.tablet {
-    margin: 10vh 10vw;
-  }
-
-  @include mixins.xl-desktop {
-    flex-direction: row;
-    margin: 10vh 20vw;
-  }
 }
 
 .conversation-list-panel {
-  width: 300px;
+  width: 255px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   min-height: 0;
   border-right: 1px solid var(--stroke-color-primary);
-
-  @include mixins.desktop {
-    width: 350px;
-  }
 }
 
 .chat-content-panel {
@@ -268,12 +251,12 @@ const enterChat = () => {
   right: 0;
   top: 0;
   bottom: 0;
-  min-width: 300px;
+  min-width: 358px;
   max-width: 400px;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-color-operate);
-  box-shadow: var(--shadow-color) 0 0 10px;
+  box-shadow: 0 1px 5px var(--shadow-color), 0 8px 12px var(--shadow-color), 0 12px 26px var(--shadow-color);
   overflow: auto;
   z-index: 1000;
 
