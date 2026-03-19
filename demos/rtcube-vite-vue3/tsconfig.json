@@ -1,7 +1,25 @@
 {
-  "files": [],
+  "extends": "@vue/tsconfig/tsconfig.web.json",
+  "include": ["env.d.ts", "src/*", "./src/**/*.ts", "./src/**/*.vue"],
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "allowJs": true,
+    "allowImportingTsExtensions": true, //this works only with below noEmit set to true
+    "noEmit": true,
+    "noImplicitAny": false,
+    "preserveValueImports": false,
+    "importsNotUsedAsValues": "remove",
+    "verbatimModuleSyntax": true,
+    "strictNullChecks": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+
   "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
+    {
+      "path": "./tsconfig.config.json"
+    }
   ]
 }

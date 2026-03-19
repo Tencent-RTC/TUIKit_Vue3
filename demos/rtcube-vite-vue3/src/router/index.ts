@@ -1,61 +1,39 @@
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router';
 
-const routes = [
+// Only keep Home and Detail routes
+const Home = () => import('../views/Home/index.vue');
+const Detail = () => import('../views/Detail/index.vue');
+const Login = () => import('../views/Login/Login.vue');
+
+export const routes: RouteRecordRaw[] = [
+  { path: '/', redirect: '/home' },
   {
-    path: '/',
-    name: 'Home',
-    component: () => import('../pages/Home/Home.vue'),
+    path: '/home',
+    name: 'home',
+    component: Home
   },
   {
-    path: '/login/:sceneId?',
-    name: 'Login',
-    component: () => import('../pages/Login/Login.vue'),
+    path: '/detail',
+    name: 'detail',
+    component: Detail
   },
   {
-    path: '/stages',
-    name: 'Stages',
-    redirect: { name: 'chat' },
-    component: () => import('../pages/Stages/Stages.vue'),
-    children: [
-      {
-        path: '/stages/chat',
-        name: 'chat',
-        component: () => import('../scenes/Chat/Chat.vue'),
-      },
-      {
-        path: '/stages/call',
-        name: 'call',
-        component: () => import('../scenes/Call/Call.vue'),
-      },
-      {
-        path: '/stages/live',
-        name: 'live',
-        component: () => import('../scenes/Live/Live.vue'),
-      },
-      {
-        path: '/stages/live-list',
-        name: 'live-list',
-        component: () => import('../scenes/Live/LiveList'),
-      },
-      {
-        path: '/stages/live-player',
-        name: 'live-player',
-        component: () => import('../scenes/Live/LivePlayer'),
-      },
-      {
-        path: '/stages/live-pusher',
-        name: 'live-pusher',
-        component: () => import('../scenes/Live/LivePusher'),
-      },
-    ]
-  },
+    path: '/login',
+    name: 'login',
+    component: Login
+  }
 ];
 
-export const router = createRouter({
+const router = createRouter({
   history: createWebHashHistory(),
   routes,
+  scrollBehavior: (_to, _from, savedPosition) => {
+    if (savedPosition) {
+      return savedPosition;
+    } else {
+      return { top: 0 };
+    }
+  }
 });
 
 export default router;
-
-
