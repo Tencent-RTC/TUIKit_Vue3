@@ -1,0 +1,49 @@
+/* Variables for tpm-components */
+// Material id
+$material-id: '14';
+
+// Class prefix
+$prefix: tp !default;
+$matPrefix: 'tav' !default;
+
+// Responsive breakpoints
+$largePCPoint: 1440px !default;
+$PCPoint: 1024px !default;
+$ipadPoint: 768px !default;
+$phonePoint: 320px !default;
+
+// Wide screen
+$largePCMin: $largePCPoint !default;
+
+// Narrow screen (default)
+$PCMin: $PCPoint !default;
+$PCMax: $largePCPoint - 1 !default;
+
+// Tablet
+$ipadMin: $ipadPoint !default;
+$ipadMax: $PCPoint - 1 !default;
+
+// Phone
+$phoneMin: $phonePoint !default;
+$phoneMax: $ipadPoint - 1 !default;
+
+// Content area width
+$contentGap: 10px !default;
+$largeContentPoint: 1440px !default;
+$contentPoint: 1200px !default;
+
+$largeContent: $largeContentPoint - $contentGap * 2 !default;
+$content: $contentPoint - $contentGap * 2 !default;
+
+// Page padding
+$plr: 20px !default;
+$ipadPlr: 24px !default;
+$phonePlr: 16px !default;
+
+// Text colors
+$textColorPrimary: #000 !default;
+$textColor: #3D485D !default;
+$textColorWeak: #98A3B7 !default;
+$textColorHover: #0052d9 !default;
+
+$borderColor: #d6dbe3 !default;

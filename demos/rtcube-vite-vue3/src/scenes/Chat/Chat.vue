@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { h, ref, watch } from 'vue';
-import { TUICallKit } from '@tencentcloud/call-uikit-vue';
 import {
   ConversationList,
   Chat,
@@ -22,6 +21,7 @@ import {
   useConversationListState,
 } from '@tencentcloud/chat-uikit-vue3';
 import { IconMenu, IconHistory3 } from '@tencentcloud/uikit-base-component-vue3';
+import { TUICallKit } from '@trtc/calls-uikit-vue';
 import { PlaceholderEmpty } from './components/PlaceholderEmpty';
 import { SideTab } from './components/SideTab';
 
@@ -33,7 +33,6 @@ const isSearchInChatShow = ref(false);
 const { t, theme } = useUIKit();
 const { activeConversation } = useConversationListState();
 
-// Close sidebar when switching conversations
 watch(() => activeConversation.value?.conversationID, (newVal, oldVal) => {
   if (newVal !== oldVal) {
     isChatSettingShow.value = false;
@@ -70,75 +69,61 @@ const enterChat = () => {
       <ContactList v-show="activeTab === 'contact'" />
     </div>
 
-    <!-- Chat Content Panel -->
-    <Chat
+    <!-- Chat Content Panel + Search Panel Container -->
+    <div
       v-if="activeTab === 'conversation'"
-      :PlaceholderEmpty="() => h(
-        PlaceholderEmpty,
-        { type: 'chat' })
-      "
-      class="chat-content-panel"
+      class="chat-with-search"
     >
-      <ChatHeader>
-        <template #ChatHeaderRight>
-          <button
-            class="icon-button"
-            :title="t('chat.Setting')"
-            @click="isChatSettingShow = !isChatSettingShow"
-          >
-            <IconMenu size="20" />
-          </button>
-        </template>
-      </ChatHeader>
-      <MessageList />
-      <MessageInput class="message-input-container">
-        <template #headerToolbar>
-          <div class="message-toolbar">
-            <div class="message-toolbar-actions">
-              <EmojiPicker />
-              <ImagePicker />
-              <FilePicker />
-              <VideoPicker />
-              <AudioCallPicker />
-              <VideoCallPicker />
-            </div>
+      <Chat
+        :PlaceholderEmpty="() => h(
+          PlaceholderEmpty,
+          { type: 'chat' })
+        "
+        class="chat-content-panel"
+      >
+        <ChatHeader>
+          <template #ChatHeaderRight>
             <button
               class="icon-button"
-              :title="t('chat.Search')"
-              @click="isSearchInChatShow = !isSearchInChatShow"
+              :title="t('chat.Setting')"
+              @click="isChatSettingShow = !isChatSettingShow"
             >
-              <IconHistory3 size="20" />
+              <IconMenu size="20" />
             </button>
-          </div>
-        </template>
-      </MessageInput>
+          </template>
+        </ChatHeader>
+        <MessageList />
+        <MessageInput class="message-input-container">
+          <template #headerToolbar>
+            <div class="message-toolbar">
+              <div class="message-toolbar-actions">
+                <EmojiPicker />
+                <ImagePicker />
+                <FilePicker />
+                <VideoPicker />
+                <AudioCallPicker />
+                <VideoCallPicker />
+              </div>
+              <button
+                class="icon-button"
+                :title="t('chat.Search')"
+                @click="isSearchInChatShow = !isSearchInChatShow"
+              >
+                <IconHistory3 size="20" />
+              </button>
+            </div>
+          </template>
+        </MessageInput>
+      </Chat>
 
-      <!-- Chat Setting Sidebar -->
-      <div
-        v-show="isChatSettingShow"
-        class="chat-sidebar"
-        :class="{ dark: theme === 'dark' }"
-      >
-        <div class="chat-sidebar-header">
-          <span class="chat-sidebar-title">{{ t('chat.Setting') }}</span>
-          <button
-            class="icon-button"
-            @click="isChatSettingShow = false"
-          >
-            ✕
-          </button>
-        </div>
-        <ChatSetting />
-      </div>
-
-      <!-- Search in Chat Sidebar -->
+      <!-- Search in Chat Panel (side-by-side with chat, not overlapping) -->
       <div
         v-show="isSearchInChatShow"
-        class="chat-sidebar"
+        class="search-panel"
         :class="{ dark: theme === 'dark' }"
       >
-        <div class="chat-sidebar-header">
-          <span class="chat-sidebar-title">{{ t('chat.Search') }}</span>
+        <div class="search-panel-header">
+          <span class="search-panel-title">{{ t('chat.Search') }}</span>
           <button
             class="icon-button"
             @click="isSearchInChatShow = false"
@@ -148,7 +133,18 @@ const enterChat = () => {
         </div>
         <Search :variant="VariantType.EMBEDDED" />
       </div>
-    </Chat>
+
+      <!-- Chat Setting Sidebar (overlay on the entire chat-with-search area) -->
+      <div
+        v-show="isChatSettingShow"
+        class="chat-sidebar"
+        :class="{ dark: theme === 'dark' }"
+      >
+        <ChatSetting
+          @close="isChatSettingShow = false"
+        />
+      </div>
+    </div>
 
     <!-- Contact Detail Panel -->
     <ContactInfo
@@ -169,45 +165,45 @@ const enterChat = () => {
 @use '../../styles/mixins' as mixins;
 
 .chat-layout {
+  max-width: 900px;
+  max-height: 640px;
+  margin: auto;
   flex: 1;
   display: flex;
   flex-direction: row;
   overflow: hidden;
+  min-height: 0;
   background-color: var(--bg-color-operate);
   color: var(--text-color-primary);
   box-shadow: 0 4px 24px rgba(0,0,0,0.08), inset 0 -1px 0 rgba(255,255,255,0.05);
   border-radius: 24px;
-
-  @include mixins.tablet {
-    margin: 10vh 10vw;
-  }
-
-  @include mixins.xl-desktop {
-    flex-direction: row;
-    margin: 10vh 20vw;
-  }
 }
 
 .conversation-list-panel {
-  width: 300px;
+  width: 255px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   min-height: 0;
   border-right: 1px solid var(--stroke-color-primary);
+}
 
-  @include mixins.desktop {
-    width: 350px;
-  }
+.chat-with-search {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  min-width: 0;
+  position: relative;
 }
 
 .chat-content-panel {
   flex: 1;
-  position: relative;
+  min-width: 0;
 }
 
 .contact-detail-panel {
-  flex: 1;
+  height: auto;
 }
 
 .message-input-container {
@@ -268,12 +264,12 @@ const enterChat = () => {
   right: 0;
   top: 0;
   bottom: 0;
-  min-width: 300px;
+  min-width: 358px;
   max-width: 400px;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-color-operate);
-  box-shadow: var(--shadow-color) 0 0 10px;
+  box-shadow: 0 1px 5px var(--shadow-color), 0 8px 12px var(--shadow-color), 0 12px 26px var(--shadow-color);
   overflow: auto;
   z-index: 1000;
 
@@ -282,7 +278,21 @@ const enterChat = () => {
   }
 }
 
-.chat-sidebar-header {
+.search-panel {
+  width: 358px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-color-operate);
+  border-left: 1px solid var(--stroke-color-primary);
+  overflow: auto;
+
+  &.dark {
+    border-left-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.search-panel-header {
   position: sticky;
   top: 0;
   display: flex;
@@ -294,7 +304,7 @@ const enterChat = () => {
   z-index: 10;
 }
 
-.chat-sidebar-title {
+.search-panel-title {
   font-size: 16px;
   font-weight: 500;
   color: var(--text-color-primary);

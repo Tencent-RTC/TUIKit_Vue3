@@ -10,17 +10,17 @@
     <div class="tabs">
       <div
         class="tab-item"
-        :class="{ active: props.activeTab === 'conversation' }"
         @click="handleTabChange('conversation')"
       >
-        <IconChatNew size="24" />
+        <IconMessage size="24"  v-if="props.activeTab !== 'conversation'" />
+        <IconMessageSelected size="24" v-else />
       </div>
       <div
         class="tab-item"
-        :class="{ active: props.activeTab === 'contact' }"
         @click="handleTabChange('contact')"
       >
-        <IconContacts size="24" />
+        <IconContacts size="24" v-if="props.activeTab !== 'contact'" />
+        <IconContactsSelected size="24" v-else />
       </div>
     </div>
   </div>
@@ -30,7 +30,12 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { useLoginState, useUIKit, Avatar } from '@tencentcloud/chat-uikit-vue3';
-import { IconChatNew, IconContacts } from '@tencentcloud/uikit-base-component-vue3';
+import { 
+  IconMessage,
+  IconMessageSelected,
+  IconContacts,
+  IconContactsSelected,
+} from '@tencentcloud/uikit-base-component-vue3';
 
 const { theme } = useUIKit();
 const { loginUserInfo } = useLoginState();
@@ -56,7 +61,7 @@ const handleTabChange = (tab: 'conversation' | 'contact') => {
 
 <style scoped>
 .side-tab {
-  width: 72px;
+  width: 60px;
   height: 100vh;
   background: var(--bg-color-function);
   display: flex;
@@ -124,6 +129,7 @@ const handleTabChange = (tab: 'conversation' | 'contact') => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  background: transparent;
 }
 
 .tab-item {
@@ -136,15 +142,6 @@ const handleTabChange = (tab: 'conversation' | 'contact') => {
   cursor: pointer;
   transition: all 0.3s;
   color: var(--text-color-primary);
-}
-
-.tab-item:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.tab-item.active {
-  background: var(--button-color-primary-default);
-  color: var(--text-color-button);
 }
 
 .side-tab.dark {
