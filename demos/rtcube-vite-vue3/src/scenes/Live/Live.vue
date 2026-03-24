@@ -1,168 +1,190 @@
 <template>
-  <div class="live-page">
-    <div class="main-content">
-      <div class="live-content">
-        <h2 class="live-title">
-          {{ t('live.title') }}
-        </h2>
+  <div class="live-scene">
+    <!-- Live List View -->
+    <div v-if="currentPage === 'list'" class="live-list-container">
+      <LiveHeader
+        :show-start-button="true"
+        @start-live="goToPusher"
+        @go-home="goToList"
+      />
+      <LiveListView @live-room-click="handleLiveRoomClick" />
+    </div>
 
-        <div class="authenticated-content">
-          <p class="welcome-text">
-            {{ t('live.welcome') }}
-          </p>
+    <!-- Live Pusher View -->
+    <div v-else-if="currentPage === 'pusher'" class="live-pusher-container">
+      <LiveHeader
+        :show-start-button="false"
+        @go-home="goToList"
+      />
+      <LivePusherView @leave-live="goToList" />
+    </div>
 
-          <div class="action-grid">
-            <div class="action-card">
-              <h3>{{ t('live.startLive') }}</h3>
-              <p>{{ t('live.startLiveDesc') }}</p>
-              <button class="action-btn action-btn--live" @click="startLive">
-                {{ t('live.startLiveBtn') }}
-              </button>
-            </div>
-
-            <div class="action-card">
-              <h3>{{ t('live.watchLive') }}</h3>
-              <p>{{ t('live.watchLiveDesc') }}</p>
-              <button class="action-btn action-btn--watch" @click="watchLive">
-                {{ t('live.watchLiveBtn') }}
-              </button>
-            </div>
-          </div>
-
-          <div class="live-list">
-            <h3>{{ t('live.hotLive') }}</h3>
-            <LiveList @live-room-click="handleLiveItemClick" />
-          </div>
-        </div>
-      </div>
+    <!-- Live Player View -->
+    <div v-else-if="currentPage === 'player'" class="live-player-container">
+      <LiveHeader
+        v-show="!isMobile"
+        :show-start-button="false"
+        :show-login-button="false"
+        @go-home="goToList"
+      />
+      <LivePlayerView
+        v-if="loginUserInfo"
+        :live-id="currentLiveId"
+        @leave-live="goToList"
+      />
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { LiveList, useLiveListState } from 'tuikit-atomicx-vue3';
-import { useRouter } from 'vue-router';
+<script lang="ts" setup>
+import { ref, watch } from 'vue';
+import TUIRoomEngine from '@tencentcloud/tuiroom-engine-js';
+import { TUIMessageBox, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import {
+  useLoginState,
+  useLiveListState,
+  useDeviceState,
+} from 'tuikit-atomicx-vue3';
 import type { LiveInfo } from 'tuikit-atomicx-vue3';
+import {
+  LiveListView,
+  LivePlayerView,
+  LivePusherView,
+  isMobile,
+} from './TUILiveKit';
+import LiveHeader from './components/LiveHeader.vue';
+
+type PageType = 'list' | 'pusher' | 'player';
 
 const { t } = useUIKit();
+const { loginUserInfo } = useLoginState();
+const { currentLive, joinLive } = useLiveListState();
+const { openLocalMicrophone } = useDeviceState();
 
-const router = useRouter();
-const { joinLive } = useLiveListState();
+const currentPage = ref<PageType>('list');
+const currentLiveId = ref<string>('');
 
-const startLive = () => {
-  router.push({ name: 'live-pusher' });
-};
+// Enable multi-playback quality when ready
+TUIRoomEngine.once('ready', () => {
+  TUIRoomEngine.callExperimentalAPI(JSON.stringify({
+    api: 'enableMultiPlaybackQuality',
+    params: {
+      enable: true,
+    },
+  }));
+});
 
-const watchLive = () => {
-  router.push({ name: 'live-list' });
-};
+// Watch for live ID changes and store in session
+watch(() => currentLive.value?.liveId, (newVal, oldVal) => {
+  if (newVal) {
+    sessionStorage.setItem('livekit-live-id', currentLive.value?.liveId || '');
+  }
+  if (oldVal && !newVal) {
+    sessionStorage.removeItem('livekit-live-id');
+  }
+});
 
-const handleLiveItemClick = async (liveInfo: LiveInfo) => {
-  await joinLive({ liveId: liveInfo.liveId });
-  router.push({ name: 'live-player' });
-};
+// Navigation methods
+function goToList() {
+  currentPage.value = 'list';
+  currentLiveId.value = '';
+}
 
+function goToPusher() {
+  currentPage.value = 'pusher';
+}
+
+function goToPlayer(liveId: string) {
+  currentLiveId.value = liveId;
+  currentPage.value = 'player';
+}
+
+// Handle live room click from list
+function handleLiveRoomClick(liveInfo: LiveInfo) {
+  if (loginUserInfo.value?.userId === liveInfo.liveOwner?.userId) {
+    TUIMessageBox.alert({
+      title: t('Warning'),
+      content: t('Unable to view own live'),
+    });
+    return;
+  }
+
+  if (liveInfo?.liveId) {
+    goToPlayer(liveInfo.liveId);
+  }
+}
+
+// Restore live session on login
+async function restoreLive() {
+  const liveId = sessionStorage.getItem('livekit-live-id');
+  if (liveId) {
+    await TUIMessageBox.confirm({
+      title: t('It is detected that you have an unfinished live broadcast session last time. Do you want to resume it?'),
+      callback: async (action) => {
+        if (action === 'confirm') {
+          try {
+            await joinLive({ liveId });
+            openLocalMicrophone();
+            goToPusher();
+          } catch (error) {
+            alert(t('Failed to join live broadcast session'));
+            sessionStorage.removeItem('livekit-live-id');
+            console.error(error);
+          }
+        } else {
+          sessionStorage.removeItem('livekit-live-id');
+        }
+      },
+    });
+  }
+}
+
+// Watch for login state changes
+watch(loginUserInfo, (newVal) => {
+  if (newVal && newVal.userId) {
+    restoreLive();
+  }
+});
 </script>
 
-<style scoped lang="scss">
-.live-page {
-  flex: 1;
-  padding: 20px;
-  display: flex;
-  justify-content: center;
-}
-
-.main-content {
-  flex: 1;
-  display: flex;
-}
-
-.live-content {
-  flex: 1;
+<style lang="scss" scoped>
+.live-scene {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
+  overflow: hidden;
 }
 
-.live-title {
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.authenticated-content {
-  flex: 1;
+.live-list-container,
+.live-pusher-container,
+.live-player-container {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  .welcome-text {
-    color: #666;
-    margin-bottom: 20px;
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+.live-list-container {
+  padding: 16px;
+}
+
+.live-pusher-container {
+  padding: 16px;
+}
+
+.live-player-container {
+  padding: 16px;
+
+  &:has(.live-player-header) {
+    padding-top: 16px;
   }
 }
 
-.action-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.action-card {
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-
-  h3 {
-    margin-bottom: 15px;
-    color: #333;
-  }
-
-  p {
-    color: #666;
-    margin-bottom: 15px;
-  }
-}
-
-.action-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.3s ease;
-
-  &--live {
-    background: #dc3545;
-    color: white;
-
-    &:hover {
-      background: #c82333;
-    }
-  }
-
-  &--watch {
-    background: #007bff;
-    color: white;
-
-    &:hover {
-      background: #0056b3;
-    }
-  }
-}
-
-.live-list {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  h3 {
-    margin-bottom: 20px;
-    color: #333;
-  }
+.live-player-header {
+  flex-shrink: 0;
+  padding-bottom: 0;
 }
 </style>

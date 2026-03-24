@@ -1,0 +1,36 @@
+// Responsive breakpoint mixins
+
+// Mobile devices (default)
+@mixin mobile {
+  @media screen and (max-width: 767px) {
+    @content;
+  }
+}
+
+// Tablet devices
+@mixin tablet {
+  @media screen and (min-width: 768px) {
+    @content;
+  }
+}
+
+// Desktop devices
+@mixin desktop {
+  @media screen and (min-width: 1024px) {
+    @content;
+  }
+}
+
+// Large desktop devices
+@mixin lg-desktop {
+  @media screen and (min-width: 1280px) {
+    @content;
+  }
+}
+
+// Extra large desktop devices
+@mixin xl-desktop {
+  @media screen and (min-width: 1536px) {
+    @content;
+  }
+}

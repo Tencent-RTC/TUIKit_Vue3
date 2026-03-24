@@ -1,0 +1,14 @@
+@import './variables';
+
+// Material class prefix
+$_prefix: $matPrefix;
+
+@function getPrefixCls($suffixCls: '') {
+  $result: $_prefix;
+
+  @if $suffixCls != '' {
+    $result: #{$_prefix}-#{$suffixCls};
+  }
+
+  @return $result;
+}
