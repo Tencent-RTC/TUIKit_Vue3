@@ -1,7 +1,7 @@
 <template>
   <Transition name="player-control">
     <div
-      v-show="showControls"
+      v-show="controlBarVisible"
       ref="playerControlRef"
       :class="[
         'playback-controls',
@@ -10,45 +10,26 @@
       ]"
     >
       <div class="control-buttons">
-        <span
-          v-if="!isSafari || !hasTCPlayer()"
-          class="control-btn play-pause-btn"
-          :class="{disabled: isPlayPauseDisabled}"
-          :title="isPlaying ? t('LiveView.Pause') : t('LiveView.Play')"
-          @click="handlePlayPause"
-        >
-          <IconPause v-if="isPlaying" size="20" />
-          <IconPlay v-else size="20" />
-        </span>
-        <div class="center-controls" />
+        <div class="left-controls">
+          <ControlBarItem
+            v-for="item in leftControlItems"
+            :key="item.key"
+            :item="item"
+          />
+        </div>
+        <div class="center-controls">
+          <ControlBarItem
+            v-for="item in centerControlItems"
+            :key="item.key"
+            :item="item"
+          />
+        </div>
         <div class="right-controls">
-          <MultiResolution />
-          <span v-if="!isSafari || !hasTCPlayer()" class="control-btn audio-control-btn">
-            <AudioControl
-              class="audio-control-icon"
-              :icon-size="20"
-              :volume="currentVolume"
-              :is-muted="isMuted"
-              @volume-change="handleVolumeChange"
-              @mute-change="handleMuteChange"
-            />
-          </span>
-          <span
-            class="control-btn"
-            :class="{disabled: isPictureInPictureDisabled}"
-            :title="isPictureInPicture ? t('LiveView.ExitPictureInPicture') : t('LiveView.PictureInPicture')"
-            @click="handlePictureInPicture"
-          >
-            <IconPictureInPicture size="20" />
-          </span>
-          <span
-            class="control-btn fullscreen-btn"
-            :class="{disabled: isFullscreenDisabled}"
-            :title="isFullscreen ? t('LiveView.ExitFullscreen') : t('LiveView.Fullscreen')"
-            @click="handleFullscreen"
-          >
-            <IconFullScreen size="20" />
-          </span>
+          <ControlBarItem
+            v-for="item in rightControlItems"
+            :key="item.key"
+            :item="item"
+          />
         </div>
       </div>
     </div>
@@ -56,160 +37,183 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, onBeforeUnmount } from 'vue';
 import {
-  IconFullScreen,
-  IconPictureInPicture,
-  IconPause,
-  IconPlay,
-  useUIKit,
-  TUIToast,
-  TOAST_TYPE,
-} from '@tencentcloud/uikit-base-component-vue3';
+  computed,
+  onMounted,
+  ref,
+  onBeforeUnmount,
+} from 'vue';
 import { isMobile } from '../../../utils';
-import AudioControl from './AudioControl.vue';
-import MultiResolution from './MultiResolution.vue';
+import ControlBarItem from './ControlBarItem.vue';
 import { usePlayerControlState } from './PlayerControlState';
+import { PlayerControlButton } from '../../../types/player';
+import type { CustomButton } from '../../../types/player';
+import type { ControlItem } from './types';
 
 const {
-  isMuted,
-  isPlaying,
-  isFullscreen,
-  isPictureInPicture,
-  currentVolume,
-  pause,
-  resume,
-  requestPictureInPicture,
-  exitPictureInPicture,
-  requestFullscreen,
-  exitFullscreen,
-  setVolume,
-  setMute,
+  controlBarVisible,
+  buttons,
+  customButtons,
   cleanup,
-  isSafari,
-  hasTCPlayer,
+  setControlBarVisible,
+  startAutoHide,
+  stopAutoHide,
 } = usePlayerControlState();
 
 const props = defineProps<{
   isLandscapeStyleMode?: boolean;
 }>();
 
-const { t } = useUIKit();
 const playerControlRef = ref<HTMLElement>();
-const showControls = ref(false);
-const hideTimeout = ref<number | null>(null);
 
-const AUTO_HIDE_DELAY = 1500; // ms
+type ControlZone = 'left' | 'center' | 'right';
+type CustomButtonPlacement = 'prepend' | 'append' | 'before' | 'after';
 
-/**
- * Disabled state computed properties for control buttons
- * - Play/Pause: disabled in PiP mode (pause not allowed in PiP)
- * - PiP: disabled when paused (must be playing to enter PiP) or in fullscreen mode
- * - Fullscreen: disabled in PiP mode (fullscreen not allowed in PiP)
- */
-const isPlayPauseDisabled = computed(() => isPictureInPicture.value);
-const isPictureInPictureDisabled = computed(() => (!isPlaying.value && !isPictureInPicture.value) || (isFullscreen.value && !isPictureInPicture.value));
-const isFullscreenDisabled = computed(() => isPictureInPicture.value);
-
-const handlePlayPause = () => {
-  if (isPlayPauseDisabled.value) {
-    TUIToast({
-      type: TOAST_TYPE.WARNING,
-      message: t('LiveView.NotAllowPauseInPIP'),
-    });
-    return;
-  }
-
-  if (isPlaying.value) {
-    pause();
-  } else {
-    resume();
-  }
+type NormalizedCustomButton = {
+  key: string;
+  button: CustomButton;
+  zone: ControlZone;
+  placement: CustomButtonPlacement;
+  anchor?: PlayerControlButton;
 };
 
-// Picture-in-picture is not allowed in paused state or fullscreen mode
-const handlePictureInPicture = async () => {
-  if (!isPlaying.value && !isPictureInPicture.value) {
-    TUIToast({
-      type: TOAST_TYPE.WARNING,
-      message: t('LiveView.NotAllowPIPInNonPlaying'),
-    });
-    return;
-  }
-
-  if (isFullscreen.value && !isPictureInPicture.value) {
-    TUIToast({
-      type: TOAST_TYPE.WARNING,
-      message: t('LiveView.NotAllowPIPInFullscreen'),
-    });
-    return;
-  }
-
-  let flag = false;
-  if (isPictureInPicture.value) {
-    flag = await exitPictureInPicture();
-  } else {
-    flag = await requestPictureInPicture();
-  }
-
-  if (!flag) {
-    TUIToast({
-      type: TOAST_TYPE.ERROR,
-      message: t('LiveView.SystemNotSupportPIP'),
-    });
-  }
+const BUILTIN_CONTROL_LAYOUT: Record<ControlZone, PlayerControlButton[]> = {
+  left: [PlayerControlButton.Play],
+  center: [],
+  right: [
+    PlayerControlButton.Resolution,
+    PlayerControlButton.Volume,
+    PlayerControlButton.PictureInPicture,
+    PlayerControlButton.Fullscreen,
+  ],
 };
 
-// Full-screen mode is not allowed in picture-in-picture mode
-const handleFullscreen = () => {
-  if (isFullscreenDisabled.value) {
-    TUIToast({
-      type: TOAST_TYPE.WARNING,
-      message: t('LiveView.NotAllowFullscreenInPIP'),
-    });
-    return;
-  }
-  if (isFullscreen.value) {
-    exitFullscreen();
-  } else {
-    requestFullscreen();
-  }
+const BUILTIN_CONTROL_ZONE_MAP: Record<PlayerControlButton, ControlZone> = {
+  [PlayerControlButton.Play]: 'left',
+  [PlayerControlButton.Resolution]: 'right',
+  [PlayerControlButton.Volume]: 'right',
+  [PlayerControlButton.PictureInPicture]: 'right',
+  [PlayerControlButton.Fullscreen]: 'right',
 };
 
-const handleVolumeChange = async (volume: number) => {
-  // When the mouse is placed in the liveCoreView area on a pc, playerControls will always be displayed
-  if (isMobile) {
-    startAutoHideControl();
+const toCustomControlItem = (button: NormalizedCustomButton): ControlItem => ({
+  kind: 'custom',
+  key: button.key,
+  button: button.button,
+});
+
+const normalizeCustomButton = (button: CustomButton): NormalizedCustomButton => {
+  const position = button.position ?? 'end';
+  const key = `custom-${button.id}`;
+
+  if (position === 'start') {
+    return {
+      key,
+      button,
+      zone: 'left',
+      placement: 'prepend',
+    };
   }
-  await setVolume(volume);
-};
 
-const handleMuteChange = async () => {
-  await setMute(!isMuted.value);
-};
-
-const startAutoHideControl = () => {
-  stopAutoHideControl();
-  hideTimeout.value = window.setTimeout(() => {
-    showControls.value = false;
-    hideTimeout.value = null;
-  }, AUTO_HIDE_DELAY);
-};
-
-const stopAutoHideControl = () => {
-  if (hideTimeout.value) {
-    clearTimeout(hideTimeout.value);
-    hideTimeout.value = null;
+  if (position === 'end') {
+    return {
+      key,
+      button,
+      zone: 'right',
+      placement: 'append',
+    };
   }
+
+  if ('slot' in position) {
+    return {
+      key,
+      button,
+      zone: position.slot,
+      placement: 'append',
+    };
+  }
+
+  return {
+    key,
+    button,
+    zone: BUILTIN_CONTROL_ZONE_MAP[position.anchor],
+    placement: position.position,
+    anchor: position.anchor,
+  };
 };
+
+const normalizedCustomButtons = computed<NormalizedCustomButton[]>(() =>
+  customButtons.value
+    .filter((button: CustomButton) => button.visible !== false)
+    .map(normalizeCustomButton),
+);
+
+const buildControlItems = (zone: ControlZone): ControlItem[] => {
+  const builtinButtons = BUILTIN_CONTROL_LAYOUT[zone];
+  const builtinButtonSet = new Set(builtinButtons);
+  const prependItems: ControlItem[] = [];
+  const appendItems: ControlItem[] = [];
+  const beforeAnchorItems = new Map<PlayerControlButton, ControlItem[]>();
+  const afterAnchorItems = new Map<PlayerControlButton, ControlItem[]>();
+
+  normalizedCustomButtons.value.forEach((button) => {
+    if (button.zone !== zone) {
+      return;
+    }
+
+    if (button.placement === 'prepend') {
+      prependItems.push(toCustomControlItem(button));
+      return;
+    }
+
+    if (button.placement === 'append') {
+      appendItems.push(toCustomControlItem(button));
+      return;
+    }
+
+    if (!button.anchor || !builtinButtonSet.has(button.anchor)) {
+      appendItems.push(toCustomControlItem(button));
+      return;
+    }
+
+    const targetMap = button.placement === 'before' ? beforeAnchorItems : afterAnchorItems;
+    const targetList = targetMap.get(button.anchor) ?? [];
+    targetList.push(toCustomControlItem(button));
+    targetMap.set(button.anchor, targetList);
+  });
+
+  const items: ControlItem[] = [...prependItems];
+
+  builtinButtons.forEach((buttonId) => {
+    items.push(...(beforeAnchorItems.get(buttonId) ?? []));
+
+    if (buttons[buttonId].visible) {
+      items.push({
+        kind: 'default',
+        key: `default-${buttonId}`,
+        id: buttonId,
+      });
+    }
+
+    items.push(...(afterAnchorItems.get(buttonId) ?? []));
+  });
+
+  items.push(...appendItems);
+
+  return items;
+};
+
+const leftControlItems = computed(() => buildControlItems('left'));
+const centerControlItems = computed(() => buildControlItems('center'));
+const rightControlItems = computed(() => buildControlItems('right'));
 
 const onMouseOver = () => {
-  stopAutoHideControl();
-  showControls.value = true;
+  stopAutoHide();
+  setControlBarVisible(true);
 };
 
 const onMouseOut = () => {
-  startAutoHideControl();
+  startAutoHide();
 };
 
 const setupParentMouseListener = () => {
@@ -246,15 +250,17 @@ const isLiveCoreViewTarget = (target: Node) => {
 
 // Handle the touch in the player control area
 const handlePlayerControlTouch = () => {
-  stopAutoHideControl();
-  startAutoHideControl();
+  stopAutoHide();
+  startAutoHide();
 };
 
 // Handle the touch in the core view area of the live broadcast
 const handleLiveCoreViewTouch = () => {
-  showControls.value = !showControls.value;
-  if (showControls.value) {
-    startAutoHideControl();
+  if (controlBarVisible.value) {
+    setControlBarVisible(false);
+  } else {
+    setControlBarVisible(true);
+    startAutoHide();
   }
 };
 
@@ -270,7 +276,7 @@ const handleScreenTouchStart = (event: TouchEvent) => {
 
 const handleScreenTouchMove = (event: TouchEvent) => {
   if (playerControlRef.value && playerControlRef.value.contains(event.target as Node)) {
-    stopAutoHideControl();
+    stopAutoHide();
   }
 };
 
@@ -295,7 +301,7 @@ const handleScreenTouchEnd = (event: TouchEvent) => {
   } else if (isLiveCoreViewTarget(target)) {
     handleLiveCoreViewTouch();
   } else {
-    showControls.value = false;
+    setControlBarVisible(false);
   }
 
   touchStartCoords.value = null;
@@ -320,7 +326,7 @@ const removeTouchEventListeners = () => {
 const cleanupEventListeners = () => {
   removeTouchEventListeners();
   removeParentMouseListener();
-  stopAutoHideControl();
+  stopAutoHide();
 };
 
 onMounted(() => {
@@ -336,7 +342,6 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 .playback-controls {
-  background: #000000;
   padding: 12px 0;
   display: flex;
   width: calc(100% + 1px); // Solve the problem of 1px deviation during absolute positioning
@@ -349,7 +354,9 @@ onBeforeUnmount(() => {
   bottom: 0;
   left: 0;
   right: 0;
+  height: 50px;
   z-index: 10;
+  background: var(--uikit-color-black-5);
 
   .control-buttons {
     display: flex;
@@ -365,6 +372,7 @@ onBeforeUnmount(() => {
   right: 0;
   z-index: 999999;
   pointer-events: auto;
+  background: var(--bg-color-operate);
 }
 
 @media screen and (orientation: portrait) {
@@ -411,86 +419,33 @@ onBeforeUnmount(() => {
 .control-buttons {
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: space-between;
+  gap: 16px;
   width: 100%;
   pointer-events: all;
 }
 
-.center-controls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.control-btn {
-  background: transparent;
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: white;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-
-  .btn-icon {
-    width: 20px;
-    height: 20px;
-    fill: currentColor;
-  }
-
-  &.disabled {
-    cursor: not-allowed;
-    opacity: 0.4;
-  }
-}
-
-.play-pause-btn {
-  .tui-icon {
-    transform: scale(1.5);
-  }
-}
-
-.audio-control-btn {
-  &:active {
-    transform: unset;
-  }
-}
-
-.playback-time {
-  color: white;
-  font-size: 14px;
-  font-weight: 500;
-  margin-left: 16px;
-}
-
+.left-controls,
+.center-controls,
 .right-controls {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-.fullscreen-btn {
-  .btn-icon {
-    width: 18px;
-    height: 18px;
-  }
+.left-controls,
+.right-controls {
+  min-width: 0;
 }
 
-.more-btn {
-  .btn-icon {
-    width: 18px;
-    height: 18px;
-  }
+.center-controls {
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+}
+
+.right-controls {
+  justify-content: flex-end;
 }
 
 .player-control-enter-active,

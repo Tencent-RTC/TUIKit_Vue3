@@ -17,6 +17,7 @@ const MessageList = {
   was_muted: 'was muted',
   was_unmuted: 'was unmuted',
   group_tip_message: 'Group tip message',
+  people: '',
 
   // TUIChat
   download_failed: 'Download failed',

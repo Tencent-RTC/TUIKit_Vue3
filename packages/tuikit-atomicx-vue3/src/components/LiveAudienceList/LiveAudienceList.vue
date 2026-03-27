@@ -13,18 +13,24 @@
         class="viewer-item"
         @click="handleViewerClick(viewer, $event)"
       >
-        <span
-          class="rank"
-          :class="getRankClass(index + 1)"
-        >{{ index < 10 ? index + 1 : '-' }}</span>
-        <Avatar :src="viewer.avatarUrl" :size="26" />
+        <!-- Custom audience-item slot replaces entire item (audience-mark will not render) -->
         <slot
-          name="audience-mark"
+          v-if="$slots['audience-item']"
+          name="audience-item"
+          :index="index"
           :audience="viewer"
         />
-        <div class="viewer-info">
-          <span class="viewer-name">{{ viewer.userName || viewer.userId }}</span>
-        </div>
+        <!-- Default rendering with audience-mark slot support -->
+        <template v-else>
+          <Avatar :src="viewer.avatarUrl" :size="26" />
+          <slot
+            name="audience-mark"
+            :audience="viewer"
+          />
+          <div class="viewer-info">
+            <span class="viewer-name">{{ viewer.userName || viewer.userId }}</span>
+          </div>
+        </template>
       </div>
 
       <div
@@ -46,16 +52,6 @@
         class="empty-state"
       >
         <p>{{ t('No audience yet') }}</p>
-      </div>
-    </div>
-    <div
-      v-if="loginUserInfo && currentLive?.liveId && !isOwner"
-      class="viewer-item current-user-item"
-    >
-      <span class="rank">-</span>
-      <Avatar :src="loginUserInfo.avatarUrl" :size="26" />
-      <div class="viewer-info">
-        <span class="viewer-name">{{ `${loginUserInfo.userName || loginUserInfo.userId} (${t('Me')})` }}</span>
       </div>
     </div>
     <UserActionMenu
@@ -93,19 +89,6 @@ const props = defineProps<{
 const { loginUserInfo } = useLoginState();
 const { audienceList, audienceCount, fetchAudienceList } = useLiveAudienceState();
 const { currentLive } = useLiveListState();
-
-const getRankClass = (rank: number) => {
-  switch (rank) {
-    case 1:
-      return 'rank-first';
-    case 2:
-      return 'rank-second';
-    case 3:
-      return 'rank-third';
-    default:
-      return 'rank-default';
-  }
-};
 
 const showActionMenu = ref(false);
 const selectedViewer = ref<AudienceInfo | null>(null);
@@ -190,11 +173,6 @@ $text-color2: var(--text-color-secondary);
   margin-top: 2px;
 
   &:hover {
-    .current-user-item {
-      opacity: 1;
-      display: flex;
-    }
-
     .viewers-list {
       height: auto;
       flex-shrink: 1;
@@ -241,46 +219,15 @@ $text-color2: var(--text-color-secondary);
     display: flex;
     align-items: center;
     gap: 12px;
-    border-radius: 0;
     min-height: 36px;
     transition: background-color 0.2s ease;
     width: 100%;
-    padding: 4px 0;
-    border-radius: 4px;
+    padding: 2px 0 2px 6px;
+    border-radius: 8px;
     cursor: pointer;
 
     &:hover {
       background-color: var(--uikit-color-gray-3);
-    }
-
-    .rank {
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-color-primary);
-      border-radius: 50%;
-      flex-shrink: 0;
-
-      &.rank-first {
-        color: var(--uikit-color-red-6);
-      }
-
-      &.rank-second {
-        color: var(--uikit-color-orange-6);
-      }
-
-      &.rank-third {
-        color: var(--uikit-color-orange-9);
-      }
-
-      &.rank-default {
-        color: var(--text-color-primary);
-      }
     }
 
     .viewer-info {
@@ -320,11 +267,6 @@ $text-color2: var(--text-color-secondary);
     margin: 4px 0;
   }
 
-  .current-user-item {
-    opacity: 0;
-    display: none;
-    z-index: 2;
-  }
 }
 
 .popover-overlay {

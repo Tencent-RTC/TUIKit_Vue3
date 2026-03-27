@@ -3,7 +3,7 @@ export default {
   // ContactList component translations
     'New contacts': 'New contacts',
     'Group applications': 'Group applications',
-    'My friends': 'My friends',
+    'My friends': 'Contacts',
     'My groups': 'My groups',
     'Blacklist': 'Blacklist',
     'Search contacts': 'Search contacts',

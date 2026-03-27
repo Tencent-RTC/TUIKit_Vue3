@@ -59,6 +59,23 @@ interface IVoiceToTextResult {
   text: string;
 }
 
+interface MessageInfo {
+  conversationID: string;
+  ID?: string;
+  messageID?: string;
+  sequence?: number;
+  time?: number;
+}
+
+interface MessageFetchOption {
+  conversationID: string;
+  messageListType: MessageListType;
+  cursor?: MessageInfo;
+  direction?: MessageFetchDirection;
+  pageCount?: number;
+  messageTypeList?: number[];
+}
+
 interface IForwardMessageParams {
   conversationIDList: string[];
   forwardMessageOptions?: SendForwardMessageOptions;
@@ -123,10 +140,23 @@ enum VoiceToTextStatusEnum {
   Failed,
 }
 
+enum MessageListType {
+  HISTORY = 0,
+  PINNED = 1,
+  LATEST = 2,
+}
+
+enum MessageFetchDirection {
+  OLDER = 0,
+  NEWER = 1,
+}
+
 export {
   QuoteTypeEnum,
   TranslationStatusEnum,
   VoiceToTextStatusEnum,
+  MessageListType,
+  MessageFetchDirection,
 };
 
 export type {
@@ -138,4 +168,6 @@ export type {
   ITranslationResult,
   IVoiceToTextResult,
   IForwardMessageParams,
+  MessageInfo,
+  MessageFetchOption,
 };

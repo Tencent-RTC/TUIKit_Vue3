@@ -26,13 +26,20 @@
   </div>
 </template>
 
+<script lang="ts">
+// Module-level counter shared across all BarrageInput instances for unique ID generation.
+let instanceIdCounter = 0;
+</script>
+
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onUnmounted, watchEffect } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveAudienceState } from '../../states/LiveAudienceState';
 import { useLoginState } from '../../states/LoginState';
+import { useMessageInputState } from './MessageInputState';
 import { EmojiPicker } from './EmojiPicker';
 import TextEditor from './TextEditor/TextEditor.vue';
+import type { OnWillSendBarrage, OnDidSendBarrage } from '../../types/barrage';
 
 const emit = defineEmits<{
   (e: 'focus'): void;
@@ -41,6 +48,9 @@ const emit = defineEmits<{
 const { t } = useUIKit();
 const { loginUserInfo } = useLoginState();
 const { audienceList } = useLiveAudienceState();
+const { setSendHooks, clearSendHooks } = useMessageInputState();
+
+const instanceId = `barrage-input-${++instanceIdCounter}`;
 
 interface Props {
   containerClass?: string;
@@ -53,6 +63,8 @@ interface Props {
   disabled?: boolean;
   autoFocus?: boolean;
   maxLength?: number;
+  onWillSendBarrage?: OnWillSendBarrage;
+  onDidSendBarrage?: OnDidSendBarrage;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -64,6 +76,17 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   autoFocus: true,
   maxLength: 80,
+});
+
+watchEffect(() => {
+  setSendHooks(instanceId, {
+    onWillSendBarrage: props.onWillSendBarrage,
+    onDidSendBarrage: props.onDidSendBarrage,
+  });
+});
+
+onUnmounted(() => {
+  clearSendHooks(instanceId);
 });
 
 const containerStyle = computed(() => {
@@ -87,7 +110,7 @@ const disabledAndPlaceholder = computed(() => {
   const localUser = audienceList.value.find(item => item.userId === loginUserInfo.value?.userId);
   return {
     disabled: props.disabled || localUser?.isMessageDisabled,
-    placeholder: localUser?.isMessageDisabled ? t('You have been muted') : props.placeholder,
+    placeholder: localUser?.isMessageDisabled ? t('BarrageInput.youHaveBeenMuted') : props.placeholder,
   };
 });
 </script>
@@ -106,10 +129,6 @@ const disabledAndPlaceholder = computed(() => {
     padding: 6px 16px;
     overflow: auto;
     box-sizing: border-box;
-
-    &:focus-within {
-      border-color: var(--text-color-link);
-    }
 
     .input-actions {
       display: flex;

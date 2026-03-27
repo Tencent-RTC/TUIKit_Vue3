@@ -176,7 +176,7 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-color-primary);
   position: absolute;
   top: 0;
   left: 0;
@@ -216,6 +216,7 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
     display: flex;
     align-items: center;
     background-color: var(--uikit-color-black-5);
+    color: var(--text-color-button);
     padding: 2px 8px;
     border-radius: 100px;
     max-width: 80%;
@@ -243,8 +244,6 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
     width: 100%;
     height: 100%;
     background: var(--uikit-color-gray-2);
-    color: #fff;
-    font-weight: bold;
     pointer-events: auto;
     box-shadow: 0 0 0 1px var(--bg-color-topbar);
 
@@ -271,6 +270,7 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
       display: flex;
       flex-direction: column;
       width: 100%;
+      color: var(--text-color-primary);
       align-items: center;
       gap: 12px;
     }

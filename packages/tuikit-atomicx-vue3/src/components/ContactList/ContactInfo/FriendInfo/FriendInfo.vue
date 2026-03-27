@@ -8,15 +8,14 @@
         <div class="contact-friend-info__id">
           {{ t('TUIContact.ID') }}：{{ friend.userID }}
         </div>
-        <div class="contact-friend-info__intro">
-          {{ t('TUIContact.Personal signature') }}：{{ friend?.selfSignature || '' }}
-        </div>
       </div>
-      <Avatar
-        :src="friend.avatar"
-        :alt="displayName"
-        size="xl"
-      />
+      <div class="contact-friend-info__avatar-wrap">
+        <Avatar
+          :src="friend.avatar"
+          :alt="displayName"
+          :size="48"
+        />
+      </div>
     </div>
 
     <div class="contact-friend-info__rows">
@@ -26,22 +25,25 @@
         </div>
         <div class="contact-friend-info__row-value">
           <template v-if="isEditing">
-            <TUIInput
-              v-model="remarkInput"
-              :max-length="32"
-              :disabled="remarkLoading"
-              auto-focus
-              @blur="handleRemarkSave"
-              @keydown.enter="handleRemarkSave"
-            />
-            <TUIButton
-              size="small"
-              type="primary"
-              :loading="remarkLoading"
-              @click="handleRemarkSave"
-            >
-              {{ t('TUIContact.Save') }}
-            </TUIButton>
+            <div class="contact-friend-info__remark-editor">
+              <TUIInput
+                v-model="remarkInput"
+                :max-length="32"
+                :disabled="remarkLoading"
+                auto-focus
+                @blur="handleRemarkSave"
+                @keydown.enter="handleRemarkSave"
+              />
+              <TUIButton
+                size="small"
+                type="primary"
+                radius="round"
+                :loading="remarkLoading"
+                @click="handleRemarkSave"
+              >
+                {{ t('TUIContact.Save') }}
+              </TUIButton>
+            </div>
           </template>
           <template v-else>
             <span class="remark-edit">
@@ -50,12 +52,23 @@
             <IconEditNameCard
               class="remark-edit-icon"
               @click="startEditRemark"
-              />
+            />
           </template>
         </div>
       </div>
 
       <div class="contact-friend-info__row">
+        <div class="contact-friend-info__row-label">
+          {{ t('TUIContact.Personal signature') }}
+        </div>
+        <div class="contact-friend-info__row-value">
+          <span class="contact-friend-info__signature">
+            {{ friend?.selfSignature || t('TUIContact.None') }}
+          </span>
+        </div>
+      </div>
+
+      <div class="contact-friend-info__row contact-friend-info__row--center">
         <div class="contact-friend-info__row-label">
           {{ t('TUIContact.Add to blacklist') }}
         </div>
@@ -74,19 +87,23 @@
       class="contact-friend-info__actions"
     >
       <TUIButton
+        class="contact-friend-info__button--primary"
+        type="primary"
+        size="big"
+        radius="round"
+        @click="handleSendMessage"
+      >
+        {{ t('TUIContact.Send message') }}
+      </TUIButton>
+      <TUIButton
+        class="contact-friend-info__button--secondary"
         type="default"
         size="big"
+        radius="round"
         color="red"
         @click="visible = true;"
       >
         {{ t('TUIContact.Delete friend') }}
-      </TUIButton>
-      <TUIButton
-        type="primary"
-        size="big"
-        @click="handleSendMessage"
-      >
-        {{ t('TUIContact.Send message') }}
       </TUIButton>
       <TUIDialog
         :visible="visible"

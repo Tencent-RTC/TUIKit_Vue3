@@ -42,9 +42,9 @@ const formatDuration = (seconds: number): string => {
   const minutes = Math.floor((seconds % 3600) / 60);
 
   if (hours === 0) {
-    return `${minutes} ${t('minutes')}`;
+    return `${minutes} ${t('ScheduleRoomPanel.Minutes')}`;
   }
-  return hours === 1 ? `1 ${t('hour')}` : `${hours} ${t('hours')}`;
+  return hours === 1 ? `1 ${t('ScheduleRoomPanel.Hour')}` : `${hours} ${t('ScheduleRoomPanel.Hours')}`;
 };
 
 // Generate duration values: 15-minute intervals for < 1 hour, 1-hour intervals for >= 1 hour
@@ -80,11 +80,11 @@ const durationOptions = computed(() => {
 
 const handleUpdate = (value: number) => {
   if (value < MIN_DURATION) {
-    TUIToast.error({ message: t('Meeting duration must be at least 15 minutes') });
+    TUIToast.error({ message: t('ScheduleRoomPanel.DurationMin') });
     return;
   }
   if (value > MAX_DURATION) {
-    TUIToast.error({ message: t('Meeting duration cannot exceed 24 hours') });
+    TUIToast.error({ message: t('ScheduleRoomPanel.DurationMax') });
     return;
   }
   emit('update:modelValue', value);

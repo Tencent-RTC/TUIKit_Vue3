@@ -2,7 +2,7 @@
 import { IconCopy, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useC2CSettingState } from '../../../states/C2CSettingState';
 import { copyTextToClipboard } from '../../../utils';
-import { Avatar } from '../../Avatar';
+import { Divider } from '../Divider';
 import { SettingItem } from '../SettingItem';
 
 const { t } = useUIKit();
@@ -10,7 +10,6 @@ const { t } = useUIKit();
 const {
   userID,
   nick,
-  avatar,
   signature,
   remark,
   isMuted,
@@ -53,19 +52,20 @@ function handleCopyUserID() {
 </script>
 
 <template>
+  <Divider variant="line" :full-width="true" />
   <div
     v-if="userID"
     class="c2c-chat-setting"
   >
     <!-- User Info Section -->
     <div class="c2c-chat-setting__info-section">
-      <div class="c2c-chat-setting__avatar-section">
+      <!-- <div class="c2c-chat-setting__avatar-section">
         <Avatar
           :src="avatar || ''"
           size="xxl"
           class="c2c-chat-setting__avatar"
         />
-      </div>
+      </div> -->
 
       <!-- User ID -->
       <div class="c2c-chat-setting__item">
@@ -83,22 +83,30 @@ function handleCopyUserID() {
         </div>
       </div>
 
+      <Divider variant="line" />
+
       <!-- Nick Name -->
       <SettingItem
         type="display"
+        :is-wrap="true"
         :label="t('ChatSetting.nickname')"
         :value="nick || ''"
         :placeholder="t('ChatSetting.nickname_placeholder')"
       />
 
+      <Divider v-if="signature && signature.trim()" variant="line" />
+
       <!-- Signature -->
       <SettingItem
         v-if="signature && signature.trim()"
         type="display"
+        :is-wrap="true"
         :label="t('ChatSetting.signature')"
         :value="signature"
       />
     </div>
+
+    <Divider v-if="isContact" variant="line" />
 
     <!-- Remark Section -->
     <div v-if="isContact" class="c2c-chat-setting__remark-section">
@@ -112,6 +120,8 @@ function handleCopyUserID() {
       />
     </div>
 
+    <Divider variant="section" />
+
     <!-- Settings Section -->
     <div class="c2c-chat-setting__settings-section">
       <!-- Pin Setting -->
@@ -122,6 +132,8 @@ function handleCopyUserID() {
         :value="isPinned"
         @change="handlePinnedChange"
       />
+
+      <Divider variant="line" />
 
       <!-- Mute Setting -->
       <SettingItem
@@ -140,29 +152,26 @@ function handleCopyUserID() {
   display: flex;
   flex-direction: column;
   background-color: transparent;
-  gap: 16px;
-  padding: 20px;
 
   color: var(--text-color-primary);
 
   &__info-section {
-    gap: 20px;
     display: flex;
     flex-direction: column;
     background-color: transparent;
   }
 
-  &__avatar-section {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
+  // &__avatar-section {
+  //   display: flex;
+  //   justify-content: center;
+  //   align-items: center;
+  // }
 
   &__item {
     display: flex;
     flex-direction: column;
-
-    border-bottom: 0.5px solid var(--stroke-color-module);
+    padding: 14px 20px 11px;
+    gap: 4px;
 
     &:last-child {
       border-bottom: none;
@@ -171,8 +180,8 @@ function handleCopyUserID() {
 
   &__label {
     font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 8px;
+    // margin-bottom: 8px;
+    color: var(--text-color-primary);
   }
 
   &__content {
@@ -206,11 +215,10 @@ function handleCopyUserID() {
 
     color: var(--text-color-secondary);
     &:hover {
-      color: var(--text-color-button);
-      background-color: var(--button-color-primary-hover);
+      background-color: var(--button-color-secondary-hover);
     }
     &:active {
-      background-color: var(--button-color-primary-active);
+      background-color: var(--button-color-secondary-active);
     }
   }
 

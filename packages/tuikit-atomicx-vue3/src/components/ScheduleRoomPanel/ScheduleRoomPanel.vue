@@ -3,16 +3,16 @@
     <div class="panel-content">
       <form class="form">
         <div class="form-item">
-          <label class="label">{{ t('Room Name') }}</label>
+          <label class="label">{{ t('ScheduleRoomPanel.RoomName') }}</label>
           <TUIInput
             v-model="formData.roomName"
             :max-length="25"
-            :placeholder="t('please enter the room name')"
+            :placeholder="t('ScheduleRoomPanel.EnterRoomName')"
           />
         </div>
 
         <div class="form-item">
-          <label class="label">{{ t('Starting time') }}</label>
+          <label class="label">{{ t('ScheduleRoomPanel.StartingTime') }}</label>
           <div class="datetime-group">
             <Datepicker v-model="formData.startDate" />
             <Timepicker v-model="formData.startTime" />
@@ -20,24 +20,24 @@
         </div>
 
         <div class="form-item">
-          <label class="label">{{ t('Room duration') }}</label>
+          <label class="label">{{ t('ScheduleRoomPanel.RoomDuration') }}</label>
           <DurationSelector v-model="formData.duration" />
         </div>
 
         <div class="form-item">
-          <label class="label">{{ t('Time Zone') }}</label>
+          <label class="label">{{ t('ScheduleRoomPanel.TimeZone') }}</label>
           <TimezoneSelector v-model="formData.timezone" />
         </div>
 
         <div :class="['form-item', { 'flex-start': formData.selectedUserList?.length > 0 }]">
-          <label class="label">{{ t('Participants') }}</label>
+          <label class="label">{{ t('ScheduleRoomPanel.Participants') }}</label>
           <div class="form-participants">
             <TUIInput
               v-model="searchUserId"
               :search="handleUserSearchChange"
               :select="handleSearchResultItemClick"
-              :placeholder="t('Please enter participant names')"
-              :emptyText="t('No relevant members found')"
+              :placeholder="t('ScheduleRoomPanel.EnterParticipantNames')"
+              :emptyText="t('ScheduleRoomPanel.NoMembersFound')"
             >
               <template #suffix>
                 <IconManageMember @click="userPickerVisible = true" />
@@ -72,15 +72,15 @@
                 <IconClose1 class="form-attendees-item-remove" @click="removeSelectUser(user)" />
               </span>
               <span class="form-attendees-item form-attendees-count">
-                {{ `${formData.selectedUserList?.length || 0} ${t('people')}` }}
+                {{ `${formData.selectedUserList?.length || 0} ${t('ScheduleRoomPanel.People')}` }}
               </span>
             </div>
           </div>
           <TUIDialog
             v-model:visible="userPickerVisible"
-            :title="t('Contacts')"
-            :cancel-text="t('Cancel')"
-            :confirm-text="t('Confirm')"
+            :title="t('ScheduleRoomPanel.Contacts')"
+            :cancel-text="t('ScheduleRoomPanel.Cancel')"
+            :confirm-text="t('ScheduleRoomPanel.Confirm')"
           >
             <UserPicker
               ref="userPickerRef"
@@ -92,10 +92,10 @@
             <template #footer>
               <div class="user-picker-footer">
                 <TUIButton @click="userPickerVisible = false">
-                  {{ t('Cancel') }}
+                  {{ t('ScheduleRoomPanel.Cancel') }}
                 </TUIButton>
                 <TUIButton type="primary" @click="handleUserPickerConfirm">
-                  {{ t('Confirm') }}
+                  {{ t('ScheduleRoomPanel.Confirm') }}
                 </TUIButton>
               </div>
             </template>
@@ -103,11 +103,11 @@
         </div>
 
         <div class="form-item flex-start">
-          <label class="label">{{ t('Security') }}</label>
+          <label class="label">{{ t('ScheduleRoomPanel.Security') }}</label>
           <div class="security-group">
             <label class="checkbox-item">
               <input v-model="formData.hasPassword" type="checkbox">
-              <span>{{ t('Room Password') }}</span>
+              <span>{{ t('ScheduleRoomPanel.RoomPassword') }}</span>
             </label>
             <TUIInput
               v-if="formData.hasPassword"
@@ -115,22 +115,22 @@
               :max-length="6"
               type="number"
               showPassword
-              :placeholder="t('Enter 6-digit password')"
+              :placeholder="t('ScheduleRoomPanel.Enter6DigitPassword')"
               class="password-input"
             />
           </div>
         </div>
 
         <div class="form-item flex-start">
-          <label class="label">{{ t('Member management') }}</label>
+          <label class="label">{{ t('ScheduleRoomPanel.MemberManagement') }}</label>
           <div class="member-group">
             <label class="checkbox-item">
               <input v-model="formData.isMicrophoneDisableForAllUser" type="checkbox">
-              <span>{{ t('Disable all audios') }}</span>
+              <span>{{ t('ScheduleRoomPanel.DisableAllAudios') }}</span>
             </label>
             <label class="checkbox-item">
               <input v-model="formData.isCameraDisableForAllUser" type="checkbox">
-              <span>{{ t('Disable all videos') }}</span>
+              <span>{{ t('ScheduleRoomPanel.DisableAllVideos') }}</span>
             </label>
           </div>
         </div>
@@ -139,14 +139,14 @@
 
     <div class="panel-footer">
       <TUIButton @click="handleCancel">
-        {{ t('Cancel') }}
+        {{ t('ScheduleRoomPanel.Cancel') }}
       </TUIButton>
       <TUIButton
         type="primary"
         :loading="isScheduling"
         @click="handleSchedule"
       >
-        {{ t('Schedule') }}
+        {{ t('ScheduleRoomPanel.Schedule') }}
       </TUIButton>
     </div>
   </div>
@@ -249,7 +249,7 @@ const validateForm = (): string | null => {
   const { roomName, hasPassword, password } = formData.value;
 
   if (!roomName.trim()) {
-    return t('The room name cannot be empty');
+    return t('ScheduleRoomPanel.RoomNameRequired');
   }
 
   const now = new Date();
@@ -264,24 +264,24 @@ const validateForm = (): string | null => {
   const currentUtcTimestamp = Math.floor(currentUtcDate.getTime() / 1000);
 
   if (scheduleStartTime.value <= currentUtcTimestamp) {
-    return t('The start time cannot be earlier than the current time');
+    return t('ScheduleRoomPanel.StartTimeInvalid');
   }
 
   const MIN_DURATION = 15 * 60;
   const MAX_DURATION = 24 * 3600;
   if (formData.value.duration < MIN_DURATION) {
-    return t('Meeting duration must be at least 15 minutes');
+    return t('ScheduleRoomPanel.DurationMin');
   }
   if (formData.value.duration > MAX_DURATION) {
-    return t('Meeting duration cannot exceed 24 hours');
+    return t('ScheduleRoomPanel.DurationMax');
   }
 
   if (hasPassword) {
     if (!password) {
-      return t('Password cannot be empty');
+      return t('ScheduleRoomPanel.PasswordRequired');
     }
     if (!/^\d{6}$/.test(password)) {
-      return t('Password must be 6 digits');
+      return t('ScheduleRoomPanel.PasswordMust6Digits');
     }
   }
 
@@ -297,7 +297,7 @@ const initializeForm = () => {
   const nextIntervalTime = getNext15MinuteInterval(now);
 
   formData.value = {
-    roomName: `${loginUserInfo.value?.userName || loginUserInfo.value?.userId}${t('Temporary Meeting')}`,
+    roomName: `${loginUserInfo.value?.userName || loginUserInfo.value?.userId}${t('ScheduleRoomPanel.TemporaryMeeting')}`,
     startDate: Math.floor(startDate.getTime() / 1000),
     startTime: Math.floor(nextIntervalTime.getTime() / 1000),
     duration: 1800,
@@ -356,7 +356,7 @@ const handleSchedule = async () => {
   } catch (error: any) {
     console.error('Schedule meeting failed:', error);
     handleErrorWithModal(error);
-    TUIToast.error({ message: t('Schedule meeting failed') });
+    TUIToast.error({ message: t('ScheduleRoomPanel.ScheduleFailed') });
   } finally {
     isScheduling.value = false;
   }

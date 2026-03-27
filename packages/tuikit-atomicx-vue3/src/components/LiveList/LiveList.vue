@@ -60,6 +60,8 @@ import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
 import { Avatar } from '../Avatar';
 import type { LiveInfo } from '../../types';
+import RTCLoginServer from '../../subEntry/live/server';
+
 const { liveList, liveListCursor, fetchLiveList } = useLiveListState();
 const { loginUserInfo } = useLoginState();
 const { t } = useUIKit();
@@ -107,9 +109,9 @@ function resizeLiveListItems() {
 }
 
 watch(
-  loginUserInfo,
-  async (user) => {
-    if (user && user.userId) {
+  RTCLoginServer.getInstance().isLogin,
+  async (isLogin) => {
+    if (isLogin) {
       isLoadingMore.value = true;
       liveListCursor.value = '';
       liveList.value.length = 0;

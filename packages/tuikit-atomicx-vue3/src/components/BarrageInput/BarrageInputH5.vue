@@ -19,6 +19,8 @@
       :placeholder="placeholderText"
       :disabled="disabled"
       :maxLength="props.maxLength"
+      :onWillSendBarrage="props.onWillSendBarrage"
+      :onDidSendBarrage="props.onDidSendBarrage"
       @focus="handleFocus"
       @blur="handleBlur"
     />
@@ -28,7 +30,7 @@
       @touchstart="handleTouchStart"
       @touchend="handleTouchEnd"
     >
-      {{ t('Send') }}
+      {{ t('BarrageInput.Send') }}
     </TUIButton>
   </div>
 </template>
@@ -42,6 +44,7 @@ import { useMessageInputState } from './MessageInputState';
 import BarrageInput from './BarrageInput.vue';
 import EmojiPicker from './EmojiPicker/EmojiPicker.vue';
 import { ERROR_MESSAGE } from './constants';
+import type { OnWillSendBarrage, OnDidSendBarrage } from '../../types/barrage';
 
 const emit = defineEmits<{
   (e: 'focus'): void;
@@ -59,6 +62,8 @@ interface Props {
   disabled?: boolean;
   autoFocus?: boolean;
   maxLength?: number;
+  onWillSendBarrage?: OnWillSendBarrage;
+  onDidSendBarrage?: OnDidSendBarrage;
 }
 
 const { t } = useUIKit();
@@ -74,7 +79,7 @@ const props = withDefaults(defineProps<Props>(), {
   maxLength: 80,
 });
 
-const placeholderText = computed(() => props.placeholder || t('Say something'));
+const placeholderText = computed(() => props.placeholder || t('BarrageInput.saySomething'));
 const { loginUserInfo } = useLoginState();
 const { audienceList } = useLiveAudienceState();
 
@@ -102,7 +107,7 @@ const handleSend = async () => {
       await sendMessage(inputValue);
     } catch (err: any) {
       TUIToast.error({
-        message: t(ERROR_MESSAGE[err.code as keyof typeof ERROR_MESSAGE] || 'send message failed'),
+        message: t(ERROR_MESSAGE[err.code as keyof typeof ERROR_MESSAGE] || 'BarrageInput.sendFailed'),
       });
     }
   }

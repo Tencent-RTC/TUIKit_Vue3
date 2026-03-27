@@ -41,8 +41,6 @@
         :customClasses="[$style.conversationSearch__advanced]"
         :visible="isShowStandard"
         :show-close="false"
-        :show-confirm="false"
-        :show-cancel="false"
         @close="handleCloseStandard"
       >
         <component
@@ -77,14 +75,8 @@ import { useSearchState } from '../../../states/SearchState';
 import { SearchType, VariantType } from '../../../types';
 import { isPC } from '../../../utils';
 import { Search, SearchBar } from '../../Search';
-import type {
-  SearchProps,
-  SearchResultItemType,
-  MessageModel,
-  SearchCloudUsersResultItem,
-  SearchCloudGroupsResultItem,
-  SearchCloudMessagesResultItem,
-} from '../../../types';
+import type { SearchProps, SearchResultItemType } from '../../../types/search';
+import type { SearchCloudUsersResultItem, SearchCloudGroupsResultItem } from '../../../types/engine';
 
 interface ConversationSearchProps extends SearchProps {
   visible?: boolean;
@@ -148,16 +140,6 @@ const handleSearchGroupClick = (item: SearchCloudGroupsResultItem) => {
   handleCloseStandard();
 };
 
-const handleSearchChatMessageClick = (item: SearchResultItemType) => {
-  const { conversationID: messageConversationID = '' } = (item as MessageModel) || {};
-  const { conversationID = '' } = (item as SearchCloudMessagesResultItem)?.conversation || {};
-  const targetConversationID = conversationID || messageConversationID;
-  if (targetConversationID) {
-    setActiveConversation(targetConversationID);
-    handleCloseStandard();
-  }
-};
-
 const handleOnSelectResult = (item: SearchResultItemType, type: SearchType) => {
   if (props.onResultItemClick) {
     emit('resultItemClick', item, type);
@@ -172,7 +154,9 @@ const handleOnSelectResult = (item: SearchResultItemType, type: SearchType) => {
       handleSearchGroupClick(item as SearchCloudGroupsResultItem);
       break;
     case SearchType.CHAT_MESSAGE:
-      handleSearchChatMessageClick(item);
+      // Navigation is handled inside the Message component;
+      // here we only perform UI cleanup (close the search panel).
+      handleCloseStandard();
       break;
     default:
       if (searchMode.value === VariantType.MINI) {

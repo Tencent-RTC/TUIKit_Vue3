@@ -13,10 +13,14 @@ interface CharacterCountStorage {
   words: (options?: { node?: ProseMirrorNode }) => number;
 }
 
+// Cache Intl.Segmenter instance at module level to avoid recreation on every call
+const graphemeSegmenter = (typeof Intl !== 'undefined' && 'Segmenter' in Intl)
+  ? new (Intl as any).Segmenter('en', { granularity: 'grapheme' })
+  : null;
+
 function countGraphemes(text: string): number {
-  if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
-    const segmenter = new (Intl as any).Segmenter('en', { granularity: 'grapheme' });
-    return Array.from(segmenter.segment(text)).length;
+  if (graphemeSegmenter) {
+    return Array.from(graphemeSegmenter.segment(text)).length;
   }
   return [...text].length;
 }
@@ -74,14 +78,14 @@ const CharacterCount = Extension.create<CharacterCountOptions, CharacterCountSto
         key: new PluginKey('characterCount'),
         appendTransaction: (_transactions, _oldState, newState) => {
           if (initialEvaluationDone) {
-            return;
+            return null;
           }
 
           const { limit } = this.options;
 
           if (limit === null || limit === undefined || limit === 0) {
             initialEvaluationDone = true;
-            return;
+            return null;
           }
 
           const initialContentSize = this.storage.characters({ node: newState.doc });
@@ -96,8 +100,8 @@ const CharacterCount = Extension.create<CharacterCountOptions, CharacterCountSto
             return tr;
           }
 
-
           initialEvaluationDone = true;
+          return null;
         },
         filterTransaction: (transaction, state) => {
           const { limit } = this.options;
@@ -153,7 +157,6 @@ const CharacterCount = Extension.create<CharacterCountOptions, CharacterCountSto
   },
 });
 
-
 export {
   CharacterCount,
-}
+};

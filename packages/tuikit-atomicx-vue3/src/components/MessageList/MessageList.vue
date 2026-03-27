@@ -19,6 +19,7 @@ import { useConversationListState } from '../../states/ConversationListState';
 import { useGroupSettingState } from '../../states/GroupSettingState';
 import { useMessageListState } from '../../states/MessageListState';
 import { ConversationType, MessageType } from '../../types/engine';
+import { MessageListType } from '../../types/message';
 import { isCallMessage } from '../../utils/call';
 import { throttle } from '../../utils/lodash';
 import { Message as DefaultMessage } from './Message';
@@ -52,6 +53,8 @@ interface MessageListProps {
   MessageTimeDivider?: Component | undefined;
   /** conversation id */
   conversationID?: string | undefined;
+  /** custom renderers to override built-in message bubble content by MessageType */
+  messageRenderers?: Record<MessageType, Component> | undefined;
 }
 
 const props = withDefaults(defineProps<MessageListProps>(), {
@@ -65,10 +68,16 @@ const props = withDefaults(defineProps<MessageListProps>(), {
   Message: undefined,
   MessageTimeDivider: undefined,
   conversationID: undefined,
+  messageRenderers: undefined,
 });
 
 const slots = useSlots();
-provide(MessageListContextSymbol, { slots });
+provide(MessageListContextSymbol, {
+  slots,
+  get messageRenderers() {
+    return props.messageRenderers;
+  },
+});
 
 const autoScrollThreshold = 150;
 const isFinishFirstRender = ref<boolean>(false);
@@ -76,6 +85,7 @@ const distanceToBottom = ref<number>(0);
 const isLoadingHistory = ref<boolean>(false);
 const scrollContainer = ref<HTMLElement | null>(null);
 const isScrollToBottomVisible = ref<boolean>(false);
+const shouldScrollToBottomAfterBack = ref<boolean>(false);
 
 const storeDistanceToBottom = ref<number>(0);
 
@@ -83,14 +93,18 @@ const {
   messageList,
   loadMoreOlderMessage,
   activeConversationID,
+  messageListType,
+  pendingScrollTargetMessageID,
   isDisableScroll,
+  fetchMessageList,
+  highlightMessage,
   setIsDisableScroll,
   setEnableReadReceipt,
 } = useMessageListState();
 
 const { getGroupMemberList } = useGroupSettingState();
 
-const { scrollToBottom } = useScroll();
+const { scrollToBottom, scrollToMessage } = useScroll();
 const { activeConversation, setActiveConversation } = useConversationListState();
 const {
   observeMessageList,
@@ -98,11 +112,12 @@ const {
 } = useReadReceipt({
   enabled: props.enableReadReceipt ?? false,
   containerSelector: '#messageScrollList',
-  getMessageIDFromDom: (dom: HTMLElement) => dom.dataset.messageId || '',
+  getMessageIDFromDom: dom => (dom as HTMLElement).dataset.messageId || '',
 });
 
 const isGroup = computed(() => activeConversation.value?.type === ConversationType.GROUP);
 const enableMessageAggregation = computed(() => props.messageAggregationTime && props.messageAggregationTime > 0);
+const isMessageJumping = computed(() => messageListType.value === MessageListType.HISTORY);
 
 // Message aggregation logic
 const messageChunks = computed(() => {
@@ -194,7 +209,12 @@ const initializeMessageList = async () => {
 // Load more history messages
 const loadMoreHistory = async () => {
   // Skip if initial loading or already loading
-  if (!isFinishFirstRender.value || isLoadingHistory.value || !messageList.value?.length) {
+  if (
+    messageListType.value !== MessageListType.LATEST
+    || !isFinishFirstRender.value
+    || isLoadingHistory.value
+    || !messageList.value?.length
+  ) {
     return;
   }
 
@@ -234,6 +254,19 @@ const loadMoreHistory = async () => {
   isLoadingHistory.value = false;
 };
 
+const handleBackToLatest = async () => {
+  if (!activeConversationID.value) {
+    return;
+  }
+
+  isScrollToBottomVisible.value = false;
+  shouldScrollToBottomAfterBack.value = true;
+  await fetchMessageList({
+    conversationID: activeConversationID.value,
+    messageListType: MessageListType.LATEST,
+  });
+};
+
 watch(activeConversationID, () => {
   initializeMessageList();
 });
@@ -241,11 +274,14 @@ watch(activeConversationID, () => {
 // Monitor message list changes
 watch(messageList, (newMessages, oldMessages) => {
   if (oldMessages === undefined && newMessages && !isFinishFirstRender.value) {
-    // Switch to a new conversation
+    // Switch to a new conversation. In history mode, only finish initialization;
+    // the actual target scroll will be handled by pendingScrollTargetMessageID.
     nextTick(() => {
-      scrollToBottom({ behavior: 'instant' });
       isFinishFirstRender.value = true;
       observeMessageList();
+      if (messageListType.value !== MessageListType.HISTORY) {
+        scrollToBottom({ behavior: 'instant' });
+      }
     });
     if (isGroup.value) {
       getGroupMemberList();
@@ -254,6 +290,10 @@ watch(messageList, (newMessages, oldMessages) => {
   }
 
   if (!oldMessages || !newMessages || !newMessages.length) {
+    return;
+  }
+
+  if (messageListType.value === MessageListType.HISTORY) {
     return;
   }
 
@@ -276,6 +316,41 @@ watch(messageList, (newMessages, oldMessages) => {
   }
 }, {
   immediate: true,
+});
+
+watch([pendingScrollTargetMessageID, messageList], async ([targetMessageID, currentMessageList]) => {
+  if (!targetMessageID || !currentMessageList?.some(message => message.ID === targetMessageID)) {
+    return;
+  }
+
+  await nextTick();
+  await scrollToMessage(targetMessageID, {
+    block: 'center',
+    skipIfVisible: false,
+    behavior: 'instant',
+  }).catch(() => {});
+
+  highlightMessage({
+    messageID: targetMessageID,
+    duration: 3000,
+  });
+  pendingScrollTargetMessageID.value = undefined;
+});
+
+watch([messageList, messageListType], async ([currentMessageList, currentMessageListType]) => {
+  if (
+    !shouldScrollToBottomAfterBack.value
+    || currentMessageListType !== MessageListType.LATEST
+    || !currentMessageList?.length
+  ) {
+    return;
+  }
+
+  await nextTick();
+  await scrollToBottom({ behavior: 'instant' });
+  observeMessageList();
+  setIsDisableScroll(false);
+  shouldScrollToBottomAfterBack.value = false;
 });
 
 watch(() => props.enableReadReceipt, (newEnableReadReceipt) => {
@@ -318,6 +393,7 @@ defineExpose({
       class="message-list-container"
     >
       <ObserverView
+        v-if="!isMessageJumping"
         root="#messageScrollList"
         :rootMargin="'50px 0px 0px 0px'"
         :threshold="0.1"
@@ -353,35 +429,29 @@ defineExpose({
               :is-first-in-chunk="Boolean(messageIndex === 0)"
               :is-last-in-chunk="Boolean(messageIndex === chunk.messages.length - 1)"
               :isHiddenMessageAvatar="
-                Boolean(
-                  alignment === 'two-sided'
-                    ? (enableMessageAggregation && messageIndex !== 0 || message.flow === 'out')
-                    : (enableMessageAggregation && messageIndex !== 0 )
-                )
+                Boolean(enableMessageAggregation && messageIndex !== 0)
+              "
+              :removeAvatar="
+                Boolean(alignment === 'two-sided' && message.flow === 'out')
               "
               :is-hidden-message-nick="
                 Boolean(
-                  !isGroup
-                    || (alignment === 'two-sided'
-                      ? enableMessageAggregation && messageIndex !== 0 || message.flow === 'out'
-                      : enableMessageAggregation && messageIndex !== 0)
-                )
-              "
-              :isHiddenMessageMeta="
-                Boolean(
-                  enableMessageAggregation && messageIndex !== chunk.messages.length - 1
+                  (alignment === 'two-sided'
+                    ? enableMessageAggregation && messageIndex !== 0 || message.flow === 'out'
+                    : enableMessageAggregation && messageIndex !== 0)
                 )
               "
             />
           </template>
         </div>
       </View>
+      <div style="height: 10px;" />
     </div>
     <MessageForward />
     <ScrollToBottom
-      v-if="isScrollToBottomVisible"
+      v-if="isScrollToBottomVisible || isMessageJumping"
       :class="cs('scroll-to-bottom')"
-      @click="scrollToBottom({ behavior: 'smooth' })"
+      @click="isMessageJumping ? handleBackToLatest() : scrollToBottom({ behavior: 'smooth' })"
     />
   </div>
 </template>

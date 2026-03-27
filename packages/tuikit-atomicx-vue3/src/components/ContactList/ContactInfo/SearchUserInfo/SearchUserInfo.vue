@@ -8,15 +8,27 @@
         <div class="contact-search-user-info__id">
           {{ t('TUIContact.ID') }}：{{ user.userID }}
         </div>
-        <div class="contact-search-user-info__intro">
-          {{ t('TUIContact.Personal signature') }}：{{ user.selfSignature || '' }}
+      </div>
+      <div class="contact-search-user-info__avatar-wrap">
+        <Avatar
+          :src="user.avatar"
+          :alt="displayName"
+          :size="48"
+        />
+      </div>
+    </div>
+
+    <div class="contact-search-user-info__rows">
+      <div class="contact-search-user-info__row">
+        <div class="contact-search-user-info__row-label">
+          {{ t('TUIContact.Personal signature') }}
+        </div>
+        <div class="contact-search-user-info__row-value">
+          <span class="contact-search-user-info__intro">
+            {{ user.selfSignature || t('TUIContact.None') }}
+          </span>
         </div>
       </div>
-      <Avatar
-        :src="user.avatar"
-        :alt="displayName"
-        size="xl"
-      />
     </div>
 
     <div
@@ -57,8 +69,10 @@
       class="contact-search-user-info__actions"
     >
       <TUIButton
+        class="contact-search-user-info__button--primary"
         type="primary"
         size="big"
+        radius="round"
         :loading="loading"
         @click="handleAddFriend"
       >

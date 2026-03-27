@@ -3,6 +3,7 @@
     v-if="resolutionList.length > 0 && currentResolution"
     v-click-outside="handleClickOutside"
     class="multi-resolution"
+    :class="{ disabled: isDisabled }"
   >
     <span
       v-show="isShowResolutionList"
@@ -26,10 +27,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import vClickOutside from '../../../directives/vClickOutside';
 import { usePlayerControlState, Resolution } from './PlayerControlState';
+import { PlayerControlButton } from '../../../types/player';
 
 const { t } = useUIKit();
 const {
@@ -38,7 +40,11 @@ const {
   isPictureInPicture,
   exitPictureInPicture,
   switchResolution,
+  buttons,
 } = usePlayerControlState();
+
+// Disabled state: respects external buttons configuration
+const isDisabled = computed(() => buttons[PlayerControlButton.Resolution].disabled);
 
 // Resolution mapping for UI display
 const resolutionMap: Record<Resolution, string> = {
@@ -50,6 +56,13 @@ const resolutionMap: Record<Resolution, string> = {
 
 const isShowResolutionList = ref<boolean>(false);
 
+// Auto-collapse the resolution list when the button becomes disabled
+watch(isDisabled, (disabled) => {
+  if (disabled) {
+    isShowResolutionList.value = false;
+  }
+});
+
 // Throttle state for resolution switching
 const isResolutionSwitching = ref<boolean>(false);
 const RESOLUTION_SWITCH_COOLDOWN = 1000; // 1 second cooldown
@@ -59,11 +72,18 @@ const handleClickOutside = () => {
 };
 
 const handleClickCurrentResolution = () => {
+  if (isDisabled.value) {
+    return;
+  }
   isShowResolutionList.value = !isShowResolutionList.value;
 };
 
 const handleClickResolution = async (event: MouseEvent) => {
   event.stopPropagation();
+
+  if (isDisabled.value) {
+    return;
+  }
   
   if (isResolutionSwitching.value) {
     console.warn('[MultiResolution] Resolution switching in progress, please wait...');
@@ -101,8 +121,13 @@ const handleClickResolution = async (event: MouseEvent) => {
   position: relative;
   text-align: center;
   cursor: pointer;
-  color: #ffffff;
+  color: var(--text-color-button);
   user-select: none;
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
 
   .multi-resolution-list {
     position: absolute;
@@ -116,8 +141,12 @@ const handleClickResolution = async (event: MouseEvent) => {
     border-radius: 4px;
     padding: 4px 8px;
     transform: translate(-12px, -110%);
-    background-color: #1f2024;
-    border: 1px solid #2b2c30;
+    color: var(--text-color-primary);
+    background-color: var(--floating-color-default);
+    box-shadow: 
+    0px 12px 26px 0px var(--shadow-color),
+    0px 8px 12px 0px var(--shadow-color),
+    0px 1px 5px 0px var(--shadow-color);
 
     &.switching-disabled {
       pointer-events: none;
@@ -129,10 +158,11 @@ const handleClickResolution = async (event: MouseEvent) => {
       padding: 4px;
       margin: 4px 0;
       border-radius: 4px;
+      color: var(--text-color-primary);
       text-wrap: nowrap;
 
       &:hover {
-        background-color: #2b2c30;
+        background-color: var(--dropdown-color-hover);
       }
     }
   }

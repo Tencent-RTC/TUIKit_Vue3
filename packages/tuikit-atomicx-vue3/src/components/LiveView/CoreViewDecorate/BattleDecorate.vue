@@ -248,7 +248,7 @@ onUnmounted(() => {
     width: 100%;
     height: 100%;
     text-align: center;
-    color: var(--text-color-primary, rgba(255, 255, 255, 0.90));
+    color: var(--text-color-button, rgba(255, 255, 255, 0.90));
     font-size: 12px;
     font-style: normal;
     font-weight: 500;

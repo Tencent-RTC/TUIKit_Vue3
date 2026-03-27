@@ -3,21 +3,25 @@
     v-if="quotedMessage"
     :class="styles['quoted__message__preview']"
   >
-    <div :class="styles['quoted__message__preview__content']">
-      <div :class="styles['quoted__message__preview__content--header']">
-        <div :class="styles['quoted__message__preview__content--title']">
-          {{ quotedMessage.nick || quotedMessage.from }}
+    <div :class="styles['quoted__message__preview__body']">
+      <div :class="styles['quoted__message__preview__content']">
+        <div :class="styles['quoted__message__preview__content--header']">
+          <div :class="styles['quoted__message__preview__content--title']">
+            {{ quotedMessage.nick || quotedMessage.from }}
+          </div>
+        </div>
+        <div :class="styles['quoted__message__preview__content--text']">
+          {{ calculateReferenceContent(quotedMessage) }}
         </div>
       </div>
-      <div :class="styles['quoted__message__preview__content--text']">
-        {{ calculateReferenceContent(quotedMessage) }}
-      </div>
     </div>
-    <IconClose
+    <button
+      type="button"
       :class="styles['quoted__message__preview__close']"
-      size="16"
       @click="handleCloseQuotedMessage"
-    />
+    >
+      <IconClose size="16" />
+    </button>
   </div>
 </template>
 

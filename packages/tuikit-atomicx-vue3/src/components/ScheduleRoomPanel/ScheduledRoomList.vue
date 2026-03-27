@@ -7,13 +7,13 @@
     <!-- Initial loading overlay -->
     <div v-if="isLoading && scheduledRoomList.length === 0" class="loading-overlay">
       <IconLoadingSchedule class="loading-icon" size="36" />
-      <span class="loading-text">{{ t('Loading...') }}</span>
+      <span class="loading-text">{{ t('ScheduleRoomPanel.Loading') }}</span>
     </div>
 
     <!-- Empty state -->
     <div v-else-if="scheduledRoomList.length === 0 && !isLoading" class="schedule-room-list-empty">
       <IconApplyStageLabel size="48" />
-      <span class="text">{{ t('No scheduled rooms') }}</span>
+      <span class="text">{{ t('ScheduleRoomPanel.NoScheduledRooms') }}</span>
     </div>
 
     <!-- Room list content -->
@@ -61,21 +61,21 @@
             <template #dropdown>
               <div class="operate-list">
                 <div class="operate-item" @click="() => viewDetail(room)">
-                  {{ t('View Details') }}
+                  {{ t('ScheduleRoomPanel.ViewDetails') }}
                 </div>
                 <div
                   v-if="room.roomOwner.userId === loginUserInfo?.userId && room.roomStatus === RoomStatus.Scheduled"
                   class="operate-item"
                   @click="() => handleEditRoom(room)"
                 >
-                  {{ t('Edit Room') }}
+                  {{ t('ScheduleRoomPanel.EditRoom') }}
                 </div>
                 <div
                   v-if="room.roomOwner.userId === loginUserInfo?.userId && room.roomStatus === RoomStatus.Scheduled"
                   class="operate-item operate-item-error"
                   @click="() => cancelRoom(room)"
                 >
-                  {{ t('Cancel Room') }}
+                  {{ t('ScheduleRoomPanel.CancelRoom') }}
                 </div>
               </div>
             </template>
@@ -86,7 +86,7 @@
             type="primary"
             @click="handleJoinRoom(room)"
           >
-            {{ t('Join') }}
+            {{ t('ScheduleRoomPanel.Join') }}
           </TUIButton>
         </div>
       </div>
@@ -94,34 +94,34 @@
 
     <!--  Load more indicator (for pagination) -->
     <div v-if="isLoading && scheduledRoomList.length > 0" class="loading-indicator">
-      {{ t('Loading...') }}
+      {{ t('ScheduleRoomPanel.Loading') }}
     </div>
 
     <!-- No more data hint -->
     <div v-if="scheduledRoomListCursor === '' && scheduledRoomList.length > 0 && !isLoading" class="no-more-data">
-      {{ t('No more data') }}
+      {{ t('ScheduleRoomPanel.NoMoreData') }}
     </div>
 
     <TUIDialog
       v-model:visible="roomDetailVisible"
-      :title="t('Room Details')"
+      :title="t('ScheduleRoomPanel.RoomDetails')"
       :custom-classes="['room-detail-dialog']"
     >
       <RoomDetail :room-info="selectedRoom" :is-loading-attendees="isLoadingAttendees" />
       <template #footer>
         <div class="room-detail-footer">
           <TUIButton type="primary" @click="() => handleJoinRoom(selectedRoom)">
-            {{ t('Join Now') }}
+            {{ t('ScheduleRoomPanel.JoinNow') }}
           </TUIButton>
           <TUIButton @click="handleInviteMembers">
-            {{ t('Invite Members') }}
+            {{ t('ScheduleRoomPanel.InviteMembers') }}
           </TUIButton>
         </div>
       </template>
     </TUIDialog>
     <TUIDialog
       v-model:visible="roomShareVisible"
-      :title="`${loginUserInfo?.userName || loginUserInfo?.userId} ${t('invites you to join the meeting')}`"
+      :title="`${loginUserInfo?.userName || loginUserInfo?.userId} ${t('ScheduleRoomPanel.InvitesToJoin')}`"
       :custom-classes="['room-share-dialog']"
     >
       <RoomShare :room-info="selectedRoom" />
@@ -131,9 +131,9 @@
     </TUIDialog>
     <TUIDialog
       v-model:visible="roomEditVisible"
-      :cancel-text="t('Cancel')"
-      :confirm-text="t('Confirm')"
-      :title="t('Edit Room')"
+      :cancel-text="t('ScheduleRoomPanel.Cancel')"
+      :confirm-text="t('ScheduleRoomPanel.Confirm')"
+      :title="t('ScheduleRoomPanel.EditRoom')"
       :custom-classes="['room-edit-dialog']"
     >
       <RoomEdit
@@ -193,11 +193,11 @@ const transferRoomTimeToHHMM = (time?: number): string => {
 const transferRoomStatus = (roomStatus: RoomStatus) => {
   switch (roomStatus) {
     case RoomStatus.Scheduled:
-      return t('Not Started');
+      return t('ScheduleRoomPanel.NotStarted');
     case RoomStatus.Running:
-      return t('In Progress');
+      return t('ScheduleRoomPanel.InProgress');
     default:
-      return t('Unknown Status');
+      return t('ScheduleRoomPanel.UnknownStatus');
   }
 };
 
@@ -256,7 +256,7 @@ const loadMoreRooms = async () => {
     });
   } catch (error) {
     console.error('Load more rooms failed:', error);
-    TUIToast.error({ message: t('Load more rooms failed') });
+    TUIToast.error({ message: t('ScheduleRoomPanel.LoadMoreRoomsFailed') });
   } finally {
     isLoading.value = false;
   }
@@ -279,7 +279,7 @@ const initializeRoomList = async () => {
     await getScheduledRoomList({ cursor: '' });
   } catch (error) {
     console.error('Initialize room list failed:', error);
-    TUIToast.error({ message: t('Load room list failed') });
+    TUIToast.error({ message: t('ScheduleRoomPanel.LoadRoomListFailed') });
   } finally {
     isLoading.value = false;
   }
@@ -343,18 +343,18 @@ const shareRoom = async (room: RoomInfo) => {
 const cancelRoom = (room: RoomInfo) => {
   TUIMessageBox.confirm({
     type: 'warning',
-    title: t('Cancel the booked room'),
-    content: t('Other members will not be able to join after cancellation.'),
-    confirmText: t('Cancel Room'),
-    cancelText: t('Not to be cancelled for now'),
+    title: t('ScheduleRoomPanel.CancelBookedRoom'),
+    content: t('ScheduleRoomPanel.CancelRoomWarning'),
+    confirmText: t('ScheduleRoomPanel.CancelRoom'),
+    cancelText: t('ScheduleRoomPanel.NotCancelNow'),
     callback: async (action?: string) => {
       if (action === 'confirm') {
         try {
           await cancelScheduledRoom({ roomId: room.roomId });
-          TUIToast.success({ message: t('Cancel room successfully') });
+          TUIToast.success({ message: t('ScheduleRoomPanel.CancelRoomSuccess') });
         } catch (error) {
           console.error('Cancel room failed:', error);
-          TUIToast.error({ message: t('Cancel room failed') });
+          TUIToast.error({ message: t('ScheduleRoomPanel.CancelRoomFailed') });
         }
       }
     },
@@ -406,7 +406,7 @@ const handleSaveRoom = (editData: EditFormData) => {
       userIdList: diff.removed.map(item => item.key),
     });
   }
-  TUIToast.success({ message: t('Room updated successfully') });
+  TUIToast.success({ message: t('ScheduleRoomPanel.RoomUpdatedSuccess') });
   handleCloseEditDialog();
 };
 

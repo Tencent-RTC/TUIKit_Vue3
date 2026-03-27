@@ -1,6 +1,24 @@
 // Import from local types
 import type { TUISeatMode, TUILoginUserInfo, TUIVideoStreamType } from './types';
 
+/**
+ * Seat layout template enumeration
+ * @description Simplified single parameter to configure seat-related settings
+ *              Replaces the complex combination of isSeatEnabled, maxSeatCount, seatMode, etc.
+ */
+export enum SeatLayoutTemplate {
+  /** Portrait dynamic 9-grid layout */
+  VideoDynamicGrid9Seats = 600,
+  /** Portrait dynamic 1v6 floating layout */
+  VideoDynamicFloat7Seats = 601,
+  /** Portrait static 9-grid layout */
+  VideoFixedGrid9Seats = 800,
+  /** Portrait static 1v6 floating layout */
+  VideoFixedFloat7Seats = 801,
+  /** Landscape 4-seat layout */
+  VideoLandscape4Seats = 200,
+}
+
 export type LiveInfo = {
   liveId: string;
   liveName: string;
@@ -21,6 +39,8 @@ export type LiveInfo = {
   maxSeatCount: number;
   layoutTemplate: number;
   customInfo: Record<string, any>;
+  /** Seat template configuration */
+  seatTemplate?: SeatLayoutTemplate;
 };
 
 export enum LiveType {
@@ -72,15 +92,14 @@ export interface CreateLiveParams {
   isGiftEnabled?: boolean;
   isLikeEnabled?: boolean;
   isPublicVisible?: boolean;
-  isSeatEnabled?: boolean;
-  keepOwnerOnSeat?: boolean;
-  seatLayoutTemplateId?: number;
-  maxSeatCount?: number;
   seatMode?: TUISeatMode;
   coverUrl?: string;
   backgroundUrl?: string;
   categoryList?: Array<number>;
   activityStatus?: number;
+  seatLayoutTemplateId?: number;
+  /** Seat template configuration */
+  seatTemplate?: SeatLayoutTemplate;
 }
 
 export interface JoinLiveParams {
@@ -94,6 +113,8 @@ export interface UpdateLiveInfoParams {
   coverUrl?: string;
   backgroundUrl?: string;
   isPublicVisible?: boolean;
+  /** Seat template configuration */
+  seatTemplate?: SeatLayoutTemplate;
   layoutTemplate?: number;
 }
 

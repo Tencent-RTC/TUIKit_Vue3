@@ -187,8 +187,12 @@ const handleImageError = () => {
 };
 
 function handlePreviewOpen() {
-  if (loadingState.value !== 'loaded') return;
-  if (!messageContent.value.url) return;
+  if (loadingState.value !== 'loaded') {
+    return;
+  }
+  if (!messageContent.value.url) {
+    return;
+  }
   isPreviewOpen.value = true;
 }
 
@@ -197,13 +201,17 @@ function handlePreviewClose() {
 }
 
 function lockBodyScroll() {
-  if (typeof document === 'undefined') return;
+  if (typeof document === 'undefined') {
+    return;
+  }
   previousBodyOverflow = document.body.style.overflow;
   document.body.style.overflow = 'hidden';
 }
 
 function unlockBodyScroll() {
-  if (typeof document === 'undefined') return;
+  if (typeof document === 'undefined') {
+    return;
+  }
   if (previousBodyOverflow !== null) {
     document.body.style.overflow = previousBodyOverflow;
     previousBodyOverflow = null;
@@ -282,6 +290,7 @@ onUnmounted(() => {
 
     <!-- image -->
     <img
+      v-else
       ref="imageRef"
       :class="cs('image', {
         'image--visible': loadingState === 'loaded',
