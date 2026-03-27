@@ -43,13 +43,12 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { TUIStore } from '@tencentcloud/chat-uikit-engine-lite';
 import { useUIKit, TUIToast } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
-import { useScroll } from '../../../../hooks/useScroll';
 import { useMessageListState } from '../../../../states/MessageListState';
 import { safeJSONParse } from '../../../../utils/json';
+import { MessageListType } from '../../../../types/message';
 import type { ICloudCustomData } from '../../../../types/message';
 import type { IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
 
@@ -60,11 +59,10 @@ const props = withDefaults(defineProps<{
 });
 
 const { t } = useUIKit();
-const { scrollToMessage } = useScroll();
 const {
-  highlightMessageIDSet,
+  messageList,
   recalledMessageIDSet,
-  highlightMessage,
+  fetchMessageList,
 } = useMessageListState();
 
 const messageContent = computed(() => props.message.getMessageContent() as {
@@ -77,10 +75,14 @@ const referencedInfo = computed(() => {
   const content = cloudCustomData?.messageReply?.messageAbstract || '';
   const sender = cloudCustomData?.messageReply?.messageSender || '';
   const messageID = cloudCustomData?.messageReply?.messageID || '';
+  const sequence = cloudCustomData?.messageReply?.messageSequence;
+  const time = cloudCustomData?.messageReply?.messageTime;
   return {
     content,
     sender,
     messageID,
+    sequence,
+    time,
   };
 });
 
@@ -88,30 +90,26 @@ const isOriginMessageHasRecalled = computed(() => recalledMessageIDSet.value.has
 
 const handleReferenceClick = () => {
   if (referencedInfo.value.messageID) {
-    const { messageID } = referencedInfo.value;
+    const { messageID, sequence, time } = referencedInfo.value;
+    const targetMessage = messageList.value?.find(item => item.ID === messageID);
 
-    const messageModel = TUIStore.getMessageModel(messageID);
-    if (isOriginMessageHasRecalled.value || !messageModel || messageModel.isDeleted || messageModel.isRevoked) {
+    if (isOriginMessageHasRecalled.value || targetMessage?.isDeleted || targetMessage?.isRevoked) {
       TUIToast.error({
         message: t('MessageList.origin_message_has_been_recalled'),
       });
       return;
     }
 
-    const isExist = highlightMessageIDSet.value.has(messageID);
-
-    if (!isExist) {
-      highlightMessage({
+    fetchMessageList({
+      conversationID: props.message.conversationID,
+      messageListType: MessageListType.HISTORY,
+      cursor: {
+        conversationID: props.message.conversationID,
         messageID,
-        duration: 3000,
-      });
-    }
-
-    scrollToMessage(messageID, {
-      block: 'center',
-      skipIfVisible: true,
-      behavior: 'instant',
-    }).catch(() => {});
+        sequence,
+        time,
+      },
+    });
   }
 };
 
@@ -120,7 +118,7 @@ const handleReferenceClick = () => {
 <style lang="scss" scoped>
 .text-message {
   font-size: 14px;
-  padding: 12px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   word-break: break-word;
@@ -187,6 +185,7 @@ const handleReferenceClick = () => {
       vertical-align: middle;
       line-height: 1;
       margin: 0 1px;
+      user-select: text;
     }
   }
 }

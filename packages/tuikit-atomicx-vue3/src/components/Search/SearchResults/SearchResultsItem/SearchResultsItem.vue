@@ -32,7 +32,6 @@
 </template>
 
 <script lang="ts" setup>
-import { defineProps, withDefaults } from 'vue';
 import { SearchType } from '../../../../types/engine';
 import type {
   SearchCloudMessagesResultItem,

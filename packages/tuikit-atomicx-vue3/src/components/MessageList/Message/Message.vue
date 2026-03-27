@@ -12,6 +12,7 @@ interface MessageProps {
   isFirstInChunk?: boolean;
   isLastInChunk?: boolean;
   isHiddenMessageAvatar?: boolean;
+  removeAvatar?: boolean;
   isHiddenMessageNick?: boolean;
   isHiddenMessageMeta?: boolean;
 }
@@ -24,6 +25,7 @@ withDefaults(defineProps<MessageProps>(), {
   isFirstInChunk: undefined,
   isLastInChunk: undefined,
   isHiddenMessageAvatar: false,
+  removeAvatar: false,
   isHiddenMessageNick: false,
   isHiddenMessageMeta: false,
 });
@@ -39,8 +41,8 @@ withDefaults(defineProps<MessageProps>(), {
     :is-first-in-chunk="isFirstInChunk"
     :is-last-in-chunk="isLastInChunk"
     :is-hidden-message-avatar="isHiddenMessageAvatar"
+    :remove-avatar="removeAvatar"
     :is-hidden-message-nick="isHiddenMessageNick"
-    :is-hidden-message-meta="isHiddenMessageMeta"
   />
 </template>
 

@@ -5,15 +5,11 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-color-operate);
+  background-color: var(--bg-color-topbar);
 }
 
 .contact-info__empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--text-color-secondary);
+
 }
 
 .contact-info__header {

@@ -19,7 +19,7 @@ interface ErrorConfig {
 }
 
 interface ErrorMatcher {
-  code: number;
+  code?: number;
   /** When provided, this matcher only applies when the error message matches the pattern. */
   messagePattern?: RegExp;
   /** When provided, this matcher only applies when called from this specific API. */
@@ -44,63 +44,56 @@ const ERROR_MATCHERS: ErrorMatcher[] = [
   { code: TUIErrorCode.ERR_CAMERA_START_FAILED, config: { id: 20014, i18nKey: 'Modal.CameraStartFailed' } },
   { code: TUIErrorCode.ERR_MICROPHONE_START_FAILED, config: { id: 20015, i18nKey: 'Modal.MicrophoneStartFailed' } },
   // roomManager error code — all three are API-specific so apiName is required for them to match
-  { code: TUIErrorCode.ERR_INVALID_PARAMETER, apiName: 'endRoom', messagePattern: /the room identifier is null, please check room is created/, config: { id: 20016, i18nKey: 'Modal.PleaseCreateOrJoinRoomBeforeDismiss' } },
-  { code: TUIErrorCode.ERR_ROOM_ID_OCCUPIED, apiName: 'createAndJoinRoom', config: { id: 20017, i18nKey: 'Modal.PleaseCreateRoomByOtherRoomId' } },
-  { code: TUIErrorCode.ERR_ROOM_ID_NOT_EXIST, apiName: 'joinRoom', config: { id: 20018, i18nKey: 'Modal.PleaseCreateRoomFirst' } },
+  { messagePattern: /Please login firstly by useLoginState/, apiName: 'createAndJoinRoom', config: { id: 20016, i18nKey: 'Modal.PleaseLoginFirstBeforeCreateAndJoinRoom' } },
+  { messagePattern: /Please login firstly by useLoginState/, apiName: 'joinRoom', config: { id: 20017, i18nKey: 'Modal.PleaseLoginFirstBeforeJoinRoom' } },
+  { messagePattern: /Please login firstly by useLoginState/, apiName: 'getScheduledRoomList', config: { id: 20018, i18nKey: 'Modal.PleaseLoginFirstBeforeGetScheduledRoomList' } },
+  { messagePattern: /Please login firstly by useLoginState/, apiName: 'scheduleRoom', config: { id: 20019, i18nKey: 'Modal.PleaseLoginFirstBeforeScheduleRoom' } },
+  { code: TUIErrorCode.ERR_ROOM_ID_NOT_EXIST, apiName: 'joinRoom', config: { id: 20020, i18nKey: 'Modal.PleaseCreateRoomFirst' } },
+  { code: TUIErrorCode.ERR_INVALID_PARAMETER, apiName: 'endRoom', messagePattern: /the room identifier is null, please check room is created/, config: { id: 20021, i18nKey: 'Modal.PleaseCreateOrJoinRoomBeforeDismiss' } },
 ];
 
 /**
- * Resolve ErrorConfig by matching code, then narrowing by apiName and messagePattern.
- * Priority (highest to lowest):
- *   1. code + apiName + messagePattern
- *   2. code + apiName (no messagePattern)
- *   3. code + messagePattern (no apiName)
- *   4. code only (generic fallback)
- * Matchers with apiName set will never match when a different (or no) apiName is passed.
+ * Returns the number of defined constraint fields on a matcher.
+ * More constraints = higher specificity = should be preferred over general matchers.
  */
-function resolveConfig(code: number, message?: string, apiName?: string): ErrorConfig | undefined {
-  const candidates = ERROR_MATCHERS.filter(m => m.code === code);
-  if (!candidates.length) {
-    return undefined;
-  }
-
-  if (apiName) {
-    const apiCandidates = candidates.filter(m => m.apiName === apiName);
-    if (apiCandidates.length) {
-      if (message) {
-        const specific = apiCandidates.find(m => m.messagePattern?.test(message));
-        if (specific) {
-          return specific.config;
-        }
-      }
-      const generic = apiCandidates.find(m => !m.messagePattern);
-      if (generic) {
-        return generic.config;
-      }
-    }
-  }
-
-  // Fall through to matchers that have no apiName restriction
-  const noApiCandidates = candidates.filter(m => !m.apiName);
-  if (message) {
-    const specific = noApiCandidates.find(m => m.messagePattern?.test(message));
-    if (specific) {
-      return specific.config;
-    }
-  }
-  return noApiCandidates.find(m => !m.messagePattern)?.config;
+function matcherSpecificity(m: ErrorMatcher): number {
+  return (m.code !== undefined ? 1 : 0)
+    + (m.apiName !== undefined ? 1 : 0)
+    + (m.messagePattern !== undefined ? 1 : 0);
 }
 
 /**
- * Handle error and show UIKitModal
- * @param error - Error object with code and optional message properties
+ * Pre-sorted copy of ERROR_MATCHERS: higher-specificity matchers come first so that
+ * resolveConfig always prefers the most-specific rule regardless of declaration order.
+ * Declaration order within the same specificity level is preserved (stable sort).
+ */
+const SORTED_ERROR_MATCHERS = [...ERROR_MATCHERS].sort(
+  (a, b) => matcherSpecificity(b) - matcherSpecificity(a),
+);
+
+/**
+ * Resolve ErrorConfig by finding the most-specific matcher where every defined field matches.
+ * A field that is undefined on the matcher acts as a wildcard.
+ */
+function resolveConfig(code?: number, message?: string, apiName?: string): ErrorConfig | undefined {
+  return SORTED_ERROR_MATCHERS.find(m =>
+    (m.code === undefined || m.code === code)
+    && (m.apiName === undefined || m.apiName === apiName)
+    && (m.messagePattern === undefined || (!!message && m.messagePattern.test(message))),
+  )?.config;
+}
+
+/**
+ * Handle error and show UIKitModal.
+ * When a matching ErrorConfig is found, the localized message is shown.
+ * @param error - Error object with optional code and message properties
  * @param apiName - The state API name that triggered the error (e.g. 'createAndJoinRoom')
  */
 function handleErrorWithModal(error: { code?: number; message?: string }, apiName?: string): void {
   const { t } = useUIKit();
 
   const { code, message } = error;
-  if (!code) {
+  if (!code && !message) {
     return;
   }
 
@@ -112,6 +105,7 @@ function handleErrorWithModal(error: { code?: number; message?: string }, apiNam
       content: t(`Room.${config.i18nKey}`),
       type: 'error',
     });
+    return;
   }
 }
 

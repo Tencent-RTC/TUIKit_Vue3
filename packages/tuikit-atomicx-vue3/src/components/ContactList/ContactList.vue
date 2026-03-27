@@ -15,7 +15,6 @@
             <div
               v-for="group in contactGroups"
               :key="group.key"
-              class="contact-list__group"
             >
               <component
                 :is="GroupHeader"
@@ -39,28 +38,60 @@
                       group.isExpanded && 'contact-list__group-icon--expanded']"
                   />
                   <span class="contact-list__group-name">{{ group.title }}</span>
-                  <div
-                    v-if="group.unreadCount !== undefined && group.unreadCount > 0"
-                    class="contact-list__unread-badge"
-                  >
-                    {{ group.unreadCount > UNREAD_COUNT_LIMIT ? '99+' : group.unreadCount }}
-                  </div>
+                </div>
+                <div
+                  v-if="group.showTotalCount"
+                  class="contact-list__group-count"
+                >
+                  {{ group.count ?? 0 }}
+                </div>
+                <div
+                  v-else-if="group.unreadCount !== undefined && group.unreadCount > 0"
+                  class="contact-list__unread-badge"
+                >
+                  {{ group.unreadCount > UNREAD_COUNT_LIMIT ? '99+' : group.unreadCount }}
                 </div>
               </div>
               <div
                 v-if="group.isExpanded"
                 class="contact-list__group-content"
               >
-                <component
-                  :is="ContactItem"
-                  v-for="(contactItem, index) in group.items"
-                  :key="`${group.type}_${getItemId(contactItem)}_${index}`"
-                  :contact-item="{ type: group.type, data: contactItem }"
-                  :active-contact-item="activeContact"
-                  @click="handleContactClick"
-                  @friend-application-action="handleFriendApplicationAction"
-                  @group-application-action="handleGroupApplicationAction"
-                />
+                <template
+                  v-if="group.type === ContactItemType.FRIEND && group.sections?.length"
+                >
+                  <section
+                    v-for="section in group.sections"
+                    :key="section.key"
+                    class="contact-list__section"
+                  >
+                    <div class="contact-list__section-header">
+                      <span class="contact-list__section-title">{{ section.title }}</span>
+                      <span class="contact-list__section-count">({{ section.count }})</span>
+                    </div>
+                    <component
+                      :is="ContactItem"
+                      v-for="(friend, index) in section.items"
+                      :key="getContactItemKey(ContactItemType.FRIEND, friend, index)"
+                      :contact-item="{ type: ContactItemType.FRIEND, data: friend }"
+                      :active-contact-item="activeContact"
+                      @click="handleContactClick"
+                      @friend-application-action="handleFriendApplicationAction"
+                      @group-application-action="handleGroupApplicationAction"
+                    />
+                  </section>
+                </template>
+                <template v-else>
+                  <component
+                    :is="ContactItem"
+                    v-for="(contactItem, index) in group.items"
+                    :key="getContactItemKey(group.type, contactItem, index)"
+                    :contact-item="{ type: group.type, data: contactItem }"
+                    :active-contact-item="activeContact"
+                    @click="handleContactClick"
+                    @friend-application-action="handleFriendApplicationAction"
+                    @group-application-action="handleGroupApplicationAction"
+                  />
+                </template>
               </div>
             </div>
           </template>
@@ -93,6 +124,7 @@ import { UNREAD_COUNT_LIMIT } from './constants/const';
 import { ContactListItem } from './ContactListItem';
 import { ContactSearch } from './ContactSearch';
 import { useContactList } from './hooks';
+import { buildFriendSections } from './utils/buildFriendSections';
 import type {
   ContactGroupItem,
   FriendApplication,
@@ -101,6 +133,7 @@ import type {
   ContactGroup,
   CustomGroupConfig,
   ContactItem,
+  Friend,
 } from '../../types/contact';
 
 const props = withDefaults(defineProps<ContactListProps>(), {
@@ -184,6 +217,12 @@ const getItemId = (item: ContactItem): string => {
   return '';
 };
 
+const getContactItemKey = (
+  type: ContactItemType,
+  item: ContactItem,
+  index: number,
+): string => `${type}_${getItemId(item)}_${index}`;
+
 const handleContactClick = (type: ContactItemType, item: ContactItem) => {
   const contactGroupItem: ContactGroupItem = { type, data: item };
   emit('contact-item-click', contactGroupItem);
@@ -253,36 +292,47 @@ watch(
 );
 
 const contactGroups = computed<ContactGroup[]>(() => {
+  const friendSections = buildFriendSections(friendList.value as Friend[]);
+
   const groupConfigs = [
     {
       type: ContactItemType.FRIEND_REQUEST,
       title: defaultGroupTitles.value[ContactItemType.FRIEND_REQUEST],
       items: friendApplicationList.value,
       unreadCount: friendApplicationUnreadCount.value,
+      showTotalCount: false,
       order: 1,
     },
     {
       type: ContactItemType.GROUP_REQUEST,
       title: defaultGroupTitles.value[ContactItemType.GROUP_REQUEST],
       items: groupApplicationList.value,
+      showTotalCount: false,
       order: 2,
     },
     {
       type: ContactItemType.FRIEND,
       title: defaultGroupTitles.value[ContactItemType.FRIEND],
       items: friendList.value,
+      count: friendList.value.length,
+      sections: friendSections,
+      showTotalCount: true,
       order: 3,
     },
     {
       type: ContactItemType.GROUP,
       title: defaultGroupTitles.value[ContactItemType.GROUP],
       items: groupList.value,
+      count: groupList.value.length,
+      showTotalCount: true,
       order: 4,
     },
     {
       type: ContactItemType.BLACK,
       title: defaultGroupTitles.value[ContactItemType.BLACK],
       items: blackList.value,
+      count: blackList.value.length,
+      showTotalCount: true,
       order: 5,
     },
   ];
@@ -296,7 +346,10 @@ const contactGroups = computed<ContactGroup[]>(() => {
       type: config.type,
       title: customGroupConfig?.[config.type]?.title ?? config.title ?? '',
       items: config.items,
+      ...(config.count !== undefined && { count: config.count }),
+      ...(config.sections !== undefined && { sections: config.sections }),
       ...(config.unreadCount !== undefined && { unreadCount: config.unreadCount }),
+      ...(config.showTotalCount !== undefined && { showTotalCount: config.showTotalCount }),
       isExpanded: expandedGroups.value.has(config.type),
       order: customGroupConfig?.[config.type]?.order ?? config.order,
     }))

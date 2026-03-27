@@ -9,16 +9,18 @@
           {{ t('TUIContact.ID') }}：{{ application?.userID }}
         </div>
       </div>
-      <Avatar
-        :src="application.avatar"
-        :alt="application?.nick || application.userID"
-        size="xl"
-      />
+      <div class="contact-friend-application-info__avatar-wrap">
+        <Avatar
+          :src="application.avatar"
+          :alt="application?.nick || application.userID"
+          :size="48"
+        />
+      </div>
     </div>
     <div class="contact-friend-application-info__rows">
       <div class="contact-friend-application-info__row">
         <div class="contact-friend-application-info__row-label">
-          {{ t('TUIContact.Verification info') }}：
+          {{ t('TUIContact.Verification info') }}
         </div>
         <div class="contact-friend-application-info__row-value">
           {{ application?.wording || t('TUIContact.None') }}
@@ -30,19 +32,23 @@
       class="contact-friend-application-info__actions"
     >
       <TUIButton
+        class="contact-friend-application-info__button--primary"
+        type="primary"
+        size="big"
+        radius="round"
+        @click="handleAccept"
+      >
+        {{ t('TUIContact.Agree') }}
+      </TUIButton>
+      <TUIButton
+        class="contact-friend-application-info__button--secondary"
         type="default"
         size="big"
+        radius="round"
         color="red"
         @click="handleRefuse"
       >
         {{ t('TUIContact.Refuse') }}
-      </TUIButton>
-      <TUIButton
-        type="primary"
-        size="big"
-        @click="handleAccept"
-      >
-        {{ t('TUIContact.Agree') }}
       </TUIButton>
     </div>
   </div>

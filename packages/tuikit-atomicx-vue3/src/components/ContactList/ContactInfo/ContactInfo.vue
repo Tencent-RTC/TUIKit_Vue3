@@ -1,7 +1,7 @@
 <template>
-  <div class="contact-info">
+  <div v-if="contactInfo" class="contact-info">
     <header
-      v-if="isH5 && contactInfo"
+      v-if="isH5"
       class="contact-info__header"
     >
       <IconChevronLeft
@@ -14,7 +14,6 @@
     </header>
     <component
       :is="getComponentByType(contactInfo?.type)"
-      v-if="contactInfo"
       v-bind="getComponentProps(contactInfo.type)"
       :show-actions="showActions"
       @close="handleCloseContactInfo"
@@ -31,13 +30,8 @@
       @add-friend="handleAddFriend"
       @join-group="handleJoinGroup"
     />
-    <div
-      v-else-if="PlaceholderEmpty"
-      class="contact-info__empty"
-    >
-      <component :is="PlaceholderEmpty" />
-    </div>
   </div>
+  <component v-else :is="PlaceholderEmpty" />
 </template>
 
 <script setup lang="ts">

@@ -346,9 +346,10 @@ export interface IRoomState {
   cancelScheduledRoom(options: { roomId: string }): Promise<void>;
 
   /**
-   * 创建并立即加入新房间
-   * @param options - 创建选项
+   * 创建并立即加入房间，若房间已存在则直接加入
+   * @param options - 选项
    * @param options.roomId - 房间 ID
+   * @param options.roomType - 房间类型（默认为标准房间）
    * @param options.options - 房间创建配置
    */
   createAndJoinRoom(options: { roomId: string; roomType?: RoomType; options: CreateRoomOptions }): Promise<void>;
@@ -369,7 +370,7 @@ export interface IRoomState {
   /**
    * 结束当前房间（仅房主可用）
    */
-  endRoom(): Promise<void>;
+  endRoom(options?: { roomId?: string }): Promise<void>;
 
   /**
    * 更新房间信息

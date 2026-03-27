@@ -54,7 +54,7 @@ const { inputRawValue, updateRawValue, sendMessage, setEditorInstance, setConten
 const editorRef = ref<HTMLDivElement | null>(null);
 const isFocused = ref(props.autoFocus);
 
-const placeholderText = computed(() => props.placeholder || t('Say something'));
+const placeholderText = computed(() => props.placeholder || t('BarrageInput.saySomething'));
 
 let editorInstance: Editor | null = null;
 
@@ -80,7 +80,7 @@ const createEditorInstance = (p: ITextEditorProps) => {
           await sendMessage(inputValue);
         } catch (err: any) {
           TUIToast.error({
-            message: t(ERROR_MESSAGE[err.code as keyof typeof ERROR_MESSAGE] || 'send message failed'),
+            message: t(ERROR_MESSAGE[err.code as keyof typeof ERROR_MESSAGE] || 'BarrageInput.sendFailed'),
           });
         }
       },

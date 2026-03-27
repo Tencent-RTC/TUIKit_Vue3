@@ -7,6 +7,7 @@ import {
   GroupMemberRole,
 } from '../../../../states/GroupSettingState';
 import { Avatar } from '../../../Avatar';
+import { Divider } from '../../Divider';
 import type { GroupMember } from '../../../../states/GroupSettingState';
 
 interface GroupMembersProps {
@@ -85,18 +86,44 @@ const sortedMembers = computed(() => {
   });
 });
 
-const displayMiniMembers = computed(() =>
-  isExpanded.value ? sortedMembers.value : sortedMembers.value.slice(0, props.maxDisplayCount),
-);
+const actionButtonOrder = computed(() => {
+  const actions: Array<'add' | 'remove'> = [];
+  if (props.showAddButton) {
+    actions.push('add');
+  }
+  if (props.showRemoveButton) {
+    actions.push('remove');
+  }
+  return actions;
+});
+
+const visibleActionButtons = computed(() => {
+  if (isExpanded.value) {
+    return [] as Array<'add' | 'remove'>;
+  }
+  return actionButtonOrder.value.slice(0, props.maxDisplayCount);
+});
+
+const displayMiniMembers = computed(() => {
+  if (isExpanded.value) {
+    return sortedMembers.value;
+  }
+  const availableMemberSlots = Math.max(0, props.maxDisplayCount - visibleActionButtons.value.length);
+  return sortedMembers.value.slice(0, availableMemberSlots);
+});
 
 // Generate skeleton items when members is undefined
 const skeletonItems = computed(() => {
   if (members.value !== undefined) {
     return [];
   }
-  const skeletonCount = Math.min(props.memberCount || props.maxDisplayCount, props.maxDisplayCount);
+  const availableMemberSlots = Math.max(0, props.maxDisplayCount - visibleActionButtons.value.length);
+  const skeletonCount = Math.min(props.memberCount || availableMemberSlots, availableMemberSlots);
   return Array.from({ length: skeletonCount }, (_, index) => index);
 });
+
+const canShowAddButton = computed(() => visibleActionButtons.value.includes('add'));
+const canShowRemoveButton = computed(() => visibleActionButtons.value.includes('remove'));
 
 const shouldShowExpand = computed(() =>
   props.expandable && sortedMembers.value.length > props.maxDisplayCount,
@@ -231,7 +258,7 @@ onUnmounted(() => {
 
       <!-- Add Member Button -->
       <div
-        v-if="!isExpanded && showAddButton"
+        v-if="!isExpanded && canShowAddButton"
         :class="[
           'group-members__item',
           'group-members__action-btn'
@@ -242,13 +269,13 @@ onUnmounted(() => {
           <IconPlus />
         </div>
         <div class="group-members__action-btn__label">
-          {{ t('ChatSetting.add') }}
+          <!-- {{ t('ChatSetting.add') }} -->
         </div>
       </div>
 
       <!-- Remove Member Button -->
       <div
-        v-if="!isExpanded && showRemoveButton"
+        v-if="!isExpanded && canShowRemoveButton"
         :class="[
           'group-members__item',
           'group-members__action-btn'
@@ -259,7 +286,7 @@ onUnmounted(() => {
           <IconMinus />
         </div>
         <div class="group-members__action-btn__label">
-          {{ t('ChatSetting.remove') }}
+          <!-- {{ t('ChatSetting.remove') }} -->
         </div>
       </div>
 
@@ -311,14 +338,11 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 60px;
-    padding: 16px 0 12px;
-    border-bottom: 0.5px solid var(--stroke-color-module);
+    padding: 14px 20px 0px;
   }
 
   &__title {
     font-size: 14px;
-    font-weight: 500;
     display: flex;
     align-items: baseline;
     color: var(--text-color-primary);
@@ -341,12 +365,12 @@ onUnmounted(() => {
     color: var(--text-color-secondary);
 
     &:hover {
-      color: var(--text-color-button);
-      background-color: var(--button-color-primary-hover);
+      // color: var(--text-color-button);
+      background-color: var(--button-color-secondary-hover);
     }
 
     &:active {
-      background-color: var(--button-color-primary-active);
+      background-color: var(--button-color-secondary-active);
     }
 
     &--expanded {
@@ -356,10 +380,12 @@ onUnmounted(() => {
 
   &__grid {
     display: grid;
-    padding: 16px 0;
+    padding: 14px 20px;
+    margin-left: -8px;
+    margin-right: -8px;
     justify-items: center;
     grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-    gap: 8px;
+    gap: 6px;
 
     &--expanded {
       max-height: 400px;
@@ -398,8 +424,8 @@ onUnmounted(() => {
   }
 
   &__skeleton-avatar {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     animation: skeleton-pulse 1.5s ease-in-out infinite;
     background-color: rgba(0, 0, 0, 0.08);
@@ -453,7 +479,6 @@ onUnmounted(() => {
     grid-column: 1 / -1;
     display: flex;
     justify-content: center;
-    padding: 20px 0;
   }
 
   &__no-more-text {

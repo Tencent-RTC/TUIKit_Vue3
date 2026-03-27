@@ -16,9 +16,16 @@
       :style="streamViewStyle"
     >
       <div
-        id="atomicx-live-stream-content"
+        :id="LIVE_STREAM_CONTENT_VIEW"
         class="stream-content"
       />
+      <!-- Center overlay slot for custom content (pause button, watermark, etc.) -->
+      <div
+        v-if="$slots['center-overlay']"
+        class="center-overlay"
+      >
+        <slot name="center-overlay" />
+      </div>
       <div
         v-if="needPlayStreamViewInfo.length > 0 && !isPictureInPicture"
         class="live-core-ui"
@@ -48,14 +55,34 @@
       />
       <LiveCoreDecorate v-if="!isPictureInPicture" :seatListWithRealSize="seatListWithRealSize" />
     </div>
+    <!-- Voice chat room overlay: web does not support voice chat rooms -->
+    <div
+      v-if="isVoiceChatRoom"
+      class="voice-chat-overlay"
+    >
+      <IconCall size="50" />
+      <span class="voice-chat-overlay-text">{{ t('LiveView.VoiceChatNotSupported') }}</span>
+    </div>
+    <!-- Anchor away overlay: shown when seatList is empty and the viewer is not the anchor -->
+    <div
+      v-if="isAnchorAway"
+      class="anchor-away-overlay"
+    >
+      <div class="anchor-away-content">
+        <div class="anchor-away-icon">
+          <IconCoffee :size="58" />
+        </div>
+        <div class="anchor-away-text">
+          {{ t('LiveView.AnchorAway') }}
+        </div>
+      </div>
+    </div>
     <Teleport
-      v-if="!isFullscreen"
       to="body"
-      :disabled="!isMobile"
+      :disabled="!isMobile || isFullscreen"
     >
       <PlayerControl v-if="isShowPlayerControl" :isLandscapeStyleMode="isLandscapeStyleMode" />
     </Teleport>
-    <PlayerControl v-if="isShowPlayerControl && isFullscreen" :isLandscapeStyleMode="isLandscapeStyleMode" />
     <div :id="SVGA_PLAYER_VIEW" />
   </div>
 </template>
@@ -63,7 +90,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount, useSlots, Teleport } from 'vue';
 import type { ComputedRef } from 'vue';
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { useUIKit, IconCall, IconCoffee } from '@tencentcloud/uikit-base-component-vue3';
 import { useCoGuestState } from '../../states/CoGuestState';
 import { useCoHostState } from '../../states/CoHostState';
 import { useDeviceState } from '../../states/DeviceState';
@@ -77,6 +104,7 @@ import { getContentSize } from '../../utils/domOperation';
 import LiveCoreDecorate from './CoreViewDecorate/LiveCoreDecorate.vue';
 import DefaultStreamViewUI from './DefaultStreamViewUI.vue';
 import { usePlayerControlState } from './PlayerControl';
+import { LIVE_STREAM_CONTENT_VIEW } from './index';
 import PlayerControl from './PlayerControl/PlayerControl.vue';
 import type { SeatInfo, SeatUserInfo } from '../../types';
 
@@ -118,10 +146,14 @@ const isAlignCenter = computed(() => {
 });
 const isShowPlayerControl = computed(() => currentLive.value?.liveId && !seatList.value.some(item => item.userInfo?.userId === loginUserInfo.value?.userId));
 const isAnchor = computed(() => loginUserInfo.value?.userId === currentLive.value?.liveOwner.userId);
+// Voice chat rooms use "voice_" prefix in liveId, while live rooms use "live_" prefix
+const isVoiceChatRoom = computed(() => currentLive.value?.liveId?.startsWith('voice_') ?? false);
+// Show anchor-away overlay when seatList is empty, the viewer is not the anchor, and playback has started
+const isAnchorAway = computed(() => isPlayedVideo.value && !isAnchor.value && seatList.value.length === 0 && currentLive.value?.liveId?.startsWith('live_'));
 
 onMounted(async () => {
   isMounted.value = true;
-  await startPlayStream({ view: 'atomicx-live-stream-content' });
+  await startPlayStream({ view: LIVE_STREAM_CONTENT_VIEW });
   isPlayedVideo.value = true;
   if (!isAnchor.value) {
     setCaptureVolume(100);
@@ -562,6 +594,30 @@ onBeforeUnmount(() => {
       top: 0;
       left: 0;
       overflow: hidden;
+
+      :deep(video) {
+        // Solve the problem where the background color of the video tag is black and overflows under the bright color theme
+        background: unset !important;
+      }
+    }
+
+    .center-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      // z-index must be between stream-content (auto) and PlayerControl (.pc-mode: 10)
+      z-index: 5;
+
+      // Allow child elements to receive pointer events
+      > * {
+        pointer-events: auto;
+      }
     }
 
     .live-core-ui {
@@ -582,6 +638,65 @@ onBeforeUnmount(() => {
     height: 50vmin;
     transform: translate(-50%, -50%);
     pointer-events: none;
+  }
+
+  .voice-chat-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    background: var(--uikit-color-gray-1);
+    z-index: 10;
+
+    .voice-chat-overlay-text {
+      color: var(--text-color-primary);
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 24px;
+    }
+  }
+
+  .anchor-away-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    background: var(--uikit-color-gray-1);
+    z-index: 10;
+
+    .anchor-away-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .anchor-away-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-color-primary);
+    }
+
+    .anchor-away-text {
+      color: var(--text-color-secondary);
+      text-align: center;
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 24px;
+    }
   }
 }
 </style>

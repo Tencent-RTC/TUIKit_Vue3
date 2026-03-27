@@ -24,4 +24,6 @@ export const resource = {
   'LiveView.NotAllowPIPInNonPlaying': '暂停状态下不允许进入画中画模式',
   'LiveView.NotAllowPIPInFullscreen': '全屏模式下不允许进入画中画模式',
   'LiveView.BattleEnded': 'PK结束',
+  'LiveView.VoiceChatNotSupported': '当前 Web 端暂不支持语聊房展示',
+  'LiveView.AnchorAway': '主播暂时离开',
 };

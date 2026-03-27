@@ -12,15 +12,17 @@
           {{ applicationText }}
         </div>
       </div>
-      <Avatar
-        :alt="displayName"
-        size="xl"
-      />
+      <div class="contact-group-application-info__avatar-wrap">
+        <Avatar
+          :alt="displayName"
+          :size="48"
+        />
+      </div>
     </div>
     <div class="contact-group-application-info__rows">
       <div class="contact-group-application-info__row">
         <div class="contact-group-application-info__row-label">
-          {{ t('TUIContact.Application note') }}：
+          {{ t('TUIContact.Application note') }}
         </div>
         <div class="contact-group-application-info__row-value">
           {{ application.note || t('TUIContact.None') }}
@@ -32,19 +34,23 @@
       class="contact-group-application-info__actions"
     >
       <TUIButton
+        class="contact-group-application-info__button--primary"
+        type="primary"
+        size="big"
+        radius="round"
+        @click="handleAccept"
+      >
+        {{ t('TUIContact.Agree') }}
+      </TUIButton>
+      <TUIButton
+        class="contact-group-application-info__button--secondary"
         type="default"
         size="big"
+        radius="round"
         color="red"
         @click="handleRefuse"
       >
         {{ t('TUIContact.Refuse') }}
-      </TUIButton>
-      <TUIButton
-        type="primary"
-        size="big"
-        @click="handleAccept"
-      >
-        {{ t('TUIContact.Agree') }}
       </TUIButton>
     </div>
   </div>

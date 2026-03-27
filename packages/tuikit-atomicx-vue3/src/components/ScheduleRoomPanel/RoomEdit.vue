@@ -3,18 +3,18 @@
     <div class="edit-form">
       <div class="form-item">
         <div class="form-label">
-          {{ t('Room Name') }}
+          {{ t('ScheduleRoomPanel.RoomName') }}
         </div>
         <TUIInput
           v-model="internalForm.roomName"
-          :placeholder="t('please enter the room name')"
+          :placeholder="t('ScheduleRoomPanel.EnterRoomName')"
           class="form-input"
         />
       </div>
 
       <div class="form-item">
         <div class="form-label">
-          {{ t('Starting time') }}
+          {{ t('ScheduleRoomPanel.StartingTime') }}
         </div>
         <div class="datetime-group">
           <Datepicker v-model="internalForm.startDate" />
@@ -24,29 +24,29 @@
 
       <div class="form-item">
         <div class="form-label">
-          {{ t('Room duration') }}
+          {{ t('ScheduleRoomPanel.RoomDuration') }}
         </div>
         <DurationSelector v-model="internalForm.duration" />
       </div>
 
       <div class="form-item">
         <div class="form-label">
-          {{ t('Time Zone') }}
+          {{ t('ScheduleRoomPanel.TimeZone') }}
         </div>
         <TimezoneSelector v-model="internalForm.timezone" />
       </div>
 
       <div :class="['form-item', { 'flex-start': internalForm.selectedUserList?.length > 0 }]">
         <div class="form-label">
-          {{ t('Participants') }}
+          {{ t('ScheduleRoomPanel.Participants') }}
         </div>
         <div class="form-participants">
           <TUIInput
             v-model="searchUserId"
             :search="handleUserSearchChange"
             :select="handleSearchResultItemClick"
-            :placeholder="t('Please enter participant names')"
-            :emptyText="t('No relevant members found')"
+            :placeholder="t('ScheduleRoomPanel.EnterParticipantNames')"
+            :emptyText="t('ScheduleRoomPanel.NoMembersFound')"
           >
             <template #suffix>
               <IconManageMember @click="userPickerVisible = true" />
@@ -81,15 +81,15 @@
               <IconClose1 class="form-attendees-item-remove" @click="removeSelectUser(user)" />
             </span>
             <span class="form-attendees-item form-attendees-count">
-              {{ `${internalForm.selectedUserList?.length || 0} ${t('people')}` }}
+              {{ `${internalForm.selectedUserList?.length || 0} ${t('ScheduleRoomPanel.People')}` }}
             </span>
           </div>
         </div>
         <TUIDialog
           v-model:visible="userPickerVisible"
-          :cancel-text="t('Cancel')"
-          :confirm-text="t('Confirm')"
-          :title="t('Contacts')"
+          :cancel-text="t('ScheduleRoomPanel.Cancel')"
+          :confirm-text="t('ScheduleRoomPanel.Confirm')"
+          :title="t('ScheduleRoomPanel.Contacts')"
         >
           <UserPicker
             ref="userPickerRef"
@@ -101,10 +101,10 @@
           <template #footer>
             <div class="user-picker-footer">
               <TUIButton @click="userPickerVisible = false">
-                {{ t('Cancel') }}
+                {{ t('ScheduleRoomPanel.Cancel') }}
               </TUIButton>
               <TUIButton type="primary" @click="handleUserPickerConfirm">
-                {{ t('Confirm') }}
+                {{ t('ScheduleRoomPanel.Confirm') }}
               </TUIButton>
             </div>
           </template>
@@ -117,13 +117,13 @@
         type="default"
         @click="handleCancel"
       >
-        {{ t('Cancel') }}
+        {{ t('ScheduleRoomPanel.Cancel') }}
       </TUIButton>
       <TUIButton
         type="primary"
         @click="handleSave"
       >
-        {{ t('Save') }}
+        {{ t('ScheduleRoomPanel.Save') }}
       </TUIButton>
     </div>
   </div>
@@ -255,14 +255,14 @@ watch(() => internalForm.value.timezone, (newTimezone, oldTimezone) => {
 
 const validateForm = (): boolean => {
   if (!internalForm.value.roomName.trim()) {
-    TUIToast.error({ message: t('The room name cannot be empty') });
+    TUIToast.error({ message: t('ScheduleRoomPanel.RoomNameRequired') });
     return false;
   }
 
   const currentUtcTimestamp = Math.floor(Date.now() / 1000);
 
   if (scheduleStartTime.value <= currentUtcTimestamp) {
-    TUIToast.error({ message: t('The start time cannot be earlier than the current time') });
+    TUIToast.error({ message: t('ScheduleRoomPanel.StartTimeInvalid') });
     return false;
   }
 

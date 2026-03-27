@@ -11,9 +11,9 @@ export function useCopy() {
   const copy = async (value: string) => {
     const success = await copyText(value);
     if (success) {
-      TUIToast.info({ message: t('Copy Success') });
+      TUIToast.info({ message: t('ScheduleRoomPanel.CopySuccess') });
     } else {
-      TUIToast.error({ message: t('Copy Failed') });
+      TUIToast.error({ message: t('ScheduleRoomPanel.CopyFailed') });
     }
   };
 

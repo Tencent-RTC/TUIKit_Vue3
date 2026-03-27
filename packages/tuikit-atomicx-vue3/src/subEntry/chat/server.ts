@@ -2,10 +2,7 @@ import type { Ref } from 'vue';
 import { ref } from 'vue';
 import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import TUICore, { TUILogin, TUIConstants } from '@tencentcloud/tui-core-lite';
-import { ChatSceneType, useStatistical } from '../../statistical';
-import { isPC } from '../../utils';
-
-const { setChatScene } = useStatistical();
+import { waitForLogin } from '../../utils/loginCoordinator';
 
 export default class ChatLoginServer {
   static instance: ChatLoginServer;
@@ -27,7 +24,6 @@ export default class ChatLoginServer {
   }
 
   public init() {
-    setChatScene(isPC ? ChatSceneType.CHAT_WEB : ChatSceneType.CHAT_H5);
     if (!this.isReady) {
       this.isReady = true;
       TUICore.registerEvent(
@@ -62,6 +58,7 @@ export default class ChatLoginServer {
   }
 
   public async login() {
+    await waitForLogin();
     const {
       chat,
       SDKAppID,
@@ -83,6 +80,12 @@ export default class ChatLoginServer {
         SDKAppID,
         userID,
         userSig,
+      }).catch((error: any) => {
+        // Ignore error code 2025 (duplicate login), allow subsequent code to continue
+        if (error?.code === 2025) {
+          return;
+        }
+        throw error;
       });
       this.isLogin.value = true;
       this.resolveList.forEach((resolve) => {

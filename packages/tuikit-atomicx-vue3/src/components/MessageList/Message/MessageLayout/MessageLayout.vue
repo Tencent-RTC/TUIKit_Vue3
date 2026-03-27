@@ -1,10 +1,14 @@
 <script lang="ts" setup>
 import { ref, computed } from 'vue';
+import type { Component } from 'vue';
+import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
 import { MessageType, ConversationType } from '../../../../types/engine';
 import { isCallMessage } from '../../../../utils/call';
+import { getTimeStampAuto } from '../../../../utils/time';
 import { Avatar } from '../../../Avatar';
+import { useMessageListContext } from '../../MessageListContext';
 import { ReadReceiptInfo } from '../../ReadReceiptInfo';
 import { AudioMessage } from '../AudioMessage';
 import { CustomMessage } from '../CustomMessage';
@@ -18,7 +22,7 @@ import { RecalledMessage } from '../RecalledMessage';
 import { TextMessage } from '../TextMessage';
 import { VideoMessage } from '../VideoMessage';
 import { MessageBubble } from './MessageBubble';
-import { MessageMeta } from './MessageMeta';
+import { MessageStatusIcon } from './MessageMeta';
 import { useMessageLayoutClasses } from './useMessageLayoutClasses';
 import type { MessageAction } from '../../../../hooks/useMessageActions';
 import type { MessageModel } from '../../../../types/engine';
@@ -28,7 +32,7 @@ interface MessageLayoutProps {
   nick?: string;
   isAggregated?: boolean;
   isHiddenMessageAvatar?: boolean;
-  isHiddenMessageMeta?: boolean;
+  removeAvatar?: boolean;
   isHiddenMessageNick?: boolean;
   isFirstInChunk?: boolean;
   isLastInChunk?: boolean;
@@ -44,7 +48,7 @@ const props = withDefaults(defineProps<MessageLayoutProps>(), {
   nick: undefined,
   isAggregated: false,
   isHiddenMessageAvatar: false,
-  isHiddenMessageMeta: false,
+  removeAvatar: false,
   isHiddenMessageNick: false,
   isFirstInChunk: undefined,
   isLastInChunk: undefined,
@@ -53,6 +57,8 @@ const props = withDefaults(defineProps<MessageLayoutProps>(), {
   style: undefined,
 });
 
+const { t } = useUIKit();
+const isHovered = ref(false);
 const isReadReceiptInfoOpen = ref(false);
 
 const shouldRenderAsGroupTip = computed(() => {
@@ -69,7 +75,7 @@ const shouldRenderAsGroupTip = computed(() => {
   return false;
 });
 
-const MessageComponentsFactory = {
+const MessageComponentsFactory: Record<MessageType, Component> = {
   [MessageType.TEXT]: TextMessage,
   [MessageType.IMAGE]: ImageMessage,
   [MessageType.AUDIO]: AudioMessage,
@@ -82,9 +88,57 @@ const MessageComponentsFactory = {
   [MessageType.GRP_TIP]: GroupTipMessage,
 };
 
-const MessageComponent = computed(() => MessageComponentsFactory[props.message.type]);
+const messageListContext = useMessageListContext('MessageLayout');
+
+const MessageComponent = computed(() => {
+  const renderers = messageListContext?.messageRenderers;
+  const { type } = props.message;
+  if (renderers?.[type]) {
+    return renderers[type];
+  }
+  return MessageComponentsFactory[type];
+});
 
 const isMessageOwner = computed(() => props.message.flow === 'out');
+const isGroup = computed(() => props.message.conversationType === ConversationType.GROUP);
+
+const displayTime = computed(() => getTimeStampAuto(props.message.time * 1000));
+
+const showSendStatus = computed(() => (
+  isMessageOwner.value
+  && (props.message.status === 'unSend' || props.message.status === 'fail')
+));
+
+const showReadReceipt = computed(() => (
+  isMessageOwner.value
+  && props.message.status === 'success'
+  && props.message.needReadReceipt
+));
+
+const readReceiptText = computed(() => {
+  if (
+    !props.message.needReadReceipt
+    || props.message.status !== 'success'
+    || !props.message.readReceiptInfo
+    || !isMessageOwner.value
+  ) {
+    return '';
+  }
+  const { readCount, unreadCount, isPeerRead } = props.message.readReceiptInfo;
+  if (isGroup.value) {
+    if (unreadCount === undefined || readCount === undefined) {
+      return '';
+    }
+    if (unreadCount > 0) {
+      return `${unreadCount}${t('MessageList.people')}${t('MessageList.unread')}`;
+    }
+    return t('MessageList.all_read');
+  }
+  if (isPeerRead) {
+    return t('MessageList.read');
+  }
+  return t('MessageList.unread');
+});
 
 const messageLayoutClasses = computed(() => useMessageLayoutClasses({
   isMessageOwner: isMessageOwner.value,
@@ -93,10 +147,12 @@ const messageLayoutClasses = computed(() => useMessageLayoutClasses({
 }));
 
 const layoutClasses = computed(() => messageLayoutClasses.value.layoutClasses);
-const wrapperClasses = computed(() => messageLayoutClasses.value.wrapperClasses);
+const contentClasses = computed(() => messageLayoutClasses.value.contentClasses);
+const headerClasses = computed(() => messageLayoutClasses.value.headerClasses);
+const bodyClasses = computed(() => messageLayoutClasses.value.bodyClasses);
 const avatarClasses = computed(() => messageLayoutClasses.value.avatarClasses);
 const bubbleClasses = computed(() => messageLayoutClasses.value.bubbleClasses);
-const metaClasses = computed(() => messageLayoutClasses.value.metaClasses);
+const statusClasses = computed(() => messageLayoutClasses.value.statusClasses);
 
 function handleReadReceiptOpen() {
   isReadReceiptInfoOpen.value = true;
@@ -105,6 +161,20 @@ function handleReadReceiptOpen() {
 function handleReadReceiptClose() {
   isReadReceiptInfoOpen.value = false;
 }
+
+// Avatar display logic:
+// - alignment 'left' or 'right': always show avatar regardless of props
+// - removeAvatar=true: completely remove avatar from DOM (user takes full control of layout)
+// - isHiddenMessageAvatar=true: visually hide avatar but keep DOM space (no layout shift)
+const isSingleSideAlignment = computed(() => props.alignment === 'left' || props.alignment === 'right');
+const shouldRenderAvatar = computed(() => {
+  if (isSingleSideAlignment.value) return true;
+  return !props.removeAvatar;
+});
+const avatarVisibility = computed(() => {
+  if (isSingleSideAlignment.value) return 'visible';
+  return props.isHiddenMessageAvatar ? 'hidden' : 'visible';
+});
 </script>
 
 <template>
@@ -122,39 +192,68 @@ function handleReadReceiptClose() {
     :data-message-id="message.ID"
     :class="layoutClasses"
     :style="style"
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
   >
     <Avatar
-      v-if="!isHiddenMessageAvatar"
+      v-if="shouldRenderAvatar"
       :class="cs(avatarClasses)"
+      :style="{ visibility: avatarVisibility }"
       :src="message.avatar"
+      size="sm"
     />
-    <View :class="cs(wrapperClasses)">
-      <View v-if="!isHiddenMessageNick" :class="cs('message-layout__nick')">
-        {{ props.nick || message.nameCard || message.nick || message.from }}
+    <View :class="cs(contentClasses)">
+      <View v-if="!isAggregated" :class="cs(headerClasses)">
+        <View v-if="!isHiddenMessageNick" :class="cs('message-layout__nick')">
+          {{ props.nick || message.nameCard || message.nick || message.from }}
+        </View>
+        <span class="message-layout__time" :style="{ visibility: isHovered ? 'visible' : 'hidden' }">{{ displayTime }}</span>
       </View>
-      <MessageBubble
-        :class="bubbleClasses"
-        :message="message"
-        :alignment="alignment"
-        :isLastInChunk="false"
-        :messageActionList="messageActionList"
-      >
-        <component
-          :is="MessageComponent"
+      <View :class="cs(bodyClasses)">
+        <MessageBubble
+          :class="bubbleClasses"
           :message="message"
-        />
-      </MessageBubble>
-      <MessageMeta
-        v-if="!isHiddenMessageMeta"
-        :class="metaClasses"
-        :status="message.status"
-        :flow="message.flow"
-        :timestamp="message.time * 1000"
-        :need-read-receipt="message.needReadReceipt"
-        :read-receipt-info="message.readReceiptInfo"
-        :is-group="message.conversationType === ConversationType.GROUP"
-        @on-read-receipt-text-click="handleReadReceiptOpen"
-      />
+          :alignment="alignment"
+          :isLastInChunk="false"
+          :messageActionList="messageActionList"
+        >
+          <component
+            :is="MessageComponent"
+            :message="message"
+          />
+        </MessageBubble>
+        <View
+          v-if="showSendStatus || showReadReceipt"
+          :class="cs(statusClasses, showSendStatus && 'message-layout__status--centered')"
+        >
+          <MessageStatusIcon
+            v-if="showSendStatus"
+            :status="message.status"
+          />
+          <template v-else-if="showReadReceipt && Boolean(readReceiptText)">
+            <span
+              v-if="!isGroup"
+              class="message-layout__read-status"
+            >
+              {{ readReceiptText }}
+            </span>
+            <span
+              v-else-if="isGroup && message.readReceiptInfo && message.readReceiptInfo.unreadCount > 0"
+              class="message-layout__group-unread"
+              @click="handleReadReceiptOpen"
+            >
+              {{ readReceiptText }}
+            </span>
+            <span
+              v-else-if="isGroup"
+              class="message-layout__group-all-read"
+            >
+              {{ readReceiptText }}
+            </span>
+          </template>
+        </View>
+      </View>
+      <View class="message-layout__reactions" />
     </View>
   </View>
   <ReadReceiptInfo
@@ -170,7 +269,7 @@ function handleReadReceiptClose() {
 <style lang="scss" scoped>
 @use '../../../../styles/mixins' as mixin;
 
-$message-avatar-size: 40px;
+$message-avatar-size: 32px;
 $message-avatar-gap: 8px;
 
 .message-layout {
@@ -183,6 +282,7 @@ $message-avatar-gap: 8px;
   &--left {
     flex-direction: row;
   }
+
   &--right {
     flex-direction: row-reverse;
   }
@@ -197,36 +297,70 @@ $message-avatar-gap: 8px;
     color: var(--text-color-tertiary);
     @include mixin.text-ellipsis;
   }
+
+  &__time {
+    font-size: 12px;
+    color: var(--text-color-tertiary);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  &__read-status,
+  &__group-all-read {
+    font-size: 12px;
+    color: var(--text-color-secondary);
+  }
+
+  &__group-unread {
+    font-size: 12px;
+    color: var(--text-color-link);
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+      color: var(--text-color-link-hover);
+    }
+  }
+
+  &__reactions {
+    display: none;
+  }
 }
 
-.message-layout__wrapper {
+.message-layout__content {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 4px;
   flex: 1 1 auto;
+  min-width: 0;
 
   &--left {
     align-items: flex-start;
   }
+
   &--right {
     align-items: flex-end;
   }
-  &--aggregated {
-    &.message-layout__wrapper--left {
-      padding-left: calc(#{$message-avatar-size} + #{$message-avatar-gap});
-    }
-    &.message-layout__wrapper--right {
-      padding-right: calc(#{$message-avatar-size} + #{$message-avatar-gap});
-    }
-    &.message-layout__wrapper--no-padding {
-      padding: 0;
-    }
+
+}
+
+.message-layout__header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+
+  &--right {
+    flex-direction: row-reverse;
   }
 }
 
-.message-layout__bubble {
-  flex: 1 1 auto;
+.message-layout__body {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 4px;
   max-width: 90%;
 
   @include mixin.tablet-and-up {
@@ -237,15 +371,36 @@ $message-avatar-gap: 8px;
     max-width: 70%;
   }
 
+  &--left {
+    flex-direction: row;
+  }
+
+  &--right {
+    flex-direction: row-reverse;
+  }
+}
+
+.message-layout__bubble {
+  flex: 0 1 auto;
+
   &--left {}
   &--right {}
   &--aggregated {}
 }
 
-.message-layout__meta {
-  flex: 1 1 auto;
-  &--left {}
-  &--right {}
+.message-layout__status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  align-self: stretch;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-color-link);
+
+  &--centered {
+    justify-content: center;
+  }
 }
 
 .message-layout__failed {

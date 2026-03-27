@@ -18,6 +18,11 @@ export enum ContactItemType {
   SEARCH_GROUP = 'searchGroup',
 }
 
+export enum DeleteFriendType {
+  SINGLE = 'Delete_Type_Single',
+  BOTH = 'Delete_Type_Both',
+}
+
 export enum GroupApplicationType {
   USER_JOIN_REQUEST = 0,
   INVITE_MEMBER_REQUEST = 2,
@@ -153,12 +158,22 @@ export interface ContactGroupItem {
   data: ContactItem;
 }
 
+export interface ContactLetterSection {
+  key: string;
+  title: string;
+  count: number;
+  items: Friend[];
+}
+
 export interface ContactGroup {
   key: string;
   type: ContactItemType;
   title: string;
   items: ContactItem[];
   unreadCount?: number;
+  count?: number;
+  sections?: ContactLetterSection[];
+  showTotalCount?: boolean;
   isExpanded: boolean;
 }
 

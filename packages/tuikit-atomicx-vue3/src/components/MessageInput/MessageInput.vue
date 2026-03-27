@@ -14,37 +14,33 @@
     </slot>
     <div :class="styles['message-input__wrapper']">
       <QuotedMessagePreview />
-      <div :class="styles['message-input__leftInline']">
-        <slot name="leftInline" />
-      </div>
-      <slot name="textEditor">
-        <DefaultTextEditor
-          :key="disabled ? 'disabled-editor' : 'enabled-editor'"
-          :autoFocus="autoFocus"
-          :disabled="disabled"
-          :placeholder="placeholder"
-          :maxLength="maxLength"
-        >
-          <template #inputPrefix>
-            <slot name="inputPrefix" />
-          </template>
-          <template #inputSuffix>
-            <slot name="inputSuffix" />
-          </template>
-        </DefaultTextEditor>
-      </slot>
-      <div :class="styles['message-input__rightInline']">
-        <slot name="rightInline" />
+      <div :class="styles['message-input__editorRow']">
+        <div :class="styles['message-input__leftInline']">
+          <slot name="leftInline" />
+        </div>
+        <slot name="textEditor">
+          <DefaultTextEditor
+            :key="disabled ? 'disabled-editor' : 'enabled-editor'"
+            :autoFocus="autoFocus"
+            :disabled="disabled"
+            :placeholder="placeholder"
+            :maxLength="maxLength"
+          >
+            <template #inputPrefix>
+              <slot name="inputPrefix" />
+            </template>
+            <template #inputSuffix>
+              <slot name="inputSuffix" />
+            </template>
+          </DefaultTextEditor>
+        </slot>
+        <div :class="styles['message-input__rightInline']">
+          <slot name="rightInline" />
+        </div>
       </div>
     </div>
     <slot name="footerToolbar">
       <div :class="styles['message-input__footerToolbar']">
-        <SendButton
-          v-if="!hideSendButton"
-          :class="styles['message-input__send-button']"
-          :disabled="props.disabled"
-          @click="sendInputMessage"
-        />
       </div>
     </slot>
   </div>
@@ -58,7 +54,6 @@ import { AudioCallPicker } from './AudioCallPicker';
 import { EmojiPicker } from './EmojiPicker';
 import styles from './MessageInput.module.scss';
 import { QuotedMessagePreview } from './QuotedMessagePreview';
-import { SendButton } from './SendButton';
 import { TextEditor as DefaultTextEditor } from './TextEditor';
 import { VideoCallPicker } from './VideoCallPicker';
 import type { CustomAction, MessageInputProps } from './types';
@@ -83,7 +78,7 @@ const props = withDefaults(defineProps<MessageInputProps>(), {
   actions: () => ['EmojiPicker', 'ImagePicker', 'FilePicker', 'VideoPicker'],
 });
 
-const { inputRawValue, setContent, sendMessage } = useMessageInputState();
+const { setContent, sendMessage } = useMessageInputState();
 
 const pickProps = <T extends object, K extends keyof T>(
   sourceObject: T,
@@ -118,9 +113,7 @@ const actionList = computed(() =>
 );
 
 const sendInputMessage = () => {
-  if (inputRawValue.value) {
-    sendMessage();
-    setContent('');
-  }
+  sendMessage();
+  setContent('');
 };
 </script>

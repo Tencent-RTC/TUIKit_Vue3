@@ -12,7 +12,6 @@
       <div
         class="control-button mirror-control"
         @click.stop="toggleMirror"
-        :title="t('Mirror')"
       >
         <svg-icon
           :icon="
@@ -24,7 +23,6 @@
         class="control-button more-control"
         @mouseenter="handleMouseEnter"
         @mouseleave="handleMouseLeave"
-        :title="t('More')"
       >
         <MoreIcon />
         <div
@@ -248,11 +246,12 @@ const handleControlClick = (control: any, material: MediaSource) => {
     margin-top: 8px;
     padding: 4px;
     min-width: 100px;
-    background: rgba(45, 50, 62, 0.95);
+    background: #2d323e;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(20px);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     z-index: 1001;
     overflow: hidden;
     animation: fadeInScale 0.15s ease-out;
@@ -266,7 +265,7 @@ const handleControlClick = (control: any, material: MediaSource) => {
       height: 0;
       border-left: 6px solid transparent;
       border-right: 6px solid transparent;
-      border-bottom: 6px solid rgba(45, 50, 62, 0.95);
+      border-bottom: 6px solid #2d323e;
     }
   }
 

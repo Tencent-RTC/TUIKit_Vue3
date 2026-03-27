@@ -1,6 +1,8 @@
 <template>
   <div
     :class="friendItemClasses"
+    role="button"
+    tabindex="0"
     @click="handleClick"
     @keydown.enter="handleClick"
     @keydown.space="handleClick"

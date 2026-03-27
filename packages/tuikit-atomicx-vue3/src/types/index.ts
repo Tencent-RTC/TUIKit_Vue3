@@ -22,6 +22,7 @@ export * from './coHost';
 export * from './battle';
 export * from './barrage';
 export * from './gift';
+export * from './player';
 // room
 export * from './room';
 export * from './participant';

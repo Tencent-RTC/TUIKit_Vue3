@@ -1,112 +1,12 @@
-// Chat related exports (pure components, no initialization)
-import { View as ViewComponent } from '../../baseComp/View';
-import { ChatSetting as ChatSettingComponent } from '../../components/ChatSetting';
-import {
-  ContactList as ContactListComponent,
-  ContactListItem as ContactListItemComponent,
-  ContactInfo as ContactInfoComponent,
-} from '../../components/ContactList';
-import {
-  ConversationList as ConversationListComponent,
-  ConversationActions as ConversationActionsComponent,
-  ConversationListHeader as ConversationListHeaderComponent,
-  ConversationListContent as ConversationListContentComponent,
-  ConversationPreview as ConversationPreviewComponent,
-  ConversationPreviewUI as ConversationPreviewUIComponent,
-  ConversationSearch as ConversationSearchComponent,
-} from '../../components/ConversationList';
-import {
-  MessageInput as MessageInputComponent,
-  MessageInputH5 as MessageInputH5Component,
-  EmojiPicker as EmojiPickerComponent,
-  AttachmentPicker as AttachmentPickerComponent,
-  FilePicker as FilePickerComponent,
-  ImagePicker as ImagePickerComponent,
-  VideoPicker as VideoPickerComponent,
-  AudioCallPicker as AudioCallPickerComponent,
-  VideoCallPicker as VideoCallPickerComponent,
-} from '../../components/MessageInput';
-import {
-  MessageList as MessageListComponent,
-  Message as MessageComponent,
-} from '../../components/MessageList';
-import {
-  Search as SearchComponent,
-  SearchAdvanced as SearchAdvancedComponent,
-  MessageAdvanced as MessageAdvancedComponent,
-  UserAdvanced as UserAdvancedComponent,
-  SearchResultItem as SearchResultItemComponent,
-  SearchBar as SearchBarComponent,
-  SearchResults as SearchResultsComponent,
-} from '../../components/Search';
-import { useMessageActions as useMessageActionsHook } from '../../hooks/useMessageActions';
-import { useC2CSettingState as c2cSettingState } from '../../states/C2CSettingState';
-import { useContactListState as contactListState } from '../../states/ContactListState';
-import { useConversationListState as conversationListState } from '../../states/ConversationListState';
-import { useGroupSettingState as groupSettingState } from '../../states/GroupSettingState';
-import { useMessageActionState as messageActionState } from '../../states/MessageActionState';
-import { useMessageInputState as messageInputState } from '../../states/MessageInputState';
-import { useMessageListState as messageListState } from '../../states/MessageListState';
-import { useSearchState as searchState } from '../../states/SearchState';
-import ChatLoginServer from './server';
-
-ChatLoginServer.getInstance().init();
-
-// component
-const Search = SearchComponent;
-const SearchAdvanced = SearchAdvancedComponent;
-const MessageAdvanced = MessageAdvancedComponent;
-const UserAdvanced = UserAdvancedComponent;
-const SearchBar = SearchBarComponent;
-const SearchResults = SearchResultsComponent;
-const SearchResultItem = SearchResultItemComponent;
-const ConversationList = ConversationListComponent;
-const ConversationActions = ConversationActionsComponent;
-const ConversationListHeader = ConversationListHeaderComponent;
-const ConversationListContent = ConversationListContentComponent;
-const ConversationPreview = ConversationPreviewComponent;
-const ConversationPreviewUI = ConversationPreviewUIComponent;
-const ConversationSearch = ConversationSearchComponent;
-const ContactList = ContactListComponent;
-const ContactListItem = ContactListItemComponent;
-const ContactInfo = ContactInfoComponent;
-
-const MessageList = MessageListComponent;
-const Message = MessageComponent;
-const MessageInput = MessageInputComponent;
-const MessageInputH5 = MessageInputH5Component;
-const EmojiPicker = EmojiPickerComponent;
-const AttachmentPicker = AttachmentPickerComponent;
-const FilePicker = FilePickerComponent;
-const ImagePicker = ImagePickerComponent;
-const VideoPicker = VideoPickerComponent;
-const AudioCallPicker = AudioCallPickerComponent;
-const VideoCallPicker = VideoCallPickerComponent;
-const ChatSetting = ChatSettingComponent;
-const View = ViewComponent;
-
-// Hooks
-const useMessageActions = useMessageActionsHook;
-
-// States
-const useConversationListState = conversationListState;
-const useMessageActionState = messageActionState;
-const useMessageInputState = messageInputState;
-const useMessageListState = messageListState;
-const useSearchState = searchState;
-const useContactListState = contactListState;
-const useC2CSettingState = c2cSettingState;
-const useGroupSettingState = groupSettingState;
-
+// Components
+export { View } from '../../baseComp/View';
+export { ChatSetting } from '../../components/ChatSetting';
 export {
-  // component
-  Search,
-  SearchAdvanced,
-  UserAdvanced,
-  MessageAdvanced,
-  SearchResults,
-  SearchResultItem,
-  SearchBar,
+  ContactList,
+  ContactListItem,
+  ContactInfo,
+} from '../../components/ContactList';
+export {
   ConversationList,
   ConversationActions,
   ConversationListHeader,
@@ -114,8 +14,8 @@ export {
   ConversationPreview,
   ConversationPreviewUI,
   ConversationSearch,
-  MessageList,
-  Message,
+} from '../../components/ConversationList';
+export {
   MessageInput,
   MessageInputH5,
   EmojiPicker,
@@ -125,26 +25,36 @@ export {
   VideoPicker,
   AudioCallPicker,
   VideoCallPicker,
-  ChatSetting,
-  View,
-  ContactList,
-  ContactListItem,
-  ContactInfo,
+} from '../../components/MessageInput';
+export {
+  MessageList,
+  Message,
+  CustomMessage,
+} from '../../components/MessageList';
+export {
+  Search,
+  SearchAdvanced,
+  MessageAdvanced,
+  UserAdvanced,
+  SearchResultItem,
+  SearchBar,
+  SearchResults,
+} from '../../components/Search';
 
-  // Hooks
-  useMessageActions,
+// Hooks
+export { useMessageActions } from '../../hooks/useMessageActions';
 
-  // States
-  useMessageListState,
-  useMessageInputState,
-  useMessageActionState,
-  useConversationListState,
-  useSearchState,
-  useContactListState,
-  useC2CSettingState,
-  useGroupSettingState,
-};
+// States
+export { useC2CSettingState } from '../../states/C2CSettingState';
+export { useContactListState } from '../../states/ContactListState';
+export { useConversationListState } from '../../states/ConversationListState';
+export { useGroupSettingState } from '../../states/GroupSettingState';
+export { useMessageActionState } from '../../states/MessageActionState';
+export { useMessageInputState } from '../../states/MessageInputState';
+export { useMessageListState } from '../../states/MessageListState';
+export { useSearchState } from '../../states/SearchState';
 
+// Types
 export * from '../../types/message';
 export * from '../../types/search';
 export * from '../../types/engine';

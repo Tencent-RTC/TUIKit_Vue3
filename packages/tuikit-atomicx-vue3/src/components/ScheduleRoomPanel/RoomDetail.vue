@@ -1,12 +1,12 @@
 <template>
   <div class="room-detail">
     <div v-if="!roomInfo" class="room-detail-empty">
-      {{ t('No room information') }}
+      {{ t('ScheduleRoomPanel.NoRoomInfo') }}
     </div>
     <div v-else class="room-detail-content">
       <div class="detail-item">
         <div class="detail-label">
-          {{ t('Room Name') }}
+          {{ t('ScheduleRoomPanel.RoomName') }}
         </div>
         <div class="detail-value">
           {{ roomInfo.roomName }}
@@ -15,7 +15,7 @@
 
       <div class="detail-item">
         <div class="detail-label">
-          {{ t('Room ID') }}
+          {{ t('ScheduleRoomPanel.RoomID') }}
         </div>
         <div class="detail-value">
           {{ roomInfo.roomId }}
@@ -25,7 +25,7 @@
 
       <div v-if="roomInfo.password" class="detail-item">
         <div class="detail-label">
-          {{ t('Room Password') }}
+          {{ t('ScheduleRoomPanel.RoomPassword') }}
         </div>
         <div class="detail-value">
           {{ roomInfo.password }}
@@ -35,7 +35,7 @@
 
       <div class="detail-item">
         <div class="detail-label">
-          {{ t('Room Time') }}
+          {{ t('ScheduleRoomPanel.RoomTime') }}
         </div>
         <div class="detail-value">
           {{ formatDateTime(roomInfo.scheduledStartTime) }} - {{ formatDateTime(roomInfo.scheduledEndTime) }}
@@ -47,7 +47,7 @@
 
       <div class="detail-item">
         <div class="detail-label">
-          {{ t('Creator') }}
+          {{ t('ScheduleRoomPanel.Creator') }}
         </div>
         <div class="detail-value">
           {{ roomInfo.roomOwner.userName || roomInfo.roomOwner.userId }}
@@ -56,12 +56,12 @@
 
       <div class="detail-item">
         <div class="detail-label">
-          {{ t('Attendees') }}
+          {{ t('ScheduleRoomPanel.Attendees') }}
         </div>
         <div class="detail-value">
           <div v-if="isLoadingAttendees" class="attendees-loading">
             <IconLoadingSchedule class="loading-icon" size="16" />
-            <span>{{ t('Loading...') }}</span>
+            <span>{{ t('ScheduleRoomPanel.Loading') }}</span>
           </div>
           <div
             v-else-if="roomInfo.scheduleAttendees && roomInfo.scheduleAttendees.length > 0"
@@ -71,7 +71,7 @@
             {{ roomInfo.scheduleAttendees.map((attendee) => attendee.userName || attendee.userId).join(', ') }}
           </div>
           <div v-else class="no-attendees">
-            {{ t('No scheduled members') }}
+            {{ t('ScheduleRoomPanel.NoScheduledMembers') }}
           </div>
         </div>
       </div>
@@ -114,11 +114,11 @@ const formatDateTime = (timestamp?: number): string => {
 const getRoomStatusText = (status: RoomStatus): string => {
   switch (status) {
     case RoomStatus.Scheduled:
-      return t('Not Started');
+      return t('ScheduleRoomPanel.NotStarted');
     case RoomStatus.Running:
-      return t('In Progress');
+      return t('ScheduleRoomPanel.InProgress');
     default:
-      return t('Unknown Status');
+      return t('ScheduleRoomPanel.UnknownStatus');
   }
 };
 

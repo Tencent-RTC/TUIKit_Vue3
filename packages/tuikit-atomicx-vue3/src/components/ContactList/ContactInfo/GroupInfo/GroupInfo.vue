@@ -8,18 +8,35 @@
         <div class="contact-group-info__id">
           {{ t('TUIContact.Group ID') }}：{{ group.groupID }}
         </div>
-        <div class="contact-group-info__id">
-          {{ t('TUIContact.Group type') }}：{{ group.type }}
+      </div>
+      <div class="contact-group-info__avatar-wrap">
+        <Avatar
+          :src="group.avatar"
+          :alt="displayName"
+          :size="48"
+        />
+      </div>
+    </div>
+
+    <div class="contact-group-info__rows">
+      <div class="contact-group-info__row">
+        <div class="contact-group-info__row-label">
+          {{ t('TUIContact.Group type') }}
         </div>
-        <div class="contact-group-info__intro">
-          {{ t('TUIContact.Group introduction') }}：{{ group.introduction || t('TUIContact.No introduction') }}
+        <div class="contact-group-info__row-value">
+          {{ group.type }}
         </div>
       </div>
-      <Avatar
-        :src="group.avatar"
-        :alt="displayName"
-        size="xl"
-      />
+      <!-- <div class="contact-group-info__row">
+        <div class="contact-group-info__row-label">
+          {{ t('TUIContact.Group introduction') }}
+        </div>
+        <div class="contact-group-info__row-value">
+          <span class="contact-group-info__intro">
+            {{ group.introduction || t('TUIContact.No introduction') }}
+          </span>
+        </div>
+      </div> -->
     </div>
 
     <div
@@ -27,9 +44,20 @@
       class="contact-group-info__actions"
     >
       <TUIButton
+        class="contact-group-info__button--primary"
+        type="primary"
+        size="big"
+        radius="round"
+        @click="handleEnterGroup"
+      >
+        {{ t('TUIContact.Enter group chat') }}
+      </TUIButton>
+      <TUIButton
         v-if="canDismissGroup"
+        class="contact-group-info__button--secondary"
         type="default"
         size="big"
+        radius="round"
         color="red"
         @click="visible = true;"
       >
@@ -38,20 +66,14 @@
 
       <TUIButton
         v-if="canQuitGroup"
+        class="contact-group-info__button--secondary"
         type="default"
         size="big"
+        radius="round"
         color="red"
         @click="visible = true"
       >
         {{ t('TUIContact.quit group') }}
-      </TUIButton>
-
-      <TUIButton
-        type="primary"
-        size="big"
-        @click="handleEnterGroup"
-      >
-        {{ t('TUIContact.Enter group chat') }}
       </TUIButton>
       <TUIDialog
         appendTo="body"

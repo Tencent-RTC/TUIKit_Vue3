@@ -1,12 +1,12 @@
 <template>
   <div class="room-share">
     <div v-if="!roomInfo" class="room-share-empty">
-      {{ t('No room information') }}
+      {{ t('ScheduleRoomPanel.NoRoomInfo') }}
     </div>
     <div v-else class="room-share-content">
       <div class="share-item">
         <div class="share-label">
-          {{ t('Room Name') }}
+          {{ t('ScheduleRoomPanel.RoomName') }}
         </div>
         <div class="share-value">
           {{ roomInfo.roomName }}
@@ -15,7 +15,7 @@
 
       <div class="share-item">
         <div class="share-label">
-          {{ t('Room Time') }}
+          {{ t('ScheduleRoomPanel.RoomTime') }}
         </div>
         <div class="share-value">
           {{ formatDateTime(roomInfo.scheduledStartTime) }} - {{ formatDateTime(roomInfo.scheduledEndTime) }}
@@ -24,7 +24,7 @@
 
       <div class="share-item">
         <div class="share-label">
-          {{ t('Room ID') }}
+          {{ t('ScheduleRoomPanel.RoomID') }}
         </div>
         <div class="share-value">
           {{ roomInfo.roomId }}
@@ -34,7 +34,7 @@
 
       <div v-if="roomInfo.password" class="share-item">
         <div class="share-label">
-          {{ t('Room Password') }}
+          {{ t('ScheduleRoomPanel.RoomPassword') }}
         </div>
         <div class="share-value">
           {{ roomInfo.password }}
@@ -44,7 +44,7 @@
 
       <div class="share-item">
         <div class="share-label">
-          {{ t('Room Link') }}
+          {{ t('ScheduleRoomPanel.RoomLink') }}
         </div>
         <div class="share-value room-link">
           <span class="room-link-text">{{ roomLink }}</span>
@@ -59,7 +59,7 @@
           class="copy-button"
           @click="copyRoomInfoAndLink"
         >
-          {{ t('Copy Meeting ID and Link') }}
+          {{ t('ScheduleRoomPanel.CopyMeetingIdAndLink') }}
         </TUIButton>
       </div>
     </div>
@@ -105,16 +105,16 @@ const roomLink = computed(() => {
 
 const copyRoomInfoAndLink = async () => {
   if (!props.roomInfo) {
-    TUIToast.error({ message: t('No room information') });
+    TUIToast.error({ message: t('ScheduleRoomPanel.NoRoomInfo') });
     return;
   }
 
   const roomInfoLines = [
-    `${t('Room Name')}: ${props.roomInfo.roomName}`,
-    `${t('Room ID')}: ${props.roomInfo.roomId}`,
-    props.roomInfo.password ? `${t('Room Password')}: ${props.roomInfo.password}` : null,
-    `${t('Room Time')}: ${formatDateTime(props.roomInfo.scheduledStartTime)} - ${formatDateTime(props.roomInfo.scheduledEndTime)}`,
-    `${t('Room Link')}: ${roomLink.value}`,
+    `${t('ScheduleRoomPanel.RoomName')}: ${props.roomInfo.roomName}`,
+    `${t('ScheduleRoomPanel.RoomID')}: ${props.roomInfo.roomId}`,
+    props.roomInfo.password ? `${t('ScheduleRoomPanel.RoomPassword')}: ${props.roomInfo.password}` : null,
+    `${t('ScheduleRoomPanel.RoomTime')}: ${formatDateTime(props.roomInfo.scheduledStartTime)} - ${formatDateTime(props.roomInfo.scheduledEndTime)}`,
+    `${t('ScheduleRoomPanel.RoomLink')}: ${roomLink.value}`,
   ].filter(Boolean);
 
   const roomInfoText = roomInfoLines.join('\n');

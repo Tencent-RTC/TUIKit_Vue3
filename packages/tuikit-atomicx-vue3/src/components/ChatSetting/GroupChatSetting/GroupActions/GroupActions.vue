@@ -10,10 +10,13 @@
       class="group-actions__button"
       radius="rect"
       :disabled="loading"
+      type="text"
       @click="handleChangeGroupOwner"
     >
       {{ t('ChatSetting.transfer_group_owner') }}
     </TUIButton>
+
+    <Divider v-if="canChangeGroupOwner" variant="line" />
 
     <!-- Quit group button -->
     <TUIButton
@@ -21,10 +24,13 @@
       class="group-actions__button"
       color="red"
       radius="rect"
+      type="text"
       @click="() => isShowQuitDialog = true"
-    >
+      >
       {{ t('ChatSetting.quit_group') }}
     </TUIButton>
+
+    <Divider v-if="canQuitGroup" variant="line" />
 
     <!-- Dismiss group button - only for group owner -->
     <TUIButton
@@ -32,6 +38,7 @@
       class="group-actions__button"
       color="red"
       radius="rect"
+      type="text"
       @click="() => isShowDismissDialog = true"
     >
       {{ t('ChatSetting.dismiss_group') }}
@@ -92,6 +99,7 @@ import { ref, computed } from 'vue';
 import { TUIButton, TUIDialog, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useGroupSettingState, GroupPermission } from '../../../../states/GroupSettingState';
 import { UserPicker } from '../../../UserPicker';
+import { Divider } from '../../Divider';
 import type { UserPickerRef } from '../../../UserPicker';
 
 const { t } = useUIKit();
@@ -198,10 +206,12 @@ const handleDismissGroup = () => {
 .group-actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 
   &__button {
+    box-sizing: border-box;
+    height: auto;
     width: 100%;
+    padding: 12px 0;
   }
 }
 </style>

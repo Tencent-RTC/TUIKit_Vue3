@@ -73,7 +73,7 @@ const formatDuration = (seconds: number): string => {
 
 <style lang="scss" scoped>
 .audio-message {
-  padding: 8px 16px;
+  padding: 10px 12px;
 
   &__content {
     display: flex;

@@ -39,16 +39,14 @@
     @include scrollbar.scrollbar-hidden();
   }
 
-  &__group {
-    margin-bottom: 8px;
-  }
-
   &__group-header {
-    padding: 8px 20px;
+    padding: 12px;
     cursor: pointer;
     user-select: none;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     transition: background-color 0.2s;
 
     &:hover {
@@ -67,8 +65,9 @@
     font-size: 14px;
     font-weight: 400;
     color: var(--text-color-primary);
-    gap: 8px;
+    gap: 4px;
     flex: 1;
+    min-width: 0;
   }
 
   &__group-icon {
@@ -85,6 +84,14 @@
     font-size: 14px;
     line-height: 16px;
     font-weight: 400;
+    min-width: 0;
+  }
+
+  &__group-count {
+    flex-shrink: 0;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--text-color-tertiary);
   }
 
   &__unread-badge {
@@ -96,17 +103,39 @@
     min-width: 16px;
     height: 16px;
     text-align: center;
-    margin-left: 8px;
     box-sizing: border-box;
     display: flex;
     justify-content: center;
     align-items: center;
     font-weight: 500;
+    flex-shrink: 0;
   }
 
   &__group-content {
     background-color: var(--bg-color-operate);
     padding: 0;
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 12px 12px 0;
+    margin-left: 32px;
+    border-bottom: 1px solid var(--stroke-color-module);
+    color: var(--text-color-tertiary);
+  }
+
+  &__section-title,
+  &__section-count {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 400;
   }
 
   &__empty {

@@ -5,6 +5,7 @@ import TUICore, { TUILogin, TUIConstants } from '@tencentcloud/tui-core-lite';
 import TUIRoomEngine from '@tencentcloud/tuiroom-engine-js';
 import { dataReport, MetricsKey } from '../../report';
 import { isMobile } from '../../utils';
+import { waitForLogin } from '../../utils/loginCoordinator';
 
 export default class RTCLoginServer {
   private static instance: RTCLoginServer;
@@ -60,6 +61,7 @@ export default class RTCLoginServer {
   }
 
   public async login() {
+    await waitForLogin();
     const {
       chat,
       SDKAppID,
@@ -82,6 +84,12 @@ export default class RTCLoginServer {
         SDKAppID,
         userID,
         userSig,
+      }).catch((error: any) => {
+        // Ignore error code 2025 (duplicate login), allow subsequent code to continue
+        if (error?.code === 2025) {
+          return;
+        }
+        throw error;
       });
       const res = await TUIRoomEngine.login({
         sdkAppId: SDKAppID,

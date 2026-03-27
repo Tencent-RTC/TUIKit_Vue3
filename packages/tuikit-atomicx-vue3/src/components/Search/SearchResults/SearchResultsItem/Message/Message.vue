@@ -28,6 +28,9 @@ import { computed, h, useCssModule } from 'vue';
 import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { SearchType } from '../../../../../types/engine';
+import { MessageListType } from '../../../../../types/message';
+import { useConversationListState } from '../../../../../states/ConversationListState';
+import { useMessageListState } from '../../../../../states/MessageListState';
 import { Avatar } from '../../../../Avatar';
 import { highlightText } from '../utils';
 import type { MessageModel } from '../../../../../types/engine';
@@ -252,7 +255,28 @@ const renderMessageContent = (message: MessageModel, searchKeyword: string) => {
   }
 };
 
-const handleClick = () => {
+const { setActiveConversation } = useConversationListState();
+const { fetchMessageList } = useMessageListState();
+
+// Navigate to the target conversation and locate the specific message,
+// then notify the parent via onClick callback for UI cleanup (e.g., closing search panel).
+const handleClick = async () => {
+  const message = props.data as MessageModel;
+  const { conversationID } = message || {};
+  if (conversationID) {
+    await setActiveConversation(conversationID);
+    await fetchMessageList({
+      conversationID,
+      messageListType: MessageListType.HISTORY,
+      cursor: {
+        conversationID,
+        ID: message.ID,
+        messageID: message.ID,
+        sequence: message.sequence,
+        time: message.time,
+      },
+    });
+  }
   props.onClick?.(props.data, SearchType.CHAT_MESSAGE);
 };
 </script>

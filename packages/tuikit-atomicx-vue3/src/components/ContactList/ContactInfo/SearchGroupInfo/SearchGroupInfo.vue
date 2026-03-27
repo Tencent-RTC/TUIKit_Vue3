@@ -8,18 +8,35 @@
         <div class="contact-search-group-info__id">
           {{ t('TUIContact.Group ID') }}：{{ group.groupID }}
         </div>
-        <div class="contact-search-group-info__intro">
-          {{ t('TUIContact.Group type') }}：{{ getGroupTypeName(group.type) }}
+      </div>
+      <div class="contact-search-group-info__avatar-wrap">
+        <Avatar
+          :src="group.avatar"
+          :alt="displayName"
+          :size="48"
+        />
+      </div>
+    </div>
+
+    <div class="contact-search-group-info__rows">
+      <div class="contact-search-group-info__row">
+        <div class="contact-search-group-info__row-label">
+          {{ t('TUIContact.Group type') }}
         </div>
-        <div class="contact-search-group-info__intro">
-          {{ t('TUIContact.Group introduction') }}：{{ group.introduction || t('TUIContact.No introduction') }}
+        <div class="contact-search-group-info__row-value">
+          {{ getGroupTypeName(group.type) }}
         </div>
       </div>
-      <Avatar
-        :src="group.avatar"
-        :alt="displayName"
-        size="xl"
-      />
+      <!-- <div class="contact-search-group-info__row">
+        <div class="contact-search-group-info__row-label">
+          {{ t('TUIContact.Group introduction') }}
+        </div>
+        <div class="contact-search-group-info__row-value">
+          <span class="contact-search-group-info__intro">
+            {{ group.introduction || t('TUIContact.No introduction') }}
+          </span>
+        </div>
+      </div> -->
     </div>
 
     <template v-if="status !== 'idle'">
@@ -54,8 +71,10 @@
       class="contact-search-group-info__actions"
     >
       <TUIButton
+        class="contact-search-group-info__button--primary"
         type="primary"
         size="big"
+        radius="round"
         :loading="loading"
         @click="handleJoinGroup"
       >

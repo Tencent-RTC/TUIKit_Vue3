@@ -218,13 +218,13 @@ const isToday = (date: any) => {
 };
 
 const weekdays = computed(() => [
-  t('Sunday'),
-  t('Monday'),
-  t('Tuesday'),
-  t('Wednesday'),
-  t('Thursday'),
-  t('Friday'),
-  t('Saturday'),
+  t('ScheduleRoomPanel.Sunday'),
+  t('ScheduleRoomPanel.Monday'),
+  t('ScheduleRoomPanel.Tuesday'),
+  t('ScheduleRoomPanel.Wednesday'),
+  t('ScheduleRoomPanel.Thursday'),
+  t('ScheduleRoomPanel.Friday'),
+  t('ScheduleRoomPanel.Saturday'),
 ]);
 </script>
 

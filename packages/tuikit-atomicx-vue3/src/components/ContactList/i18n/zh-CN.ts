@@ -3,7 +3,7 @@ export default {
     // ContactList组件翻译
     'New contacts': '新的联系人',
     'Group applications': '群聊申请',
-    'My friends': '我的好友',
+    'My friends': '联系人',
     'My groups': '我的群聊',
     'Blacklist': '黑名单',
     'Search contacts': '搜索联系人',

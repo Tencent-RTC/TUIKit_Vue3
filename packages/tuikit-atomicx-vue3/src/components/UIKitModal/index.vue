@@ -41,14 +41,14 @@
               style="min-width: 88px"
               @click="handleCancel"
             >
-              {{ t('Cancel') }}
+              {{ t('UIKitModal.Cancel') }}
             </TUIButton>
             <TUIButton
               type="primary"
               style="min-width: 88px"
               @click="handleConfirm"
             >
-              {{ t('Confirm') }}
+              {{ t('UIKitModal.Confirm') }}
             </TUIButton>
           </div>
         </div>
@@ -71,13 +71,13 @@ import {
   IconInfoToast,
   IconErrorToast,
   IconWarningToast,
+  useUIKit,
 } from '@tencentcloud/uikit-base-component-vue3';
 import { getPlatform } from '@tencentcloud/universal-api';
-import { useI18n } from '../../locales';
 import type { UIKitModalOptions } from './type';
 
 const IS_PC = getPlatform() === 'pc';
-const { t } = useI18n();
+const { t } = useUIKit();
 
 interface Props extends UIKitModalOptions {
   visible: boolean;

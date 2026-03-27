@@ -230,22 +230,28 @@ const avatarWithBadges = computed(() => {
 
   // If unread messages exist, add the unread message badge
   if (props.unreadCount !== undefined) {
+    const badgeChild = result;
     result = h(Badge, {
       hidden: props.unreadCount === 0,
       value: typeof props.unreadCount === 'number' ? props.unreadCount : '',
       max: props.maxUnreadCount,
       isDot: props.isDotUnreadCount,
       type: 'danger',
-    }, [result]);
+    }, {
+      default: () => [badgeChild],
+    });
   }
 
   // If online status should be shown, add the online status badge
   if (props.isShowOnlineStatus) {
+    const onlineBadgeChild = result;
     result = h(AvatarOnlineBadge, {
       show: true,
       onlineStatus: props.isOnline ? 'online' : 'offline',
       size: typeof props.size === 'number' ? 'md' : props.size,
-    }, [result]);
+    }, {
+      default: () => [onlineBadgeChild],
+    });
   }
 
   return result;

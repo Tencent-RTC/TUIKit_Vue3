@@ -74,15 +74,15 @@ const bodyElement = document.body;
             :message="message"
           />
           <template v-else-if="action.visible">
-            <span>{{ t(`MessageList.${action.label}`, { defaultValue: action.label }) }}</span>
             <template v-if="action.icon">
-              <span v-if="typeof action.icon === 'string'">{{ action.icon }}</span>
+              <span v-if="typeof action.icon === 'string'" :class="cs('message-action-dropdown__icon')">{{ action.icon }}</span>
               <component
                 :is="action.icon"
                 v-else
                 :class="cs('message-action-dropdown__icon')"
               />
             </template>
+            <span>{{ t(`MessageList.${action.label}`, { defaultValue: action.label }) }}</span>
           </template>
         </ContextMenuItem>
       </ContextMenuContent>
@@ -94,17 +94,29 @@ const bodyElement = document.body;
 .message-action-dropdown__item {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
   border: none;
   outline: none;
-  padding: 7px 16px;
-  display: flex;
+  width: 100%;
+  padding: 14px 12px;
   font-size: 14px;
-  font-weight: 500;
   background-color: var(--dropdown-color-default);
   color: var(--text-color-primary);
   cursor: pointer;
+  position: relative;
   transition: background-color 0.2s ease;
+
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 12px;
+    right: 12px;
+    height: 1px;
+    background-color: var(--stroke-color-secondary);
+  }
 
   &:hover {
     background-color: var(--dropdown-color-hover);
@@ -113,5 +125,11 @@ const bodyElement = document.body;
   &:active {
     background-color: var(--dropdown-color-active);
   }
+}
+
+.message-action-dropdown__icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
 }
 </style>

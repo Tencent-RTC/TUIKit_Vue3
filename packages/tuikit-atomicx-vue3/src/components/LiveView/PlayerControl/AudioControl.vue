@@ -1,8 +1,14 @@
 <template>
   <div class="audio-control" :style="iconSizeStyle" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
     <span class="control-btn volume-btn" :title="props.isMuted ? t('LiveView.OpenSpeaker') : t('LiveView.CloseSpeaker')" @click="handleVolumeIconClick">
-      <IconSpeakerOff :size="props.iconSize" v-if="props.isMuted" />
-      <IconSpeakerOn :size="props.iconSize" v-else />
+      <template v-if="props.isMuted">
+        <component v-if="props.customActiveIcon" :is="renderButtonIcon(props.customActiveIcon, props.iconSize)" />
+        <IconSpeakerOff v-else :size="props.iconSize" />
+      </template>
+      <template v-else>
+        <component v-if="props.customIcon" :is="renderButtonIcon(props.customIcon, props.iconSize)" />
+        <IconSpeakerOn v-else :size="props.iconSize" />
+      </template>
     </span>
     <div v-show="isVolumeSliderVisible" class="volume-slider-container">
       <div
@@ -36,8 +42,10 @@
 
 <script setup lang="ts">
 import { computed, ref, onUnmounted } from 'vue';
+import type { Component as VueComponent } from 'vue';
 import { IconSpeakerOn, IconSpeakerOff, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { isMobile } from '../../../utils';
+import { renderButtonIcon } from './utils/renderIcon';
 
 // Constants
 const VOLUME_CONSTANTS = {
@@ -56,6 +64,14 @@ interface AudioControlProps {
   iconSize?: number;
   isMuted?: boolean;
   volume?: number; // Volume range: 0-100
+  /**
+   * Custom icon for unmuted state. When provided, replaces the default IconSpeakerOn.
+   */
+  customIcon?: VueComponent | (() => any);
+  /**
+   * Custom icon for muted state. When provided, replaces the default IconSpeakerOff.
+   */
+  customActiveIcon?: VueComponent | (() => any);
 }
 
 const props = withDefaults(defineProps<AudioControlProps>(), {
@@ -254,13 +270,6 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .audio-control {
-  --volume-control-primary: rgb(255, 255, 255);
-  --volume-control-primary-hover: rgba(255, 255, 255, 0.1);
-  --volume-control-background: rgba(0, 0, 0, 0.8);
-  --volume-control-background-light: rgba(0, 0, 0, 0.5);
-  --volume-control-border: rgba(255, 255, 255, 0.1);
-  --volume-control-shadow: rgba(0, 0, 0, 0.2);
-
   position: relative;
   display: flex;
   align-items: center;
@@ -289,11 +298,14 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  background: var(--volume-control-background);
+  background: var(--floating-color-default);
+  box-shadow: 
+  0px 12px 26px 0px var(--shadow-color), 
+  0px 8px 12px 0px var(--shadow-color), 
+  0px 1px 5px 0px var(--shadow-color);
   padding: 12px 8px; // Increased padding for PC (from 8px 6px)
   border-radius: 8px;
   backdrop-filter: blur(10px);
-  border: 1px solid var(--volume-control-border);
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
@@ -351,7 +363,7 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--slider-color-empty);
   border: none;
 }
 
@@ -360,7 +372,7 @@ onUnmounted(() => {
   bottom: 0;
   left: 0;
   width: 100%;
-  background: #ffffff;
+  background: var(--slider-color-filled);
   border-radius: 2px;
 }
 
@@ -372,11 +384,9 @@ onUnmounted(() => {
   transform: translateX(-50%) translateY(50%);
   width: $thumb-size;
   height: $thumb-size;
-  background: #ffffff;
+  background: var(--slider-color-button);
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  transition: transform 0.1s ease;
+  border: 1px solid var(--text-color-link);
   z-index: 3;
   cursor: grab;
 
@@ -395,7 +405,7 @@ onUnmounted(() => {
 }
 
 .volume-value {
-  color: var(--volume-control-primary);
+  color: var(--text-color-primary);
   font-size: 12px;
   font-weight: 500;
   text-align: center;
@@ -410,7 +420,6 @@ onUnmounted(() => {
     padding: 10px 8px;
 
     &:active {
-      background: var(--volume-control-background-light);
       transform: scale(0.98);
       transition: all 0.1s ease;
     }
