@@ -19,12 +19,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { conference } from '@tencentcloud/roomkit-web-vue3';
 import { useLoginState } from '@tencentcloud/chat-uikit-vue3';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import HomeView from './components/home.vue';
 import RoomView from './components/room.vue';
+// Aegis data reporting (remove for GitHub demo)
+import { createSceneDurationTracker } from '@/utils/aegis';
 
 const { loginUserInfo } = useLoginState();
 const { language, theme } = useUIKit();
@@ -34,6 +36,17 @@ const roomId = ref('');
 const roomType = ref<number>(0);
 const password = ref<string | undefined>(undefined);
 const isConferenceLoggedIn = ref(false);
+
+// Scene duration tracking (remove for GitHub demo)
+let durationTracker: { cleanup: () => void } | null = null;
+
+onMounted(() => {
+  durationTracker = createSceneDurationTracker('room');
+});
+
+onUnmounted(() => {
+  durationTracker?.cleanup();
+});
 
 // Initialize conference settings
 watch([language, theme], ([newLanguage, newTheme]) => {

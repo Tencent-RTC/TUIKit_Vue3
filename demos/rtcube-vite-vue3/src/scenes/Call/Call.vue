@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, provide, reactive, ref, watch } from 'vue';
+import { computed, provide, reactive, ref, watch, onMounted, onUnmounted } from 'vue';
 import { TUICallKit } from '@trtc/calls-uikit-vue';
 import { useLoginState } from '@tencentcloud/chat-uikit-vue3';
 import { UserInfoContextKey, UserInfoContextDefaultValue } from './context';
@@ -24,9 +24,22 @@ import Container from './components/Layout/Container/Container.vue';
 import Home from './pages/Home/Home.vue';
 import CallPage from './pages/Call/Call.vue';
 import GroupCallPage from './pages/GroupCall/GroupCall.vue';
+// Aegis data reporting (remove for GitHub demo)
+import { createSceneDurationTracker } from '@/utils/aegis';
 
 const { loginUserInfo } = useLoginState();
 const currentPage = ref<'home' | 'call' | 'groupCall'>('home');
+
+// Scene duration tracking (remove for GitHub demo)
+let durationTracker: { cleanup: () => void } | null = null;
+
+onMounted(() => {
+  durationTracker = createSceneDurationTracker('call');
+});
+
+onUnmounted(() => {
+  durationTracker?.cleanup();
+});
 
 const userInfoValue = reactive<IUserInfoContext>({
   ...UserInfoContextDefaultValue,

@@ -38,6 +38,8 @@ const { t } = useUIKit();
 
 .welcome {
   flex: 1;
+  width: 100%;
+  height: 100%;
   box-sizing: border-box;
   padding-left: 40px;
   padding-top: 100px;

@@ -40,12 +40,12 @@
         </t-step-item>
         <t-step-item class="step" :title="t('sidebar.viewDocGuide')">
           <div v-for="item in experienceList?.src" :key="(item as any).cmd" class="step02">
-            <a :href="item.url" target="_blank">{{ (item as any).nameKey ? t((item as any).nameKey) : item.name }}</a>
+            <a :href="item.url" target="_blank" @click="onDocLinkClick(item.url, (item as any).nameKey || item.name)">{{ (item as any).nameKey ? t((item as any).nameKey) : item.name }}</a>
           </div>
         </t-step-item>
 
         <t-step-item :title="t('sidebar.enterConsoleTest')" v-if="experienceList?.consolePanel?.isShow" class="step03">
-          <a :href="experienceList?.consolePanel.url" target="_blank">{{ t('sidebar.enterProductConsole') }}</a>
+          <a :href="experienceList?.consolePanel.url" target="_blank" @click="onConsolePanelClick(experienceList?.consolePanel.url)">{{ t('sidebar.enterProductConsole') }}</a>
         </t-step-item>
 
         <t-step-item :title="t('sidebar.miniProgramEntrance')" v-if="experienceList?.miniprogram?.isShow">
@@ -54,6 +54,61 @@
           </div>
         </t-step-item>
       </t-steps>
+
+      <!-- Extended Capabilities Section for Chat -->
+      <div v-if="experienceList?.extendedCapabilities?.isShow" class="extended-capabilities">
+        <p class="sidebar-title">{{ t('sidebar.extendedCapabilities') }}</p>
+        <div
+          v-for="item in experienceList?.extendedCapabilities.items"
+          :key="item.id"
+          class="capability-item"
+        >
+          <div class="capability-header">
+            <span class="capability-name">{{ (item as any).nameKey ? t((item as any).nameKey) : item.name }}</span>
+          </div>
+          <div class="capability-desc">{{ (item as any).descKey ? t((item as any).descKey) : '' }}</div>
+          <div class="capability-platforms">
+            <a
+              v-for="(url, platform) in item.platformDocs"
+              :key="platform"
+              :href="url"
+              target="_blank"
+              class="platform-link"
+              @click="onCapabilityPlatformClick(item.id, String(platform), String(url))"
+            >
+              {{ t(`sidebar.platform.${platform}`) }}
+            </a>
+          </div>
+        </div>
+      </div>
+
+    <!-- Mobile Experience QR Codes Section for Chat -->
+    <div v-if="experienceList?.mobileExperience?.isShow" class="mobile-experience">
+      <p class="sidebar-title">{{ t('sidebar.mobileExperience') }}</p>
+      <div class="mobile-platform-cards">
+        <div
+          v-for="item in experienceList?.mobileExperience.items"
+          :key="item.id"
+          class="mobile-platform-card"
+          @mouseenter="onMobileExperienceView(item.id, (item as any).nameKey ? t((item as any).nameKey) : item.name)"
+        >
+          <div class="platform-qrcode-wrapper">
+            <div class="platform-qrcode">
+              <img :src="item.qrcodeUrl" :alt="item.name" />
+            </div>
+            <span class="qrcode-tip">{{ t('sidebar.scanToExperience') }}</span>
+          </div>
+          <div class="platform-info">
+            <div class="platform-header">
+              <component :is="getPlatformIcon(item.id)" class="platform-icon" />
+              <span class="platform-name">{{ (item as any).nameKey ? t((item as any).nameKey) : item.name }}</span>
+            </div>
+            <p class="platform-desc">{{ (item as any).descKey ? t((item as any).descKey) : item.desc }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
       <div v-if="experienceList?.choose?.isShow" class="sidebar-bottom">
         <img class="sidebar-img" src="../../../assets/images/Mask-group.png" />
         <div class="sidebar-footer">
@@ -63,14 +118,22 @@
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, toRef } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useSidebarStore } from '../../../stores/sidebar';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import {
+  CALLKIT_SIDEBAR_CONFIG,
+  ROOMKIT_SIDEBAR_CONFIG,
+  LIVE_SIDEBAR_CONFIG,
+  CHATKIT_SIDEBAR_CONFIG,
+} from '@/constants';
+import { IconAndroid, IconApple, IconMiniProgram } from '@/components/Icon';
+// Aegis data reporting (remove for GitHub demo)
+import { reportSidebarClick, reportDiversionClick } from '@/utils/aegis';
 
 const { t, language } = useUIKit();
 const currentLanguage = computed(() => language.value);
@@ -79,17 +142,15 @@ const props = defineProps(['activeScene']);
 const activeSceneRef = toRef(props, 'activeScene');
 
 const current = ref(0);
-const sidebar = useSidebarStore();
-const { callkit, roomkit, live, chatkit } = storeToRefs(sidebar);
 
 const sceneDataMap: Record<string, any> = {
-  callkit,
-  roomkit,
-  live,
-  chatkit,
+  callkit: CALLKIT_SIDEBAR_CONFIG,
+  roomkit: ROOMKIT_SIDEBAR_CONFIG,
+  live: LIVE_SIDEBAR_CONFIG,
+  chatkit: CHATKIT_SIDEBAR_CONFIG,
 };
 
-const experienceList = computed(() => sceneDataMap[activeSceneRef.value]?.value);
+const experienceList = computed(() => sceneDataMap[activeSceneRef.value]);
 const isShowQrCodePopup = ref<boolean>(false);
 const isShowPlayerQrCodePopup = ref<boolean>(false);
 const isShowQcloudClassQrCodePopup = ref<boolean>(false);
@@ -136,7 +197,48 @@ function closeQrCodePopup() {
 }
 
 const toRescue = (url: string) => {
+  // Report sidebar click event (remove for GitHub demo)
+  reportSidebarClick('external_link', props.activeScene, url);
   window.open(url, '_blank');
+};
+
+// Platform icon mapping
+const getPlatformIcon = (platform: string) => {
+  const iconMap: Record<string, any> = {
+    android: IconAndroid,
+    ios: IconApple,
+    miniprogram: IconMiniProgram,
+  };
+  return iconMap[platform] || IconAndroid;
+};
+
+// Narrow screen toggle functions
+/**
+ * Report doc link click event (remove for GitHub demo)
+ */
+const onDocLinkClick = (url: string, name: string) => {
+  reportSidebarClick('doc_click', props.activeScene, `${name}:${url}`);
+};
+
+/**
+ * Report console panel click event (remove for GitHub demo)
+ */
+const onConsolePanelClick = (url: string) => {
+  reportSidebarClick('console_click', props.activeScene, url);
+};
+
+/**
+ * Report extended capability platform link click event (remove for GitHub demo)
+ */
+const onCapabilityPlatformClick = (capabilityId: string, platform: string, url: string) => {
+  reportDiversionClick('capability_platform_click', `${capabilityId}_${platform}`, url);
+};
+
+/**
+ * Report mobile experience QR code view event (remove for GitHub demo)
+ */
+const onMobileExperienceView = (platformId: string, platformName: string) => {
+  reportDiversionClick('mobile_qrcode_view', platformId, platformName);
 };
 
 // 窄屏下展示收起 start
@@ -1011,6 +1113,170 @@ a {
       opacity: 1;
       pointer-events: auto;
     }
+  }
+}
+
+// Extended Capabilities Section
+.extended-capabilities {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eaf0fa;
+
+  .capability-item {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f0f5ff;
+    }
+  }
+
+  .capability-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .capability-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #000;
+  }
+
+  .capability-desc {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+
+  .capability-platforms {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .platform-link {
+    display: inline-block;
+    padding: 4px 8px;
+    font-size: 11px;
+    color: #1c66e5;
+    background: #e8f3ff;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #1c66e5;
+      color: #fff;
+    }
+  }
+}
+
+// Mobile Experience Section - Two Column Card Layout
+.mobile-experience {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eaf0fa;
+
+  .mobile-platform-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .mobile-platform-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 8px;
+    background: #fff;
+    border: 1px solid #eaf0fa;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #1c66e5;
+      box-shadow: 0 2px 8px rgba(28, 102, 229, 0.1);
+    }
+  }
+
+  .platform-qrcode-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .platform-qrcode {
+    width: 72px;
+    height: 72px;
+
+    img {
+      width: 100%;
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    .qrcode-placeholder-box {
+      width: 100%;
+      height: 100%;
+      border: 1px dashed #ddd;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+
+      span {
+        font-size: 10px;
+        color: #999;
+        text-align: center;
+        padding: 4px;
+      }
+    }
+  }
+
+  .qrcode-tip {
+    font-size: 11px;
+    color: #999;
+    text-align: center;
+  }
+
+  .platform-info {
+    text-align: center;
+    width: 100%;
+  }
+
+  .platform-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .platform-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  .platform-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+  }
+
+  .platform-desc {
+    font-size: 11px;
+    color: #888;
+    line-height: 1.4;
+    margin: 0;
   }
 }
 </style>

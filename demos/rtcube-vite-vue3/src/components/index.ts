@@ -11,3 +11,7 @@ export { Icon } from './Icon';
 
 // Header component
 export { default as Header } from './Header/index.vue';
+
+// New feature components
+export { PlatformExperience } from './PlatformExperience';
+export { QuickAccess } from './QuickAccess';

@@ -37,7 +37,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import TUIRoomEngine from '@tencentcloud/tuiroom-engine-js';
 import { TUIMessageBox, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import {
@@ -53,6 +53,8 @@ import {
   isMobile,
 } from './TUILiveKit';
 import LiveHeader from './components/LiveHeader.vue';
+// Aegis data reporting (remove for GitHub demo)
+import { createSceneDurationTracker } from '@/utils/aegis';
 
 type PageType = 'list' | 'pusher' | 'player';
 
@@ -63,6 +65,17 @@ const { openLocalMicrophone } = useDeviceState();
 
 const currentPage = ref<PageType>('list');
 const currentLiveId = ref<string>('');
+
+// Scene duration tracking (remove for GitHub demo)
+let durationTracker: { cleanup: () => void } | null = null;
+
+onMounted(() => {
+  durationTracker = createSceneDurationTracker('live');
+});
+
+onUnmounted(() => {
+  durationTracker?.cleanup();
+});
 
 // Enable multi-playback quality when ready
 TUIRoomEngine.once('ready', () => {

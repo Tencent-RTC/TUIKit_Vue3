@@ -12,6 +12,7 @@
             :class="activeScene"
             :active-scene="activeScene"
             :is-international="false"
+            @switch-scene="changeActiveScene"
           ></WindowContent>
         </div>
       </div>

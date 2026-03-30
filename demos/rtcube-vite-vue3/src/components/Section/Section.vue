@@ -61,7 +61,7 @@ $prefixCls: getPrefixCls(section);
     inset 0px 0px 10px #ffffff;
   border-radius: 20px;
   box-sizing: border-box;
-  padding: 48px 60px 60px;
+  padding: 24px 60px 24px;
 
   &__title {
     font-family: "RobotoTRTC", sans-serif;
@@ -101,7 +101,6 @@ $prefixCls: getPrefixCls(section);
   min-width: 1320px;
   background: transparent;
   box-shadow: none;
-  padding-top: 80px;
 
   .#{$prefixCls}__title {
     &-renew {

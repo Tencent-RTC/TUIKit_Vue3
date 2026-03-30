@@ -4,7 +4,7 @@
     <Call v-if="activeScene === 'callkit'" />
 
     <!-- Chat Scene -->
-    <Chat v-else-if="activeScene === 'chatkit'" />
+    <Chat v-else-if="activeScene === 'chatkit'" @switch-scene="handleSwitchScene" />
 
     <!-- RoomKit Scene -->
     <Room v-else-if="activeScene === 'roomkit'" />
@@ -28,6 +28,14 @@ import { Live } from '../../../scenes/Live';
 
 const props = defineProps(['activeScene', 'isInternational']);
 const { activeScene } = toRefs(props);
+
+const emit = defineEmits<{
+  (e: 'switchScene', scene: string): void;
+}>();
+
+const handleSwitchScene = (scene: string) => {
+  emit('switchScene', scene);
+};
 </script>
 
 <style scoped lang="scss">

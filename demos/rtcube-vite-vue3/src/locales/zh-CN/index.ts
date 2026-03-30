@@ -48,9 +48,9 @@ export default {
     'home.trtc': '实时音视频 TRTC',
     'home.im': '即时通信 IM',
     'home.css': '云直播 CSS',
-    'home.bannerTitle': '即刻体验 通话·会议·聊天·直播',
-    'home.bannerDesc': '所见即所得，30分钟即可上线同款能力',
-    'home.sceneExperience': '音视频场景体验',
+    'home.bannerTitle': 'Web 场景 Demo · Chat · Call · Live · Room',
+    'home.bannerDesc': '开源源码，fork 即用，30分钟完成 Web 端集成',
+    'home.sceneExperience': '场景体验',
 
     // Scenes
     'scenes.call.label': '音视频通话 SDK  |  含 UI 快速集成',
@@ -98,7 +98,7 @@ export default {
     'login.docs': '开发文档',
     'login.console': '控制台',
     'login.github': 'GitHub',
-    'login.copyright': '© 2024 Tencent Cloud. All rights reserved.',
+    'login.copyright': '© 2026 Tencent Cloud. All rights reserved.',
     'login.loggingIn': '登录中...',
     'login.backToHome': '返回首页',
     'login.agreeToTerms': '我已阅读并同意',
@@ -462,5 +462,71 @@ export default {
     'action.useCapability': '使用同款能力',
     'action.14DaysFree': '14天免费体验',
     'action.viewDocumentation': '查看该能力的实现文档',
+
+    // Platform Experience Section
+    'platform.sectionTitle': '其他端产品体验',
+    'platform.sectionDesc': '各端 Demo 与 Web RTCube Demo 功能一致，包含 Chat / Call / Room / Live 四大场景。所有 Demo 使用同一套测试账号体系，支持跨端互通。',
+    'platform.sceneList': '通话 · 会议 · 聊天 · 直播',
+    'platform.scanToExperience': '扫码体验',
+    'platform.miniProgram': '微信小程序',
+    'platform.qrcodePlaceholder': '二维码占位',
+    'platform.defaultScanTip': '使用手机扫描二维码下载体验',
+    'platform.iosScanTip': '使用 iPhone 扫描二维码下载 App',
+    'platform.androidScanTip': '使用 Android 手机扫描二维码下载 App',
+    'platform.uniappScanTip': '使用 Android 手机扫描二维码下载 UniApp 版本',
+    'platform.miniProgramScanTip': '使用微信扫描二维码体验小程序',
+
+    // Quick Access Section
+    'quickAccess.sectionTitle': '快速接入',
+    'quickAccess.chat': 'Chat',
+    'quickAccess.chatDesc': '即时通信 IM 快速接入',
+    'quickAccess.call': 'Call',
+    'quickAccess.callDesc': '音视频通话快速接入',
+    'quickAccess.room': 'Room',
+    'quickAccess.roomDesc': '多人音视频房间快速接入',
+    'quickAccess.live': 'Live',
+    'quickAccess.liveDesc': '互动直播快速接入',
+    'quickAccess.miniProgram': '小程序',
+
+    // Capability Recommend Section (Chat right panel)
+    'capabilityRecommend.title': '能力扩展推荐',
+    'capabilityRecommend.call': '通话 Call',
+    'capabilityRecommend.callDesc': '一对一音视频，支持智能客服、1v1 在线辅导场景',
+    'capabilityRecommend.room': '会议 Room',
+    'capabilityRecommend.roomDesc': '多人视频，支持在线课堂、多人 K 歌场景',
+    'capabilityRecommend.live': '直播 Live',
+    'capabilityRecommend.liveDesc': '互动直播，支持秀场直播、赛事直播场景',
+    'capabilityRecommend.experienceDemo': '体验 Demo',
+    'capabilityRecommend.viewDocs': '接入文档',
+
+    // Chat Toolbar Quick Entry
+    'chatToolbar.quickCall': '快速发起通话',
+    'chatToolbar.quickRoom': '快速加入会议',
+
+    // Sidebar Extended Capabilities
+    'sidebar.extendedCapabilities': '更多能力快速接入',
+    'sidebar.extended.call': '通话 Call',
+    'sidebar.extended.callDesc': '一对一音视频通话，支持智能客服、1v1 在线辅导',
+    'sidebar.extended.room': '会议 Room',
+    'sidebar.extended.roomDesc': '多人视频会议，支持在线课堂、多人 K 歌',
+    'sidebar.extended.live': '直播 Live',
+    'sidebar.extended.liveDesc': '互动直播，支持秀场直播、赛事直播',
+    'sidebar.extended.chat': '聊天 Chat',
+    'sidebar.extended.chatDesc': '即时通信，支持娱乐社交、互动游戏、企业办公',
+
+    // Sidebar Platform Docs
+    'sidebar.platform.web': 'Web',
+    'sidebar.platform.android': 'Android',
+    'sidebar.platform.ios': 'iOS',
+    'sidebar.platform.uniapp': 'UniApp',
+    'sidebar.platform.miniprogram': '小程序',
+
+    // Sidebar Mobile Experience
+    'sidebar.mobileExperience': '移动端体验',
+    'sidebar.mobile.android': 'Android',
+    'sidebar.mobile.ios': 'iOS',
+    'sidebar.mobile.uniapp': 'UniApp',
+    'sidebar.mobile.miniprogram': '小程序',
+    'sidebar.scanToExperience': '扫码体验',
   }
 };

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { h, ref, watch } from 'vue';
+import { h, ref, watch, onMounted, onUnmounted } from 'vue';
 import {
   ConversationList,
   Chat,
@@ -24,6 +24,15 @@ import { IconMenu, IconHistory3 } from '@tencentcloud/uikit-base-component-vue3'
 import { TUICallKit } from '@trtc/calls-uikit-vue';
 import { PlaceholderEmpty } from './components/PlaceholderEmpty';
 import { SideTab } from './components/SideTab';
+import { CapabilityRecommend } from './components/CapabilityRecommend';
+import { ToolbarQuickCall } from './components/ToolbarQuickCall';
+import { ToolbarQuickRoom } from './components/ToolbarQuickRoom';
+// Aegis data reporting (remove for GitHub demo)
+import { createSceneDurationTracker } from '@/utils/aegis';
+
+const emit = defineEmits<{
+  (e: 'switchScene', scene: string): void;
+}>();
 
 const activeContact = ref();
 const activeTab = ref<'conversation' | 'contact'>('conversation');
@@ -32,6 +41,17 @@ const isSearchInChatShow = ref(false);
 
 const { t, theme } = useUIKit();
 const { activeConversation } = useConversationListState();
+
+// Scene duration tracking (remove for GitHub demo)
+let durationTracker: { cleanup: () => void } | null = null;
+
+onMounted(() => {
+  durationTracker = createSceneDurationTracker('chat');
+});
+
+onUnmounted(() => {
+  durationTracker?.cleanup();
+});
 
 watch(() => activeConversation.value?.conversationID, (newVal, oldVal) => {
   if (newVal !== oldVal) {
@@ -46,6 +66,21 @@ const handleTabChange = (tab: 'conversation' | 'contact') => {
 
 const enterChat = () => {
   activeTab.value = 'conversation';
+};
+
+// Handle scene switch from capability recommend cards
+const handleSwitchScene = (scene: string) => {
+  emit('switchScene', scene);
+};
+
+// Handle quick call entry
+const handleQuickCall = () => {
+  emit('switchScene', 'callkit');
+};
+
+// Handle quick room entry
+const handleQuickRoom = () => {
+  emit('switchScene', 'roomkit');
 };
 
 </script>
@@ -76,8 +111,8 @@ const enterChat = () => {
     >
       <Chat
         :PlaceholderEmpty="() => h(
-          PlaceholderEmpty,
-          { type: 'chat' })
+          CapabilityRecommend,
+          { onSwitchScene: handleSwitchScene })
         "
         class="chat-content-panel"
       >
@@ -103,6 +138,7 @@ const enterChat = () => {
                 <VideoPicker />
                 <AudioCallPicker />
                 <VideoCallPicker />
+                <ToolbarQuickRoom @click="handleQuickRoom" />
               </div>
               <button
                 class="icon-button"
@@ -151,8 +187,8 @@ const enterChat = () => {
       v-else
       :active-contact-item="activeContact"
       :PlaceholderEmpty="() => h(
-        PlaceholderEmpty,
-        { type: 'contact' })
+        CapabilityRecommend,
+        { onSwitchScene: handleSwitchScene })
       "
       class="contact-detail-panel"
       @send-message="enterChat"
@@ -198,6 +234,7 @@ const enterChat = () => {
 }
 
 .chat-content-panel {
+  display: flex;
   flex: 1;
   min-width: 0;
 }
@@ -230,6 +267,13 @@ const enterChat = () => {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 16px;
+  background-color: var(--stroke-color-primary);
+  margin: 0 4px;
 }
 
 .icon-button {

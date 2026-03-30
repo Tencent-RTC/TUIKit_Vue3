@@ -48,9 +48,9 @@ export default {
     'home.trtc': 'TRTC',
     'home.im': 'Instant Messaging',
     'home.css': 'Cloud Live',
-    'home.bannerTitle': 'Experience Call · Meeting · Chat · Live',
-    'home.bannerDesc': 'What you see is what you get, launch the same capabilities in 30 minutes',
-    'home.sceneExperience': 'Audio & Video Scene Experience',
+    'home.bannerTitle': 'Web Scene Demo · Chat · Call · Live · Room',
+    'home.bannerDesc': 'Open source code, fork and use, complete Web integration in 30 minutes',
+    'home.sceneExperience': 'Scene Experience',
 
     // Scenes
     'scenes.call.label': 'Audio/Video Call SDK | Quick Integration with UI',
@@ -98,7 +98,7 @@ export default {
     'login.docs': 'Documentation',
     'login.console': 'Console',
     'login.github': 'GitHub',
-    'login.copyright': '© 2024 Tencent Cloud. All rights reserved.',
+    'login.copyright': '© 2026 Tencent Cloud. All rights reserved.',
     'login.loggingIn': 'Logging in...',
     'login.backToHome': 'Back to Home',
     'login.agreeToTerms': 'I have read and agree to',
@@ -462,5 +462,71 @@ export default {
     'action.useCapability': 'Create an application',
     'action.14DaysFree': 'Start for free',
     'action.viewDocumentation': 'Documentation',
+
+    // Platform Experience Section
+    'platform.sectionTitle': 'Multi-Platform Experience',
+    'platform.sectionDesc': 'All platform demos share the same capabilities as Web RTCube Demo, including Chat / Call / Room / Live scenarios. All demos use the same test account system for cross-platform interoperability.',
+    'platform.sceneList': 'Call · Meeting · Chat · Live',
+    'platform.scanToExperience': 'Scan to Experience',
+    'platform.miniProgram': 'WeChat Mini Program',
+    'platform.qrcodePlaceholder': 'QR Code Placeholder',
+    'platform.defaultScanTip': 'Scan the QR code with your phone to download',
+    'platform.iosScanTip': 'Scan with iPhone to download the App',
+    'platform.androidScanTip': 'Scan with Android phone to download the App',
+    'platform.uniappScanTip': 'Scan with Android phone to download UniApp version',
+    'platform.miniProgramScanTip': 'Scan with WeChat to experience the Mini Program',
+
+    // Quick Access Section
+    'quickAccess.sectionTitle': 'Quick Integration',
+    'quickAccess.chat': 'Chat',
+    'quickAccess.chatDesc': 'IM Quick Integration',
+    'quickAccess.call': 'Call',
+    'quickAccess.callDesc': 'Audio/Video Call Quick Integration',
+    'quickAccess.room': 'Room',
+    'quickAccess.roomDesc': 'Multi-person Room Quick Integration',
+    'quickAccess.live': 'Live',
+    'quickAccess.liveDesc': 'Interactive Live Quick Integration',
+    'quickAccess.miniProgram': 'Mini Program',
+
+    // Capability Recommend Section (Chat right panel)
+    'capabilityRecommend.title': 'Capability Extensions',
+    'capabilityRecommend.call': 'Call',
+    'capabilityRecommend.callDesc': '1v1 audio/video call for smart customer service, online tutoring scenarios',
+    'capabilityRecommend.room': 'Room',
+    'capabilityRecommend.roomDesc': 'Multi-person video for online classroom, group karaoke scenarios',
+    'capabilityRecommend.live': 'Live',
+    'capabilityRecommend.liveDesc': 'Interactive live streaming for showroom, sports broadcast scenarios',
+    'capabilityRecommend.experienceDemo': 'Try Demo',
+    'capabilityRecommend.viewDocs': 'View Docs',
+
+    // Chat Toolbar Quick Entry
+    'chatToolbar.quickCall': 'Quick Start Call',
+    'chatToolbar.quickRoom': 'Quick Join Room',
+
+    // Sidebar Extended Capabilities
+    'sidebar.extendedCapabilities': 'More Capabilities',
+    'sidebar.extended.call': 'Call',
+    'sidebar.extended.callDesc': '1v1 audio/video call for smart customer service, online tutoring',
+    'sidebar.extended.room': 'Room',
+    'sidebar.extended.roomDesc': 'Multi-person video meeting for online classroom, group karaoke',
+    'sidebar.extended.live': 'Live',
+    'sidebar.extended.liveDesc': 'Interactive live streaming for showroom, sports broadcast',
+    'sidebar.extended.chat': 'Chat',
+    'sidebar.extended.chatDesc': 'Instant messaging for social entertainment, interactive gaming, enterprise office',
+
+    // Sidebar Platform Docs
+    'sidebar.platform.web': 'Web',
+    'sidebar.platform.android': 'Android',
+    'sidebar.platform.ios': 'iOS',
+    'sidebar.platform.uniapp': 'UniApp',
+    'sidebar.platform.miniprogram': 'Mini Program',
+
+    // Sidebar Mobile Experience
+    'sidebar.mobileExperience': 'Mobile Experience',
+    'sidebar.mobile.android': 'Android',
+    'sidebar.mobile.ios': 'iOS',
+    'sidebar.mobile.uniapp': 'UniApp',
+    'sidebar.mobile.miniprogram': 'Mini Program',
+    'sidebar.scanToExperience': 'Scan to Experience',
   }
 };

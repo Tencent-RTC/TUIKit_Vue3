@@ -33,8 +33,8 @@
       <!-- Left Illustration Area -->
       <div class="illustration-area">
         <img
-          src="https://cloudcache.tencent-cloud.com/qcloud/ui/static/static_source_business/97991446-f2ba-4ebd-925f-f9ccba214a0e.png"
-          alt="Banner图片"
+          :src="bannerImage"
+          alt="Banner"
           loading="lazy"
         />
       </div>
@@ -100,41 +100,9 @@
       </div>
     </main>
 
-    <!-- Statistics Footer -->
+    <!-- Footer Disclaimer -->
     <footer class="login-footer">
-      <div class="stats-container">
-        <div class="stat-item">
-          <div class="stat-value">
-            <span class="stat-number">90</span>
-            <span class="stat-unit">%</span>
-          </div>
-          <div class="stat-label">{{ t('stats.marketShare') }}</div>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <div class="stat-value">
-            <span class="stat-number">30</span>
-            <span class="stat-unit">{{ t('language.current') === '当前语言' ? '亿' : 'B' }}</span>
-          </div>
-          <div class="stat-label">{{ t('stats.dailyMinutes') }}</div>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <div class="stat-value">
-            <span class="stat-number">2800</span>
-            <span class="stat-unit">+</span>
-          </div>
-          <div class="stat-label">{{ t('stats.globalNodes') }}</div>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <div class="stat-value">
-            <span class="stat-number">10</span>
-            <span class="stat-unit">{{ t('language.current') === '当前语言' ? '亿+' : 'B+' }}</span>
-          </div>
-          <div class="stat-label">{{ t('stats.monthlyUsers') }}</div>
-        </div>
-      </div>
+      <div class="footer-disclaimer">{{ t('login.copyright') }}</div>
     </footer>
   </div>
 </template>
@@ -148,6 +116,7 @@ import { useRoute, useRouter } from 'vue-router';
 import headerLogo from '@/assets/images/logo-icon.png';
 import headerTitle from '@/assets/images/logo-title.png';
 import headerTitleEn from "@/assets/images/logo-title-en.png";
+import bannerImage from '@/assets/images/main.png';
 import iconLanguage from '@/assets/icons/svg/icon-language.svg';
 import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 
@@ -466,57 +435,14 @@ label {
   margin-top: 6px;
 }
 
-// Footer Statistics Styles
+// Footer Disclaimer Styles
 .login-footer {
-  margin: 40px 80px;
-  padding: 44px 120px;
-  border-radius: 20px;
-  background: rgb(230, 244, 255);
-  box-shadow: 0 4px 30px 0 #B7DCFF80, 0 2px 4px 0 #FFFFFF66;
-}
-
-.stats-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 60px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.stat-item {
+  padding: 24px 40px;
   text-align: center;
 
-  .stat-value {
-    display: flex;
-    align-items: baseline;
-    justify-content: center;
-    gap: 4px;
-
-    .stat-number {
-      font-size: 48px;
-      font-weight: 600;
-      color: #1677ff;
-      line-height: 1;
-    }
-
-    .stat-unit {
-      font-size: 24px;
-      font-weight: 500;
-      color: #1677ff;
-    }
-  }
-
-  .stat-label {
-    margin-top: 8px;
+  .footer-disclaimer {
     font-size: 14px;
     color: #667085;
   }
-}
-
-.stat-divider {
-  width: 1px;
-  height: 60px;
-  background: #e4e7ec;
 }
 </style>

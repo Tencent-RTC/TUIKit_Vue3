@@ -14,65 +14,14 @@
   }
 
   .footer {
-    background: url(https://cloudcache.tencent-cloud.com/qcloud/ui/static/static_source_business/36ab2643-00a4-43ad-b5cb-985951bc9291.png);
+    padding: 24px 40px;
+    text-align: center;
+    background: transparent;
 
-    .footer-contaienr {
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
+    .footer-disclaimer {
+      font-size: 14px;
+      color: #667085;
     }
-
-    height: 174px;
-    margin-top: 0;
-    background-size: cover;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-around;
-  }
-
-  .footer .footer-slogan-item {
-    display: flex;
-    flex-direction: row;
-  }
-
-  .footer .footer-slogan-item .slogan-item-left-separator {
-    width: 2px;
-    height: 66px;
-    opacity: 1;
-    margin-right: 16px;
-    background: linear-gradient(180deg, rgb(144, 167, 216) 20%, rgba(144, 167, 216, 0) 100%);
-  }
-
-  .footer .footer-slogan-item .slogan-item-content {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .footer .footer-slogan-item .slogan-item-content .slogan-item-title {
-    opacity: 1;
-    color: #fff;
-    font-size: 40px;
-    font-weight: 500;
-    font-family: RobotoTRTC, sans-serif;
-    text-align: left;
-    line-height: 48px;
-    letter-spacing: 0.2px;
-  }
-
-  .slogan-item-desc {
-    opacity: 1;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 400;
-    font-family: RobotoTRTC, sans-serif;
-    text-align: left;
-    line-height: 22px;
-    letter-spacing: 0.2px;
   }
 
   &__content {
