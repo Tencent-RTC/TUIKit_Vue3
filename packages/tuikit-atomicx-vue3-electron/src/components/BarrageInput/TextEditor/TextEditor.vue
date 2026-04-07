@@ -110,6 +110,22 @@ const destroyEditorInstance = () => {
   setEditorInstance(null);
 };
 
+const syncEditorPlaceholder = (placeholder: string) => {
+  if (!editorInstance) {
+    return;
+  }
+  const placeholderExtension = editorInstance.extensionManager?.extensions?.find(
+    extension => extension.name === 'placeholder',
+  );
+  if (!placeholderExtension) {
+    return;
+  }
+  // Workaround for TipTap 2.x: mutate placeholder extension options in place
+  // and dispatch an empty transaction to refresh the placeholder decoration.
+  placeholderExtension.options.placeholder = placeholder;
+  editorInstance.view.dispatch(editorInstance.state.tr);
+};
+
 watch(
   () => props.disabled,
   async (newDisabled, oldDisabled) => {
@@ -121,6 +137,16 @@ watch(
         createEditorInstance(props);
       }
     }
+  },
+);
+
+watch(
+  placeholderText,
+  (newPlaceholder) => {
+    if (!editorInstance || props.disabled) {
+      return;
+    }
+    syncEditorPlaceholder(newPlaceholder);
   },
 );
 

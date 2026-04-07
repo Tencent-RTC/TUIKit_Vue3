@@ -1,9 +1,8 @@
 import { reactive, markRaw } from 'vue';
 import { TUIRole } from '@tencentcloud/tuiroom-engine-electron';
-import { TUIToast, TOAST_TYPE, IconTransferOwner } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIToast, TOAST_TYPE, IconTransferOwner, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 // import { MESSAGE_DURATION } from '@/core/constants/message';
 import TUIMessageBox from '../../baseComp/MessageBox';
-import { useI18n } from '../../locales';
 // import eventBus from '@/core/hooks/useMitt';
 import { useRoomState } from '../../states/RoomState';
 import useUserState from '../../states/UserState/index';
@@ -12,20 +11,21 @@ import useRoomEngine from '../useRoomEngine';
 import type { UserInfo } from '../../types';
 
 const roomEngine = useRoomEngine();
-const { t } = useI18n();
-const { localUser, getDisplayName } = useUserState();
-const { currentRoom } = useRoomState();
+
 export default function useTransferOwnerAction(userInfo: UserInfo) {
+  const { t } = useUIKit();
+  const { localUser, getDisplayName } = useUserState();
+  const { currentRoom } = useRoomState();
   function transferOwnerFunc() {
     TUIMessageBox({
-      title: t('Transfer the roomOwner to sb', {
+      title: t('ParticipantList.TransferHostTo', {
         name: getDisplayName(userInfo),
       }),
       message: t(
-        'After transfer the room owner, you will become a general user',
+        'ParticipantList.TransferHostWarning',
       ),
-      confirmButtonText: t('Confirm transfer'),
-      cancelButtonText: t('Cancel'),
+      confirmButtonText: t('ParticipantList.ConfirmTransfer'),
+      cancelButtonText: t('ParticipantList.Cancel'),
       callback: async (action) => {
         if (action === 'confirm') {
           handleTransferOwner();
@@ -54,7 +54,7 @@ export default function useTransferOwnerAction(userInfo: UserInfo) {
         });
         TUIToast({
           type: TOAST_TYPE.SUCCESS,
-          message: t('The room owner has been transferred to sb', {
+          message: t('ParticipantList.TransferHostSuccess', {
             name: getDisplayName(userInfo),
           }),
           // duration: MESSAGE_DURATION.NORMAL,
@@ -62,7 +62,7 @@ export default function useTransferOwnerAction(userInfo: UserInfo) {
       } catch (error) {
         TUIToast({
           type: TOAST_TYPE.ERROR,
-          message: t('Make host failed, please try again.'),
+          message: t('ParticipantList.TransferHostFailed'),
           // duration: MESSAGE_DURATION.NORMAL,
         });
       }
@@ -72,7 +72,7 @@ export default function useTransferOwnerAction(userInfo: UserInfo) {
   const transferOwner = reactive({
     key: UserAction.TransferOwnerAction,
     icon: markRaw(IconTransferOwner),
-    label: t('Make host'),
+    label: t('ParticipantList.TransferHost'),
     handler: transferOwnerFunc,
   });
   return transferOwner;

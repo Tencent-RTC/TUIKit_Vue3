@@ -27,26 +27,25 @@
         </div>
       </div>
     </template>
-    <div v-if="!userInfo.userId" class="empty-position">
-      <span
-        v-if="connected.some(item => item.userId === loginUserInfo?.userId)"
-        class="text"
-        :title="t('LiveView.WaitingForConnection')"
-      >{{ t('LiveView.WaitingForConnection') }}</span>
-      <span
-        v-else
-        class="text"
-        :title="t('LiveView.WaitingForConnection')"
-      >{{ t('LiveView.WaitingForConnection') }}</span>
+    <div
+      v-else
+      class="empty-position"
+      :class="{ 'clickable': !isAnchor }"
+    >
+      <div class="seat-display">
+        <IconPlus v-if="!isAnchor" />
+        <span v-else class="seat-index">{{ props.seatIndex }}</span>
+        <span class="text">{{ isAnchor ? t('LiveView.WaitingForConnection') : t('LiveView.ApplyForConnection') }}</span>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick, onUnmounted } from 'vue';
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { useUIKit, IconPlus } from '@tencentcloud/uikit-base-component-vue3';
 import AudioIcon from '../../baseComp/AudioIcon.vue';
-import { useCoGuestState } from '../../states/CoGuestState';
+import { useLiveListState } from '../../states/LiveListState';
 import { useLiveSeatState } from '../../states/LiveSeatState';
 import { useLoginState } from '../../states/LoginState';
 import { DeviceStatus } from '../../types';
@@ -62,6 +61,7 @@ interface Props {
     height: string;
     zIndex: number;
   }; }>;
+  seatIndex: number;
 }
 
 const props = defineProps<Props>();
@@ -70,8 +70,15 @@ const { t } = useUIKit();
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 
 const { loginUserInfo } = useLoginState();
-const { connected } = useCoGuestState();
 const { speakingUsers, seatList } = useLiveSeatState();
+const { currentLive } = useLiveListState();
+
+const isAnchor = computed(() => {
+  if (!loginUserInfo.value?.userId || !currentLive.value?.liveOwner?.userId) {
+    return false;
+  }
+  return loginUserInfo.value.userId === currentLive.value.liveOwner.userId;
+});
 
 const seatListWithUser = computed(() => seatList.value.filter(item => item.userInfo && item.userInfo.userId !== ''));
 
@@ -168,13 +175,12 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
 
 <style lang="scss" scoped>
 .stream-cover {
-  position: relative;
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-color-primary);
   position: absolute;
   top: 0;
   left: 0;
@@ -202,7 +208,7 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: var(--uikit-color-gray-3);
+      background-color: var(--uikit-color-gray-2);
     }
   }
 
@@ -214,6 +220,7 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
     display: flex;
     align-items: center;
     background-color: var(--uikit-color-black-5);
+    color: var(--text-color-button);
     padding: 2px 8px;
     border-radius: 100px;
     max-width: 80%;
@@ -241,22 +248,34 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
     width: 100%;
     height: 100%;
     background: var(--uikit-color-gray-2);
-    color: #fff;
-    font-weight: bold;
     pointer-events: auto;
     box-shadow: 0 0 0 1px var(--bg-color-topbar);
 
-    .number {
-      font-size: 18px;
-      margin-bottom: 10px;
+    &.clickable {
+      cursor: pointer;
     }
 
     .text {
       font-size: 14px;
       max-width: 80%;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
+      text-align: center;
+      word-break: break-word;
+      color: var(--text-color-primary);
+      font-weight: 400;
+    }
+
+    .seat-display {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      color: var(--text-color-primary);
+      align-items: center;
+    }
+
+    .seat-index {
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--text-color-secondary);
     }
   }
 }

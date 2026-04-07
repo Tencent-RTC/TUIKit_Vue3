@@ -1,24 +1,24 @@
 <template>
   <tui-dialog
     v-model="showRequestOpenMicDialog"
-    :title="t('Tips')"
+    :title="t('AudioSetting.Tips')"
     :modal="true"
     :show-close="false"
     :close-on-click-modal="false"
     width="500px"
     :append-to-room-container="true"
-    :confirm-button="t('Turn on the microphone')"
-    :cancel-button="t('Keep it closed')"
+    :confirm-button="t('AudioSetting.TurnOnMicrophone')"
+    :cancel-button="t('AudioSetting.KeepClosed')"
     @confirm="handleAccept"
     @cancel="handleReject"
   >
     <span>{{ dialogContent }}</span>
     <template #footer>
       <TUIButton type="primary" @click="handleAccept">
-        {{ t('Turn on the microphone') }}
+        {{ t('AudioSetting.TurnOnMicrophone') }}
       </TUIButton>
       <TUIButton @click="handleReject">
-        {{ t('Keep it closed') }}
+        {{ t('AudioSetting.KeepClosed') }}
       </TUIButton>
     </template>
   </tui-dialog>
@@ -54,9 +54,9 @@ async function onRequestReceived(eventInfo: { request: TUIRequest }) {
   if (requestAction === TUIRequestAction.kRequestToOpenRemoteMicrophone) {
     const userRole
       = getUserInfo({ userId })?.userRole === TUIRole.kRoomOwner
-        ? t('RoomOwner')
-        : t('Admin');
-    dialogContent.value = t('Sb invites you to turn on the microphone', {
+        ? t('AudioSetting.RoomOwner')
+        : t('AudioSetting.Admin');
+    dialogContent.value = t('AudioSetting.InviteTurnOnMicrophone', {
       role: userRole,
     });
     requestOpenMicRequestId.value = requestId;

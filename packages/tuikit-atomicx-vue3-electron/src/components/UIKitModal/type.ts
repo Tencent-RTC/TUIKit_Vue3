@@ -13,6 +13,9 @@ export interface UIKitModalOptions extends UIKitModalEvents {
   title: string;
   content: string | VNode;
   type: 'info' | 'warning' | 'error' | 'success';
+  confirmText?: string;
+  cancelText?: string;
+  showCancelButton?: boolean;
 }
 
 export interface IUIKitModalBtn {

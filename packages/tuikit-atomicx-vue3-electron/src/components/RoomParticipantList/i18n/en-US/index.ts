@@ -52,6 +52,7 @@ export const resource = {
     Confirm: 'Confirm',
     Cancel: 'Cancel',
     Note: 'Note',
+    Operation: 'Operation',
     ConfirmTransfer: 'Confirm transfer',
 
     InviteMicSent: 'An invitation to turn on the microphone has been sent to {{ name }}',

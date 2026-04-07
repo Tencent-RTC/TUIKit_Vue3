@@ -26,7 +26,7 @@
             />
             <span class="uikit-modal-title">{{ title }}</span>
             <IconClose
-              v-if="IS_PC"
+              v-if="IS_PC && showCancelButton"
               class="uikit-modal-close-icon"
               @click="handleCancel"
             />
@@ -37,18 +37,19 @@
           />
           <div class="uikit-modal-footer">
             <TUIButton
+              v-if="showCancelButton"
               type="default"
               style="min-width: 88px"
               @click="handleCancel"
             >
-              {{ t('Cancel') }}
+              {{ cancelButtonText }}
             </TUIButton>
             <TUIButton
               type="primary"
               style="min-width: 88px"
               @click="handleConfirm"
             >
-              {{ t('Confirm') }}
+              {{ confirmButtonText }}
             </TUIButton>
           </div>
         </div>
@@ -71,13 +72,13 @@ import {
   IconInfoToast,
   IconErrorToast,
   IconWarningToast,
+  useUIKit,
 } from '@tencentcloud/uikit-base-component-vue3';
 import { getPlatform } from '@tencentcloud/universal-api';
-import { useI18n } from '../../locales';
 import type { UIKitModalOptions } from './type';
 
 const IS_PC = getPlatform() === 'pc';
-const { t } = useI18n();
+const { t } = useUIKit();
 
 interface Props extends UIKitModalOptions {
   visible: boolean;
@@ -88,6 +89,7 @@ const props = withDefaults(defineProps<Props>(), {
   title: '',
   content: '',
   visible: false,
+  showCancelButton: true,
 });
 
 const emit = defineEmits<{
@@ -121,6 +123,9 @@ const processedContent = computed(() => {
 
   return escapeHtml(content);
 });
+
+const confirmButtonText = computed(() => props.confirmText || t('UIKitModal.Confirm'));
+const cancelButtonText = computed(() => props.cancelText || t('UIKitModal.Cancel'));
 
 function escapeHtml(text: string): string {
   const div = document.createElement('div');

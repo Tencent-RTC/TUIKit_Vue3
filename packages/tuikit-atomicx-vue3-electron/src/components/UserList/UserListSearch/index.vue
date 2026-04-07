@@ -4,17 +4,16 @@
     <input
       v-model="userSearchText"
       class="search-input"
-      :placeholder="t('Search Member')"
+      :placeholder="t('ParticipantList.Search')"
     />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { IconSearch } from '@tencentcloud/uikit-base-component-vue3';
-import { useI18n } from '../../../locales';
+import { IconSearch, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import useUserState from '../../../states/UserState/index';
 
-const { t } = useI18n();
+const { t } = useUIKit();
 const { userSearchText } = useUserState();
 </script>
 

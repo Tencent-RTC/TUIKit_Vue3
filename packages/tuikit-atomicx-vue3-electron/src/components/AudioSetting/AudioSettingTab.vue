@@ -1,16 +1,16 @@
 <template>
   <div class="audio-setting-tab">
     <div v-if="audioSettingProps?.supportSwitchMicrophone" class="item-setting">
-      <span class="title">{{ t('Mic') }}</span>
+      <span class="title">{{ t('AudioSetting.Mic') }}</span>
       <div class="flex">
         <microphone-select class="select" />
         <TUIButton v-if="isDetailMode" @click="handleMicrophoneTest">
-          {{ isMicrophoneTesting ? t('Stop') : t('Test') }}
+          {{ isMicrophoneTesting ? t('AudioSetting.Stop') : t('AudioSetting.Test') }}
         </TUIButton>
       </div>
     </div>
     <div v-if="audioSettingProps?.supportAudioLevel" class="item-setting">
-      <span class="title">{{ t('Output') }}</span>
+      <span class="title">{{ t('AudioSetting.Output') }}</span>
       <div class="mic-bar-container">
         <div
           v-for="(item, index) in new Array(volumeTotalNum).fill('')"
@@ -23,7 +23,7 @@
       </div>
     </div>
     <div v-if="audioSettingProps?.supportSwitchSpeaker" class="item-setting">
-      <span class="title">{{ t('Speaker') }}</span>
+      <span class="title">{{ t('AudioSetting.Speaker') }}</span>
       <div class="flex">
         <speaker-select
           class="select"
@@ -32,7 +32,7 @@
           "
         />
         <TUIButton v-if="isDetailMode" @click="handleSpeakerTest">
-          {{ isSpeakerTesting ? t('Stop') : t('Test') }}
+          {{ isSpeakerTesting ? t('AudioSetting.Stop') : t('AudioSetting.Test') }}
         </TUIButton>
       </div>
     </div>
@@ -105,7 +105,7 @@ async function handleSpeakerTest() {
   } catch (error) {
     console.error('[AudioSettingTab] speaker test action failed:', error);
     if (isStartAction) {
-      TUIToast.error({ message: t('Speaker test failed to start, please check device connection') });
+      TUIToast.error({ message: t('AudioSetting.SpeakerTestFailed') });
     }
   }
 }

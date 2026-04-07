@@ -1,8 +1,7 @@
 import { reactive, computed, defineComponent } from 'vue';
 import { TUIMediaDevice } from '@tencentcloud/tuiroom-engine-electron';
-import { TUIToast, TOAST_TYPE } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIToast, TOAST_TYPE, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import TUIMessageBox from '../../baseComp/MessageBox';
-import { useI18n } from '../../locales';
 import { useRoomState } from '../../states/RoomState';
 import { useRoomEngine } from '../useRoomEngine';
 // import { MESSAGE_DURATION } from '../../../../constants/message';
@@ -10,7 +9,7 @@ import { useRoomEngine } from '../useRoomEngine';
 const { currentRoom } = useRoomState();
 
 export default function useRoomAudioAction() {
-  const { t } = useI18n();
+  const { t } = useUIKit();
   const roomEngine = useRoomEngine();
   let stateForAllAudio = false;
 
@@ -20,13 +19,13 @@ export default function useRoomAudioAction() {
     stateForAllAudio = !currentRoom.value?.isAllMicrophoneDisabled;
     TUIMessageBox({
       title: currentRoom.value?.isAllMicrophoneDisabled
-        ? t('Enable all audios')
-        : t('All current and new members will be muted'),
+        ? t('ParticipantList.UnmuteAll')
+        : t('ParticipantList.MuteAllTip'),
       message: currentRoom.value?.isAllMicrophoneDisabled
-        ? t('After unlocking, users can freely turn on the microphone')
-        : t('Members will not be able to open the microphone'),
-      confirmButtonText: t('Confirm'),
-      cancelButtonText: t('Cancel'),
+        ? t('ParticipantList.UnmuteAllDesc')
+        : t('ParticipantList.MicDisabledTip'),
+      confirmButtonText: t('ParticipantList.Confirm'),
+      cancelButtonText: t('ParticipantList.Cancel'),
       callback: async (action) => {
         if (action === 'confirm') {
           doToggleRoomAudio();
@@ -38,8 +37,8 @@ export default function useRoomAudioAction() {
   async function doToggleRoomAudio() {
     if (currentRoom.value?.isAllMicrophoneDisabled === stateForAllAudio) {
       const tipMessage = stateForAllAudio
-        ? t('All audios disabled')
-        : t('All audios enabled');
+        ? t('ParticipantList.AudioDisabled')
+        : t('ParticipantList.AudioEnabled');
       TUIToast({
         type: TOAST_TYPE.SUCCESS,
         message: tipMessage,
@@ -58,8 +57,8 @@ export default function useRoomAudioAction() {
     icon: defineComponent({}),
     label: computed(() =>
       currentRoom.value?.isAllMicrophoneDisabled
-        ? t('Lift all mute')
-        : t('All mute'),
+        ? t('ParticipantList.UnmuteAll')
+        : t('ParticipantList.MuteAll'),
     ),
     handler: toggleRoomAudio,
   });

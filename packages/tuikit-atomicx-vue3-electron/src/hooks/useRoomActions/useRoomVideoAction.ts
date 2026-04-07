@@ -1,12 +1,12 @@
+import { reactive, computed, defineComponent } from 'vue';
 import { TUIMediaDevice } from '@tencentcloud/tuiroom-engine-electron';
-import { TUIToast, TOAST_TYPE } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIToast, TOAST_TYPE, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import TUIMessageBox from '../../baseComp/MessageBox';
-import { useI18n } from '../../locales';
 import { useRoomState } from '../../states/RoomState';
 import useRoomEngine from '../useRoomEngine';
 
 export default function useRoomVideoAction() {
-  const { t } = useI18n();
+  const { t } = useUIKit();
   const { currentRoom } = useRoomState();
   const roomEngine = useRoomEngine();
 
@@ -16,13 +16,13 @@ export default function useRoomVideoAction() {
     stateForAllVideo = !currentRoom.value?.isAllCameraDisabled;
     TUIMessageBox({
       title: currentRoom.value?.isAllCameraDisabled
-        ? t('Enable all videos')
-        : t('All and new members will be banned from the camera'),
+        ? t('ParticipantList.EnableAllVideo')
+        : t('ParticipantList.DisableAllVideoTip'),
       message: currentRoom.value?.isAllCameraDisabled
-        ? t('After unlocking, users can freely turn on the camera')
-        : t('Members will not be able to open the camera'),
-      confirmButtonText: t('Confirm'),
-      cancelButtonText: t('Cancel'),
+        ? t('ParticipantList.EnableAllVideoDesc')
+        : t('ParticipantList.CameraDisabledTip'),
+      confirmButtonText: t('ParticipantList.Confirm'),
+      cancelButtonText: t('ParticipantList.Cancel'),
       callback: async (action) => {
         if (action === 'confirm') {
           doToggleRoomVideo();
@@ -34,8 +34,8 @@ export default function useRoomVideoAction() {
   async function doToggleRoomVideo() {
     if (currentRoom.value?.isAllCameraDisabled === stateForAllVideo) {
       const tipMessage = stateForAllVideo
-        ? t('All videos disabled')
-        : t('All videos enabled');
+        ? t('ParticipantList.VideoDisabled')
+        : t('ParticipantList.VideoEnabled');
       TUIToast({
         type: TOAST_TYPE.SUCCESS,
         message: tipMessage,
@@ -54,8 +54,8 @@ export default function useRoomVideoAction() {
     icon: defineComponent({}),
     label: computed(() =>
       currentRoom.value?.isAllCameraDisabled
-        ? t('Lift stop all video')
-        : t('All stop video'),
+        ? t('ParticipantList.EnableAllVideo')
+        : t('ParticipantList.DisableAllVideo'),
     ),
     handler: toggleRoomVideo,
   });

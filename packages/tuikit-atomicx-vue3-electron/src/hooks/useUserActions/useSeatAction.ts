@@ -1,15 +1,8 @@
 import { computed, reactive } from 'vue';
 import {
-  TUIRequestCallbackType,
-  TUIErrorCode,
-} from '@tencentcloud/tuiroom-engine-electron';
+  TUIRequestCallbackType, TUIErrorCode, } from '@tencentcloud/tuiroom-engine-electron';
 import {
-  IconInviteOnStage,
-  IconDenyOnStage,
-  IconOnStage,
-  IconOffStage,
-  TUIToast, TOAST_TYPE } from '@tencentcloud/uikit-base-component-vue3';
-import { useI18n } from '../../locales';
+  IconInviteOnStage, IconDenyOnStage, IconOnStage, IconOffStage, TUIToast, TOAST_TYPE, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 // import { MESSAGE_DURATION } from '@/constants/message';
 import { useRoomState } from '../../states/RoomState';
 import useUserState from '../../states/UserState/index';
@@ -19,13 +12,12 @@ import type { UserInfo, ActionType } from '../../types';
 
 const { currentRoom } = useRoomState();
 
-const { t } = useI18n();
-
 const roomEngine = useRoomEngine();
 
 export function useInviteUserOnSeat(
   userInfo: UserInfo,
 ): ActionType<UserAction> {
+  const { t } = useUIKit();
   const { userListOnSeat, getDisplayName, cancelInvitationByAdmin, sendInvitationByAdmin } = useUserState();
 
   async function toggleInviteUserOnSeat() {
@@ -38,7 +30,7 @@ export function useInviteUserOnSeat(
       if (userListOnSeat.value.length === currentRoom.value?.maxSeatCount) {
         TUIToast({
           type: TOAST_TYPE.WARNING,
-          message: `${t('The stage is full')}`,
+          message: `${t('ParticipantList.StageFull')}`,
           // duration: MESSAGE_DURATION.NORMAL,
         });
         return;
@@ -57,14 +49,14 @@ export function useInviteUserOnSeat(
             case TUIRequestCallbackType.kRequestAccepted:
               TUIToast({
                 type: TOAST_TYPE.SUCCESS,
-                message: `${getDisplayName(userInfo)} ${t('accepted the invitation to the stage')}`,
+                message: `${getDisplayName(userInfo)} ${t('ParticipantList.AcceptedInviteToStage')}`,
                 // duration: MESSAGE_DURATION.NORMAL,
               });
               break;
             case TUIRequestCallbackType.kRequestRejected:
               TUIToast({
                 type: TOAST_TYPE.WARNING,
-                message: `${getDisplayName(userInfo)} ${t('declined the invitation to the stage')}`,
+                message: `${getDisplayName(userInfo)} ${t('ParticipantList.DeclinedInviteToStage')}`,
                 // duration: MESSAGE_DURATION.NORMAL,
               });
               break;
@@ -72,7 +64,7 @@ export function useInviteUserOnSeat(
               TUIToast({
                 type: TOAST_TYPE.WARNING,
                 message: t(
-                  'The invitation to sb to go on stage has timed out',
+                  'ParticipantList.InviteStageTimeout',
                   {
                     name: getDisplayName(userInfo),
                   },
@@ -85,7 +77,7 @@ export function useInviteUserOnSeat(
                 TUIToast({
                   type: TOAST_TYPE.WARNING,
                   message: t(
-                    'This member has already received the same request, please try again later',
+                    'ParticipantList.DuplicateStageInvite',
                   ),
                   // duration: MESSAGE_DURATION.NORMAL,
                 });
@@ -108,8 +100,8 @@ export function useInviteUserOnSeat(
     ),
     label: computed(() =>
       userInfo.seatStatus === SeatStatus.OffInvitationPending
-        ? t('Cancel stage')
-        : t('Invite stage'),
+        ? t('ParticipantList.CancelStage')
+        : t('ParticipantList.InviteStage'),
     ),
     handler: toggleInviteUserOnSeat,
   });
@@ -117,12 +109,13 @@ export function useInviteUserOnSeat(
 }
 
 export function useAgreeUserOnSeat(userInfo: UserInfo): ActionType<UserAction> {
+  const { t } = useUIKit();
   const { acceptApplicationByAdmin } = useUserState();
 
   const agreeUserOnSeat = reactive({
     key: UserAction.AgreeOnSeatAction,
     icon: IconOnStage,
-    label: t('Agree to the stage'),
+    label: t('ParticipantList.AgreeToStage'),
     handler: async () => {
       try {
         await acceptApplicationByAdmin({
@@ -133,7 +126,7 @@ export function useAgreeUserOnSeat(userInfo: UserInfo): ActionType<UserAction> {
         if (error === TUIErrorCode.ERR_ALL_SEAT_OCCUPIED) {
           TUIToast({
             type: TOAST_TYPE.WARNING,
-            message: t('The stage is full'),
+            message: t('ParticipantList.StageFull'),
           });
         } else {
           console.error('Failure to response a user request', error);
@@ -145,11 +138,12 @@ export function useAgreeUserOnSeat(userInfo: UserInfo): ActionType<UserAction> {
 }
 
 export function useDenyUserOnSeat(userInfo: UserInfo): ActionType<UserAction> {
+  const { t } = useUIKit();
   const { rejectApplicationByAdmin } = useUserState();
   const denyUserOnSeat = reactive({
     key: UserAction.DenyOnSeatAction,
     icon: IconDenyOnStage,
-    label: t('Refuse stage'),
+    label: t('ParticipantList.RefuseStage'),
     handler: async () => {
       try {
         await rejectApplicationByAdmin({
@@ -165,6 +159,7 @@ export function useDenyUserOnSeat(userInfo: UserInfo): ActionType<UserAction> {
 }
 
 export function useKickUserOffSeat(userInfo: UserInfo): ActionType<UserAction> {
+  const { t } = useUIKit();
   async function kickUserOffSeatByAdmin(userInfo: UserInfo) {
     await roomEngine.instance?.kickUserOffSeatByAdmin({
       seatIndex: -1,
@@ -175,7 +170,7 @@ export function useKickUserOffSeat(userInfo: UserInfo): ActionType<UserAction> {
   const kickUserOffSeat = reactive({
     key: UserAction.KickOffSeatAction,
     icon: IconOffStage,
-    label: t('Step down'),
+    label: t('ParticipantList.StepDown'),
     handler: () => kickUserOffSeatByAdmin(userInfo),
   });
   return kickUserOffSeat;

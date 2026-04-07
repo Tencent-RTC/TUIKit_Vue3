@@ -10,7 +10,7 @@ import { zhCN, enUS } from 'date-fns/locale';
 
 interface GetTimeStampOptions {
   time: number;
-  language?: 'zh-CN' | 'zh-TW' | 'en-US' | 'ja-JP' | 'ko-KR' | string;
+  language?: 'zh-CN' | 'en-US' | string;
 }
 
 function getTimeStamp({ time, language = 'en-US' }: GetTimeStampOptions) {

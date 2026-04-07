@@ -18,4 +18,5 @@ export const resource = {
   'there is no available seat to take': 'There is no available seat to take',
   'Accept co-guest request failed': 'Accept co-guest request failed',
   'Reject co-guest request failed': 'Reject co-guest request failed',
+  'Disconnect co-guest failed': 'Disconnect co-guest failed',
 };

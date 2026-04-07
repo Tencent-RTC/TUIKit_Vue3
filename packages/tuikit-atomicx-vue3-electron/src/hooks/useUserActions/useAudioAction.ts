@@ -1,24 +1,18 @@
 import { computed, reactive, Ref, ref } from 'vue';
 import {
-  TUIMediaDevice,
-} from '@tencentcloud/tuiroom-engine-electron';
+  TUIMediaDevice, } from '@tencentcloud/tuiroom-engine-electron';
 // import { MESSAGE_DURATION } from '../../../../constants/message';
 import { useRoomEngine } from '../useRoomEngine';
-import { useI18n } from '../../locales';
 import { UserInfo, UserAction, ActionType, DeviceStatus, RequestType } from '../../types';
 import {
-  IconAudioOpen,
-  IconAudioClose,
-  TUIToast,
-  TOAST_TYPE,
-} from '@tencentcloud/uikit-base-component-vue3';
+  IconAudioOpen, IconAudioClose, TUIToast, TOAST_TYPE, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import useUserState from '../../states/UserState/index';
 
 export default function useAudioControl(
   userInfo: UserInfo
 ): ActionType<UserAction> {
   const roomEngine = useRoomEngine();
-  const { t } = useI18n();
+  const { t } = useUIKit();
   const { sendInvitationByAdmin } = useUserState();
 
   async function muteUserAudio() {
@@ -31,7 +25,7 @@ export default function useAudioControl(
       if (userInfo.microphoneStatus === DeviceStatus.OffInvitationPending) {
         TUIToast({
           type: TOAST_TYPE.INFO,
-          message: `${t('An invitation to open the camera has been sent to sb.', { name: userInfo.displayName })}`,
+          message: `${t('ParticipantList.InviteMicSent', { name: userInfo.displayName })}`,
           // duration: MESSAGE_DURATION.NORMAL,
         });
         return;
@@ -43,7 +37,7 @@ export default function useAudioControl(
       });
       TUIToast({
         type: TOAST_TYPE.INFO,
-        message: `${t('An invitation to open the camera has been sent to sb.', { name: userInfo.displayName })}`,
+        message: `${t('ParticipantList.InviteMicSent', { name: userInfo.displayName })}`,
         // duration: MESSAGE_DURATION.NORMAL,
       });
     }
@@ -56,7 +50,7 @@ export default function useAudioControl(
       userInfo.microphoneStatus === DeviceStatus.On ? IconAudioOpen : IconAudioClose
     ),
     label: computed(() =>
-      userInfo.microphoneStatus === DeviceStatus.On ? t('Mute') : t('Unmute')
+      userInfo.microphoneStatus === DeviceStatus.On ? t('ParticipantList.Mute') : t('ParticipantList.Unmute')
     ),
     handler: muteUserAudio,
   });

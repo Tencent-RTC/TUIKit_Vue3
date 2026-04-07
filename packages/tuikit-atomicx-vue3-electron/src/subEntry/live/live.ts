@@ -27,3 +27,4 @@ export { LiveCoreView, LiveView } from '../../components/LiveView';
 export { MicButton } from '../../components/MicButton';
 // NOTE:
 export { StreamMixer } from '../../components/StreamMixer';
+export { useLiveErrorModal } from '../../components/UIKitModal/liveErrorModal';

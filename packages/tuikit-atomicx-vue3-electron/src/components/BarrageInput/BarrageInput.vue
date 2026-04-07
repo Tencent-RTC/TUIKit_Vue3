@@ -15,26 +15,11 @@
         @blur="emit('blur')"
       >
         <template #prefix>
-          <div
-            v-if="!isRightSafeMode"
-            class="input-actions input-actions--prefix"
-          >
+          <div ref="prefixActionsRef" class="input-actions input-actions--prefix">
             <EmojiPicker
               :disabled="disabledAndPlaceholder.disabled"
               :trigger-style="{ display: 'flex' }"
-            />
-          </div>
-        </template>
-        <template #suffix>
-          <div
-            v-if="isRightSafeMode"
-            class="input-actions input-actions--suffix"
-          >
-            <EmojiPicker
-              :disabled="disabledAndPlaceholder.disabled"
-              :trigger-style="{ display: 'flex' }"
-              align="end"
-              :panel-width="emojiPanelWidth"
+              v-bind="emojiPickerProps"
             />
           </div>
         </template>
@@ -71,7 +56,7 @@ interface Props {
   disabled?: boolean;
   autoFocus?: boolean;
   maxLength?: number;
-  emojiPopupMode?: 'default' | 'rightSafe';
+  emojiPopupMode?: 'inset' | 'outset';
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -83,30 +68,58 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   autoFocus: true,
   maxLength: 80,
-  emojiPopupMode: 'default',
+  emojiPopupMode: 'outset',
 });
 
 const messageInputContainerRef = ref<HTMLElement | null>(null);
+const prefixActionsRef = ref<HTMLElement | null>(null);
 const emojiPanelWidth = ref(310);
-const isRightSafeMode = computed(() => props.emojiPopupMode === 'rightSafe');
+const emojiAlignOffset = ref(0);
+const isInsetMode = computed(() => props.emojiPopupMode === 'inset');
+
+// Aggregate EmojiPicker props based on popup mode to keep the template clean.
+const emojiPickerProps = computed(() => {
+  if (isInsetMode.value) {
+    return {
+      align: 'start' as const,
+      alignOffset: emojiAlignOffset.value,
+      panelWidth: emojiPanelWidth.value,
+      panelMaxHeight: 320,
+      showScrollbar: true,
+    };
+  }
+  return {
+    align: 'center' as const,
+    alignOffset: 0,
+    panelWidth: 310,
+    panelMaxHeight: undefined,
+    showScrollbar: false,
+  };
+});
+
 let resizeObserver: ResizeObserver | null = null;
 let resizeRafId: number | null = null;
 
 function updateEmojiPanelWidth() {
-  if (!isRightSafeMode.value || !messageInputContainerRef.value) {
+  if (!isInsetMode.value || !messageInputContainerRef.value) {
     return;
   }
   const containerWidth = messageInputContainerRef.value.clientWidth;
   if (!containerWidth) {
     return;
   }
-  const rightPanel = messageInputContainerRef.value.closest('.main-right') as HTMLElement | null;
-  const panelWidth = rightPanel?.clientWidth || containerWidth;
+  // In inset mode, set popup width equal to the input container width.
+  emojiPanelWidth.value = Math.max(160, containerWidth);
 
-  // Constrain popup width by available area inside the right panel.
-  // This avoids left overflow when the right panel is narrow on Windows.
-  const safeMaxWidth = Math.min(containerWidth - 8, panelWidth - 24);
-  emojiPanelWidth.value = Math.min(310, Math.max(160, safeMaxWidth));
+  // Compute negative offset so the popup left edge aligns with the container left edge.
+  // The trigger (emoji icon) is inside prefix padding, so we shift the popup left
+  // by the distance between the container's left edge and the trigger's left edge.
+  const containerRect = messageInputContainerRef.value.getBoundingClientRect();
+  if (prefixActionsRef.value) {
+    const triggerRect = prefixActionsRef.value.getBoundingClientRect();
+    // Ensure offset is always non-positive to prevent unexpected rightward shift.
+    emojiAlignOffset.value = Math.min(0, -(triggerRect.left - containerRect.left));
+  }
 }
 
 function scheduleEmojiPanelResize() {
@@ -188,10 +201,6 @@ onBeforeUnmount(() => {
     overflow: auto;
     box-sizing: border-box;
 
-    &:focus-within {
-      border-color: var(--text-color-link);
-    }
-
     .input-actions {
       display: flex;
       align-items: center;
@@ -200,10 +209,6 @@ onBeforeUnmount(() => {
 
       &--prefix {
         margin-right: 12px;
-      }
-
-      &--suffix {
-        margin-left: 12px;
       }
 
       .send-button {

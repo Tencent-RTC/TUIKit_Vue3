@@ -1,14 +1,14 @@
 <template>
   <tui-dialog
     v-model="showRequestOpenCameraDialog"
-    :title="t('Tips')"
+    :title="t('VideoSetting.Tips')"
     :modal="true"
     :show-close="false"
     :close-on-click-modal="false"
     width="500px"
     :append-to-room-container="true"
-    :confirm-button="t('Turn on the camera')"
-    :cancel-button="t('Keep it closed')"
+    :confirm-button="t('VideoSetting.TurnOnCamera')"
+    :cancel-button="t('VideoSetting.KeepClosed')"
     @confirm="handleAccept"
     @cancel="handleReject"
   >
@@ -17,10 +17,10 @@
     </span>
     <template #footer>
       <TUIButton @click="handleAccept" type="primary">
-        {{ t('Turn on the camera') }}
+        {{ t('VideoSetting.TurnOnCamera') }}
       </TUIButton>
       <TUIButton @click="handleReject">
-        {{ t('Keep it closed') }}
+        {{ t('VideoSetting.KeepClosed') }}
       </TUIButton>
     </template>
   </tui-dialog>
@@ -29,14 +29,9 @@
 <script setup lang="ts">
 import { ref, onUnmounted, Ref } from 'vue';
 import TUIRoomEngine, {
-  TUIRoomEvents,
-  TUIRequest,
-  TUIRequestAction,
-  TUIRole,
-} from '@tencentcloud/tuiroom-engine-electron';
+  TUIRoomEvents, TUIRequest, TUIRequestAction, TUIRole, } from '@tencentcloud/tuiroom-engine-electron';
 import TuiDialog from '../../baseComp/Dialog'
-import { useI18n } from '../../locales';
-import { TUIButton } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 
 import useUserState from '../../states/UserState/index';
 import useRoomEngine from '../../hooks/useRoomEngine';
@@ -46,7 +41,7 @@ const dialogContent: Ref<string> = ref('');
 
 const { getUserInfo } = useUserState();
 
-const { t } = useI18n();
+const { t } = useUIKit();
 
 /**
  * Handling host or administrator turn on/off camera signalling
@@ -58,9 +53,9 @@ async function onRequestReceived(eventInfo: { request: TUIRequest }) {
   if (requestAction === TUIRequestAction.kRequestToOpenRemoteCamera) {
     const userRole =
       getUserInfo({ userId })?.userRole === TUIRole.kRoomOwner
-        ? t('RoomOwner')
-        : t('Admin');
-    dialogContent.value = t('Sb invites you to turn on the camera', {
+        ? t('VideoSetting.RoomOwner')
+        : t('VideoSetting.Admin');
+    dialogContent.value = t('VideoSetting.InviteTurnOnCamera', {
       role: userRole,
     });
     requestOpenCameraRequestId.value = requestId;

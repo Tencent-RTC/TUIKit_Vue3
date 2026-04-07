@@ -48,6 +48,7 @@ import { ref, computed } from 'vue';
 import { TRTCMediaSourceType } from '@tencentcloud/tuiroom-engine-electron';
 import { TUIToast, TOAST_TYPE, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useVideoMixerState } from '../../states/VideoMixerState';
+import { useLiveErrorModal } from '../UIKitModal';
 
 import CameraSettingDialog from './CameraSettingDialog.vue';
 import LiveSceneSelect from './LiveSceneSelect.vue';
@@ -57,6 +58,7 @@ import ScreenShareSettingDialog from './ScreenShareSettingDialog.vue';
 import type { MediaSource } from '../../types';
 
 const { t } = useUIKit();
+const { handleErrorWithModal } = useLiveErrorModal();
 const {
   addMediaSource,
   updateMediaSource,
@@ -122,6 +124,9 @@ const addCameraMaterial = async (material: Partial<MediaSource>) => {
         message: t('This camera has already been added to the materials list'),
       });
     } else {
+      if (handleErrorWithModal(error)) {
+        return;
+      }
       TUIToast({
         type: TOAST_TYPE.WARNING,
         message: t('Failed to add camera source.'),

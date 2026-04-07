@@ -1,19 +1,19 @@
 <template>
   <div class="video-tab">
     <div v-if="videoSettingProps?.supportSwitchCamera" class="item-setting">
-      <span class="title">{{ t('Camera') }}</span>
+      <span class="title">{{ t('VideoSetting.Camera') }}</span>
       <camera-select />
     </div>
     <div v-if="videoSettingProps?.supportVideoPreview" class="item-setting">
-      <span class="title">{{ t('Preview') }}</span>
+      <span class="title">{{ t('VideoSetting.Preview') }}</span>
       <video-preview class="video-preview" />
     </div>
     <div v-if="videoSettingProps?.supportSwitchResolution" class="item-setting">
-      <span class="title">{{ t('Resolution') }}</span>
+      <span class="title">{{ t('VideoSetting.Resolution') }}</span>
       <video-profile />
     </div>
     <div v-if="videoSettingProps?.supportSwitchMirror" class="mirror-container">
-      <span>{{ t('Mirror') }}</span>
+      <span>{{ t('VideoSetting.Mirror') }}</span>
       <TUISwitch v-model="isLocalMirror" />
     </div>
   </div>
@@ -21,8 +21,7 @@
 
 <script setup lang="ts">
 import { watch, inject, ref } from 'vue';
-import { TUISwitch } from '@tencentcloud/uikit-base-component-vue3';
-import { useI18n } from '../../locales';
+import { TUISwitch, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useDeviceState } from '../../states/DeviceState';
 import { MirrorType } from '../../types';
 import CameraSelect from './CameraSelect.vue';
@@ -30,7 +29,7 @@ import VideoPreview from './VideoPreview.vue';
 import VideoProfile from './VideoProfile.vue';
 import type { VideoSettingProps } from '../../types';
 
-const { t } = useI18n();
+const { t } = useUIKit();
 const { switchMirror } = useDeviceState();
 
 const isLocalMirror = ref(true);

@@ -1,7 +1,6 @@
 import { ref, computed } from 'vue';
 import { TUIRole } from '@tencentcloud/tuiroom-engine-electron';
-import { useI18n } from '../../../locales';
-import { TUIToast, TOAST_TYPE } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIToast, TOAST_TYPE, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { MESSAGE_DURATION } from '../../../constants/message';
 // import { roomService } from '../../../../services';
 import useUserState from '../../../states/UserState/index';
@@ -9,7 +8,7 @@ import useRoomActions from '../../../hooks/useRoomActions';
 import { UserInfo } from '../../../types';
 
 export default function useIndex() {
-  const { t } = useI18n();
+  const { t } = useUIKit();
 
   const { localUser, userList } = useUserState();
   const isGeneralUser = computed(
@@ -37,7 +36,7 @@ export default function useIndex() {
     // roomService.conferenceInvitationManager.inviteUsers({ userIdList });
     TUIToast({
       type: TOAST_TYPE.SUCCESS,
-      message: t('Invitation sent, waiting for members to join.'),
+      message: t('ParticipantList.InviteSuccess'),
     });
   };
 

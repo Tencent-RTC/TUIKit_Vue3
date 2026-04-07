@@ -5,7 +5,7 @@
       <span
         v-if="!isCameraTesting && !isCameraTestLoading"
         class="off-camera-info"
-      >{{ t('Off Camera') }}
+      >{{ t('VideoSetting.OffCamera') }}
       </span>
       <IconLoading
         v-if="isCameraTestLoading"
@@ -18,11 +18,10 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, onBeforeMount } from 'vue';
-import { IconLoading } from '@tencentcloud/uikit-base-component-vue3';
-import { useI18n } from '../../locales';
+import { IconLoading, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useDeviceState } from '../../states/DeviceState';
 
-const { t } = useI18n();
+const { t } = useUIKit();
 const { isCameraTesting, isCameraTestLoading, startCameraDeviceTest, stopCameraDeviceTest } = useDeviceState();
 const previewId = ref<string>('');
 

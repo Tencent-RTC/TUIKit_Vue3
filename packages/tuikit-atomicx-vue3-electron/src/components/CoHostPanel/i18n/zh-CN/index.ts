@@ -1,6 +1,7 @@
 export const resource = {
   'Host Battle': '主播 PK',
   'Host Connection': '主播连线',
+  'CoHost': '连主播',
   'No application for co-host': '暂无连主播申请',
   'Current seat': '当前麦位',
   'Seat is empty': '麦位为空',
@@ -30,6 +31,7 @@ export const resource = {
   'Are you sure you want to exit the connection': '确定要退出连线吗？',
   'Layout Template': '布局模板',
   'Dynamic Grid Layout': '动态网格布局',
+  'Dynamic Grid9 Layout': '动态宫格布局',
   'Dynamic 1v6 Layout': '动态1v6布局',
   // Toast messages with specific error codes
   'Send co-host request failed, Room not exist': '发起连线失败，对方主播房间不存在',

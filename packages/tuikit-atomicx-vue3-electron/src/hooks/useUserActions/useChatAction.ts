@@ -1,12 +1,11 @@
 import { computed, reactive, markRaw } from 'vue';
-import { TUIToast, TOAST_TYPE, IconChatForbidden } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIToast, TOAST_TYPE, IconChatForbidden, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 // import { MESSAGE_DURATION } from '../../../../constants/message';
 import useRoomEngine from '../useRoomEngine';
-import { useI18n } from '../../locales';
 import { UserInfo, UserAction, ActionType } from '../../types';
 
 const roomEngine = useRoomEngine();
-const { t } = useI18n();
+const { t } = useUIKit();
 export default function useChatAction(
   userInfo: UserInfo
 ): ActionType<UserAction> {
@@ -20,7 +19,7 @@ export default function useChatAction(
     } catch (error) {
       TUIToast({
         type: TOAST_TYPE.ERROR,
-        message: t('Failed to disable chat'),
+        message: t('ParticipantList.DisableChatFailed'),
         // duration: MESSAGE_DURATION.NORMAL,
       });
     }
@@ -30,7 +29,7 @@ export default function useChatAction(
     key: UserAction.ChatAction,
     icon: markRaw(IconChatForbidden),
     label: computed(() =>
-      userInfo.isMessageDisabled ? t('Enable chat') : t('Disable chat')
+      userInfo.isMessageDisabled ? t('ParticipantList.EnableChat') : t('ParticipantList.DisableChat')
     ),
     handler: disableUserChat,
   });
