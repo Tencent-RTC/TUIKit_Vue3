@@ -1,0 +1,26 @@
+{
+  "name": "showroom-chat-medical",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.4.31",
+    "@tencentcloud/chat-uikit-vue3": "^5.5.0",
+    "@tencentcloud/uikit-base-component-vue3": "^1.4.0",
+    "@trtc/calls-uikit-vue": "^4.4.0",
+    "lucide-vue-next": "^1.0.0",
+    "tdesign-vue-next": "^1.18.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.5",
+    "sass": "^1.77.8",
+    "typescript": "^5.2.2",
+    "vite": "^5.3.4",
+    "vue-tsc": "^2.0.24"
+  }
+}
