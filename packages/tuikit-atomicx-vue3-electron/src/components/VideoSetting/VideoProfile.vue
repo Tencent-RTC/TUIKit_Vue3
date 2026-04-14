@@ -18,24 +18,23 @@
 <script setup lang="ts">
 import type { ComputedRef } from 'vue';
 import { watch, computed } from 'vue';
-import { TUISelect, TUIOption } from '@tencentcloud/uikit-base-component-vue3';
-import { useI18n } from '../../locales';
+import { TUISelect, TUIOption, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useDeviceState } from '../../states/DeviceState';
 import { VideoQuality } from '../../types';
 
-const { t } = useI18n();
+const { t } = useUIKit();
 
 const videoQualityList: ComputedRef<
   { label: string; value: VideoQuality }[]
 > = computed(() => [
-  { label: t('Low Definition'), value: VideoQuality.Quality360P },
+  { label: t('VideoSetting.LowDefinition'), value: VideoQuality.Quality360P },
   {
-    label: t('Standard Definition'),
+    label: t('VideoSetting.StandardDefinition'),
     value: VideoQuality.Quality540P,
   },
-  { label: t('High Definition'), value: VideoQuality.Quality720P },
+  { label: t('VideoSetting.HighDefinition'), value: VideoQuality.Quality720P },
   {
-    label: t('Super Definition'),
+    label: t('VideoSetting.SuperDefinition'),
     value: VideoQuality.Quality1080P,
   },
 ]);

@@ -50,8 +50,10 @@ export const resource = {
   'This camera has already been added to the materials list': '该摄像头已在素材列表中，无需重复添加',
   'This screen has already been added to the materials list': '该屏幕分享已在素材列表中，无需重复添加',
   'Failed to add image': '添加图片失败',
+  'Failed to load image': '图片加载失败',
   'Failed to add screen or window source': '添加屏幕或窗口失败',
   'Failed to add camera source.': '添加摄像头失败',
   'Failed to update media source': '更新媒体源失败',
   'Failed to update media source. The new media source ID already exited.': '更新媒体源失败，新修改的媒体源 ID 已存在',
+  'Window': '窗口',
 };

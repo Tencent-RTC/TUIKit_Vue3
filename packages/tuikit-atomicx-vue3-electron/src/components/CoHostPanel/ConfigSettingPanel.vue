@@ -2,6 +2,8 @@
   <TUIDialog
     v-model:visible="dialogVisible"
     :title="t('Anchor battle settings')"
+    :confirmText="t('Confirm')"
+    :cancelText="t('Cancel')"
     :custom-classes="['co-host-dialog']"
     @cancel="cancel"
     @confirm="confirm"

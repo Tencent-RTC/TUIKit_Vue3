@@ -1,7 +1,7 @@
 <template>
   <tui-dialog
     v-model="isShowDialog"
-    :title="t('change name')"
+    :title="t('ParticipantList.ChangeName')"
     :modal="true"
     width="480px"
     :before-close="handleCancel"
@@ -13,7 +13,7 @@
         :model-value="inputUserName"
         @input="inputUserName = $event"
         class="dialog-input"
-        :placeholder="t('Please input user name')"
+        :placeholder="t('ParticipantList.InputUserName')"
       />
     </div>
     <template #footer>
@@ -23,10 +23,10 @@
         @click="handleConfirm"
         :disabled="isConfirmButtonDisable"
       >
-        {{ t('Confirm') }}
+        {{ t('ParticipantList.Confirm') }}
       </TUIButton>
       <TUIButton style="min-width: 88px" @click="handleCancel">
-        {{ t('Cancel') }}
+        {{ t('ParticipantList.Cancel') }}
       </TUIButton>
     </template>
   </tui-dialog>
@@ -36,8 +36,7 @@
 import { ref, defineProps, computed } from 'vue';
 import TuiDialog from '../../../baseComp/Dialog';
 import TuiInput from '../../../baseComp/Input';
-import { TUIButton } from '@tencentcloud/uikit-base-component-vue3';
-import { useI18n } from '../../../locales';
+import { TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { UserInfo } from '../../../types';
 
 interface Props {
@@ -46,7 +45,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { t } = useI18n();
+const { t } = useUIKit();
 
 const inputUserName = ref(props.userInfo.nameCard);
 const isShowDialog = ref(true);

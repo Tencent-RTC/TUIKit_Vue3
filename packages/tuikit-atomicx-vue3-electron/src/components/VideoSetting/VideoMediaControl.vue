@@ -4,7 +4,7 @@
     class="video-control-container"
   >
     <icon-button
-      :title="t('Camera')"
+      :title="t('VideoSetting.Camera')"
       :has-more="
         videoSettingProps?.displayMode === MediaSettingDisplayMode.IconWithPanel
       "
@@ -35,12 +35,9 @@
 import type { Ref } from 'vue';
 import { ref, defineEmits, inject } from 'vue';
 import {
-  IconCameraOn,
-  IconCameraOff,
-} from '@tencentcloud/uikit-base-component-vue3';
+  IconCameraOn, IconCameraOff, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import IconButton from '../../baseComp/IconButton.vue';
 import vClickOutside from '../../directives/vClickOutside';
-import { useI18n } from '../../locales';
 import { useDeviceState } from '../../states/DeviceState';
 import { useRoomParticipantState } from '../../states/RoomParticipantState';
 import { useRoomState } from '../../states/RoomState';
@@ -59,7 +56,7 @@ const { cameraStatus, cameraLastError, isCameraTesting, startCameraTest, stopCam
 const { currentRoom } = useRoomState();
 const { localParticipant } = useRoomParticipantState();
 
-const { t } = useI18n();
+const { t } = useUIKit();
 const showVideoSettingTab: Ref<boolean> = ref(false);
 
 async function handleClickIcon() {

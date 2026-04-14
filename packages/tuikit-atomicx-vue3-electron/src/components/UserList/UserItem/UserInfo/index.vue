@@ -41,24 +41,15 @@
 import { computed, defineProps, withDefaults } from 'vue';
 import { TUIRole } from '@tencentcloud/tuiroom-engine-electron';
 import {
-  IconVideoOpen,
-  IconVideoClose,
-  IconAudioOpen,
-  IconAudioClose,
-  IconScreenOpen,
-  IconApplyActive,
-  IconUser,
-} from '@tencentcloud/uikit-base-component-vue3';
+  IconVideoOpen, IconVideoClose, IconAudioOpen, IconAudioClose, IconScreenOpen, IconApplyActive, IconUser, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import Avatar from '../../../../baseComp/Avatar.vue';
-import { useI18n } from '../../../../locales';
-
 import { useRoomState } from '../../../../states/RoomState';
 import useUserState from '../../../../states/UserState/index';
 import { SeatStatus, DeviceStatus } from '../../../../types';
 import { isMobile } from '../../../../utils/environment';
 import type { UserInfo } from '../../../../types';
 
-const { t } = useI18n();
+const { t } = useUIKit();
 
 const { localUser, getDisplayName } = useUserState();
 const { currentRoom } = useRoomState();
@@ -83,19 +74,19 @@ const isTargetUserAdmin = computed(
 
 const extraInfo = computed(() => {
   if (isMaster.value && isMe.value) {
-    return `${t('Host')}, ${t('Me')}`;
+    return `${t('ParticipantList.Host')}, ${t('ParticipantList.Me')}`;
   }
   if (isTargetUserRoomOwner.value) {
-    return t('Host');
+    return t('ParticipantList.Host');
   }
   if (isTargetUserAdmin.value && isMe.value) {
-    return `${t('Admin')}, ${t('Me')}`;
+    return `${t('ParticipantList.Admin')}, ${t('ParticipantList.Me')}`;
   }
   if (isTargetUserAdmin.value) {
-    return t('Admin');
+    return t('ParticipantList.Admin');
   }
   if (isMe.value) {
-    return t('Me');
+    return t('ParticipantList.Me');
   }
   return '';
 });

@@ -13,4 +13,7 @@ export const resource = {
   'FreeBeauty.Ruddy': 'Ruddy',
   'FreeBeauty.Sure you want to reset the beauty effect?': 'Sure you want to reset the beauty effect?',
   'FreeBeauty.All beauty parameters will revert to default after reset': 'All beauty parameters will revert to default after reset',
+  'FreeBeauty.ApplyFailed': 'Failed to apply beauty settings',
+  'FreeBeauty.CameraTestFailed': 'Camera test failed',
+  'FreeBeauty.InitializeFailed': 'Failed to initialize beauty',
 };

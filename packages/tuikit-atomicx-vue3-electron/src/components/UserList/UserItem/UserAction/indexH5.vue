@@ -6,7 +6,7 @@
         {{ userInfo.nameCard || userInfo.userName || userInfo.userId }}
       </div>
       <span v-if="isWeChat" v-tap.stop="handleCloseControl" class="tab-cancel">
-        {{ t('Cancel') }}
+        {{ t('ParticipantList.Cancel') }}
       </span>
     </div>
     <div
@@ -24,10 +24,9 @@
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue';
 import Avatar from '../../../../baseComp/Avatar.vue';
-import { TUIIcon } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIIcon, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { isWeChat } from '../../../../utils/environment';
 import vTap from '../../../../directives/vTap';
-import { useI18n } from '../../../../locales';
 import { UserInfo } from '../../../../types';
 import { useUserActions } from '../../../../hooks/useUserActions';
 
@@ -37,7 +36,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { t } = useI18n();
+const { t } = useUIKit();
 
 const emit = defineEmits(['on-close-control']);
 

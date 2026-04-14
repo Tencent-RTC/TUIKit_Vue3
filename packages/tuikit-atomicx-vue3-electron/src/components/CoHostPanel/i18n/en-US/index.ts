@@ -1,5 +1,7 @@
 export const resource = {
   'Host Battle': 'Host Battle',
+  'Host Connection': 'Host Connection',
+  'CoHost': 'Co-host',
   'Current seat': 'Current seat',
   'Seat is empty': 'Seat is empty',
   'Invite more': 'Invite more',
@@ -28,6 +30,7 @@ export const resource = {
   'Are you sure you want to exit the connection': 'Are you sure you want to exit the connection?',
   'Layout Template': 'Layout Template',
   'Dynamic Grid Layout': 'Dynamic Grid Layout',
+  'Dynamic Grid9 Layout': 'Dynamic Grid9 Layout',
   'Dynamic 1v6 Layout': 'Dynamic 1v6 Layout',
   // Toast messages with specific error codes
   'Send co-host request failed, Room not exist': 'Send co-host request failed, Room does not exist',

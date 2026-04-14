@@ -50,8 +50,11 @@ export const resource = {
   'This camera has already been added to the materials list': 'This camera has already been added to the materials list',
   'This screen has already been added to the materials list': 'This screen has already been added to the materials list',
   'Failed to add image': 'Failed to add image',
+  'Failed to load image': 'Failed to load image',
   'Failed to add screen or window source': 'Failed to add screen or window source',
+  'Failed to add camera source.': 'Failed to add camera source.',
   'Failed to add camera source': 'Failed to add camera source',
   'Failed to update media source': 'Failed to update media source',
   'Failed to update media source. The new media source ID already exited.': 'Failed to update media source. The new media source ID already exited.',
+  'Window': 'Window',
 };

@@ -13,7 +13,7 @@
       class="more-container"
     >
       <TUIButton @click="toggleClickMoreBtn">
-        {{ t('More') }}
+        {{ t('ParticipantList.More') }}
         <IconArrowUp
           size="12"
           :class="['more-arrow', showMoreControl ? 'up' : 'down']"
@@ -43,11 +43,7 @@
 <script setup lang="ts">
 import { ref, watch, computed, nextTick, defineProps } from 'vue';
 import {
-  TUIButton,
-  IconArrowUp,
-  TUIIcon,
-} from '@tencentcloud/uikit-base-component-vue3';
-import { useI18n } from '../../../../locales';
+  TUIButton, IconArrowUp, TUIIcon, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { UserInfo } from '../../../../types';
 import useUserState from '../../../../states/UserState/index';
 import { useUserActions } from '../../../../hooks/useUserActions';
@@ -59,7 +55,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { t } = useI18n();
+const { t } = useUIKit();
 
 const isMe = computed(
   () => props.userInfo.userId === localUser.value?.userId

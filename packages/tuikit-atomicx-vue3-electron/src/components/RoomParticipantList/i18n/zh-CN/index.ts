@@ -52,6 +52,7 @@ export const resource = {
     Confirm: '确认',
     Cancel: '取消',
     Note: '通知',
+    Operation: '操作',
     ConfirmTransfer: '确认转交',
 
     InviteMicSent: '已向{{ name }}发出开启麦克风邀请',

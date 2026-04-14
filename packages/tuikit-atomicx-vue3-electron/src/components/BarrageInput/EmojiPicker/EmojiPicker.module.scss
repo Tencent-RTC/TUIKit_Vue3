@@ -9,23 +9,44 @@
     gap: 8px;
     width: var(--emoji-panel-width, 310px);
     max-width: calc(100vw - 24px);
-    max-height: 300px;
+    max-height: var(--emoji-panel-max-height, 300px);
     overflow-y: auto;
     overflow-x: hidden;
     border-radius: 16px;
-    padding: 16px;
+    padding: 12px;
     margin-bottom: 10px;
     background-color: var(--dropdown-color-default);
     box-shadow: 0 0 10px 0 var(--shadow-color);
     user-select: none;
     scrollbar-width: none; // Firefox
     -ms-overflow-style: none; // IE/Edge Legacy
-    justify-content: space-around;
+    justify-content: flex-start;
 
     &::-webkit-scrollbar {
       width: 0;
       height: 0;
       display: none;
+    }
+
+    // Show vertical scrollbar when content overflows in inset mode.
+    &--scrollbar-visible {
+      scrollbar-width: thin; // Firefox
+      -ms-overflow-style: auto; // IE/Edge Legacy
+
+      &::-webkit-scrollbar {
+        width: 6px;
+        height: 0;
+        display: block;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
     }
 
     &-item {

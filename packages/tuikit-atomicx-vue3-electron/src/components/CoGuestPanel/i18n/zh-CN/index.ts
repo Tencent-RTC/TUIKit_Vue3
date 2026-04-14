@@ -18,4 +18,5 @@ export const resource = {
   'there is no available seat to take': '暂无可用麦位',
   'Accept co-guest request failed': '接受连麦请求失败',
   'Reject co-guest request failed': '拒绝连麦请求失败',
+  'Disconnect co-guest failed': '断开连麦失败',
 };

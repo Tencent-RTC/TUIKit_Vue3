@@ -1,6 +1,7 @@
 export const resource = {
   'LiveView.NoVideo': 'No video',
-  'LiveView.WaitingForConnection': 'Waiting for connection',
+  'LiveView.WaitingForConnection': 'Awaiting Link',
+  'LiveView.ApplyForConnection': 'Apply to Link',
   'LiveView.Play': 'Play',
   'LiveView.Pause': 'Pause',
   'LiveView.PictureInPicture': 'Picture in Picture',

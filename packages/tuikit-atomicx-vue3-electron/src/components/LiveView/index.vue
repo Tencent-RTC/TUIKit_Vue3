@@ -36,6 +36,7 @@
             v-if="!$slots.streamViewUI"
             :streamViewInfoList="needPlayStreamViewInfo"
             :userInfo="item.userInfo"
+            :seatIndex="index + 1"
           />
         </div>
       </div>

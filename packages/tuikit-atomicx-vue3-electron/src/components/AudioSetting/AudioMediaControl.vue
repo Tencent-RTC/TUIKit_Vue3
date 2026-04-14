@@ -4,7 +4,7 @@
     class="audio-control-container"
   >
     <icon-button
-      :title="t('Mic')"
+      :title="t('AudioSetting.Mic')"
       :has-more="
         audioSettingProps?.displayMode === MediaSettingDisplayMode.IconWithPanel
       "
@@ -31,13 +31,13 @@ import { ref, defineEmits, computed, inject } from 'vue';
 import AudioIcon from '../../baseComp/AudioIcon.vue';
 import IconButton from '../../baseComp/IconButton.vue';
 import vClickOutside from '../../directives/vClickOutside';
-import { useI18n } from '../../locales';
 import { useDeviceState } from '../../states/DeviceState';
 import { useRoomState } from '../../states/RoomState';
 import { DeviceStatus, DeviceError, MediaSettingDisplayMode } from '../../types';
 import AudioSettingTab from './AudioSettingTab.vue';
 import type { AudioSettingProps } from '../../types';
 
+import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 const audioSettingProps: AudioSettingProps | undefined
   = inject('audioSettingProps');
 
@@ -57,7 +57,7 @@ const {
 const emits = defineEmits(['click-icon']);
 
 const showAudioSettingTab: Ref<boolean> = ref(false);
-const { t } = useI18n();
+const { t } = useUIKit();
 
 const isMuted = computed(() => {
   if (!currentRoom?.value) {

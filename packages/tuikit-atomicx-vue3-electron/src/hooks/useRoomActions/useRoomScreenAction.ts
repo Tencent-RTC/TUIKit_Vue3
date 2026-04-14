@@ -1,8 +1,7 @@
 import { computed, reactive } from 'vue';
 import { TUIRole, TUIMediaDevice } from '@tencentcloud/tuiroom-engine-electron';
-import { IconAllMembersShareScreen, IconHostShareScreen } from '@tencentcloud/uikit-base-component-vue3';
+import { IconAllMembersShareScreen, IconHostShareScreen, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import TUIMessageBox from '../../baseComp/MessageBox';
-import { useI18n } from '../../locales';
 import { useRoomState } from '../../states/RoomState';
 import useUserState from '../../states/UserState/index';
 import useRoomEngine from '../useRoomEngine';
@@ -11,7 +10,7 @@ const { userWithScreenOn } = useUserState();
 const { currentRoom } = useRoomState();
 
 export default function useRoomScreenAction(): ActionType<RoomAction> {
-  const { t } = useI18n();
+  const { t } = useUIKit();
   const roomEngine = useRoomEngine();
   let stateForScreenShare = false;
   async function toggleAllScreenShare() {
@@ -29,13 +28,13 @@ export default function useRoomScreenAction(): ActionType<RoomAction> {
     }
     TUIMessageBox({
       title: t(
-        'Is it turned on that only the host/admin can share the screen?',
+        'ParticipantList.ConfirmHostAdminOnlyShare',
       ),
       message: t(
-        'Other member is sharing the screen is now, the member\'s sharing will be terminated after you turning on',
+        'ParticipantList.TerminateOtherShare',
       ),
-      confirmButtonText: t('Confirm'),
-      cancelButtonText: t('Cancel'),
+      confirmButtonText: t('ParticipantList.Confirm'),
+      cancelButtonText: t('ParticipantList.Cancel'),
       callback: async (action) => {
         if (action === 'confirm') {
           await roomEngine.instance?.closeRemoteDeviceByAdmin({
@@ -52,8 +51,8 @@ export default function useRoomScreenAction(): ActionType<RoomAction> {
     key: RoomAction.ScreenAction,
     label: computed(() =>
       currentRoom.value?.isAllScreenShareDisabled
-        ? t('All members can share screen')
-        : t('Screen sharing for host/admin only'),
+        ? t('ParticipantList.AllCanShare')
+        : t('ParticipantList.HostAdminOnlyShare'),
     ),
     icon: computed(() =>
       currentRoom.value?.isAllScreenShareDisabled

@@ -34,6 +34,9 @@ const createUIKitModal = (options: UIKitModalOptions): Promise<{ action: string 
     title: options.title,
     content: options.content,
     type: options.type,
+    confirmText: options.confirmText,
+    cancelText: options.cancelText,
+    showCancelButton: options.showCancelButton,
     onConfirm: options.onConfirm,
     onCancel: options.onCancel,
   });
