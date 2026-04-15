@@ -72,6 +72,22 @@ const CallMessage = {
   no_answer_timeout: '超时无应答',
 };
 
+const RoomMessage = {
+  meeting_in_progress: '房间进行中',
+  meeting: '房间',
+  quick_conference: '的快速房间',
+  initiating: '正在发起',
+  x_people_have_joined: '{{number}} 人已进入房间',
+  waiting_for_members_to_join_the_meeting: '等待成员进入房间',
+  x_people_are_in_the_meeting: '{{number}} 人在房间中',
+  already_joined: '已进入',
+  cannot_enter_while_in_other_meeting: '您当前已经在其他房间中，请先离开当前房间',
+  enter_the_meeting: '进入房间',
+  ending_meeting: '正在结束房间',
+  the_meeting_has_ended: '房间已结束',
+  room_does_not_exist_or_has_ended: '房间不存在或已结束',
+};
+
 const Emoji = {
   '[TUIEmoji_Smile]': '[微笑]',
   '[TUIEmoji_Expect]': '[期待]',
@@ -140,5 +156,6 @@ const Emoji = {
 export {
   MessageList,
   CallMessage,
+  RoomMessage,
   Emoji,
-}
+};
