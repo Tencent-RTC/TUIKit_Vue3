@@ -116,8 +116,14 @@ export function useAudienceAction({ targetAudience }: { targetAudience: RoomUser
 
   const controlList = computed(() => {
     const controlListResult: { key: string; label: string; handler: () => void }[] = [];
-    // 设为嘉宾：是大房间，我是房主/我是管理员，目标用户不是管理员
-    if (isWebinar.value && (isLocalOwner.value || (isLocalAdmin.value && !isLocalOwner.value))) {
+    // 设为嘉宾：是大房间，我是房主，或我是管理员且目标用户不是其他管理员
+    if (
+      isWebinar.value
+      && (
+        isLocalOwner.value
+        || ((isLocalAdmin.value && !isLocalOwner.value) && (!targetIsAdmin.value || targetIsMe.value))
+      )
+    ) {
       controlListResult.push(promoteToParticipantAction);
     }
     // 设置管理员：我是房主，目标用户不是管理员并且不是我自己

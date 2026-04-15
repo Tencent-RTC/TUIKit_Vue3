@@ -29,16 +29,16 @@ export const resource = {
   'ParticipantList.KickOut': 'Kick out',
   'ParticipantList.InputUserName': 'Please enter user name',
 
-  'ParticipantList.MuteAll': 'Mute all',
-  'ParticipantList.UnmuteAll': 'Unmute all',
+  'ParticipantList.MuteAll': 'Mute All',
+  'ParticipantList.UnmuteAll': 'Unmute All',
   'ParticipantList.MuteAllTip': 'Current and new members will be muted',
   'ParticipantList.UnmuteAllDesc': 'This will allow participants to unmute themselves.',
   'ParticipantList.MicDisabledTip': 'Participants will not be able to unmute.',
   'ParticipantList.AudioDisabled': 'All audios muted',
   'ParticipantList.AudioEnabled': 'All audios unmuted',
 
-  'ParticipantList.DisableAllVideo': 'Disable videos',
-  'ParticipantList.EnableAllVideo': 'Enable videos',
+  'ParticipantList.DisableAllVideo': 'Disable Videos',
+  'ParticipantList.EnableAllVideo': 'Enable Videos',
   'ParticipantList.DisableAllVideoTip': 'Camera access will be disabled for all participants.',
   'ParticipantList.EnableAllVideoDesc': 'This will allow participants to start their video.',
   'ParticipantList.CameraDisabledTip': 'Participants will not be able to start their video.',
@@ -46,7 +46,7 @@ export const resource = {
   'ParticipantList.VideoEnabled': 'All videos enabled',
 
   'ParticipantList.AllCanShare': 'All members can share screen',
-  'ParticipantList.HostAdminOnlyShare': 'Screen sharing for host/admin only',
+  'ParticipantList.HostAdminOnlyShare': 'Only host/admins can share screen',
   'ParticipantList.ConfirmHostAdminOnlyShare': 'Allow only Host and Admins to share?',
   'ParticipantList.TerminateOtherShare': 'Enabling this will stop any ongoing sharing by general participant.',
 

@@ -10,16 +10,19 @@ import { EmojiPicker as EmojiPickerComponent } from './EmojiPicker';
 import { resources } from './i18n';
 import MessageInputComponent from './MessageInput.vue';
 import MessageInputH5Component from './MessageInputH5.vue';
+import { QuickConferencePicker as QuickConferencePickerComponent } from './QuickConferencePicker';
 import { TextEditor as TextEditorComponent } from './TextEditor';
 import { VideoCallPicker as VideoCallPickerComponent } from './VideoCallPicker';
 
 addI18n('en-US', { translation: {
   MessageInput: resources['en-US'].MessageInput,
   OfflinePush: resources['en-US'].OfflinePush,
+  ConferencePicker: resources['en-US'].ConferencePicker,
 } });
 addI18n('zh-CN', { translation: {
   MessageInput: resources['zh-CN'].MessageInput,
   OfflinePush: resources['zh-CN'].OfflinePush,
+  ConferencePicker: resources['zh-CN'].ConferencePicker,
 } });
 
 const MessageInput = MessageInputComponent;
@@ -32,6 +35,7 @@ const TextEditor = TextEditorComponent;
 const AttachmentPicker = AttachmentPickerComponent;
 const AudioCallPicker = AudioCallPickerComponent;
 const VideoCallPicker = VideoCallPickerComponent;
+const QuickConferencePicker = QuickConferencePickerComponent;
 
 export {
   AttachmentPicker,
@@ -44,4 +48,5 @@ export {
   MessageInputH5,
   AudioCallPicker,
   VideoCallPicker,
+  QuickConferencePicker,
 };

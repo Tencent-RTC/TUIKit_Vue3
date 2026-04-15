@@ -73,6 +73,22 @@ const CallMessage = {
   no_answer_timeout: 'Call not answered (timeout)',
 };
 
+const RoomMessage = {
+  meeting_in_progress: 'Room in progress',
+  meeting: 'Room',
+  quick_conference: ' \'s Quick Room',
+  initiating: 'Initiating',
+  x_people_have_joined: '{{number}} people have entered the room',
+  waiting_for_members_to_join_the_meeting: 'Waiting members',
+  x_people_are_in_the_meeting: '{{number}} people are in the room',
+  already_joined: 'Already in room',
+  cannot_enter_while_in_other_meeting: 'You are already in another room. Please leave it first',
+  enter_the_meeting: 'Enter',
+  ending_meeting: 'Ending room',
+  the_meeting_has_ended: 'The room has ended',
+  room_does_not_exist_or_has_ended: 'The room does not exist or has ended',
+};
+
 const Emoji = {
   '[TUIEmoji_Smile]': '[Smile]',
   '[TUIEmoji_Expect]': '[Expect]',
@@ -141,5 +157,6 @@ const Emoji = {
 export {
   MessageList,
   CallMessage,
+  RoomMessage,
   Emoji,
 };

@@ -29,6 +29,7 @@
       <div
         v-if="needPlayStreamViewInfo.length > 0 && !isPictureInPicture"
         class="live-core-ui"
+        :style="{ pointerEvents: isAnchor ? 'none' : 'auto' }"
       >
         <div
           v-for="(item, index) in needPlayStreamViewInfo"

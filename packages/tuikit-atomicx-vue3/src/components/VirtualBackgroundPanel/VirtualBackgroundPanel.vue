@@ -197,6 +197,9 @@ async function initializeVirtualBackground() {
     selectedBackground.value = resolveInitialSelection();
     const config = getVirtualBackgroundConfig(selectedBackground.value);
     await setVirtualBackground(config);
+    // eslint-disable-next-line no-promise-executor-return
+    await new Promise(resolve => setTimeout(resolve, 3000)); // todo sdk 修复加载逻辑后移除此处
+
     isInitialized.value = true;
   } catch (error) {
     console.error('Failed to initialize virtual background:', error);
@@ -269,8 +272,8 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  setVirtualBackground(virtualBackgroundConfig.value || { enable: false });
   stopCameraTest();
-
   unsubscribeEvent(
     VirtualBackgroundEvent.onAbort,
     handleVirtualBackgroundAbort,

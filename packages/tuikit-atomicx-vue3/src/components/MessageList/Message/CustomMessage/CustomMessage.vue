@@ -2,25 +2,29 @@
 import { computed, useCssModule } from 'vue';
 import { View } from '../../../../baseComp/View';
 import { isCallMessage as _isCallMessage } from '../../../../utils/call';
+import { isRoomMessage } from '../../../../utils/room';
 import { CallMessage } from './CallMessage';
+import { QuickConferenceMessage } from './QuickConferenceMessage';
 import type { MessageModel } from '../../../../types';
 
 interface Props {
   message: MessageModel;
 }
-const props = defineProps<Props>();
-
-const classes = useCssModule();
 
 interface CustomMessageData {
   businessID: string;
   [key: string]: any;
 }
+
 interface CustomMessagePayload {
   data: string;
   description: string;
   extension: string;
 }
+
+const props = defineProps<Props>();
+
+const classes = useCssModule();
 
 const isCallMessage = computed(() => _isCallMessage(props.message));
 
@@ -37,6 +41,7 @@ const textLinkData = computed<{ text?: string; link?: string } | null>(() => {
     return null;
   }
 });
+
 </script>
 
 <template>
@@ -44,6 +49,11 @@ const textLinkData = computed<{ text?: string; link?: string } | null>(() => {
     v-if="isCallMessage"
     :message="props.message"
     :class="classes['custom-message']"
+  />
+
+  <QuickConferenceMessage
+    v-else-if="isRoomMessage(props.message)"
+    :message="props.message"
   />
 
   <!-- text_link -->

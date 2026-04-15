@@ -13,6 +13,7 @@ import { useMessageActionState } from '../states/MessageActionState';
 import { isCallMessage } from '../utils/call';
 import { MessageType } from '../types/engine';
 import type { MessageModel } from '../types/engine';
+import { isRoomMessage } from '../utils/room';
 
 /**
  * Message action interface
@@ -58,13 +59,13 @@ const DEFAULT_ACTIONS: Record<string, MessageAction> = {
   quote: {
     key: 'quote',
     label: 'quote',
-    visible: (message: MessageModel) => !isCallMessage(message),
+    visible: (message: MessageModel) => !isCallMessage(message) && !isRoomMessage(message),
     icon: IconMsgQuote,
   },
   forward: {
     key: 'forward',
     label: 'forward',
-    visible: (message: MessageModel) => !isCallMessage(message),
+    visible: (message: MessageModel) => !isCallMessage(message) && !isRoomMessage(message),
     icon: IconMsgForward,
   },
   delete: {

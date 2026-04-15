@@ -30,7 +30,14 @@ const OfflinePush = {
   custom: '[自定义消息]',
 };
 
+const ConferencePicker = {
+  Quick_Conference: '{{name}}的快速房间',
+  Create_Conference_Failed: '创建房间失败，请重试',
+  Cannot_Start_While_In_Meeting: '您当前已经在房间中，不可再次发起房间',
+};
+
 export default {
   MessageInput,
   OfflinePush,
+  ConferencePicker,
 };
