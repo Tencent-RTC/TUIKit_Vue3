@@ -30,7 +30,14 @@ const OfflinePush = {
   custom: '[Custom Message]',
 };
 
+const ConferencePicker = {
+  Quick_Conference: '{{name}} \'s Quick Room',
+  Create_Conference_Failed: 'Failed to create room, please try again',
+  Cannot_Start_While_In_Meeting: 'You are already in a room and cannot start another one',
+};
+
 export default {
   OfflinePush,
   MessageInput,
+  ConferencePicker,
 };

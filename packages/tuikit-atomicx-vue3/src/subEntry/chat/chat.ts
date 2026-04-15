@@ -25,6 +25,7 @@ export {
   VideoPicker,
   AudioCallPicker,
   VideoCallPicker,
+  QuickConferencePicker,
 } from '../../components/MessageInput';
 export {
   MessageList,
