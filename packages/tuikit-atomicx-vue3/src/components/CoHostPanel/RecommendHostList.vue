@@ -55,13 +55,11 @@ import { IconRefresh, useUIKit, TUIToast, TOAST_TYPE } from '@tencentcloud/uikit
 import { TUIErrorCode } from '@tencentcloud/tuiroom-engine-js';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useCoHostState } from '../../states/CoHostState';
-import { useLiveListState } from '../../states/LiveListState';
 import { Avatar } from '../Avatar';
 import { CoHostStatus } from '../../types';
 
 const { t } = useUIKit();
-const { liveListCursor, fetchLiveList } = useLiveListState();
-const { coHostStatus, invitees, candidates } = useCoHostState();
+const { coHostStatus, invitees, candidates, candidatesCursor, getCoHostCandidates } = useCoHostState();
 
 const recommendHostListContentRef = ref<HTMLElement | null>(null);
 const loadMoreRef = ref<HTMLElement | null>(null);
@@ -69,7 +67,7 @@ let intersectionObserver: IntersectionObserver | null = null;
 
 const refreshInviteesLoading = ref(false);
 const loadMoreLoading = ref(false);
-const hasMoreLive = computed(() => liveListCursor.value !== '');
+const hasMoreLive = computed(() => candidatesCursor.value !== '');
 async function handleRefreshInvitees() {
   refreshInviteesLoading.value = true;
   if (recommendHostListContentRef.value) {
@@ -77,10 +75,7 @@ async function handleRefreshInvitees() {
   }
   Promise.all([
     new Promise((resolve) => setTimeout(resolve, 500)),
-    fetchLiveList({
-      cursor: '',
-      count: 20,
-    }),
+    getCoHostCandidates(''),
   ])
   .catch(error => {
     if (error.code === TUIErrorCode.ERR_FREQ_LIMIT) {
@@ -101,10 +96,7 @@ onMounted(() => {
       if (item.isIntersecting && !loadMoreLoading.value && hasMoreLive.value) {
         loadMoreLoading.value = true;
         try {
-          await fetchLiveList({
-            cursor: liveListCursor.value,
-            count: 20,
-          });
+          await getCoHostCandidates(candidatesCursor.value);
         } catch (error) {
           console.error('Load more users failed:', error);
         } finally {

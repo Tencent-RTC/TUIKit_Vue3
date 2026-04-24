@@ -17,6 +17,8 @@ export const resource = {
   Resolution: 'Resolution',
   'Update Camera': 'Update Camera',
   'Add Camera': 'Add Camera',
+  'Cancel': 'Cancel',
+  'The camera may be in use by another application. Please select a different camera.': 'The current camera is unavailable. It may be occupied, disabled, or experiencing a driver error.',
 
   // LiveSceneSelect
   'We support you to add rich sources': 'We support you to add rich sources',

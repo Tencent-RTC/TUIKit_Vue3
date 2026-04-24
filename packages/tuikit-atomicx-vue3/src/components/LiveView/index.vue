@@ -6,12 +6,6 @@
     :class="{ 'align-center': isAlignCenter }"
   >
     <div
-      v-if="!$slots.localVideo && !isPlayedVideo"
-      class="live-core-placeholder"
-    >
-      <span class="placeholder-text">{{ t('LiveView.NoVideo') }}</span>
-    </div>
-    <div
       class="live-core-view"
       :style="streamViewStyle"
     >
@@ -24,7 +18,7 @@
         v-if="$slots['center-overlay']"
         class="center-overlay"
       >
-        <slot name="center-overlay" />
+        <slot name="center-overlay" v-bind="{ isLoading }" />
       </div>
       <div
         v-if="needPlayStreamViewInfo.length > 0 && !isPictureInPicture"
@@ -56,6 +50,13 @@
       />
       <LiveCoreDecorate v-if="!isPictureInPicture" :seatListWithRealSize="seatListWithRealSize" />
     </div>
+    <!-- Loading overlay: shown when entering room, placed at container level to avoid 0-size stream view -->
+    <div
+      v-if="isLoading && !$slots['center-overlay']"
+      class="entering-room-loading"
+    >
+      <IconLoading class="entering-room-loading-icon" size="40" />
+    </div>
     <!-- Voice chat room overlay: web does not support voice chat rooms -->
     <div
       v-if="isVoiceChatRoom"
@@ -78,6 +79,15 @@
         </div>
       </div>
     </div>
+    <!-- Autoplay prompt overlay: shown when browser autoplay policy blocks playback -->
+    <div
+      v-if="isAutoPlayFailed && !isAnchor"
+      class="autoplay-prompt-overlay"
+    >
+      <slot name="autoplay-prompt" v-bind="{ resume: handleAutoPlayResume }">
+        <DefaultAutoPlayPrompt :visible="true" @resume="handleAutoPlayResume" />
+      </slot>
+    </div>
     <Teleport
       to="body"
       :disabled="!isMobile || isFullscreen"
@@ -91,19 +101,23 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount, useSlots, Teleport } from 'vue';
 import type { ComputedRef } from 'vue';
-import { useUIKit, IconCall, IconCoffee } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIRoomEvents } from '@tencentcloud/tuiroom-engine-js';
+import { useUIKit, IconCall, IconCoffee, IconLoading } from '@tencentcloud/uikit-base-component-vue3';
+import useRoomEngine from '../../hooks/useRoomEngine';
 import { useCoGuestState } from '../../states/CoGuestState';
 import { useCoHostState } from '../../states/CoHostState';
-import { useDeviceState } from '../../states/DeviceState';
 import { setGiftPlayerView } from '../../states/LiveGiftState';
 import { useLiveListState } from '../../states/LiveListState';
 import { useLiveSeatState } from '../../states/LiveSeatState';
 import { useLoginState } from '../../states/LoginState';
+import { useDeviceState } from '../../states/DeviceState';
 import { CoHostStatus } from '../../types';
 import { isMobile } from '../../utils';
 import { getContentSize } from '../../utils/domOperation';
 import LiveCoreDecorate from './CoreViewDecorate/LiveCoreDecorate.vue';
+import DefaultAutoPlayPrompt from './DefaultAutoPlayPrompt.vue';
 import DefaultStreamViewUI from './DefaultStreamViewUI.vue';
+import { useOverlayState } from './OverlayState';
 import { usePlayerControlState } from './PlayerControl';
 import { LIVE_STREAM_CONTENT_VIEW } from './index';
 import PlayerControl from './PlayerControl/PlayerControl.vue';
@@ -111,20 +125,76 @@ import type { SeatInfo, SeatUserInfo } from '../../types';
 
 const emit = defineEmits(['empty-seat-click']);
 
-const { isFullscreen, isLandscapeStyleMode, isPictureInPicture, exitPictureInPicture, exitFullscreen } = usePlayerControlState();
+defineSlots<{
+  'center-overlay'(props: { isLoading: boolean }): any;
+  'autoplay-prompt'(props: { resume: () => void }): any;
+  'streamViewUI'(props: { userInfo: SeatUserInfo }): any;
+  'localVideo'(props: { style: any }): any;
+}>();
+
+const { isFullscreen, isPlaying, isLandscapeStyleMode, isPictureInPicture, exitPictureInPicture, exitFullscreen } = usePlayerControlState();
 const { t } = useUIKit();
 const { seatList, canvas, startPlayStream, stopPlayStream } = useLiveSeatState();
+const { setCaptureVolume, setOutputVolume } = useDeviceState();
 const { currentLive } = useLiveListState();
 const { coHostStatus } = useCoHostState();
 const { disConnect } = useCoGuestState();
-const { setCaptureVolume, setOutputVolume } = useDeviceState();
 
 const slots = useSlots();
 const SVGA_PLAYER_VIEW = 'svga-player-view';
 const isInStreamMixerComp = computed(() => slots.localVideo);
 
 const { loginUserInfo } = useLoginState();
-const isPlayedVideo = ref(false);
+const { isAnchor, isVoiceChatRoom, isAnchorAway, isLoading, startObserving, stopObserving } = useOverlayState({
+  viewId: LIVE_STREAM_CONTENT_VIEW,
+});
+
+const roomEngine = useRoomEngine();
+const isAutoPlayFailed = ref(false);
+let cachedAutoPlayResume: (() => void) | null = null;
+
+const handleAutoPlayFailed = (callbackInfo: { resume: () => void }) => {
+  if (!isAutoPlayFailed.value) {
+    isAutoPlayFailed.value = true;
+    cachedAutoPlayResume = callbackInfo.resume;
+  }
+};
+
+function handleAutoPlayResume() {
+  if (cachedAutoPlayResume) {
+    cachedAutoPlayResume();
+    cachedAutoPlayResume = null;
+  }
+  isAutoPlayFailed.value = false;
+  isPlaying.value = true;
+}
+
+// Dismiss the autoplay prompt as soon as the user interacts with ANY part
+// of the page. Browsers unlock autoplay after a user gesture (click or
+// touch), so by that point the stream has almost certainly resumed.
+// Keeping the prompt up would be a stale UX.
+// Note: keyboard events don't count as autoplay-unlocking gestures in most
+// browsers, so we only listen for pointer-based gestures (click / touchstart).
+const dismissAutoPlayPromptOnGesture = () => {
+  cachedAutoPlayResume = null;
+  isAutoPlayFailed.value = false;
+  isPlaying.value = true;
+};
+
+// `capture: true` so we observe the gesture even if child handlers call
+// stopPropagation. `once: true` cleans up automatically after first fire.
+const autoPlayGestureOpts: AddEventListenerOptions = { capture: true, once: true };
+
+watch(isAutoPlayFailed, (failed) => {
+  if (failed) {
+    document.addEventListener('click', dismissAutoPlayPromptOnGesture, autoPlayGestureOpts);
+    document.addEventListener('touchstart', dismissAutoPlayPromptOnGesture, autoPlayGestureOpts);
+  } else {
+    document.removeEventListener('click', dismissAutoPlayPromptOnGesture, autoPlayGestureOpts);
+    document.removeEventListener('touchstart', dismissAutoPlayPromptOnGesture, autoPlayGestureOpts);
+  }
+});
+
 const isMounted = ref(false);
 const seatListWithRealSize = ref<Array<{ userInfo: SeatUserInfo; region: any }>>([]);
 // The distance of the horizontal video from the top and bottom edges.
@@ -135,7 +205,10 @@ const audioConnectGap = 5;
 // The height ratio of the audio connect view in portrait container.
 const audioConnectHeightInPortraitContainerRatio = 156 / 1280;
 const isLocalUserOnSeat = computed(() => seatList.value.some(seat => seat.userInfo?.userId === loginUserInfo.value?.userId));
-const isLandscapeVideoAndAudioConnect = computed(() => currentLive.value?.layoutTemplate >= 200 && currentLive.value?.layoutTemplate <= 399);
+const isLandscapeVideoAndAudioConnect = computed(() => {
+  const layoutTemplate = currentLive.value?.layoutTemplate;
+  return layoutTemplate !== undefined && layoutTemplate >= 200 && layoutTemplate <= 399;
+});
 const isAlignCenter = computed(() => {
   if (isLandscapeVideoAndAudioConnect.value && isMobile) {
     return false;
@@ -145,21 +218,27 @@ const isAlignCenter = computed(() => {
   }
   return true;
 });
-const isShowPlayerControl = computed(() => currentLive.value?.liveId && !seatList.value.some(item => item.userInfo?.userId === loginUserInfo.value?.userId));
-const isAnchor = computed(() => loginUserInfo.value?.userId === currentLive.value?.liveOwner.userId);
-// Voice chat rooms use "voice_" prefix in liveId, while live rooms use "live_" prefix
-const isVoiceChatRoom = computed(() => currentLive.value?.liveId?.startsWith('voice_') ?? false);
-// Show anchor-away overlay when seatList is empty, the viewer is not the anchor, and playback has started
-const isAnchorAway = computed(() => isPlayedVideo.value && !isAnchor.value && seatList.value.length === 0 && currentLive.value?.liveId?.startsWith('live_'));
+const isShowPlayerControl = computed(() =>
+  !isLoading.value
+  && !isAnchorAway.value
+  && !isAutoPlayFailed.value
+  && currentLive.value?.liveId
+  && !seatList.value.some(item => item.userInfo?.userId === loginUserInfo.value?.userId),
+);
 
 onMounted(async () => {
   isMounted.value = true;
+  // Listen for browser autoplay policy restriction
+  roomEngine.instance?.on(TUIRoomEvents.onAutoPlayFailed, handleAutoPlayFailed);
+  // Start playing the stream first
   await startPlayStream({ view: LIVE_STREAM_CONTENT_VIEW });
-  isPlayedVideo.value = true;
+  // Set volume for audience
   if (!isAnchor.value) {
     setCaptureVolume(100);
     setOutputVolume(100);
   }
+  // Then start observing for video ready state
+  startObserving();
 });
 
 onBeforeUnmount(async () => {
@@ -167,8 +246,19 @@ onBeforeUnmount(async () => {
     exitPictureInPicture();
   }
   isMounted.value = false;
+  roomEngine.instance?.off(TUIRoomEvents.onAutoPlayFailed, handleAutoPlayFailed);
+  isAutoPlayFailed.value = false;
+  cachedAutoPlayResume = null;
+  // Defensive cleanup: if the component is unmounted while the autoplay
+  // prompt is still showing, the `once: true` listeners would normally be
+  // cleaned up by the `watch(isAutoPlayFailed)` handler above (since we
+  // reset the flag right before this). Still, remove them explicitly in
+  // case the watcher fires after we've detached.
+  document.removeEventListener('click', dismissAutoPlayPromptOnGesture, autoPlayGestureOpts);
+  document.removeEventListener('touchstart', dismissAutoPlayPromptOnGesture, autoPlayGestureOpts);
+  // Clean up observer first, then stop the stream
+  stopObserving();
   await stopPlayStream();
-  isPlayedVideo.value = false;
 });
 
 const isPortraitContainer = ref(true);
@@ -626,7 +716,7 @@ onBeforeUnmount(() => {
       height: 100%;
       z-index: 1;
       position: absolute;
-      pointer-events: auto;
+      pointer-events: none;
       top: 0;
       left: 0;
     }
@@ -639,6 +729,24 @@ onBeforeUnmount(() => {
     height: 50vmin;
     transform: translate(-50%, -50%);
     pointer-events: none;
+  }
+
+  .entering-room-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 10;
+
+    .entering-room-loading-icon {
+      animation: live-loading-rotate 1.5s linear infinite;
+      color: var(--text-color-secondary, rgba(255, 255, 255, 0.55));
+    }
   }
 
   .voice-chat-overlay {
@@ -698,6 +806,24 @@ onBeforeUnmount(() => {
       font-weight: 500;
       line-height: 24px;
     }
+  }
+
+  .autoplay-prompt-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 11;
+  }
+}
+
+@keyframes live-loading-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 </style>

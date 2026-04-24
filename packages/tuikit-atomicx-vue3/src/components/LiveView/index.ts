@@ -13,6 +13,7 @@ addI18n('zh-CN', { translation: zhCNResource });
  * @slots
  * @slot streamViewUI - 自定义流视图 UI，参数为 { userInfo: SeatUserInfo }
  * @slot center-overlay - 中心覆盖层插槽，用于自定义中心区域内容（如暂停蒙层、刷新加载等）
+ * @slot autoplay-prompt - 自动播放受限提示插槽，参数为 { resume: () => void }，点击后调用 resume 恢复播放。不传时使用内置默认提示 UI
  * @slot localVideo - 本地视频流插槽，参数为 { style: object }，用于混流场景下展示本地画面
  *
  * @emits

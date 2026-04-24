@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
+import { MessageType } from '../../../../../types/engine'
 import cs from 'classnames';
 import { useMessageListState } from '../../../../../states/MessageListState';
 import { MessageActionDropdown } from '../MessageActionDropdown';
@@ -15,8 +15,9 @@ interface MessageBubbleProps {
 }
 
 const MEDIA_MESSAGE_TYPE = [
-  TUIChatEngine.TYPES.MSG_IMAGE,
-  TUIChatEngine.TYPES.MSG_VIDEO,
+  MessageType.IMAGE,
+  MessageType.VIDEO,
+  MessageType.CUSTOM,
 ];
 
 const props = withDefaults(defineProps<MessageBubbleProps>(), {
@@ -36,8 +37,6 @@ const isHighlighted = computed(() => highlightMessageIDSet.value.has(props.messa
   <div
     class="message-bubble"
     :class="cs({
-      [`bubble-${message.flow}`]: message.flow && true,
-      'media-bubble': MEDIA_MESSAGE_TYPE.includes(message.type),
       'highlight--normal': isHighlighted,
       'highlight--media': isHighlighted && isMediaMessage
     })"
@@ -59,13 +58,7 @@ const isHighlighted = computed(() => highlightMessageIDSet.value.has(props.messa
 </template>
 
 <style lang="scss" scoped>
-
-$message-bubble-border-radius: 8px;
-
 .message-bubble {
-  border-radius: $message-bubble-border-radius;
-  overflow: hidden;
-
   // Only disable text selection on touch devices (H5), allow copy on PC
   @media (pointer: coarse) {
     -webkit-touch-callout: none;
@@ -73,26 +66,6 @@ $message-bubble-border-radius: 8px;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
   }
-
-  &.all-round-radius {
-    border-radius: $message-bubble-border-radius;
-  }
-}
-
-.bubble-in {
-  background-color: var(--bg-color-bubble-reciprocal);
-  border-top-left-radius: 0px;
-}
-
-.bubble-out {
-  background-color: var(--bg-color-bubble-own);
-  border-top-right-radius: 0px;
-}
-
-.message-bubble.media-bubble {
-  background: none;
-  border-radius: 20px;
-  border: 1.5px solid var(--bg-color-bubble-own);
 }
 
 .has-risk-content {

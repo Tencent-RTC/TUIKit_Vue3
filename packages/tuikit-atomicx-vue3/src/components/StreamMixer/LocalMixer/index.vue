@@ -44,7 +44,9 @@ const { currentLive } = useLiveListState();
 
 const mixControlRef = ref<InstanceType<typeof MixerControl> | null>(null);
 const { publishVideoQuality, activeMediaSource, enableLocalVideoMixer, mediaSourceList, isVideoMixerEnabled } = useVideoMixerState();
-enableLocalVideoMixer();
+enableLocalVideoMixer().catch((err: unknown) => {
+  console.error('[LocalMixer] enableLocalVideoMixer failed:', err);
+});
 
 const currentLiveOrientation = computed(() => {
   if (currentLive.value

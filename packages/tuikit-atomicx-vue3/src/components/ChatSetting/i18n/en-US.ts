@@ -16,6 +16,10 @@ const ChatSetting = {
   you_are_not_friend: 'You are not friend',
   pin_conversation: 'Pin Conversation',
   mute_conversation: 'Mute Conversation',
+  clear_history_message: 'Clear Chat History',
+  confirm_clear_history: 'Are you sure you want to clear chat history?',
+  clear_history_success: 'Chat history cleared successfully',
+  clear_history_failed: 'Failed to clear chat history',
   copied: 'Copied',
 
   // GroupChatSetting

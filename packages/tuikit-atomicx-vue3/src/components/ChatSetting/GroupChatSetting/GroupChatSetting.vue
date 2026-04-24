@@ -33,6 +33,7 @@ const {
   groupType,
   allMembers,
   memberCount,
+  nameCard,
   isInGroup,
   currentUserID,
   currentUserRole,
@@ -42,6 +43,7 @@ const {
   updateGroupProfile,
   addGroupMember,
   deleteGroupMember,
+  setGroupMemberNameCard,
 } = useGroupSettingState();
 
 const { friendList } = useContactListState();
@@ -313,6 +315,19 @@ const userPickerDialogTitle = computed(() => {
   }
   return t('ChatSetting.add_member_dialog_title');
 });
+
+// const handleNameCardConfirm = async (value: string) => {
+//   try {
+//     await setGroupMemberNameCard({ nameCard: value });
+//     TUIToast.success({
+//       message: t('ChatSetting.group_name_card_update_success'),
+//     });
+//   } catch {
+//     TUIToast.error({
+//       message: t('ChatSetting.group_name_card_update_failed'),
+//     });
+//   }
+// };
 </script>
 
 <template>
@@ -380,6 +395,14 @@ const userPickerDialogTitle = computed(() => {
       :validator="validateNotification"
       @confirm="handleNotificationConfirm"
     />
+
+    <!-- <SettingItem
+      type="input"
+      :editable="true"
+      :label="t('ChatSetting.my_name_card')"
+      :value="nameCard || ''"
+      @confirm="handleNameCardConfirm"
+    /> -->
 
     <template v-if="isInGroup">
       <GroupManagementEntry

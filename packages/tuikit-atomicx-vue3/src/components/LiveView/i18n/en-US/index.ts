@@ -1,7 +1,7 @@
 export const resource = {
   'LiveView.NoVideo': 'No video',
-  'LiveView.WaitingForConnection': 'Conn Wait',
-  'LiveView.ApplyForConnection': 'Conn Join',
+  'LiveView.WaitingForConnection': 'Awaiting Link',
+  'LiveView.ApplyForConnection': 'Apply to Link',
   'LiveView.Play': 'Play',
   'LiveView.Pause': 'Pause',
   'LiveView.PictureInPicture': 'Picture in Picture',
@@ -26,4 +26,6 @@ export const resource = {
   'LiveView.BattleEnded': 'Battle ended',
   'LiveView.VoiceChatNotSupported': 'Voice chat room display is not currently supported on the Web',
   'LiveView.AnchorAway': 'The host is temporarily away',
+  'LiveView.AutoPlayPromptDesc': 'Content is ready. Click the button to start playback',
+  'LiveView.StartPlay': 'Play',
 };

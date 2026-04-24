@@ -69,7 +69,10 @@ const handleFileClick = async (event: MouseEvent) => {
 
 <template>
   <View
-    :class="cs('file-message')"
+    :class="cs('file-message', {
+      'file-message--flow-in': message.flow === 'in',
+      'file-message--flow-out': message.flow === 'out',
+    })"
     @click="handleFileClick"
   >
     <View class="file-message__icon">
@@ -91,13 +94,13 @@ const handleFileClick = async (event: MouseEvent) => {
 
 <style lang="scss" scoped>
 @use '../../../../styles/mixins/text' as text;
+@use '../bubble-mixins' as bubble;
 
 .file-message {
+  @include bubble.bubble-base();
   display: flex;
   flex-direction: row;
   align-items: center;
-  background-color: var(--background-color-secondary);
-  border-radius: 8px;
   gap: 12px;
   padding: 10px 12px;
   cursor: pointer;

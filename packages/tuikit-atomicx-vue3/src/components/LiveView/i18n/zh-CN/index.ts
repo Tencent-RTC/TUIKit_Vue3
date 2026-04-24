@@ -26,4 +26,6 @@ export const resource = {
   'LiveView.BattleEnded': 'PK结束',
   'LiveView.VoiceChatNotSupported': '当前 Web 端暂不支持语聊房展示',
   'LiveView.AnchorAway': '主播暂时离开',
+  'LiveView.AutoPlayPromptDesc': '内容已准备就绪，点击按钮开始播放',
+  'LiveView.StartPlay': '开始播放',
 };

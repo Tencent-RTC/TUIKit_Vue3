@@ -16,6 +16,10 @@ const ChatSetting = {
   you_are_not_friend: '对方和您未成为好友',
   pin_conversation: '会话置顶',
   mute_conversation: '会话免打扰',
+  clear_history_message: '清空聊天记录',
+  confirm_clear_history: '确定要清空聊天记录吗？',
+  clear_history_success: '聊天记录清空成功',
+  clear_history_failed: '聊天记录清空失败',
   copied: '已复制',
 
   // GroupChatSetting

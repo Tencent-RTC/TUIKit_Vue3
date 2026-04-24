@@ -49,8 +49,7 @@
  * import { RealtimeMessageList } from 'tuikit-atomicx-vue3';
  * </script>
  */
-
-import RealtimeMessageList from './RealtimeMessageList.vue';
-import Subtitle from './Subtitle.vue';
+import RealtimeMessageList from './components/RealtimeMessageList.vue';
+import Subtitle from './components/Subtitle.vue';
 
 export { Subtitle, RealtimeMessageList };

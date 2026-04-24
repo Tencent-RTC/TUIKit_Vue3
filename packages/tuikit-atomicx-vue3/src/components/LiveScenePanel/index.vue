@@ -213,7 +213,7 @@ const selectMaterial = async (type: TRTCMediaSourceType) => {
         type: TRTCMediaSourceType.kScreen,
         name: t('Screen'),
         screen: {
-          resolution: TRTCVideoResolution.TRTCVideoResolution_1920_1080,
+          resolution: { width: 5760, height: 3240 },
           systemAudio: true,
           fps: 15,
         },

@@ -49,7 +49,7 @@ import { useLiveListState } from "../../../states/LiveListState";
 import LiveGiftPopupList from "./LiveGiftPopupList.vue";
 import GiftItem from "../GiftItem.vue";
 
-const { giftInfoList, sendGift, getGiftList } = useLiveGiftState();
+const { giftInfoList, sendGift, refreshGiftList } = useLiveGiftState();
 const { currentLive } = useLiveListState();
 const { t } = useUIKit();
 
@@ -175,7 +175,7 @@ watch(
   () => currentLive.value?.liveId,
   (liveId) => {
     if (liveId) {
-      getGiftList();
+      refreshGiftList();
     }
   },
   { immediate: true }

@@ -1,5 +1,10 @@
 <template>
-  <div :class="cs('face-message')">
+  <div
+    :class="cs('face-message', {
+      'face-message--flow-in': message.flow === 'in',
+      'face-message--flow-out': message.flow === 'out',
+    })"
+  >
     <img
       :src="messageContent.url"
       :alt="messageContent.name"
@@ -37,7 +42,10 @@ const messageContent = {
 </script>
 
 <style lang="scss" scoped>
+@use '../bubble-mixins' as bubble;
+
 .face-message {
+  @include bubble.bubble-base();
   // Face message styles will be implemented here
   width: 150px;
   height: 150px;

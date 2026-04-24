@@ -12,6 +12,56 @@
 export type TranscriberLanguage = 'zh' | 'en' | string;
 
 /**
+ * @module SubtitleDisplayMode
+ * @description **Subtitle Display Mode**
+ *
+ * Controls whether subtitles render only the primary line or render bilingual lines.
+ */
+export type SubtitleDisplayMode = 'bilingual' | 'translation';
+
+/**
+ * @module ASRSettingsOption
+ * @description **ASR Settings Option**
+ *
+ * Generic option item used by ASR language / mode settings.
+ */
+export interface ASRSettingsOption<T = string> {
+  label: string;
+  value: T;
+}
+
+/**
+ * @module ASRSettingsPayload
+ * @description **ASR Settings Payload**
+ *
+ * Shared shape for ASR settings persistence and updates.
+ */
+export interface ASRSettingsPayload {
+  sourceLanguage: string;
+  targetLanguage: string;
+  subtitleDisplayMode: SubtitleDisplayMode;
+}
+
+/**
+ * @module RawTranscriberMessage
+ * @description **Raw Transcriber Message**
+ *
+ * Raw payload shape received from the underlying transcriber SDK before normalization.
+ */
+export type RawTranscriberMessage = {
+  segmentId: string;
+  speakerUserId: string;
+  sourceText: string;
+  translationTexts?: Map<string, string> | Array<{
+    language: string;
+    text: string;
+  }>;
+  timestamp: number;
+  isCompleted: boolean;
+  robotId?: string;
+};
+
+/**
  * @module TranscriberMessage
  * @description **Transcriber Message**
  *
@@ -36,9 +86,13 @@ export interface TranscriberMessage {
   segmentId: string;
   speakerUserId: string;
   sourceText: string;
-  translationTexts?: Map<TranscriberLanguage, string>;
+  translationTexts?: Map<TranscriberLanguage, string> | Array<{
+    language: TranscriberLanguage;
+    text: string;
+  }>;
   timestamp: number;
   isCompleted: boolean;
+  robotId?: string;
 }
 
 /**

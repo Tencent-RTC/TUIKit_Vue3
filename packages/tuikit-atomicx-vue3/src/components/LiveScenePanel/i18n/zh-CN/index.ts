@@ -17,6 +17,8 @@ export const resource = {
   Resolution: '分辨率',
   'Update Camera': '更新摄像头',
   'Add Camera': '添加摄像头',
+  'Cancel': '取消',
+  'The camera may be in use by another application. Please select a different camera.': '当前摄像头不可用，可能被占用、禁用或者驱动异常。',
 
   // LiveSceneSelect
   'We support you to add rich sources': '我们支持您添加形式丰富的画面源',
