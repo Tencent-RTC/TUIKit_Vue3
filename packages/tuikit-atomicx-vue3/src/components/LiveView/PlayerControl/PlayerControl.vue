@@ -1,7 +1,7 @@
 <template>
   <Transition name="player-control">
     <div
-      v-show="controlBarVisible"
+      v-show="controlBarVisible && hasVisibleButtons"
       ref="playerControlRef"
       :class="[
         'playback-controls',
@@ -206,6 +206,12 @@ const buildControlItems = (zone: ControlZone): ControlItem[] => {
 const leftControlItems = computed(() => buildControlItems('left'));
 const centerControlItems = computed(() => buildControlItems('center'));
 const rightControlItems = computed(() => buildControlItems('right'));
+
+const hasVisibleButtons = computed(() =>
+  leftControlItems.value.length > 0
+  || centerControlItems.value.length > 0
+  || rightControlItems.value.length > 0,
+);
 
 const onMouseOver = () => {
   stopAutoHide();

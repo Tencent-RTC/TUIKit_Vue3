@@ -310,13 +310,14 @@ onUnmounted(() => {
 </template>
 
 <style lang="scss" scoped>
+@use '../bubble-mixins' as bubble;
+
 .image-message {
+  @include bubble.bubble-media();
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  border-radius: 20px;
-  overflow: hidden;
   transition: all 0.3s ease-in-out;
   min-height: 50px;
   max-width: 100%;

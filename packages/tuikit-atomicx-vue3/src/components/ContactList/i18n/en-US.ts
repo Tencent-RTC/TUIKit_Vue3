@@ -73,5 +73,6 @@ export default {
     'waiting for verification': 'waiting for verification',
     'verification info': 'verification info',
     'Send application': 'Send application',
+    application_handled_on_another_device_or_admin: 'This application has already been handled on another device or by another admin',
   },
 };

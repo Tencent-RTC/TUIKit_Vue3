@@ -72,7 +72,12 @@ const { loginUserInfo } = useLoginState();
 const { speakingUsers, seatList } = useLiveSeatState();
 const { currentLive } = useLiveListState();
 
-const isAnchor = computed(() => loginUserInfo.value?.userId === currentLive.value?.liveOwner.userId);
+const isAnchor = computed(() => {
+  if (!loginUserInfo.value?.userId || !currentLive.value?.liveOwner?.userId) {
+    return false;
+  }
+  return loginUserInfo.value.userId === currentLive.value.liveOwner.userId;
+});
 
 const seatListWithUser = computed(() => seatList.value.filter(item => item.userInfo && item.userInfo.userId !== ''));
 
@@ -144,19 +149,25 @@ watch(() => needCanvasMaskList.value.length, async () => {
     await nextTick();
     if (canvasRef.value) {
       drawCanvas();
+      // Disconnect previous observer before creating a new one to avoid memory leaks
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       resizeObserver = new ResizeObserver(() => {
         drawCanvas();
       });
       resizeObserver.observe(canvasRef.value);
     }
-  } else if (resizeObserver && canvasRef.value) {
-    resizeObserver.unobserve(canvasRef.value);
+  } else if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
   }
 }, { immediate: true });
 
 onUnmounted(() => {
-  if (resizeObserver && canvasRef.value) {
-    resizeObserver.unobserve(canvasRef.value);
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
   }
 });
 

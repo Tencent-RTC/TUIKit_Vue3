@@ -1,7 +1,6 @@
 import type { Ref } from 'vue';
 import { computed, reactive, ref, watch } from 'vue';
 import { TRTCCloud, TUIVideoQuality } from '@tencentcloud/tuiroom-engine-js';
-import { TUIMessageBox, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import useRoomEngine from '../../../hooks/useRoomEngine';
 import { useLiveListState } from '../../../states/LiveListState';
 import { useLiveSeatState } from '../../../states/LiveSeatState';
@@ -55,6 +54,8 @@ export interface PlayerControlState {
   isMuted: Ref<boolean>;
   isSafari: Ref<boolean>;
   controlBarVisible: Ref<boolean>;
+  /** Whether a refresh operation is in progress. Used by OverlayState to reset loading state. */
+  isRefreshing: Ref<boolean>;
 
   // Built-in button states
   buttons: PlayerControlButtons;
@@ -95,6 +96,9 @@ export interface PlayerControlState {
   stopAutoHide: () => void;
   upsertCustomButtons: (buttons: CustomButton[]) => void;
 
+  // Refresh state control
+  setRefreshing: (refreshing: boolean) => void;
+
   // Cleanup method
   cleanup: () => void;
 }
@@ -126,6 +130,7 @@ const currentVolume = ref(VOLUME_CONSTANTS.DEFAULT_VOLUME);
 const isMuted = ref(false); // Mute state - synced across all rooms
 const isSafari = ref(isSafariBrowser());
 const controlBarVisible = ref(false);
+const isRefreshing = ref(false); // Refresh state - used by OverlayState to reset loading
 
 // User overrides: tracks properties explicitly set by external consumers.
 // When resetButtonDefaults() runs, it re-applies these overrides after computing
@@ -236,7 +241,6 @@ const resolutionList = ref<Resolution[]>([]);
 const currentResolution = ref<Resolution | undefined>();
 
 const roomEngine = useRoomEngine();
-const { t } = useUIKit();
 const { loginUserInfo } = useLoginState();
 const { seatList } = useLiveSeatState();
 
@@ -328,19 +332,9 @@ export function usePlayerControlState(): PlayerControlState {
       isPlaying.value = true;
       return true;
     } catch (error: any) {
-      // Handle browser autoplay policy restriction
+      // Browser autoplay policy restriction is handled by LiveView's
+      // onAutoPlayFailed listener which provides an in-player prompt overlay.
       if (error?.name === 'NotAllowedError' && (error?.message?.includes('user agent') || error?.message?.includes('denied permission'))) {
-        TUIMessageBox.alert({
-          content: t('LiveView.ContentReady'),
-          confirmText: t('LiveView.Play'),
-          callback: async () => {
-            await roomEngine.instance?.callExperimentalAPI(JSON.stringify({
-              api: 'resume',
-              params: {},
-            }));
-            isPlaying.value = true;
-          },
-        });
         return false;
       }
       throw error;
@@ -719,6 +713,10 @@ export function usePlayerControlState(): PlayerControlState {
     controlBarVisible.value = visible;
   };
 
+  const setRefreshing = (refreshing: boolean): void => {
+    isRefreshing.value = refreshing;
+  };
+
   const stopAutoHide = (): void => {
     if (hideTimeout) {
       clearTimeout(hideTimeout);
@@ -817,6 +815,7 @@ export function usePlayerControlState(): PlayerControlState {
     currentResolution,
     isSafari,
     controlBarVisible,
+    isRefreshing,
     buttons,
     customButtons,
     hasTCPlayer,
@@ -836,6 +835,7 @@ export function usePlayerControlState(): PlayerControlState {
     startAutoHide,
     stopAutoHide,
     upsertCustomButtons,
+    setRefreshing,
     cleanup,
   };
 }

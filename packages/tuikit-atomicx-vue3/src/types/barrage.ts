@@ -47,7 +47,7 @@ export enum BarrageType {
  * > 建议在进入直播间前完成事件监听，这样才能确保不会漏掉事件通知。
  *
  * @example
- * import { BarrageEvent } from 'tuikit-atomicx-vue3';
+ * import { BarrageEvent, useBarrageState } from 'tuikit-atomicx-vue3';
  * const { subscribeEvent, unsubscribeEvent } = useBarrageState();
  *
  * const onBarrageReceived = (barrage: Barrage) => {
@@ -60,8 +60,18 @@ export enum BarrageEvent {
   /**
    * 当收到弹幕消息时触发。
    * @event
+   * @param {Barrage} barrage - 弹幕消息对象
+   * @param {string} barrage.liveId - 直播间 ID
+   * @param {TUIUserInfo} barrage.sender - 发送者用户信息
+   * @param {number} barrage.sequence - 消息序列号
+   * @param {number} barrage.timestampInSecond - 消息时间戳（秒）
+   * @param {BarrageType} barrage.messageType - 消息类型（文本消息或自定义消息）
+   * @param {string} [barrage.textContent] - 文本内容（文本消息时使用）
+   * @param {Record<string, string>} [barrage.extensionInfo] - 扩展信息（文本消息时使用）
+   * @param {string} [barrage.businessId] - 业务 ID（自定义消息时使用）
+   * @param {string} [barrage.data] - 自定义数据（自定义消息时使用，JSON 字符串格式）
    * @example
-   * import { BarrageEvent } from 'tuikit-atomicx-vue3';
+   * import { BarrageEvent, useBarrageState } from 'tuikit-atomicx-vue3';
    * const { subscribeEvent, unsubscribeEvent } = useBarrageState();
    *
    * const onBarrageReceived = (barrage: Barrage) => {

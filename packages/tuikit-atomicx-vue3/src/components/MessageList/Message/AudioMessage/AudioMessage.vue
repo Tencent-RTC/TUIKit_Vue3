@@ -1,5 +1,10 @@
 <template>
-  <View class="audio-message">
+  <View
+    :class="cs('audio-message', {
+      'audio-message--flow-in': message.flow === 'in',
+      'audio-message--flow-out': message.flow === 'out',
+    })"
+  >
     <View class="audio-message__content">
       <PlayButton
         :is-playing="isPlaying"
@@ -19,6 +24,7 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
+import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
 import { useAudioControl } from '../../../../hooks/useAudioControl';
 import PlayButton from './PlayButton.vue';
@@ -72,7 +78,10 @@ const formatDuration = (seconds: number): string => {
 </script>
 
 <style lang="scss" scoped>
+@use '../bubble-mixins' as bubble;
+
 .audio-message {
+  @include bubble.bubble-base();
   padding: 10px 12px;
 
   &__content {

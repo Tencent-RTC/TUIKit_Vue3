@@ -1,7 +1,7 @@
 <template>
   <div class="schedule-room-panel">
     <div class="panel-content">
-      <form class="form">
+      <form class="form" @submit.prevent>
         <div class="form-item">
           <label class="label">{{ t('ScheduleRoomPanel.RoomName') }}</label>
           <TUIInput
@@ -91,10 +91,10 @@
             />
             <template #footer>
               <div class="user-picker-footer">
-                <TUIButton @click="userPickerVisible = false">
+                <TUIButton @click.prevent="userPickerVisible = false">
                   {{ t('ScheduleRoomPanel.Cancel') }}
                 </TUIButton>
-                <TUIButton type="primary" @click="handleUserPickerConfirm">
+                <TUIButton type="primary" @click.prevent="handleUserPickerConfirm">
                   {{ t('ScheduleRoomPanel.Confirm') }}
                 </TUIButton>
               </div>

@@ -382,10 +382,6 @@ $message-avatar-gap: 8px;
 
 .message-layout__bubble {
   flex: 0 1 auto;
-
-  &--left {}
-  &--right {}
-  &--aggregated {}
 }
 
 .message-layout__status {

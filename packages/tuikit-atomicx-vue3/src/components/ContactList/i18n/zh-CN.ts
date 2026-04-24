@@ -73,5 +73,6 @@ export default {
     'waiting for verification': '等待验证',
     'verification info': '验证信息',
     'Send application': '发送申请',
+    'application_handled_on_another_device_or_admin': '该申请已被其他设备或管理员处理',
   },
 };

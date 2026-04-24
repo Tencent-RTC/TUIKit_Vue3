@@ -20,7 +20,14 @@
         :key="message.segmentId || messageIndex"
         class="content"
       >
-        {{ message.sourceText }}
+        <div
+          v-for="(line, lineIndex) in getDisplayLines(message)"
+          :key="`${message.segmentId || messageIndex}-${lineIndex}`"
+          class="content-line"
+          :class="{ secondary: lineIndex > 0 }"
+        >
+          {{ line }}
+        </div>
       </div>
     </div>
   </div>
@@ -28,10 +35,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick, watch } from 'vue';
-import { useAITranscriberState } from '../../states/AITranscriberState';
-import { formatTimestampToTime } from '../../utils/utils';
-import { getDisplayName } from './utils';
-import type { TranscriberMessage } from '../../types/asr';
+import { useAITranscriberState } from '../../../states/AITranscriberState';
+import { formatTimestampToTime } from '../../../utils/utils';
+import { getDisplayName, getMessageDisplayLines, hasDisplayableText } from '../utils/display';
+import type { SubtitleDisplayMode, TranscriberMessage } from '../../../types/asr';
 
 interface MessageGroup {
   sender: string;
@@ -43,7 +50,14 @@ const conversationContainerRef = ref<HTMLElement>();
 const isUserScrolling = ref(false);
 const timeInterval = 60 * 1000; // 60 seconds
 
+const props = defineProps<{
+  targetLanguage?: string;
+  displayMode?: SubtitleDisplayMode;
+}>();
+
 const { realtimeMessageList } = useAITranscriberState();
+const effectiveTargetLanguage = computed(() => props.targetLanguage || '');
+const effectiveDisplayMode = computed(() => props.displayMode || 'translation');
 
 const isAtBottom = (): boolean => {
   if (!conversationContainerRef.value) {
@@ -77,7 +91,7 @@ const handleScroll = () => {
 
 const transcribedMessageList = computed((): MessageGroup[] => {
   const completedMessages = [...realtimeMessageList.value
-    .filter(msg => msg.sourceText?.trim() && typeof msg.timestamp === 'number' && Number.isFinite(msg.timestamp)),
+    .filter(msg => hasDisplayableText(msg.sourceText) && typeof msg.timestamp === 'number' && Number.isFinite(msg.timestamp)),
   ].sort((a, b) => (a.timestamp ?? 0) - (b.timestamp ?? 0));
 
   if (completedMessages.length === 0) {
@@ -112,6 +126,12 @@ const transcribedMessageList = computed((): MessageGroup[] => {
 
   return aggregatedMessageList;
 });
+
+const getDisplayLines = (message: TranscriberMessage) => getMessageDisplayLines(
+  message,
+  effectiveTargetLanguage.value,
+  effectiveDisplayMode.value,
+);
 
 watch(() => realtimeMessageList.value.length, () => {
   nextTick(() => {
@@ -176,5 +196,15 @@ watch(() => realtimeMessageList.value.length, () => {
   text-align: left;
   border-radius: 8px;
   background-color: var(--bg-color-bubble-reciprocal);
+}
+
+.content-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  &.secondary {
+    margin-top: 4px;
+    opacity: 0.78;
+  }
 }
 </style>

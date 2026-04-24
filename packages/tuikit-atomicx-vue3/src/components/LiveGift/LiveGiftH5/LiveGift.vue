@@ -35,7 +35,7 @@ import { useLiveListState } from "../../../states/LiveListState";
 import LiveGiftDrawer from "./LiveGiftDrawer.vue";
 import GiftCardPlayer from "./GiftCardPlayer.vue";
 
-const { giftInfoList, getGiftList } = useLiveGiftState();
+const { giftInfoList, refreshGiftList } = useLiveGiftState();
 const { currentLive } = useLiveListState();
 
 const drawerVisible = ref(false);
@@ -56,7 +56,7 @@ watch(
   () => currentLive.value?.liveId,
   (liveId) => {
     if (liveId) {
-      getGiftList();
+      refreshGiftList();
     }
   },
   { immediate: true }

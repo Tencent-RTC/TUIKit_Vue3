@@ -21,7 +21,16 @@ const containerSize = ref({
 let containerId: string | null = null;
 
 function handleStreamContainerSize(entries: ResizeObserverEntry[]) {
-  const container = document.getElementById(containerId as string) as HTMLElement;
+  // Guard against null container: the DOM node may have been removed
+  // before the ResizeObserver callback fires, causing TypeError on
+  // accessing clientWidth/clientHeight.
+  if (!containerId) {
+    return;
+  }
+  const container = document.getElementById(containerId);
+  if (!container) {
+    return;
+  }
   containerSize.value.width = container.clientWidth;
   containerSize.value.height = container.clientHeight;
 }
@@ -31,14 +40,28 @@ const ro = new ResizeObserver((entries) => {
 });
 
 function createResizeObserver({ view }: { view: string }) {
-  if (view) {
-    containerId = view;
-    ro.observe(document.getElementById(containerId as string) as Element);
+  if (!view) {
+    return;
   }
+  const container = document.getElementById(view);
+  if (!container) {
+    return;
+  }
+  containerId = view;
+  ro.observe(container);
 }
 
 function deleteResizeObserver() {
-  ro.unobserve(document.getElementById(containerId as string) as Element);
+  // Guard against null container: during teardown the element may already
+  // be detached from the DOM, and unobserve(null) throws in some browsers.
+  if (!containerId) {
+    return;
+  }
+  const container = document.getElementById(containerId);
+  if (container) {
+    ro.unobserve(container);
+  }
+  containerId = null;
 }
 
 const config = computed(() => {

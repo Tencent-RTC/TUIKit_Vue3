@@ -131,13 +131,14 @@ watch(() => props.message.ID, () => {
 </template>
 
 <style lang="scss" scoped>
+@use '../bubble-mixins' as bubble;
+
 .video-message {
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
-  border-radius: 8px;
+  @include bubble.bubble-media();
   background-color: #f5f5f5;
   max-width: 100%;
 

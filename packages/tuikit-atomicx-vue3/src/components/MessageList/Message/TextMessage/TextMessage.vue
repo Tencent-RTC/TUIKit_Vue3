@@ -1,5 +1,10 @@
 <template>
-  <View class="text-message">
+  <View
+    :class="cs('text-message', {
+      'text-message--flow-in': message.flow === 'in',
+      'text-message--flow-out': message.flow === 'out',
+    })"
+  >
     <View
       v-if="referencedInfo.content"
       :class="cs('text-message__reference', {
@@ -116,7 +121,10 @@ const handleReferenceClick = () => {
 </script>
 
 <style lang="scss" scoped>
+@use '../bubble-mixins' as bubble;
+
 .text-message {
+  @include bubble.bubble-base();
   font-size: 14px;
   padding: 10px 12px;
   display: flex;

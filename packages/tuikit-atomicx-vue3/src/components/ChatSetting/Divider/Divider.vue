@@ -27,7 +27,7 @@ withDefaults(defineProps<DividerProps>(), {
   }
 
   &--line &__inner {
-    height: 0.5px;
+    height: 1px;
     width: calc(100% - 40px);
     margin: 0 20px;
     background-color: var(--stroke-color-secondary);

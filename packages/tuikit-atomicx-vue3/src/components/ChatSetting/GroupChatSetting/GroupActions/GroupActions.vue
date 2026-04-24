@@ -4,7 +4,7 @@
       'group-actions',
     ]"
   >
-    <!-- Change group owner button - only for group owner -->
+    <!-- Change group owner button - only for group owner (blue text) -->
     <TUIButton
       v-if="canChangeGroupOwner"
       class="group-actions__button"
@@ -18,6 +18,19 @@
 
     <Divider v-if="canChangeGroupOwner" variant="line" />
 
+    <!-- Clear history button -->
+    <TUIButton
+      class="group-actions__button"
+      color="red"
+      radius="rect"
+      type="text"
+      @click="() => isShowClearHistoryDialog = true"
+    >
+      {{ t('ChatSetting.clear_history_message') }}
+    </TUIButton>
+
+    <Divider v-if="canQuitGroup || canDismissGroup" variant="line" />
+
     <!-- Quit group button -->
     <TUIButton
       v-if="canQuitGroup"
@@ -26,11 +39,11 @@
       radius="rect"
       type="text"
       @click="() => isShowQuitDialog = true"
-      >
+    >
       {{ t('ChatSetting.quit_group') }}
     </TUIButton>
 
-    <Divider v-if="canQuitGroup" variant="line" />
+    <Divider v-if="canQuitGroup && canDismissGroup" variant="line" />
 
     <!-- Dismiss group button - only for group owner -->
     <TUIButton
@@ -43,6 +56,20 @@
     >
       {{ t('ChatSetting.dismiss_group') }}
     </TUIButton>
+
+    <!-- Clear History Dialog -->
+    <TUIDialog
+      appendTo="body"
+      :visible="isShowClearHistoryDialog"
+      :title="t('ChatSetting.clear_history_message')"
+      @close="() => isShowClearHistoryDialog = false"
+      @cancel="() => isShowClearHistoryDialog = false"
+      @confirm="handleClearHistory"
+    >
+      <div>
+        {{ t('ChatSetting.confirm_clear_history') }}
+      </div>
+    </TUIDialog>
 
     <!-- Transfer Group Owner Dialog -->
     <TUIDialog
@@ -111,9 +138,11 @@ const {
   quitGroup,
   hasPermission,
   changeGroupOwner,
+  clearHistoryMessage,
 } = useGroupSettingState();
 
 const isShowTransferDialog = ref(false);
+const isShowClearHistoryDialog = ref(false);
 const isShowDismissDialog = ref(false);
 const isShowQuitDialog = ref(false);
 const loading = ref(false);
@@ -199,6 +228,21 @@ const handleQuitGroup = () => {
 // Handle dismiss group
 const handleDismissGroup = () => {
   dismissGroup();
+};
+
+// Handle clear history
+const handleClearHistory = async () => {
+  try {
+    await clearHistoryMessage();
+    isShowClearHistoryDialog.value = false;
+    TUIToast.success({
+      message: t('ChatSetting.clear_history_success'),
+    });
+  } catch {
+    TUIToast.error({
+      message: t('ChatSetting.clear_history_failed'),
+    });
+  }
 };
 </script>
 

@@ -67,10 +67,14 @@
       {{ t('Exit connection') }}
     </TUIButton>
     <template v-if="!currentBattleInfo?.battleId">
-      <TUIButton type="primary" @click="handleBattleRequest" v-if="!inPk && battleRequestList.size === 0">
+      <TUIButton
+        v-if="!inPk && battleRequestList.size === 0"
+        type="primary"
+        @click="handleBattleRequest"
+      >
         {{ t('Start battle') }}
       </TUIButton>
-      <TUIButton @click="handleCancelBattleRequest" v-if="!inPk && battleRequestList.size > 0">
+      <TUIButton v-if="!inPk && battleRequestList.size > 0" @click="handleCancelBattleRequest">
         {{ t('Cancel battle') }}
       </TUIButton>
     </template>
@@ -112,9 +116,9 @@ import { useCoHostState } from '../../states/CoHostState';
 import { useLoginState } from '../../states/LoginState';
 import { CoHostLayoutTemplate, CoHostStatus, CoHostEvent, BattleEvent } from '../../types';
 import { Avatar } from '../Avatar';
+import { ERROR_MESSAGE } from './constants';
 import RecommendHostList from './RecommendHostList.vue';
 import type { SeatUserInfo } from '../../types';
-import { ERROR_MESSAGE } from './constants';
 
 const props = defineProps<{
   battleDuration: number;
@@ -130,6 +134,7 @@ const {
   requestHostConnection,
   cancelHostConnection,
   exitHostConnection,
+  muteRemoteHostAudio,
   subscribeEvent,
   unsubscribeEvent,
 } = useCoHostState();
@@ -151,6 +156,7 @@ const seatNumber = computed(() => {
 });
 
 const showExitCoHostDialog = ref(false);
+const mutedHosts = ref<Set<string>>(new Set());
 const battleRequestList = ref<Set<string>>(new Set());
 const requestBattleId = ref('');
 
@@ -211,9 +217,26 @@ const handleCancelCoHostRequest = async (user: SeatUserInfo) => {
   }
 };
 
+const isMuted = (liveId: string) => mutedHosts.value.has(liveId);
+
+const handleToggleMuteHost = async (user: SeatUserInfo) => {
+  const muted = isMuted(user.liveId);
+  try {
+    await muteRemoteHostAudio(user.liveId, !muted);
+    if (muted) {
+      mutedHosts.value.delete(user.liveId);
+    } else {
+      mutedHosts.value.add(user.liveId);
+    }
+  } catch (error) {
+    TUIToast({ type: TOAST_TYPE.ERROR, message: t('Mute failed') });
+  }
+};
+
 const handleExitCoHost = () => {
   exitHostConnection();
   showExitCoHostDialog.value = false;
+  mutedHosts.value.clear();
 };
 
 const handleBattleRequest = async () => {
@@ -229,7 +252,7 @@ const handleBattleRequest = async () => {
       timeout: 10,
     });
     requestBattleId.value = battleRes.battleId;
-    userIdList.forEach(userId => battleRequestList.value.add(userId))
+    userIdList.forEach(userId => battleRequestList.value.add(userId));
   } catch (error: any) {
     const message = t(ERROR_MESSAGE[error.code as keyof typeof ERROR_MESSAGE] || 'Request battle failed');
     TUIToast.error({ message });
@@ -239,7 +262,7 @@ const handleBattleRequest = async () => {
 const handleCancelBattleRequest = async () => {
   await cancelBattleRequest({
     battleId: requestBattleId.value,
-    userIdList: Array.from(battleRequestList.value)
+    userIdList: Array.from(battleRequestList.value),
   });
   requestBattleId.value = '';
   battleRequestList.value.clear();
@@ -263,19 +286,19 @@ const handleCoHostRequestTimeout = ({ inviter, invitee }: { inviter: SeatUserInf
   }
 };
 
-const onBattleRequestAccept = (eventInfo: { battleId: string, inviter: SeatUserInfo, invitee: SeatUserInfo }) => {
+const onBattleRequestAccept = (eventInfo: { battleId: string; inviter: SeatUserInfo; invitee: SeatUserInfo }) => {
   if (eventInfo.inviter.userId === loginUserInfo.value?.userId) {
     battleRequestList.value.delete(eventInfo.invitee.userId);
   }
 };
 
-const onBattleRequestRejected = (eventInfo: { battleId: string, inviter: SeatUserInfo, invitee: SeatUserInfo }) => {
+const onBattleRequestRejected = (eventInfo: { battleId: string; inviter: SeatUserInfo; invitee: SeatUserInfo }) => {
   if (eventInfo.inviter.userId === loginUserInfo.value?.userId) {
     battleRequestList.value.delete(eventInfo.invitee.userId);
   }
 };
 
-const onBattleRequestTimeout = (eventInfo: { battleId: string, inviter: SeatUserInfo, invitee: SeatUserInfo }) => {
+const onBattleRequestTimeout = (eventInfo: { battleId: string; inviter: SeatUserInfo; invitee: SeatUserInfo }) => {
   if (eventInfo.inviter.userId === loginUserInfo.value?.userId) {
     battleRequestList.value.delete(eventInfo.invitee.userId);
   }
@@ -284,12 +307,12 @@ const onBattleRequestTimeout = (eventInfo: { battleId: string, inviter: SeatUser
 const onBattleStarted = () => {
   requestBattleId.value = '';
   battleRequestList.value.clear();
-}
+};
 
 const onBattleEnded = () => {
   requestBattleId.value = '';
   battleRequestList.value.clear();
-}
+};
 
 onMounted(() => {
   subscribeEvent(CoHostEvent.onCoHostRequestAccepted, handleCoHostRequestAccepted);

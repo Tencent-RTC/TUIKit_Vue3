@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { IconCopy, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { ref } from 'vue';
+import { IconCopy, TUIButton, TUIDialog, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useC2CSettingState } from '../../../states/C2CSettingState';
 import { copyTextToClipboard } from '../../../utils';
 import { Divider } from '../Divider';
@@ -18,7 +19,10 @@ const {
   setChatPinned,
   setChatMuted,
   setUserRemark,
+  clearHistoryMessage,
 } = useC2CSettingState();
+
+const isShowClearHistoryDialog = ref(false);
 
 function handlePinnedChange(value: boolean) {
   setChatPinned(value);
@@ -46,6 +50,20 @@ function handleCopyUserID() {
       TUIToast.success({
         message: t('ChatSetting.copied'),
       });
+    });
+  }
+}
+
+async function handleClearHistoryMessage() {
+  try {
+    await clearHistoryMessage();
+    isShowClearHistoryDialog.value = false;
+    TUIToast.success({
+      message: t('ChatSetting.clear_history_success'),
+    });
+  } catch {
+    TUIToast.error({
+      message: t('ChatSetting.clear_history_failed'),
     });
   }
 }
@@ -143,7 +161,34 @@ function handleCopyUserID() {
         :value="isMuted"
         @change="handleMutedChange"
       />
+
+      <Divider variant="line" />
+      <div class="c2c-chat-setting__danger-actions">
+        <TUIButton
+          class="c2c-chat-setting__danger-button"
+          color="red"
+          radius="rect"
+          type="text"
+          @click="() => isShowClearHistoryDialog = true"
+        >
+          {{ t('ChatSetting.clear_history_message') }}
+        </TUIButton>
+      </div>
     </div>
+
+    <!-- Clear History Dialog -->
+    <TUIDialog
+      appendTo="body"
+      :visible="isShowClearHistoryDialog"
+      :title="t('ChatSetting.clear_history_message')"
+      @close="() => isShowClearHistoryDialog = false"
+      @cancel="() => isShowClearHistoryDialog = false"
+      @confirm="handleClearHistoryMessage"
+    >
+      <div>
+        {{ t('ChatSetting.confirm_clear_history') }}
+      </div>
+    </TUIDialog>
   </div>
 </template>
 
@@ -232,6 +277,18 @@ function handleCopyUserID() {
     display: flex;
     flex-direction: column;
     gap: 0;
+  }
+
+  &__danger-actions {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__danger-button {
+    box-sizing: border-box;
+    height: auto;
+    width: 100%;
+    padding: 12px 0;
   }
 }
 </style>

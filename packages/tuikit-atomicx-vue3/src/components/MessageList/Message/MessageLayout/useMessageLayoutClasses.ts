@@ -35,8 +35,6 @@ export function useMessageLayoutClasses({
 
   const bubbleClasses = cs(
     'message-layout__bubble',
-    isRightAligned ? 'message-layout__bubble--right' : 'message-layout__bubble--left',
-    isAggregated && 'message-layout__bubble--aggregated',
   );
 
   const avatarClasses = cs(

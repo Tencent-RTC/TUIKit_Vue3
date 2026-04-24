@@ -71,7 +71,7 @@ export interface LiveUserInfo {
  * > 建议在进入直播间前完成事件监听，这样才能确保不会漏掉事件通知。
  *
  * @example
- * import { LiveAudienceEvent } from 'tuikit-atomicx-vue3';
+ * import { LiveAudienceEvent, useLiveAudienceState } from 'tuikit-atomicx-vue3';
  * const { subscribeEvent, unsubscribeEvent } = useLiveAudienceState();
  *
  * const onAudienceJoined = (eventInfo: { audience: LiveUserInfo }) => {
@@ -82,10 +82,68 @@ export interface LiveUserInfo {
  */
 export enum LiveAudienceEvent {
   /**
+   * 当房主加入直播间时触发。
+   * @event
+   * @param {object} eventInfo - 事件参数对象
+   * @param {LiveUserInfo} eventInfo.owner - 加入的房主信息
+   * @example
+   * import { LiveAudienceEvent, useLiveAudienceState } from 'tuikit-atomicx-vue3';
+   * const { subscribeEvent } = useLiveAudienceState();
+   *
+   * subscribeEvent(LiveAudienceEvent.onOwnerJoined, (eventInfo) => {
+   *   console.log('房主加入:', eventInfo.owner.userName);
+   * });
+   */
+  onOwnerJoined = 'onOwnerJoined',
+  /**
+   * 当房主离开直播间时触发。
+   * @event
+   * @param {object} eventInfo - 事件参数对象
+   * @param {LiveUserInfo} eventInfo.owner - 离开的房主信息
+   * @example
+   * import { LiveAudienceEvent, useLiveAudienceState } from 'tuikit-atomicx-vue3';
+   * const { subscribeEvent } = useLiveAudienceState();
+   *
+   * subscribeEvent(LiveAudienceEvent.onOwnerLeft, (eventInfo) => {
+   *   console.log('房主离开:', eventInfo.owner.userName);
+   * });
+   */
+  onOwnerLeft = 'onOwnerLeft',
+  /**
+   * 当管理员加入直播间时触发。
+   * @event
+   * @param {object} eventInfo - 事件参数对象
+   * @param {LiveUserInfo} eventInfo.admin - 加入的管理员信息
+   * @example
+   * import { LiveAudienceEvent, useLiveAudienceState } from 'tuikit-atomicx-vue3';
+   * const { subscribeEvent } = useLiveAudienceState();
+   *
+   * subscribeEvent(LiveAudienceEvent.onAdminJoined, (eventInfo) => {
+   *   console.log('管理员加入:', eventInfo.admin.userName);
+   * });
+   */
+  onAdminJoined = 'onAdminJoined',
+  /**
+   * 当管理员离开直播间时触发。
+   * @event
+   * @param {object} eventInfo - 事件参数对象
+   * @param {LiveUserInfo} eventInfo.admin - 离开的管理员信息
+   * @example
+   * import { LiveAudienceEvent, useLiveAudienceState } from 'tuikit-atomicx-vue3';
+   * const { subscribeEvent } = useLiveAudienceState();
+   *
+   * subscribeEvent(LiveAudienceEvent.onAdminLeft, (eventInfo) => {
+   *   console.log('管理员离开:', eventInfo.admin.userName);
+   * });
+   */
+  onAdminLeft = 'onAdminLeft',
+  /**
    * 当有观众加入直播间时触发。
    * @event
+   * @param {object} eventInfo - 事件参数对象
+   * @param {LiveUserInfo} eventInfo.audience - 加入的观众信息
    * @example
-   * import { LiveAudienceEvent } from 'tuikit-atomicx-vue3';
+   * import { LiveAudienceEvent, useLiveAudienceState } from 'tuikit-atomicx-vue3';
    * const { subscribeEvent, unsubscribeEvent } = useLiveAudienceState();
    *
    * const onAudienceJoined = (eventInfo: { audience: LiveUserInfo }) => {
@@ -98,8 +156,10 @@ export enum LiveAudienceEvent {
   /**
    * 当有观众离开直播间时触发。
    * @event
+   * @param {object} eventInfo - 事件参数对象
+   * @param {LiveUserInfo} eventInfo.audience - 离开的观众信息
    * @example
-   * import { LiveAudienceEvent } from 'tuikit-atomicx-vue3';
+   * import { LiveAudienceEvent, useLiveAudienceState } from 'tuikit-atomicx-vue3';
    * const { subscribeEvent, unsubscribeEvent } = useLiveAudienceState();
    *
    * const onAudienceLeft = (eventInfo: { audience: LiveUserInfo }) => {
@@ -109,7 +169,62 @@ export enum LiveAudienceEvent {
    * unsubscribeEvent(LiveAudienceEvent.onAudienceLeft, onAudienceLeft);
    */
   onAudienceLeft = 'onAudienceLeft',
+  /**
+   * 当观众的消息发送权限被禁用或启用时触发。
+   * @event
+   * @param {object} eventInfo - 事件参数对象
+   * @param {LiveUserInfo} eventInfo.audience - 观众信息
+   * @param {boolean} eventInfo.isDisable - 是否禁用消息发送
+   * @example
+   * import { LiveAudienceEvent, useLiveAudienceState } from 'tuikit-atomicx-vue3';
+   * const { subscribeEvent } = useLiveAudienceState();
+   *
+   * subscribeEvent(LiveAudienceEvent.onAudienceMessageDisabled, (eventInfo) => {
+   *   console.log('禁言状态变更:', eventInfo.audience.userId, eventInfo.isDisable);
+   * });
+   */
+  onAudienceMessageDisabled = 'onAudienceMessageDisabled',
 }
+
+/**
+ * 房主加入事件信息类型定义
+ * @interface OwnerJoinedEventInfo
+ * @description 房主加入直播间事件的回调参数类型。
+ */
+type OwnerJoinedEventInfo = {
+  /** 加入的房主信息 */
+  owner: LiveUserInfo;
+};
+
+/**
+ * 房主离开事件信息类型定义
+ * @interface OwnerLeftEventInfo
+ * @description 房主离开直播间事件的回调参数类型。
+ */
+type OwnerLeftEventInfo = {
+  /** 离开的房主信息 */
+  owner: LiveUserInfo;
+};
+
+/**
+ * 管理员加入事件信息类型定义
+ * @interface AdminJoinedEventInfo
+ * @description 管理员加入直播间事件的回调参数类型。
+ */
+type AdminJoinedEventInfo = {
+  /** 加入的管理员信息 */
+  admin: LiveUserInfo;
+};
+
+/**
+ * 管理员离开事件信息类型定义
+ * @interface AdminLeftEventInfo
+ * @description 管理员离开直播间事件的回调参数类型。
+ */
+type AdminLeftEventInfo = {
+  /** 离开的管理员信息 */
+  admin: LiveUserInfo;
+};
 
 /**
  * 观众加入事件信息类型定义
@@ -138,6 +253,18 @@ type AudienceLeftEventInfo = {
 };
 
 /**
+ * 观众消息禁用事件信息类型定义
+ * @interface AudienceMessageDisabledEventInfo
+ * @description 观众消息发送权限变更事件的回调参数类型。
+ */
+type AudienceMessageDisabledEventInfo = {
+  /** 观众信息 */
+  audience: LiveUserInfo;
+  /** 是否禁用消息发送 */
+  isDisable: boolean;
+};
+
+/**
  * 观众事件映射类型定义
  * @interface LiveAudienceEventInfo
  * @description 将每个 LiveAudienceEvent 映射到其对应的回调参数类型。
@@ -146,8 +273,13 @@ type AudienceLeftEventInfo = {
  * type LeftPayload = LiveAudienceEventInfo[LiveAudienceEvent.onAudienceLeft]; // AudienceLeftEventInfo
  */
 export interface LiveAudienceEventInfo {
+  [LiveAudienceEvent.onOwnerJoined]: OwnerJoinedEventInfo;
+  [LiveAudienceEvent.onOwnerLeft]: OwnerLeftEventInfo;
+  [LiveAudienceEvent.onAdminJoined]: AdminJoinedEventInfo;
+  [LiveAudienceEvent.onAdminLeft]: AdminLeftEventInfo;
   [LiveAudienceEvent.onAudienceJoined]: AudienceJoinedEventInfo;
   [LiveAudienceEvent.onAudienceLeft]: AudienceLeftEventInfo;
+  [LiveAudienceEvent.onAudienceMessageDisabled]: AudienceMessageDisabledEventInfo;
 }
 
 /**
