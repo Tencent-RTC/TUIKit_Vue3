@@ -49,7 +49,15 @@
  * import { RealtimeMessageList } from 'tuikit-atomicx-vue3';
  * </script>
  */
-import RealtimeMessageList from './components/RealtimeMessageList.vue';
-import Subtitle from './components/Subtitle.vue';
+import { addI18n } from '../../i18n';
+import RealtimeMessageListComponent from './components/RealtimeMessageList.vue';
+import SubtitleComponent from './components/Subtitle.vue';
+import { enResource, zhResource } from './i18n';
+
+addI18n('en-US', { translation: enResource });
+addI18n('zh-CN', { translation: zhResource });
+
+const Subtitle = SubtitleComponent;
+const RealtimeMessageList = RealtimeMessageListComponent;
 
 export { Subtitle, RealtimeMessageList };

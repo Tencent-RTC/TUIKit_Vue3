@@ -115,7 +115,25 @@ watch(
       isLoadingMore.value = true;
       liveListCursor.value = '';
       liveList.value.length = 0;
-      await fetchLiveList({});
+      // Retry with backoff to handle the race where TUIRoomEngine.login()
+      // resolves at the JS layer before the C++ liveListExtension finishes
+      // initializing (error_code:1, not inited). This typically occurs when
+      // the user is kicked offline and re-logs in without a page navigation.
+      const MAX_RETRIES = 3;
+      const RETRY_DELAY_MS = 500;
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        try {
+          await fetchLiveList({});
+          break;
+        } catch (error: any) {
+          const isNotInited = error?.code === 1 || error?.error_code === 1 || error?.message?.includes('not inited');
+          if (isNotInited && attempt < MAX_RETRIES - 1) {
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (attempt + 1)));
+          } else {
+            throw error;
+          }
+        }
+      }
       isLoadingMore.value = false;
     }
   },

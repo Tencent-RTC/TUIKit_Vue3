@@ -68,13 +68,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { TUIConnectionCode } from '@tencentcloud/tuiroom-engine-js';
 import { TUIButton, TUIToast, useUIKit, TOAST_TYPE, TUIDialog } from '@tencentcloud/uikit-base-component-vue3';
 import { useBattleState } from '../../states/BattleState';
 import { useCoHostState } from '../../states/CoHostState';
+import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
-import { CoHostLayoutTemplate, CoHostEvent } from '../../types';
+import { CoHostLayoutTemplate, CoHostEvent, LiveOrientation } from '../../types';
 import UserList from './UserList.vue';
 import RecommendHostList from './RecommendHostList.vue';
 import type { SeatUserInfo } from '../../types';
@@ -85,6 +86,7 @@ const props = defineProps<{
   coHostLayoutTemplate: CoHostLayoutTemplate;
 }>();
 const { loginUserInfo } = useLoginState();
+const { currentLive } = useLiveListState();
 const {
   invitees,
   requestHostConnection,
@@ -102,12 +104,30 @@ const {
 const showExitCoHostDialog = ref(false);
 const isUserInvited = (userId: string, liveId: string) => invitees.value.some(user => user.userId === userId && user.liveId === liveId);
 
+// Determine the current live orientation based on layoutTemplate range.
+// Landscape templates fall within [200, 599]; portrait otherwise.
+const currentLiveOrientation = computed(() => {
+  const layout = currentLive.value?.layoutTemplate;
+  if (typeof layout === 'number' && layout >= 200 && layout <= 599) {
+    return LiveOrientation.Landscape;
+  }
+  return LiveOrientation.Portrait;
+});
+
+// In landscape mode, force the co-host layout to the fixed 2-seat landscape template.
+const effectiveCoHostLayoutTemplate = computed(() => {
+  if (currentLiveOrientation.value === LiveOrientation.Landscape) {
+    return CoHostLayoutTemplate.HostVideoLandscapeFixed2Seats;
+  }
+  return props.coHostLayoutTemplate;
+});
+
 const pkUserIds = new Set<string>();
 const handleSendBattleRequest = async (user: SeatUserInfo) => {
   try {
     const result = await requestHostConnection({
       liveId: user.liveId,
-      layoutTemplate: props.coHostLayoutTemplate,
+      layoutTemplate: effectiveCoHostLayoutTemplate.value,
       timeout: 10,
       extensionInfo: JSON.stringify({
         timeout: 10,

@@ -50,8 +50,14 @@ const { seatList } = useLiveSeatState();
 const { t } = useUIKit();
 
 const showBattleDecorate = ref(false);
+// Show PK bar only when exactly 2 hosts are battling on a layout that renders them side-by-side.
+// - HostDynamicGrid (600): portrait grid, 2 of 9 seats occupied -> classic 1v1 PK
+// - HostVideoLandscapeFixed2Seats (400): landscape 1v1, 2 fixed seats -> landscape PK
 const showPkBar = computed(() => {
-  return currentLive.value?.layoutTemplate === CoHostLayoutTemplate.HostDynamicGrid
+  const layoutTemplate = currentLive.value?.layoutTemplate;
+  const isSupportedLayout = layoutTemplate === CoHostLayoutTemplate.HostDynamicGrid
+    || layoutTemplate === CoHostLayoutTemplate.HostVideoLandscapeFixed2Seats;
+  return isSupportedLayout
     && battleUsers.value.length === 2
     && seatList.value?.filter(seat => seat.userInfo).length === 2;
 });

@@ -23,7 +23,8 @@ export function usePromoteToParticipantAction(
       try {
         await promoteToParticipant({ userId: targetParticipant.userId });
       } catch (_error) {
-        if (_error && typeof _error === 'object' && 'code' in _error && _error?.code === TUIErrorCode.ERR_ALL_SEAT_OCCUPIED) {
+        if (_error && typeof _error === 'object' && 'code' in _error && (_error?.code === TUIErrorCode.ERR_ALL_SEAT_OCCUPIED || _error?.code === TUIErrorCode.ERR_NO_PERMISSION)) {
+          // todo ERR_ROOM_NOT_SUPPORT_PRELOADING 错误码等待后台确认是否修改
           TUIToast.error({
             message: t('ParticipantList.ParticipantCountLimit'),
           });

@@ -60,11 +60,11 @@
     >
       <template v-if="isPictureInPicture">
         <component v-if="buttons[PlayerControlButton.PictureInPicture].activeIcon" :is="renderButtonIcon(buttons[PlayerControlButton.PictureInPicture].activeIcon!)" />
-        <IconBusinessPictureInPicture v-else :size="20" />
+        <IconPictureInPicture v-else :size="20" />
       </template>
       <template v-else>
         <component v-if="buttons[PlayerControlButton.PictureInPicture].icon" :is="renderButtonIcon(buttons[PlayerControlButton.PictureInPicture].icon!)" />
-        <IconBusinessPictureInPicture v-else :size="20" />
+        <IconPictureInPicture v-else :size="20" />
       </template>
     </span>
   </template>
@@ -100,7 +100,7 @@ export default defineComponent({
 import { computed, h } from 'vue';
 import {
   IconFullScreen,
-  IconBusinessPictureInPicture,
+  IconPictureInPicture,
   IconBusinessPause,
   IconBusinessPlay,
   useUIKit,

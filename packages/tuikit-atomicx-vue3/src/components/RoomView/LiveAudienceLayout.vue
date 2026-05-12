@@ -7,7 +7,7 @@
       />
       <slot
         name="participantViewUI"
-        v-bind="{ participant: roomOwnerParticipant, streamType: VideoStreamType.Camera }"
+        v-bind="{ participant: currentVideoParticipant, streamType: VideoStreamType.Camera }"
       />
     </div>
   </div>
@@ -16,17 +16,22 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useRoomParticipantState } from '../../states/RoomParticipantState';
-import { useRoomState } from '../../states/RoomState';
 import { VideoStreamType } from '../../types';
 import { usePlayStream } from './usePlayStream';
 import { useStreamItemDimensions } from './useStreamItemDimensions';
 
-const { currentRoom } = useRoomState();
 const { participantList } = useRoomParticipantState();
-const roomOwnerParticipant = computed(() => participantList.value.find(participant => participant.userId === currentRoom.value?.roomOwner.userId));
 
 const liveAudienceLayoutContainerRef = ref<HTMLElement | null>(null);
-const { startPlayStream, stopPlayStream } = usePlayStream();
+const { seatList, startPlayStream, stopPlayStream } = usePlayStream();
+
+const currentVideoParticipant = computed(() => {
+  const firstSeat = seatList.value[0];
+  if (!firstSeat) {
+    return undefined;
+  }
+  return participantList.value.find(participant => participant.userId === firstSeat.userInfo.userId);
+});
 
 const { itemStyle: streamItemStyle } = useStreamItemDimensions({
   containerRef: liveAudienceLayoutContainerRef,

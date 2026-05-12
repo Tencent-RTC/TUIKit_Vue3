@@ -68,6 +68,7 @@ export const resource = {
   'ParticipantList.TransferHostFailed': 'Failed to transfer host. Please try again.',
   'ParticipantList.ChangeNameFailed': 'Failed to change name. Please try again.',
   'ParticipantList.TransferHostWarning': 'After transferring room ownership, you will become a general member',
+  'ParticipantList.TransferHostWithAsrWarning': 'After transferring room ownership, you will become a general member. Real-time Subtitles and AI Meeting Minutes will stop and must be re-enabled by the new host.',
   'ParticipantList.NameMaxLength': 'The user name cannot exceed 32 characters',
 
   'ParticipantList.InviteSuccess': 'Invitation sent successfully, waiting for member to join',

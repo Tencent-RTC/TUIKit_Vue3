@@ -26,12 +26,12 @@
         <slot name="participantViewUI" v-bind="{ participant, streamType }" />
       </template>
     </MobileLayout>
-    <FloatMixLayout v-if="isWebinarHost">
+    <FloatMixLayout v-if="isWebinarHost || isWebinarParticipant">
       <template #participantViewUI="{ participant, streamType }">
         <slot name="participantViewUI" v-bind="{ participant, streamType }" />
       </template>
     </FloatMixLayout>
-    <LiveAudienceLayout v-if="isWebinarNonHost">
+    <LiveAudienceLayout v-if="!isWebinarHost && isWebinarAudience">
       <template #participantViewUI="{ participant, streamType }">
         <slot name="participantViewUI" v-bind="{ participant, streamType }" />
       </template>
@@ -42,6 +42,7 @@
 <script setup lang="ts">
 import { ref, provide, computed } from 'vue';
 import { useLoginState } from '../../states/LoginState';
+import { useRoomParticipantState } from '../../states/RoomParticipantState';
 import { useRoomState } from '../../states/RoomState';
 import { RoomLayoutTemplate, RoomType } from '../../types';
 import FloatMixLayout from './FloatMixLayout.vue';
@@ -61,6 +62,7 @@ withDefaults(defineProps<Props>(), {
 });
 
 const { currentRoom } = useRoomState();
+const { participantList } = useRoomParticipantState();
 const { loginUserInfo } = useLoginState();
 const roomViewContainerRef = ref<HTMLDivElement | null>(null);
 
@@ -75,7 +77,8 @@ function handleStreamDoubleClick(streamInfo: { participant: RoomParticipant; str
 
 const isStandardRoom = computed(() => currentRoom.value?.roomType === RoomType.Standard);
 const isWebinarHost = computed(() => currentRoom.value?.roomType === RoomType.Webinar && currentRoom.value?.roomOwner.userId === loginUserInfo.value?.userId);
-const isWebinarNonHost = computed(() => currentRoom.value?.roomType === RoomType.Webinar && currentRoom.value?.roomOwner.userId !== loginUserInfo.value?.userId);
+const isWebinarParticipant = computed(() => currentRoom.value?.roomType === RoomType.Webinar && participantList.value.some(participant => participant.userId === loginUserInfo.value?.userId));
+const isWebinarAudience = computed(() => currentRoom.value?.roomType === RoomType.Webinar && !participantList.value.some(participant => participant.userId === loginUserInfo.value?.userId));
 
 </script>
 

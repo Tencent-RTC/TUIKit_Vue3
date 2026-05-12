@@ -68,6 +68,7 @@ export const resource = {
   'ParticipantList.TransferHostFailed': '转交房主失败，请重试',
   'ParticipantList.ChangeNameFailed': '修改名称失败，请重试',
   'ParticipantList.TransferHostWarning': '转交房主后将成为普通成员',
+  'ParticipantList.TransferHostWithAsrWarning': '转交房主后，您将成为普通成员。实时字幕 / AI 会议纪要将停止，需由新房主重新开启。',
   'ParticipantList.NameMaxLength': '用户名称不能超过32个字节',
 
   'ParticipantList.InviteSuccess': '邀请信息已发出，等待成员加入',

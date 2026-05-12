@@ -1,4 +1,4 @@
-import { TRTCVideoFillMode, TRTCVideoMirrorType, TRTCVideoRotation, TUIVideoStreamType } from '@tencentcloud/tuiroom-engine-js';
+import { TRTCVideoFillMode, TRTCVideoMirrorType, TRTCVideoRotation, TRTCVideoStreamType, TUIVideoStreamType } from '@tencentcloud/tuiroom-engine-js';
 import { useRoomEngine } from '../../../hooks/useRoomEngine';
 import { useLoginState } from '../../../states/LoginState';
 
@@ -63,11 +63,9 @@ export default class RTCStreamPlayer {
       return;
     }
     if (this.userId === loginUserInfo.value?.userId && this.streamType === TUIVideoStreamType.kCameraStream) {
-      await roomEngine.instance?.setLocalVideoView({
-        streamType: this.streamType,
-        view: this.view.id,
-      });
-      this.isVideoPlaying = true;
+      // Local camera stream is rendered via the media mixing pipeline (local-video-mixer),
+      // not through the RTC stream player. No action needed here.
+      return;
     } else {
       await roomEngine.instance?.setRemoteVideoView({
         userId: this.userId,
@@ -75,10 +73,15 @@ export default class RTCStreamPlayer {
         view: this.view.id,
       });
       const trtcCloud = roomEngine.instance?.getTRTCCloud();
-      await trtcCloud?.setRemoteRenderParams(this.userId, this.streamType, {
+      const streamTypeMap = {
+        [TUIVideoStreamType.kCameraStream]: TRTCVideoStreamType.TRTCVideoStreamTypeBig,
+        [TUIVideoStreamType.kScreenStream]: TRTCVideoStreamType.TRTCVideoStreamTypeSub,
+        [TUIVideoStreamType.kCameraStreamLow]: TRTCVideoStreamType.TRTCVideoStreamTypeSmall,
+      };
+      await trtcCloud?.setRemoteRenderParams(this.userId, streamTypeMap[this.streamType], {
         mirrorType: TRTCVideoMirrorType.TRTCVideoMirrorType_Disable,
         rotation: TRTCVideoRotation.TRTCVideoRotation0,
-        fillMode: TRTCVideoFillMode.TRTCVideoFillMode_Fill,
+        fillMode: TRTCVideoFillMode.TRTCVideoFillMode_Fit,
       });
       await roomEngine.instance?.startPlayRemoteVideo({
         userId: this.userId,
@@ -94,7 +97,7 @@ export default class RTCStreamPlayer {
       return;
     }
     if (this.userId === loginUserInfo.value?.userId) {
-      await roomEngine.instance?.setLocalVideoView({ view: null });
+      // Local stream teardown is handled by the media mixing pipeline. No action needed here.
     } else {
       await roomEngine.instance?.stopPlayRemoteVideo({
         userId: this.userId,

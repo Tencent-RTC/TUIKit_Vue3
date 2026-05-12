@@ -2,14 +2,31 @@
   <div ref="floatMixLayoutContainerRef" class="float-mix-layout-container">
     <div :style="streamItemStyle" class="float-mix-layout-content">
       <div
-        id="local-video-mixer"
-        class="local-video-mixer-content"
+        id="remote-rtc-stream"
+        class="remote-rtc-stream-content"
       />
-      <slot
-        v-if="localParticipant && (!hasCameraTrack && !hasScreenTrack)"
-        name="participantViewUI"
-        v-bind="{ participant: localParticipant, streamType: VideoStreamType.Camera }"
-      />
+      <div
+        v-for="item in remoteParticipantViewList"
+        :key="item.participant.userId"
+        :style="item.style"
+      >
+        <slot name="participantViewUI" v-bind="{ participant: item.participant, streamType: VideoStreamType.Camera }" />
+      </div>
+      <div
+        id="local-stream-region"
+        class="local-stream-region-content"
+        :style="localMixerStyle"
+      >
+        <div
+          id="local-video-mixer"
+          class="local-video-mixer-content"
+        />
+        <slot
+          v-if="localParticipant"
+          name="participantViewUI"
+          v-bind="{ participant: localParticipant, streamType: VideoStreamType.Camera }"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -19,8 +36,11 @@ import { onMounted, watch, computed, ref, onUnmounted } from 'vue';
 import TUIRoomEngine, { TRTCMediaSourceType, TRTCVideoFillMode, TRTCVideoRotation, TRTCVideoResolution, TRTCVideoResolutionMode } from '@tencentcloud/tuiroom-engine-js';
 import { useRoomEngine } from '../../hooks/useRoomEngine';
 import { useDeviceState } from '../../states/DeviceState';
+import { useLoginState } from '../../states/LoginState';
 import { useRoomParticipantState } from '../../states/RoomParticipantState';
 import { VideoStreamType, DeviceStatus, VideoQuality } from '../../types';
+import { usePlayStream } from './usePlayStream';
+import { useStreamPosition } from './usePlayStream/useStreamPostion';
 import { useStreamItemDimensions } from './useStreamItemDimensions';
 import type { TRTCCloud } from '@tencentcloud/tuiroom-engine-js';
 
@@ -39,7 +59,7 @@ interface LayoutRect {
 }
 
 const { cameraStatus, screenStatus } = useDeviceState();
-const { localParticipant } = useRoomParticipantState();
+const { localParticipant, participantList } = useRoomParticipantState();
 
 const roomEngine = useRoomEngine();
 let trtcCloud: TRTCCloud | null = null;
@@ -58,6 +78,52 @@ const { itemStyle: streamItemStyle } = useStreamItemDimensions({
 });
 
 const { localMirrorType, localVideoQuality } = useDeviceState();
+const { startPlayStream, stopPlayStream } = usePlayStream();
+const { positionList } = useStreamPosition();
+const { loginUserInfo } = useLoginState();
+
+const localStreamViewInfo = computed(() =>
+  positionList.value.find(item => item.userId === loginUserInfo.value?.userId),
+);
+
+const localMixerStyle = computed(() => {
+  const info = localStreamViewInfo.value;
+  if (!info) {
+    return { width: '0px', height: '0px' };
+  }
+  return {
+    position: 'absolute' as const,
+    left: info.left,
+    top: info.top,
+    width: info.width,
+    height: info.height,
+    zIndex: info.zIndex,
+  };
+});
+
+const remoteParticipantViewList = computed(() =>
+  positionList.value
+    .filter(item => item.userId && item.userId !== loginUserInfo.value?.userId)
+    .map((item) => {
+      const participant = participantList.value.find(p => p.userId === item.userId);
+      if (!participant) {
+        return null;
+      }
+      return {
+        participant,
+        style: {
+          position: 'absolute' as const,
+          left: item.left,
+          top: item.top,
+          width: item.width,
+          height: item.height,
+          zIndex: item.zIndex,
+          overflow: 'hidden',
+        },
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null),
+);
 
 // Track actual camera and screen status based on MediaStreamTrack
 const hasCameraTrack = ref(false);
@@ -254,12 +320,14 @@ onMounted(async () => {
     if (publishParams.value) {
       await trtcCloud?.getMediaMixingManager()?.updatePublishParams(publishParams.value);
     }
+    startPlayStream({ view: 'remote-rtc-stream' });
   });
 });
 
 onUnmounted(() => {
   trtcCloud?.getMediaMixingManager()?.stopPublish();
   trtcCloud?.getMediaMixingManager()?.destroy();
+  stopPlayStream();
 });
 
 watch(() => [hasCameraTrack.value, hasScreenTrack.value], async ([newCameraStatus, newScreenStatus], [oldCameraStatus, oldScreenStatus]) => {
@@ -334,7 +402,7 @@ async function updateMediaSourceLayout(type: 'camera' | 'screen') {
         rect,
         zOrder: type === 'camera' ? 1 : 0,
         fillMode,
-        rotation: TRTCVideoRotation.TRTCVideoRotation_0,
+        rotation: TRTCVideoRotation.TRTCVideoRotation0,
       },
       isSelected: false,
       interaction: {
@@ -439,10 +507,24 @@ TUIRoomEngine.once('ready', async () => {
   overflow: hidden;
 }
 
+.local-stream-region-content {
+  position: relative;
+  overflow: hidden;
+}
+
 .local-video-mixer-content {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
+}
+
+.remote-rtc-stream-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 </style>
