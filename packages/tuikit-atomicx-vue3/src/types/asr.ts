@@ -52,14 +52,16 @@ export type RawTranscriberMessage = {
   segmentId: string;
   speakerUserId: string;
   sourceText: string;
-  translationTexts?: Map<string, string> | Array<{
-    language: string;
-    text: string;
-  }>;
+  translationTexts?: Map<string, string | TranslationText> | TranslationText[] | Record<string, string | TranslationText>;
   timestamp: number;
   isCompleted: boolean;
   robotId?: string;
 };
+
+export interface TranslationText {
+  language: string;
+  text: string;
+}
 
 /**
  * @module TranscriberMessage
@@ -74,10 +76,10 @@ export type RawTranscriberMessage = {
  *   segmentId: '123456789',
  *   speakerUserId: 'user123',
  *   sourceText: 'Hello, world!',
- *   translationTexts: new Map([
- *     ['zh', '你好，世界！'],
- *     ['en', 'Hello, world!'],
- *   ]),
+ *   translationTexts: [
+ *     { language: 'zh', text: '你好，世界！' },
+ *     { language: 'en', text: 'Hello, world!' },
+ *   ],
  *   timestamp: 1640995200000,
  *   isCompleted: true,
  * };
@@ -86,10 +88,7 @@ export interface TranscriberMessage {
   segmentId: string;
   speakerUserId: string;
   sourceText: string;
-  translationTexts?: Map<TranscriberLanguage, string> | Array<{
-    language: TranscriberLanguage;
-    text: string;
-  }>;
+  translationTexts?: TranslationText[];
   timestamp: number;
   isCompleted: boolean;
   robotId?: string;
@@ -135,10 +134,10 @@ export enum RealtimeTranscriberEvent {
  *     segmentId: '123456789',
  *     speakerUserId: 'user123',
  *     sourceText: 'Hello, world!',
- *     translationTexts: new Map([
- *       ['zh', '你好，世界！'],
- *       ['en', 'Hello, world!'],
- *     ]),
+ *     translationTexts: [
+ *       { language: 'zh', text: '你好，世界！' },
+ *       { language: 'en', text: 'Hello, world!' },
+ *     ],
  *     timestamp: 1640995200000,
  *     isCompleted: true,
  *   },

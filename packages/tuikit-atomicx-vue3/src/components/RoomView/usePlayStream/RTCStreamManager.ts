@@ -92,7 +92,9 @@ export class RTCStreamManager {
 
   public async stop() {
     console.log('RTCStreamManger.stop.');
-    this.containerView?.removeChild(this.view as HTMLElement);
+    if (this.view && this.containerView?.contains(this.view)) {
+      this.containerView.removeChild(this.view);
+    }
     [...this.playerMap.values()].forEach(async (player) => {
       await player.destroy();
     });

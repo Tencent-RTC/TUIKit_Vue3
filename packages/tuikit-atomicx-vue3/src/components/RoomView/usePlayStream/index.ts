@@ -14,7 +14,7 @@ const { hasVideoUserList } = useRoomStore();
 
 export function usePlayStream() {
   const roomEngine = useRoomEngine();
-  const { positionList, createResizeObserver, deleteResizeObserver } = useStreamPosition();
+  const { seatList, positionList, createResizeObserver, deleteResizeObserver } = useStreamPosition();
   const { currentRoom } = useRoomState();
 
   const isNeedPlayStream = ref(false);
@@ -138,6 +138,7 @@ export function usePlayStream() {
   });
 
   return {
+    seatList,
     startPlayStream,
     stopPlayStream,
   };

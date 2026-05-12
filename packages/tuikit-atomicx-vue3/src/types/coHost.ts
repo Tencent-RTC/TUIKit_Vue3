@@ -164,4 +164,6 @@ export enum CoHostLayoutTemplate {
   HostDynamicGrid = 600,
   /** 动态 1v6 布局 */
   HostDynamic1v6 = 601,
+  /** 固定 2 座位横屏布局 */
+  HostVideoLandscapeFixed2Seats = 400,
 }

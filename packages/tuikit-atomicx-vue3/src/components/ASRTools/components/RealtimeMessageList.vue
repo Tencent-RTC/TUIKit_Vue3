@@ -196,15 +196,17 @@ watch(() => realtimeMessageList.value.length, () => {
   text-align: left;
   border-radius: 8px;
   background-color: var(--bg-color-bubble-reciprocal);
+  color: var(--text-color-primary);
 }
 
 .content-line {
   white-space: pre-wrap;
   word-break: break-word;
+  color: var(--text-color-primary);
 
   &.secondary {
     margin-top: 4px;
-    opacity: 0.78;
+    color: var(--text-color-secondary);
   }
 }
 </style>

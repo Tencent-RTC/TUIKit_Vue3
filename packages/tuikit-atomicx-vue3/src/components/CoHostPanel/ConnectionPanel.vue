@@ -27,7 +27,16 @@
             <div class="user-info">
               <span class="user-name">{{ user.userName || user.userId }}</span>
             </div>
-            <div class="user-status">
+            <div class="user-actions" v-if="user.userId !== loginUserInfo?.userId">
+              <TUIButton
+                size="small"
+                :type="isMuted(user.liveId) ? 'primary' : 'default'"
+                @click="handleToggleMuteHost(user)"
+              >
+                {{ isMuted(user.liveId) ? t('Unmute') : t('Mute') }}
+              </TUIButton>
+            </div>
+            <div v-else class="user-status">
               {{ t('Connecting') }}...
             </div>
           </div>
@@ -67,14 +76,10 @@
       {{ t('Exit connection') }}
     </TUIButton>
     <template v-if="!currentBattleInfo?.battleId">
-      <TUIButton
-        v-if="!inPk && battleRequestList.size === 0"
-        type="primary"
-        @click="handleBattleRequest"
-      >
+      <TUIButton type="primary" @click="handleBattleRequest" v-if="!inPk && battleRequestList.size === 0">
         {{ t('Start battle') }}
       </TUIButton>
-      <TUIButton v-if="!inPk && battleRequestList.size > 0" @click="handleCancelBattleRequest">
+      <TUIButton @click="handleCancelBattleRequest" v-if="!inPk && battleRequestList.size > 0">
         {{ t('Cancel battle') }}
       </TUIButton>
     </template>
@@ -113,12 +118,13 @@ import { TUIConnectionCode } from '@tencentcloud/tuiroom-engine-js';
 import { TUIButton, TUIToast, useUIKit, TOAST_TYPE, TUIDialog } from '@tencentcloud/uikit-base-component-vue3';
 import { useBattleState } from '../../states/BattleState';
 import { useCoHostState } from '../../states/CoHostState';
+import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
-import { CoHostLayoutTemplate, CoHostStatus, CoHostEvent, BattleEvent } from '../../types';
+import { CoHostLayoutTemplate, CoHostStatus, CoHostEvent, BattleEvent, LiveOrientation } from '../../types';
 import { Avatar } from '../Avatar';
-import { ERROR_MESSAGE } from './constants';
 import RecommendHostList from './RecommendHostList.vue';
 import type { SeatUserInfo } from '../../types';
+import { ERROR_MESSAGE } from './constants';
 
 const props = defineProps<{
   battleDuration: number;
@@ -127,6 +133,7 @@ const props = defineProps<{
 
 const { t } = useUIKit();
 const { loginUserInfo } = useLoginState();
+const { currentLive } = useLiveListState();
 const {
   coHostStatus,
   connected,
@@ -147,12 +154,31 @@ const {
   unsubscribeEvent: unsubscribeBattleEvent,
 } = useBattleState();
 
+// Determine the current live orientation based on layoutTemplate range.
+// Landscape templates fall within [200, 599]; portrait otherwise.
+const currentLiveOrientation = computed(() => {
+  const layout = currentLive.value?.layoutTemplate;
+  if (typeof layout === 'number' && layout >= 200 && layout <= 599) {
+    return LiveOrientation.Landscape;
+  }
+  return LiveOrientation.Portrait;
+});
+
+// In landscape mode, force the co-host layout to the fixed 2-seat landscape template.
+const effectiveCoHostLayoutTemplate = computed(() => {
+  if (currentLiveOrientation.value === LiveOrientation.Landscape) {
+    return CoHostLayoutTemplate.HostVideoLandscapeFixed2Seats;
+  }
+  return props.coHostLayoutTemplate;
+});
+
 const seatNumber = computed(() => {
-  const seatNumberMap = {
+  const seatNumberMap: Record<CoHostLayoutTemplate, number> = {
     [CoHostLayoutTemplate.HostDynamicGrid]: 9,
     [CoHostLayoutTemplate.HostDynamic1v6]: 7,
+    [CoHostLayoutTemplate.HostVideoLandscapeFixed2Seats]: 2,
   };
-  return seatNumberMap[props.coHostLayoutTemplate];
+  return seatNumberMap[effectiveCoHostLayoutTemplate.value];
 });
 
 const showExitCoHostDialog = ref(false);
@@ -169,7 +195,7 @@ const handleSendCoHostRequest = async (user: SeatUserInfo) => {
   try {
     const result = await requestHostConnection({
       liveId: user.liveId,
-      layoutTemplate: props.coHostLayoutTemplate,
+      layoutTemplate: effectiveCoHostLayoutTemplate.value,
       timeout: 10,
       extensionInfo: JSON.stringify({
         timeout: 10,
@@ -252,7 +278,7 @@ const handleBattleRequest = async () => {
       timeout: 10,
     });
     requestBattleId.value = battleRes.battleId;
-    userIdList.forEach(userId => battleRequestList.value.add(userId));
+    userIdList.forEach(userId => battleRequestList.value.add(userId))
   } catch (error: any) {
     const message = t(ERROR_MESSAGE[error.code as keyof typeof ERROR_MESSAGE] || 'Request battle failed');
     TUIToast.error({ message });
@@ -262,7 +288,7 @@ const handleBattleRequest = async () => {
 const handleCancelBattleRequest = async () => {
   await cancelBattleRequest({
     battleId: requestBattleId.value,
-    userIdList: Array.from(battleRequestList.value),
+    userIdList: Array.from(battleRequestList.value)
   });
   requestBattleId.value = '';
   battleRequestList.value.clear();
@@ -286,19 +312,19 @@ const handleCoHostRequestTimeout = ({ inviter, invitee }: { inviter: SeatUserInf
   }
 };
 
-const onBattleRequestAccept = (eventInfo: { battleId: string; inviter: SeatUserInfo; invitee: SeatUserInfo }) => {
+const onBattleRequestAccept = (eventInfo: { battleId: string, inviter: SeatUserInfo, invitee: SeatUserInfo }) => {
   if (eventInfo.inviter.userId === loginUserInfo.value?.userId) {
     battleRequestList.value.delete(eventInfo.invitee.userId);
   }
 };
 
-const onBattleRequestRejected = (eventInfo: { battleId: string; inviter: SeatUserInfo; invitee: SeatUserInfo }) => {
+const onBattleRequestRejected = (eventInfo: { battleId: string, inviter: SeatUserInfo, invitee: SeatUserInfo }) => {
   if (eventInfo.inviter.userId === loginUserInfo.value?.userId) {
     battleRequestList.value.delete(eventInfo.invitee.userId);
   }
 };
 
-const onBattleRequestTimeout = (eventInfo: { battleId: string; inviter: SeatUserInfo; invitee: SeatUserInfo }) => {
+const onBattleRequestTimeout = (eventInfo: { battleId: string, inviter: SeatUserInfo, invitee: SeatUserInfo }) => {
   if (eventInfo.inviter.userId === loginUserInfo.value?.userId) {
     battleRequestList.value.delete(eventInfo.invitee.userId);
   }
@@ -307,12 +333,12 @@ const onBattleRequestTimeout = (eventInfo: { battleId: string; inviter: SeatUser
 const onBattleStarted = () => {
   requestBattleId.value = '';
   battleRequestList.value.clear();
-};
+}
 
 const onBattleEnded = () => {
   requestBattleId.value = '';
   battleRequestList.value.clear();
-};
+}
 
 onMounted(() => {
   subscribeEvent(CoHostEvent.onCoHostRequestAccepted, handleCoHostRequestAccepted);

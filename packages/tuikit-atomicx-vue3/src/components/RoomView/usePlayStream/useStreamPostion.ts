@@ -2,7 +2,7 @@ import { ref, computed } from 'vue';
 import { TUILiveLayoutManagerEvents } from '@tencentcloud/tuiroom-engine-js';
 import { useRoomEngine } from '../../../hooks/useRoomEngine';
 import { useRoomState } from '../../../states/RoomState';
-import type { TUISeatLayout, TUISeatRegion } from '@tencentcloud/tuiroom-engine-js';
+import type { TUIDeviceStatus, TUISeatLayout, TUISeatRegion } from '@tencentcloud/tuiroom-engine-js';
 
 const { currentRoom } = useRoomState();
 const roomEngine = useRoomEngine();
@@ -96,7 +96,26 @@ const positionList = computed(() => {
   }));
 });
 
-function getNewSeatInfo(seatRegion: TUISeatRegion): any {
+type SeatInfo = {
+  index: number;
+  isLocked: boolean;
+  userInfo: {
+    userId: string;
+    userName: string;
+    avatarUrl: string;
+    userMicrophoneStatus: TUIDeviceStatus;
+    userCameraStatus: TUIDeviceStatus;
+  };
+  region: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    zOrder: number;
+  };
+};
+
+function getNewSeatInfo(seatRegion: TUISeatRegion): SeatInfo {
   return {
     index: seatRegion.seatIndex,
     isLocked: seatRegion.isSeatLocked,
@@ -104,6 +123,8 @@ function getNewSeatInfo(seatRegion: TUISeatRegion): any {
       userId: seatRegion.userId,
       userName: seatRegion.userName,
       avatarUrl: seatRegion.userAvatar,
+      userMicrophoneStatus: seatRegion.userMicrophoneStatus,
+      userCameraStatus: seatRegion.userCameraStatus,
     },
     region: {
       x: seatRegion.x,
@@ -132,6 +153,7 @@ export function useStreamPosition() {
   liveLayoutManager?.on(TUILiveLayoutManagerEvents.onSeatLayoutChanged, onSeatLayoutChanged);
 
   return {
+    seatList,
     positionList,
     createResizeObserver,
     deleteResizeObserver,
