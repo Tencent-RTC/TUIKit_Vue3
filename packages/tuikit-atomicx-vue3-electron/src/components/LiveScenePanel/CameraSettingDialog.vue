@@ -34,13 +34,12 @@ import { useDeviceState } from '../../states/DeviceState';
 import { MediaSource } from '../../types';
 import {
   TRTCVideoMirrorType,
-  TRTCVideoResolution,
   TRTCMediaSourceType,
 } from '@tencentcloud/tuiroom-engine-electron';
 import { TUIDialog, TUISelect, TUIOption, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useRoomEngine } from '../../hooks/useRoomEngine.ts';
-const roomEngine = useRoomEngine();
+import { useRoomEngine } from '../../hooks/useRoomEngine';
 
+const roomEngine = useRoomEngine();
 const previewTRTCCloud = roomEngine.instance?.getTRTCCloud();
 
 const { t } = useUIKit();
@@ -63,22 +62,45 @@ const confirmText = computed(() => {
 const cancelText = t('Cancel');
 
 const currentCameraId = ref(props.mediaSource?.sourceId || cameraList.value[0]?.deviceId);
-const currentResolution = ref(TRTCVideoResolution.TRTCVideoResolution_1280_720);
+const currentResolution = ref('');
 const isMirror: Ref<boolean> = ref(
-  props.mediaSource?.mirrorType === TRTCVideoMirrorType.TRTCVideoMirrorType_Enable || true
+  props.mediaSource ? props.mediaSource.mirrorType === TRTCVideoMirrorType.TRTCVideoMirrorType_Enable : false
 );
 
-const videoResolutionList = computed(() => [
-  { label: '640x360', value: TRTCVideoResolution.TRTCVideoResolution_640_360 },
-  { label: '960x540', value: TRTCVideoResolution.TRTCVideoResolution_960_540 },
-  { label: '1280x720', value: TRTCVideoResolution.TRTCVideoResolution_1280_720 },
-  { label: '1920x1080', value: TRTCVideoResolution.TRTCVideoResolution_1920_1080 },
-]);
+const videoResolutionList: Ref<Array<{
+  label: string;
+  value: string;
+}>> = ref([]);
+
+const DEFAULT_RESOLUTION_OPTIONS: Array<{ label: string; value: string }> = [
+  { label: '1920x1080', value: '1920x1080' },
+  { label: '1280x720', value: '1280x720' },
+  { label: '960x540', value: '960x540' },
+  { label: '640x360', value: '640x360' },
+];
+
+const generateVideoResolutionList = () => {
+  const currentCamera = cameraList.value.find(item => item.deviceId === currentCameraId.value);
+  if (!currentCamera) return;
+  const supportedResolutions = (currentCamera as any)?.deviceProperties?.SupportedResolution;
+  if (supportedResolutions && Array.isArray(supportedResolutions) && supportedResolutions.length > 0) {
+    const resolutionList = supportedResolutions.map((resolution: {width: number; height: number;}) => ({
+      label: `${resolution.width}x${resolution.height}`,
+      value: `${resolution.width}x${resolution.height}`,
+    }));
+    videoResolutionList.value = resolutionList;
+  } else {
+    // No SupportedResolution from the device, fall back to a curated default list.
+    videoResolutionList.value = [...DEFAULT_RESOLUTION_OPTIONS];
+  }
+};
 
 watch(() => cameraList.value, async () => {
   if (!cameraList.value.find(item => item.deviceId === currentCameraId.value)) {
     currentCameraId.value = cameraList.value[0]?.deviceId;
-    await previewTRTCCloud.setCurrentCameraDevice(currentCameraId.value);
+    generateVideoResolutionList();
+    currentResolution.value = videoResolutionList.value[0]?.value || '';
+    await previewTRTCCloud?.setCurrentCameraDevice(currentCameraId.value);
   }
 });
 
@@ -86,66 +108,73 @@ onMounted(async () => {
   await getCameraList();
   if (props.mediaSource?.sourceId) {
     currentCameraId.value = props.mediaSource.sourceId;
-    await previewTRTCCloud.setCurrentCameraDevice(props.mediaSource.sourceId);
+    generateVideoResolutionList();
+    if (props.mediaSource?.width !== undefined && props.mediaSource.height !== undefined) {
+      currentResolution.value = `${props.mediaSource.width}x${props.mediaSource.height}`;
+    }
+    await previewTRTCCloud?.setCurrentCameraDevice(props.mediaSource.sourceId);
   } else {
     currentCameraId.value = cameraList.value[0]?.deviceId;
-    await previewTRTCCloud.setCurrentCameraDevice(cameraList.value[0]?.deviceId);
+    generateVideoResolutionList();
+    currentResolution.value = videoResolutionList.value[0]?.value || '';
+    await previewTRTCCloud?.setCurrentCameraDevice(cameraList.value[0]?.deviceId);
   }
 });
 
 watch(
   () => props.mediaSource,
-  async (mediaSource: any) => {
+  async (mediaSource: MediaSource | null) => {
     if (mediaSource) {
-      // Use sourceId directly instead of camera.cameraId (Electron format)
       if (currentCameraId.value !== mediaSource.sourceId) {
         currentCameraId.value = mediaSource.sourceId;
-        await previewTRTCCloud.setCurrentCameraDevice(mediaSource.sourceId);
+        generateVideoResolutionList();
+        await previewTRTCCloud?.setCurrentCameraDevice(mediaSource.sourceId);
       }
-      // Set resolution from camera config if available
-      if (mediaSource.camera?.resolution) {
-        currentResolution.value = mediaSource.camera.resolution;
+      if (mediaSource.width !== undefined && mediaSource.height !== undefined) {
+        currentResolution.value = `${mediaSource.width}x${mediaSource.height}`;
       }
       isMirror.value = mediaSource.mirrorType === TRTCVideoMirrorType.TRTCVideoMirrorType_Enable;
-      // Note: setLocalRenderParams is not supported in Electron SDK (Mac)
-      // Mirror settings are handled through MediaMixingManager's mirrorType field
-      // See: doc/tasks/chardzhang/阶段二-方案记录/阶段二-Electron项目改造-2.4.2-VideoMixerState-合图功能改进计划.md#6.4
     }
   },
-  { deep: true, immediate: true }
+  { deep: true }
 );
 
 const handleCameraChange = async (newVal: string) => {
   currentCameraId.value = newVal;
-  await previewTRTCCloud.setCurrentCameraDevice(newVal);
+  generateVideoResolutionList();
+  currentResolution.value = videoResolutionList.value[0]?.value || '';
+  await previewTRTCCloud?.setCurrentCameraDevice(newVal);
 };
 
 const handleConfirm = () => {
+  const [width, height] = currentResolution.value.split('x').map(Number);
+  if (!width || !height || isNaN(width) || isNaN(height)) {
+    console.warn('Invalid resolution value:', currentResolution.value);
+    return;
+  }
   if (!props.mediaSource) {
     emits('addCameraMaterial', {
       sourceId: currentCameraId.value,
       sourceType: TRTCMediaSourceType.kCamera,
       name: cameraList.value.find(item => item.deviceId === currentCameraId.value)?.deviceName,
-      camera: {
-        cameraId: currentCameraId.value,
-        resolution: currentResolution.value,
-      },
-      // todo: @zack
-      rect: { left: 0, top: 0, right: 640, bottom: 360 },
+      width,
+      height,
+      rect: { left: 0, top: 0, right: width, bottom: height },
       mirrorType: isMirror.value
         ? TRTCVideoMirrorType.TRTCVideoMirrorType_Enable
         : TRTCVideoMirrorType.TRTCVideoMirrorType_Disable,
     });
   } else {
-    const hasCameraNameChanged = props.mediaSource.name !== cameraList.value.find(item => item.deviceId === props.mediaSource.sourceId)?.deviceName;
+    const hasCameraNameChanged = props.mediaSource.name !== cameraList.value.find(item => item.deviceId === props.mediaSource?.sourceId)?.deviceName;
     const updateCameraInfo = {
       ...props.mediaSource,
       sourceId: currentCameraId.value,
-      camera: {
-        cameraId: currentCameraId.value,
-        resolution: currentResolution.value,
-      },
-    }
+      width,
+      height,
+      mirrorType: isMirror.value
+        ? TRTCVideoMirrorType.TRTCVideoMirrorType_Enable
+        : TRTCVideoMirrorType.TRTCVideoMirrorType_Disable,
+    };
     if (!hasCameraNameChanged) {
       Object.assign(updateCameraInfo, {
         name: cameraList.value.find(item => item.deviceId === currentCameraId.value)?.deviceName,

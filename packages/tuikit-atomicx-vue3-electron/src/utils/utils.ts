@@ -170,17 +170,35 @@ export function calculateByteLength(str: string) {
   return byteLength;
 }
 
-export function objectMerge(...args: any[]) {
-  return args.reduce((acc, cur) => {
+/**
+ * Type guard for plain objects (i.e. literals like `{}` or `Object.create(null)`),
+ * excluding built-ins such as `Date`, `Map`, `Set`, `RegExp`, `ArrayBuffer`,
+ * class instances, etc. Used by `objectMerge` to prevent accidental recursion
+ * into objects whose internal slots cannot be reconstructed by spreading keys.
+ */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== 'object') {
+    return false;
+  }
+  const proto = Object.getPrototypeOf(value);
+  return proto === null || proto === Object.prototype;
+}
+
+export function objectMerge<T extends Record<string, unknown>>(target: T, ...sources: Partial<T>[]): T {
+  return [target, ...sources].reduce<Record<string, unknown>>((acc, cur) => {
     Object.keys(cur).forEach(key => {
-      if (acc[key] && typeof acc[key] === 'object') {
-        acc[key] = objectMerge(acc[key], cur[key]);
+      const accVal = acc[key];
+      const curVal = (cur as Record<string, unknown>)[key];
+      // Only recurse into plain objects; otherwise (arrays, Date, Map, Set, class
+      // instances, primitives, ...) directly overwrite to keep semantics correct.
+      if (isPlainObject(accVal) && isPlainObject(curVal)) {
+        acc[key] = objectMerge(accVal, curVal);
       } else {
-        acc[key] = cur[key];
+        acc[key] = curVal;
       }
     });
     return acc;
-  }, {});
+  }, {}) as T;
 }
 
 export function convertSecondsToHMS(seconds: number) {

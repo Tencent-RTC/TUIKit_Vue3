@@ -2,7 +2,8 @@
  * Live gift type definitions
  * @module GiftTypes
  */
-import type { GiftInfo, TUIUserInfo } from '@tencentcloud/tuiroom-engine-electron';
+import type { Ref } from 'vue';
+import type { GiftCategory, GiftInfo, TUIUserInfo } from '@tencentcloud/tuiroom-engine-electron';
 
 interface Gift {
 	liveId: string;
@@ -36,6 +37,14 @@ type LiveGiftEventCallback<T extends LiveGiftEvents = LiveGiftEvents> = (
 
 export {
 	LiveGiftEvents,
+}
+
+export interface ILiveGiftState {
+  giftInfoList: Ref<GiftCategory[]>;
+  sendGift: (params: { giftId: string; count: number }) => Promise<any>;
+  getGiftList: () => Promise<GiftCategory[]>;
+  subscribeEvent: <T extends LiveGiftEvents>(event: T, callback: LiveGiftEventCallback<T>) => void;
+  unsubscribeEvent: <T extends LiveGiftEvents>(event: T, callback: LiveGiftEventCallback<T>) => void;
 }
 
 export type {

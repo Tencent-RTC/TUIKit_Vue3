@@ -28,7 +28,8 @@ import { computed } from 'vue';
 import { TRTCVideoMirrorType, TRTCVideoRotation } from '@tencentcloud/tuiroom-engine-electron';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useVideoMixerState } from '../../../states/VideoMixerState';
-import CameraMirror from '../icons/CameraMirror.vue';
+import CameraMirror from '../../../baseComp/icons/CameraMirror.vue';
+import CameraUnMirror from '../../../baseComp/icons/CameraUnmirror.vue';
 import Delete from '../icons/Delete.vue';
 import Down from '../icons/Down.vue';
 import Rotation from '../icons/Rotation.vue';
@@ -51,7 +52,14 @@ const controlList = computed(() => [
   {
     name: 'mirror',
     text: t('Mirror'),
-    icon: CameraMirror,
+    // Toggle between mirror-on / mirror-off icons so the visual state matches
+    // the active media source. `controlList` is a computed that depends on
+    // `activeMediaSource.mirrorType`, so writing the new mirrorType through
+    // `updateMediaSource` re-renders this entry automatically.
+    icon:
+      activeMediaSource.value?.mirrorType === TRTCVideoMirrorType.TRTCVideoMirrorType_Enable
+        ? CameraMirror
+        : CameraUnMirror,
     onClick: () => {
       if (activeMediaSource.value) {
         const currentMirror = activeMediaSource.value.mirrorType;

@@ -126,3 +126,14 @@ export type RealtimeTranscriberEventInfoMap = {
  * };
  */
 export type RealtimeTranscriberEventCallback = <T extends RealtimeTranscriberEvent>(eventInfo: RealtimeTranscriberEventInfoMap[T]) => void;
+
+import type { Ref } from 'vue';
+
+export interface IAITranscriberState {
+  realtimeMessageList: Ref<TranscriberMessage[]>;
+  startRealtimeTranscriber: (config: { sourceLanguage: TranscriberLanguage; translationLanguages?: TranscriberLanguage[] }) => Promise<string | null>;
+  stopRealtimeTranscriber: () => Promise<void>;
+  updateRealTimeTranscriber: (config: { sourceLanguage: TranscriberLanguage; translationLanguages?: TranscriberLanguage[] }) => Promise<string | null>;
+  subscribeEvent: (event: RealtimeTranscriberEvent, callback: RealtimeTranscriberEventCallback) => void;
+  unsubscribeEvent: (event: RealtimeTranscriberEvent, callback: RealtimeTranscriberEventCallback) => void;
+}

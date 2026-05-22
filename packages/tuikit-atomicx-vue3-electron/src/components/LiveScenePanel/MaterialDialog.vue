@@ -23,7 +23,7 @@
         <div class="category-section">
           <h4>{{ t('Multimedia') }}</h4>
           <div class="material-grid">
-            <div class="material-option" @click="selectMaterial(TRTCMediaSourceType.kVideo)">
+            <div class="material-option" @click="selectMaterial(TRTCMediaSourceType.kVideoFile)">
               <div class="option-icon">▶️</div>
               <span class="option-label">{{ t('Video') }}</span>
             </div>
@@ -55,6 +55,11 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * @deprecated This component has been replaced by LiveSceneSelect.vue.
+ * It does not support kOnlineVideo type and is no longer referenced in the main panel (index.vue).
+ * Retained temporarily for backward compatibility. Consider removing in a future cleanup.
+ */
 import { TRTCMediaSourceType } from '@tencentcloud/tuiroom-engine-electron';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 const { t } = useUIKit();

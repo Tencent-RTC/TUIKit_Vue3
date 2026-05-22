@@ -1,5 +1,24 @@
+import type { Ref } from 'vue';
 // Import from local types
 import type { TUISeatMode, TUILoginUserInfo, TUIVideoStreamType } from './types';
+
+/**
+ * Seat layout template enumeration
+ * @description Simplified single parameter to configure seat-related settings
+ *              Replaces the complex combination of isSeatEnabled, maxSeatCount, seatMode, etc.
+ */
+export enum SeatLayoutTemplate {
+  /** Portrait dynamic 9-grid layout */
+  VideoDynamicGrid9Seats = 600,
+  /** Portrait dynamic 1v6 floating layout */
+  VideoDynamicFloat7Seats = 601,
+  /** Portrait static 9-grid layout */
+  VideoFixedGrid9Seats = 800,
+  /** Portrait static 1v6 floating layout */
+  VideoFixedFloat7Seats = 801,
+  /** Landscape 4-seat layout */
+  VideoLandscape4Seats = 200,
+}
 
 export type LiveInfo = {
   liveId: string;
@@ -21,6 +40,8 @@ export type LiveInfo = {
   maxSeatCount: number;
   layoutTemplate: number;
   customInfo: Record<string, any>;
+  /** Seat template configuration */
+  seatTemplate?: SeatLayoutTemplate;
 };
 
 export enum LiveType {
@@ -64,7 +85,7 @@ export interface LayoutInfo {
   };
 }
 
-export interface CreateLiveParams {
+export interface StartLiveParams {
   liveId: string;
   liveName: string;
   notice?: string;
@@ -81,7 +102,12 @@ export interface CreateLiveParams {
   backgroundUrl?: string;
   categoryList?: Array<number>;
   activityStatus?: number;
+  /** Seat template configuration */
+  seatTemplate?: SeatLayoutTemplate;
 }
+
+/** @deprecated Use {@link StartLiveParams} instead. */
+export type CreateLiveParams = StartLiveParams;
 
 export interface JoinLiveParams {
   liveId: string;
@@ -123,3 +149,20 @@ export interface LiveListEventInfo {
 }
 
 export type LiveListEventCallback = (eventInfo: LiveListEventInfo) => void;
+
+export interface ILiveListState {
+  liveList: Ref<LiveInfo[]>;
+  liveListCursor: Ref<string>;
+  currentLive: Ref<LiveInfo | null>;
+  fetchLiveList: (options: { category?: string; cursor?: string; count?: number }) => Promise<void>;
+  startLive: (params: StartLiveParams) => Promise<void>;
+  createLive: (params: CreateLiveParams) => Promise<void>;
+  joinLive: (params: JoinLiveParams) => Promise<void>;
+  leaveLive: () => Promise<void>;
+  endLive: () => Promise<void>;
+  updateLiveInfo: (params: UpdateLiveInfoParams) => Promise<void>;
+  queryMetaData: (options: { keys: string[] }) => any;
+  updateLiveMetaData: (options: { metaData: string }) => any;
+  subscribeEvent: (event: LiveListEvent, callback: (eventInfo: any) => void) => void;
+  unsubscribeEvent: (event: LiveListEvent, callback: (eventInfo: any) => void) => void;
+}

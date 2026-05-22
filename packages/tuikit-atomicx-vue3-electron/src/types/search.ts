@@ -124,3 +124,20 @@ export const defaultTypeLabels: Record<string, string> = {
   [SearchType.USER]: 'Search.type.users',
   [SearchType.GROUP]: 'Search.type.groups',
 };
+
+import type { ComputedRef } from 'vue';
+
+export interface ISearchState {
+  keyword: ComputedRef<string>;
+  results: ComputedRef<Map<any, any>>;
+  isLoading: ComputedRef<boolean>;
+  error: ComputedRef<Error | null>;
+  searchAdvancedParams: ComputedRef<Map<any, any>>;
+  selectedSearchType: ComputedRef<any>;
+  setKeyword: (k: string) => void;
+  loadMore: (type?: any) => Promise<void>;
+  setSelectedType: (type: any) => void;
+  setSearchMessageAdvancedParams: (params: any) => void;
+  setSearchUserAdvancedParams: (params: any) => void;
+  setSearchGroupAdvancedParams: (params: any) => void;
+}

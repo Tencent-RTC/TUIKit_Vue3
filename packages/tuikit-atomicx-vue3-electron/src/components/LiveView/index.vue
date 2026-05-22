@@ -13,6 +13,10 @@
     </div>
     <div
       class="live-core-view"
+      :class="{
+        'live-core-view-landscape': isLandscapeStreamView,
+        'live-core-view-portrait': !isLandscapeStreamView,
+      }"
       :style="streamViewStyle"
     >
       <div
@@ -22,6 +26,7 @@
       <div
         v-if="needPlayStreamViewInfo.length > 0"
         class="live-core-ui"
+        :style="{ pointerEvents: isAnchor ? 'none' : 'auto' }"
       >
         <div
           v-for="(item, index) in needPlayStreamViewInfo"
@@ -85,6 +90,11 @@ const SVGA_PLAYER_VIEW = 'svga-player-view';
 const isInStreamMixerComp = computed(() => slots.localVideo);
 
 const { loginUserInfo } = useLoginState();
+
+const isAnchor = computed(
+  () => loginUserInfo.value?.userId === currentLive.value?.liveOwner.userId,
+);
+
 const isPlayedVideo = ref(false);
 const isMounted = ref(false);
 const seatListWithRealSize = ref<Array<{ userInfo: SeatUserInfo; region: any }>>([]);
@@ -151,6 +161,7 @@ const heightRatio: ComputedRef<number> = computed(() => {
   }
   return Number(aspectRatio.value.split(':')[1]);
 });
+const isLandscapeStreamView = computed(() => widthRatio.value >= heightRatio.value);
 
 const isLandscapeVideoAndAudioConnect = computed(() => currentLive.value?.layoutTemplate >= 200 && currentLive.value?.layoutTemplate <= 399);
 const isAlignCenter = computed(() => {
@@ -488,7 +499,6 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: center;
   overflow: hidden;
-  background-color: var(--bg-color-operate);
 
   &.align-center {
     align-items: center;
@@ -503,7 +513,7 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
     .placeholder-text {
-      color: var(--text-color-secondary, rgba(255, 255, 255, 0.55));
+      color: var(--live-placeholder-text, var(--text-color-secondary, rgba(255, 255, 255, 0.74)));
       font-size: 14px;
       font-style: normal;
       font-weight: 400;
@@ -515,6 +525,7 @@ onBeforeUnmount(() => {
     width: 100%;
     height: 100%;
     position: absolute;
+    box-sizing: border-box;
 
     .stream-content {
       width: 100%;

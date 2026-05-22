@@ -51,3 +51,15 @@ export type InitConfig = {
     password: string;
   };
 };
+
+import type { ComputedRef } from 'vue';
+
+export interface ILiveMonitorState {
+  monitorLiveInfoList: ComputedRef<MonitorLiveInfo[]>;
+  init: (config: InitConfig) => void;
+  getLiveList: (page: number, pageSize: number) => Promise<MonitorLiveInfo[]>;
+  closeRoom: (liveId: string) => Promise<void>;
+  startPlay: (liveId: string, viewId: string) => Promise<void>;
+  stopPlay: (liveId: string) => Promise<void>;
+  muteLiveAudio: (liveId: string, mute: boolean) => Promise<void>;
+}

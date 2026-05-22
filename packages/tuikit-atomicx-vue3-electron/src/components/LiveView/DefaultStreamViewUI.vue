@@ -135,7 +135,10 @@ const drawCanvas = () => {
   canvas.width = rect.width;
   canvas.height = rect.height;
 
-  ctx.fillStyle = '#1F2024';
+  const computedStyle = window.getComputedStyle(canvas);
+  const liveEmptySlotBg = computedStyle.getPropertyValue('--live-empty-slot-bg').trim();
+  const uikitGray2 = computedStyle.getPropertyValue('--uikit-color-gray-2').trim();
+  ctx.fillStyle = liveEmptySlotBg || uikitGray2 || '#1F2024';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   needCanvasMaskList.value.forEach((item) => {
@@ -208,7 +211,7 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: var(--uikit-color-gray-2);
+      background-color: var(--live-empty-slot-bg, var(--uikit-color-gray-2));
     }
   }
 
@@ -247,9 +250,11 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
     justify-content: center;
     width: 100%;
     height: 100%;
-    background: var(--uikit-color-gray-2);
+    background: var(--live-empty-slot-bg, var(--uikit-color-gray-2));
     pointer-events: auto;
-    box-shadow: 0 0 0 1px var(--bg-color-topbar);
+    box-shadow:
+      inset 0 0 0 1px var(--live-stage-border, var(--bg-color-topbar)),
+      inset 0 0 0 2px var(--live-stage-highlight, transparent);
 
     &.clickable {
       cursor: pointer;
