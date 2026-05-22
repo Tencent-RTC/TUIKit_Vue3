@@ -1,3 +1,4 @@
+import type { Ref } from 'vue';
 import { TUIUserInfo } from '@tencentcloud/tuiroom-engine-electron';
 
 /**
@@ -85,4 +86,11 @@ export interface Barrage extends BaseMessageInfo {
 
   businessId?: string;
   data?: string;
+}
+
+export interface IBarrageState {
+  messageList: Ref<Barrage[]>;
+  sendTextMessage: (options: { text: string; extensionInfo?: Record<string, string> }) => Promise<void> | undefined;
+  sendCustomMessage: (options: { businessId: string; data: string }) => Promise<void> | undefined;
+  appendLocalTip: (message: Barrage) => void;
 }

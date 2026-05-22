@@ -1,3 +1,4 @@
+import type { Ref } from 'vue';
 import type { SeatUserInfo } from './seat';
 
 export interface BattleConfig {
@@ -93,3 +94,16 @@ export type BattleEventInfoMap = {
 };
 
 export type BattleEventCallback = <T extends BattleEvent = BattleEvent>(eventInfo: BattleEventInfoMap[T]) => void;
+
+export interface IBattleState {
+  currentBattleInfo: Ref<BattleInfo | undefined>;
+  battleUsers: Ref<SeatUserInfo[]>;
+  battleScore: Ref<Map<string, number>>;
+  subscribeEvent: (event: BattleEvent, callback: (eventInfo: any) => void) => void;
+  unsubscribeEvent: (event: BattleEvent, callback: (eventInfo: any) => void) => void;
+  requestBattle: (options: { config: BattleConfig; userIdList: string[]; timeout: number }) => any;
+  cancelBattleRequest: (options: { battleId: string; userIdList: string[] }) => any;
+  acceptBattle: (options: { battleId: string }) => any;
+  rejectBattle: (options: { battleId: string }) => any;
+  exitBattle: (options: { battleId: string }) => any;
+}

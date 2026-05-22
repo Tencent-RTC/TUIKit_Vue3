@@ -8,6 +8,7 @@ export { useLiveGiftState } from '../../states/LiveGiftState';
 export { useLiveListState } from '../../states/LiveListState';
 export { useLiveMonitorState } from '../../states/LiveMonitorState';
 export { useLiveSeatState } from '../../states/LiveSeatState';
+export { useMusicState } from '../../states/MusicState';
 export { useVideoMixerState } from '../../states/VideoMixerState';
 
 export { BarrageInput } from '../../components/BarrageInput';

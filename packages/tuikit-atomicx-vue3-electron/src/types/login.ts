@@ -24,3 +24,12 @@ export interface LoginOptions {
   sdkAppId: number;
   [key: string]: any;
 }
+
+import type { Ref } from 'vue';
+
+export interface ILoginState {
+  loginUserInfo: Ref<LoginUserInfo | null>;
+  login: (options: LoginParams) => Promise<void>;
+  logout: () => Promise<void>;
+  setSelfInfo: (options: SetSelfInfoParams) => Promise<void>;
+}

@@ -1,4 +1,6 @@
+import type { Ref, ComputedRef } from 'vue';
 import type { LiveUserInfo } from './audience';
+import type { SeatUserInfo } from './seat';
 
 export enum HostEvent {
   onGuestApplicationReceived = 'onGuestApplicationReceived',
@@ -95,3 +97,21 @@ type CoGuestEventCallbackBase<T extends HostEvent | GuestEvent> = (
 ) => void;
 
 export type CoGuestEventCallback = CoGuestEventCallbackBase<HostEvent | GuestEvent>;
+
+export interface ICoGuestState {
+  connected: ComputedRef<SeatUserInfo[]>;
+  invitees: ComputedRef<LiveUserInfo[]>;
+  applicants: ComputedRef<LiveUserInfo[]>;
+  candidates: Ref<never[]>;
+  applyForSeat: (options: { seatIndex: number; timeout: number }) => Promise<void>;
+  cancelApplication: () => Promise<void>;
+  acceptApplication: (options: { userId: string }) => Promise<void>;
+  rejectApplication: (options: { userId: string }) => Promise<void>;
+  inviteToSeat: (options: { userId: string; seatIndex: number; timeout: number }) => Promise<void>;
+  cancelInvitation: (options: { inviteeId: string }) => Promise<void>;
+  acceptInvitation: (options: { inviterId: string }) => Promise<void>;
+  rejectInvitation: (options: { inviterId: string }) => Promise<void>;
+  disConnect: () => Promise<void>;
+  subscribeEvent: (event: HostEvent | GuestEvent, callback: (eventInfo: any) => void) => void;
+  unsubscribeEvent: (event: HostEvent | GuestEvent, callback: (eventInfo: any) => void) => void;
+}

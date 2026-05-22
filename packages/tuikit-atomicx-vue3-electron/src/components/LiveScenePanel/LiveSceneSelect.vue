@@ -48,6 +48,7 @@ import AddIcon from './icons/AddIcon.vue';
 import CameraIcon from './icons/CameraIcon.vue';
 import ScreenIcon from './icons/ScreenIcon.vue';
 import ImageIcon from './icons/ImageIcon.vue';
+import VideoIcon from './icons/VideoIcon.vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import vClickOutside from '../../directives/vClickOutside';
 const { t } = useUIKit();
@@ -67,6 +68,8 @@ const defaultMaterialList = computed(() => [
   { icon: CameraIcon, title: t('Add Camera'), type: TRTCMediaSourceType.kCamera },
   { icon: ScreenIcon, title: t('Add Screen Share'), type: TRTCMediaSourceType.kScreen },
   { icon: ImageIcon, title: t('Add Image'), type: TRTCMediaSourceType.kImage },
+  { icon: VideoIcon, title: t('Add Online Video'), type: TRTCMediaSourceType.kOnlineVideo },
+  { icon: VideoIcon, title: t('Add Local Video'), type: TRTCMediaSourceType.kVideoFile },
 ]);
 
 const isDropdownVisible = ref(false);

@@ -33,7 +33,7 @@
         >
           <div
             class="dropdown-item"
-            v-for="control in getMaterialControls(material.sourceType)"
+            v-for="control in materialControls"
             :key="control.key"
             @click="handleControlClick(control, material)"
           >
@@ -52,12 +52,13 @@ import { TRTCMediaSourceType, TRTCVideoMirrorType } from '@tencentcloud/tuiroom-
 import { IconEdit, IconSetting, IconDelIcon, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useVideoMixerState } from '../../states/VideoMixerState';
 import SvgIcon from '../../baseComp/SvgIcon.vue';
-import CameraMirror from './icons/CameraMirror.vue';
-import CameraUnMirror from './icons/CameraUnmirror.vue';
+import CameraMirror from '../../baseComp/icons/CameraMirror.vue';
+import CameraUnMirror from '../../baseComp/icons/CameraUnmirror.vue';
 import ImageIcon from './icons/ImageIcon.vue';
 import ScreenIcon from './icons/ScreenIcon.vue';
 import MoreIcon from './icons/MoreIcon.vue';
 import CameraIcon from './icons/CameraIcon.vue';
+import VideoIcon from './icons/VideoIcon.vue';
 import vClickOutside from '../../directives/vClickOutside';
 
 const { t } = useUIKit();
@@ -71,7 +72,8 @@ const emits = defineEmits<{
   toggleMenu: [material: MediaSource];
   closeMenu: [];
   cameraSetting: [material: MediaSource];
-  screenShareSetting: [material: MediaSource];
+  localVideoSetting: [material: MediaSource];
+  onlineVideoSetting: [material: MediaSource];
   rename: [material: MediaSource];
 }>();
 
@@ -87,6 +89,7 @@ const { updateMediaSource, removeMediaSource, activeMediaSource } = useVideoMixe
 
 const isMenuVisible = computed(() => !!props.isMenuVisible);
 const materialKey = computed(() => `${props.material.sourceType}::${props.material.sourceId}`);
+const materialControls = computed(() => getMaterialControls(props.material.sourceType));
 
 function toggleMirror() {
   const currentMirror = props.material?.mirrorType;
@@ -130,6 +133,8 @@ const getMaterialIcon = (mediaSourceType: TRTCMediaSourceType) => {
     [TRTCMediaSourceType.kCamera]: CameraIcon,
     [TRTCMediaSourceType.kImage]: ImageIcon,
     [TRTCMediaSourceType.kScreen]: ScreenIcon,
+    [TRTCMediaSourceType.kVideoFile]: VideoIcon,
+    [TRTCMediaSourceType.kOnlineVideo]: VideoIcon,
   };
   return iconMap[mediaSourceType];
 };
@@ -173,19 +178,30 @@ const getMaterialControls = (mediaSourceType: TRTCMediaSourceType) => {
     ...commonControls,
   ];
 
-  const screenShareControls = [
-    // {
-    //   key: 'setting',
-    //   label: t('Settings'),
-    //   icon: IconSetting,
-    //   onClick: handleScreenShareSetting,
-    // },
+  const localVideoControls = [
+    {
+      key: 'setting',
+      label: t('Settings'),
+      icon: IconSetting,
+      onClick: handleLocalVideoSetting,
+    },
+    ...commonControls,
+  ];
+
+  const onlineVideoControls = [
+    {
+      key: 'setting',
+      label: t('Settings'),
+      icon: IconSetting,
+      onClick: handleOnlineVideoSetting,
+    },
     ...commonControls,
   ];
 
   const controlsMap = {
     [TRTCMediaSourceType.kCamera]: cameraControls,
-    [TRTCMediaSourceType.kScreen]: screenShareControls,
+    [TRTCMediaSourceType.kVideoFile]: localVideoControls,
+    [TRTCMediaSourceType.kOnlineVideo]: onlineVideoControls,
   };
 
   return controlsMap[mediaSourceType] || commonControls;
@@ -203,8 +219,12 @@ const handleCameraSetting = (material: MediaSource) => {
   emits('cameraSetting', material);
 };
 
-const handleScreenShareSetting = (material: MediaSource) => {
-  emits('screenShareSetting', material);
+const handleLocalVideoSetting = (material: MediaSource) => {
+  emits('localVideoSetting', material);
+};
+
+const handleOnlineVideoSetting = (material: MediaSource) => {
+  emits('onlineVideoSetting', material);
 };
 
 const handleControlClick = async (control: MaterialControlItem, material: MediaSource) => {
@@ -255,6 +275,13 @@ onBeforeUnmount(() => {
   padding: 4px 8px;
   isolation: isolate;
   z-index: 1;
+
+  &.active {
+    background: rgba(92, 122, 255, 0.2);
+    border: 1px solid rgba(92, 122, 255, 0.65);
+    border-radius: 8px;
+  }
+  
   &.show-dropdown {
     z-index: 3000;
   }
@@ -307,6 +334,12 @@ onBeforeUnmount(() => {
     }
     &:hover {
       background: rgba(255, 255, 255, 0.2);
+    }
+    // SvgIcon defines its own `color: var(--text-color-primary)` which would
+    // otherwise shadow the button's color. Re-inherit so the shared mirror
+    // icons (which use `currentColor`) follow the button's color scheme.
+    :deep(.svg-icon) {
+      color: inherit;
     }
   }
 

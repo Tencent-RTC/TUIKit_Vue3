@@ -91,3 +91,15 @@ export enum VirtualBackgroundEvent {
  * @description 虚拟背景事件的回调函数类型定义。
  */
 export type VirtualBackgroundEventCallback = () => void;
+
+import type { Ref } from 'vue';
+
+export interface IVirtualBackgroundState {
+  virtualBackgroundConfig: Ref<VirtualBackgroundConfig>;
+  isSupported: () => boolean;
+  initVirtualBackground: (params: { assetsPath: string }) => Promise<void>;
+  setVirtualBackground: (params: VirtualBackgroundConfig) => Promise<void>;
+  saveVirtualBackground: () => Promise<void>;
+  subscribeEvent: (event: VirtualBackgroundEvent, callback: VirtualBackgroundEventCallback) => void;
+  unsubscribeEvent: (event: VirtualBackgroundEvent, callback: VirtualBackgroundEventCallback) => void;
+}

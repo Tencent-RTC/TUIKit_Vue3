@@ -51,7 +51,9 @@ const {
   clearMediaSource,
 } = useVideoMixerState();
 
-enableLocalVideoMixer();
+enableLocalVideoMixer().catch((error: unknown) => {
+  console.error('[LocalMixer] enableLocalVideoMixer failed:', error);
+});
 
 const currentLiveOrientation = computed(() => {
   if (currentLive.value

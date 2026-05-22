@@ -28,3 +28,11 @@ export enum TRTCBeautyStyle {
   TRTCBeautyStyleSmooth = 0,
   TRTCBeautyStyleNature = 1,
 }
+
+import type { Ref } from 'vue';
+
+export interface IFreeBeautyState {
+  beautyConfig: Ref<FreeBeautyConfig>;
+  setFreeBeauty: (config: FreeBeautyConfig) => Promise<void>;
+  saveBeautySetting: () => Promise<void>;
+}
