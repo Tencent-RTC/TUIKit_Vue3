@@ -1,5 +1,9 @@
-import type { Friend } from '../../../types/contact';
+import type { ContactInfo } from '@atomicxcore/core';
 
-export function getFriendDisplayName(friend: Friend): string {
-  return friend.remark || friend.nick || friend.userID || '';
+/**
+ * Resolve the display name of a contact according to priority:
+ * friend remark > nickname > userID.
+ */
+export function getFriendDisplayName(contact: ContactInfo): string {
+  return contact.friendRemark || contact.nickname || contact.userID || '';
 }

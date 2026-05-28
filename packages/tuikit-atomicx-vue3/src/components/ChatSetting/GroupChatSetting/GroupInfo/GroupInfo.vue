@@ -1,49 +1,64 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
+import { computed, inject } from 'vue';
+import { GroupType } from '@atomicxcore/core';
+import { useChatContext, useGroupStore } from '../../../../chat-store';
 import { IconCopy, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { View } from '../../../../baseComp/View';
-import { useConversationListState } from '../../../../states/ConversationListState';
-import {
-  useGroupSettingState,
-  GroupPermission,
-  GroupType,
-} from '../../../../states/GroupSettingState';
+import { GroupPermission, hasGroupPermission } from '../../../../types/groupSetting';
 import { copyTextToClipboard } from '../../../../utils';
 import { Avatar } from '../../../Avatar';
 import { SettingItem } from '../../SettingItem';
 
 const { t } = useUIKit();
+const channel = inject('channel', 'default') as string;
+const { activeConversation } = useChatContext(channel);
+const { joinedGroupList, updateProfile, loadJoinedGroups } = useGroupStore();
 
-const {
-  groupID,
-  groupName,
-  notification,
-  groupType,
-  isInGroup,
-  hasPermission,
-  updateGroupProfile,
-} = useGroupSettingState();
+// Ensure the joined group list is populated so groupInfo computed can find this group
+loadJoinedGroups();
 
-const { activeConversation } = useConversationListState();
+const currentGroupID = computed(() => {
+  const id = activeConversation.value?.conversationID;
+  return id?.startsWith('GROUP') ? id.replace(/^GROUP/, '') : undefined;
+});
 
-// Get group type display text
+// Reactive: always reflects the latest state from joinedGroupList
+const groupInfo = computed(() =>
+  joinedGroupList.value.find(g => g.groupID === currentGroupID.value),
+);
+
+const groupID = computed(() => groupInfo.value?.groupID);
+const groupName = computed(() => groupInfo.value?.groupName);
+const notification = computed(() => groupInfo.value?.notification);
+const groupType = computed(() => groupInfo.value?.groupType);
+const avatarUrl = computed(() => groupInfo.value?.avatarURL ?? '');
+const isInGroup = computed(() => groupInfo.value?.selfRole !== undefined);
+const currentUserRole = computed(() => groupInfo.value?.selfRole);
+
+const canEditName = computed(() =>
+  hasGroupPermission(GroupPermission.EDIT_GROUP_PROFILE_NAME, currentUserRole.value, groupType.value)
+  && isInGroup.value,
+);
+
+const canEditNotification = computed(() =>
+  hasGroupPermission(GroupPermission.EDIT_GROUP_PROFILE_NOTIFICATION, currentUserRole.value, groupType.value)
+  && isInGroup.value,
+);
+
 const getGroupTypeText = () => {
   if (!groupType.value) {
     return t('ChatSetting.group_type_unknown');
   }
-
   const groupTypeTextMap: Record<GroupType, string> = {
-    [GroupType.WORK]: t('ChatSetting.group_type_work'),
-    [GroupType.PUBLIC]: t('ChatSetting.group_type_public'),
-    [GroupType.MEETING]: t('ChatSetting.group_type_meeting'),
-    [GroupType.COMMUNITY]: t('ChatSetting.group_type_community'),
-    [GroupType.AVCHATROOM]: t('ChatSetting.group_type_avchatroom'),
+    [GroupType.Work]: t('ChatSetting.group_type_work'),
+    [GroupType.Public]: t('ChatSetting.group_type_public'),
+    [GroupType.Meeting]: t('ChatSetting.group_type_meeting'),
+    [GroupType.Community]: t('ChatSetting.group_type_community'),
+    [GroupType.AVChatRoom]: t('ChatSetting.group_type_avchatroom'),
   };
   return groupTypeTextMap[groupType.value] || t('ChatSetting.group_type_unknown');
 };
 
-// Validator for group name
 const validateGroupName = (value: string, originalValue?: string) => {
   if (typeof value !== 'string') {
     return t('ChatSetting.group_name_required_string');
@@ -60,7 +75,6 @@ const validateGroupName = (value: string, originalValue?: string) => {
   return null;
 };
 
-// Validator for notification
 const validateNotification = (value: string, originalValue?: string) => {
   if (typeof value !== 'string') {
     return t('ChatSetting.group_notification_required_string');
@@ -74,56 +88,39 @@ const validateNotification = (value: string, originalValue?: string) => {
   return null;
 };
 
-// Handle group name confirm
 const handleGroupNameConfirm = async (value: string) => {
+  if (!currentGroupID.value) {
+    return;
+  }
   try {
-    await updateGroupProfile({ name: value });
-    TUIToast.success({
-      message: t('ChatSetting.group_name_update_success'),
-    });
+    await updateProfile({ groupID: currentGroupID.value, groupName: value });
+    TUIToast.success({ message: t('ChatSetting.group_name_update_success') });
   } catch (error: any) {
-    TUIToast.error({
-      message: t('ChatSetting.group_name_update_failed'),
-    });
+    TUIToast.error({ message: t('ChatSetting.group_name_update_failed') });
     console.warn('updateGroupProfile::groupName', error);
   }
 };
 
-// Handle notification confirm
 const handleNotificationConfirm = async (value: string) => {
+  if (!currentGroupID.value) {
+    return;
+  }
   try {
-    await updateGroupProfile({ notification: value });
-    TUIToast.success({
-      message: t('ChatSetting.group_notification_update_success'),
-    });
+    await updateProfile({ groupID: currentGroupID.value, notification: value });
+    TUIToast.success({ message: t('ChatSetting.group_notification_update_success') });
   } catch (error: any) {
-    TUIToast.error({
-      message: t('ChatSetting.group_notification_update_failed'),
-    });
+    TUIToast.error({ message: t('ChatSetting.group_notification_update_failed') });
     console.warn('updateGroupProfile::notification', error);
   }
 };
 
-// Handle copy group ID
 const handleCopyGroupID = () => {
   if (groupID.value) {
     copyTextToClipboard(groupID.value).then(() => {
-      TUIToast.success({
-        message: t('ChatSetting.copied'),
-      });
+      TUIToast.success({ message: t('ChatSetting.copied') });
     });
   }
 };
-
-const avatarUrl = computed<string>(() => {
-  if (!activeConversation.value) {
-    return '';
-  }
-  if (activeConversation.value.type === TUIChatEngine.TYPES.CONV_GROUP) {
-    return activeConversation.value.getAvatar();
-  }
-  return '';
-});
 </script>
 
 <template>
@@ -170,7 +167,7 @@ const avatarUrl = computed<string>(() => {
       :label="t('ChatSetting.group_name')"
       :value="groupName || ''"
       :placeholder="t('ChatSetting.group_name_placeholder')"
-      :editable="Boolean(hasPermission(GroupPermission.EDIT_GROUP_PROFILE_NAME) && isInGroup)"
+      :editable="canEditName"
       :validator="validateGroupName"
       @confirm="handleGroupNameConfirm"
     />
@@ -182,7 +179,7 @@ const avatarUrl = computed<string>(() => {
       :value="notification || ''"
       :placeholder="t('ChatSetting.group_notification_placeholder')"
       :rows="4"
-      :editable="Boolean(hasPermission(GroupPermission.EDIT_GROUP_PROFILE_NOTIFICATION) && isInGroup)"
+      :editable="canEditNotification"
       :validator="validateNotification"
       @confirm="handleNotificationConfirm"
     />

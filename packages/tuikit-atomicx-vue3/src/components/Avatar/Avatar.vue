@@ -274,6 +274,7 @@ export type { AvatarSize, AvatarShape, BaseAvatarProps, AvatarProps };
   overflow: hidden;
   flex-shrink: 0;
   user-select: none;
+  isolation: isolate;
 
   &--shape-circular {
     border-radius: 50%;

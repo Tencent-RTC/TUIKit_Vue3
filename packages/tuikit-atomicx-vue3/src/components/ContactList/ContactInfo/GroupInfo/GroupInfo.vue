@@ -11,7 +11,7 @@
       </div>
       <div class="contact-group-info__avatar-wrap">
         <Avatar
-          :src="group.avatar"
+          :src="group.avatarURL"
           :alt="displayName"
           :size="48"
         />
@@ -24,19 +24,9 @@
           {{ t('TUIContact.Group type') }}
         </div>
         <div class="contact-group-info__row-value">
-          {{ group.type }}
+          {{ getGroupTypeText() }}
         </div>
       </div>
-      <!-- <div class="contact-group-info__row">
-        <div class="contact-group-info__row-label">
-          {{ t('TUIContact.Group introduction') }}
-        </div>
-        <div class="contact-group-info__row-value">
-          <span class="contact-group-info__intro">
-            {{ group.introduction || t('TUIContact.No introduction') }}
-          </span>
-        </div>
-      </div> -->
     </div>
 
     <div
@@ -91,13 +81,12 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { GroupMemberRole, GroupType } from '@atomicxcore/core';
+import { useChatContext, useGroupStore } from '../../../../chat-store';
 import { TUIButton, TUIDialog, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useConversationListState } from '../../../../states/ConversationListState';
-import { useGroupSettingState } from '../../../../states/GroupSettingState';
-import { GroupMemberRole, GroupPermission } from '../../../../states/GroupSettingState/types';
 import { Avatar } from '../../../Avatar';
-import type { GroupType } from '../../../../states/GroupSettingState/types';
-import type { GroupInfoProps, GroupModel } from '../../../../types';
+import type { GroupInfoProps } from '../../../../types/contact';
+import type { GroupInfo } from '@atomicxcore/core';
 
 const props = withDefaults(defineProps<GroupInfoProps>(), {
   showActions: true,
@@ -105,32 +94,44 @@ const props = withDefaults(defineProps<GroupInfoProps>(), {
 
 const emit = defineEmits<{
   close: [];
-  enterGroup: [group: GroupModel];
-  leaveGroup: [group: GroupModel];
-  dismissGroup: [group: GroupModel];
+  enterGroup: [group: GroupInfo];
+  leaveGroup: [group: GroupInfo];
+  dismissGroup: [group: GroupInfo];
 }>();
 
 const { t } = useUIKit();
-const { quitGroup, dismissGroup, hasPermission } = useGroupSettingState();
-const { setActiveConversation } = useConversationListState();
+const { quitGroup, dismissGroup } = useGroupStore();
+const { setActiveConversation } = useChatContext(props.channel);
 
 const visible = ref(false);
 
-const displayName = computed(() => props.group.name || props.group.groupID);
+const displayName = computed(() => props.group.groupName || props.group.groupID);
 
-const role = computed(() => (props.group.selfInfo?.role as GroupMemberRole) || GroupMemberRole.COMMON);
-const groupType = computed(() => props.group.type as unknown as GroupType);
+/**
+ * Simple inline permission logic — mirrors the M3 plan which defers the full
+ * GroupSetting permission matrix to M4. The rules here are:
+ *   - Only the group owner can dismiss a regular group.
+ *   - Any non-owner can quit, except for AVChatRoom which does not support quit.
+ *   - AVChatRoom owners cannot dismiss via this panel either (no dismiss API).
+ */
+const canDismissGroup = computed(() => {
+  if (props.group.groupType === GroupType.AVChatRoom) {
+    return false;
+  }
+  return props.group.selfRole === GroupMemberRole.Owner;
+});
 
-const canDismissGroup = computed(() =>
-  hasPermission(GroupPermission.DISMISS_GROUP, role.value, groupType.value),
-);
-const canQuitGroup = computed(() =>
-  hasPermission(GroupPermission.QUIT_GROUP, role.value, groupType.value),
-);
+const canQuitGroup = computed(() => {
+  if (props.group.groupType === GroupType.AVChatRoom) {
+    return false;
+  }
+  return props.group.selfRole !== GroupMemberRole.Owner;
+});
 
-const handleEnterGroup = () => {
-  setActiveConversation(`GROUP${props.group.groupID}`);
+const handleEnterGroup = async () => {
   emit('enterGroup', props.group);
+  const conversationID = `GROUP${props.group.groupID}`;
+  setActiveConversation(conversationID);
   emit('close');
 };
 
@@ -139,7 +140,7 @@ const handleLeaveGroup = async () => {
     await quitGroup(props.group.groupID);
     emit('leaveGroup', props.group);
   } catch (err) {
-    console.error('[ContactInfo quitGroup] error', err);
+    console.error('[GroupInfo quitGroup] error', err);
   }
   visible.value = false;
   emit('close');
@@ -150,7 +151,7 @@ const handleDismissGroup = async () => {
     await dismissGroup(props.group.groupID);
     emit('dismissGroup', props.group);
   } catch (err) {
-    console.error('[ContactInfo dismissGroup] error', err);
+    console.error('[GroupInfo dismissGroup] error', err);
   }
   visible.value = false;
   emit('close');
@@ -162,8 +163,23 @@ const handleGroupAction = () => {
   } else {
     handleLeaveGroup();
   }
-}
+};
+
+const getGroupTypeText = () => {
+  if (!props.group.groupType) {
+    return t('ChatSetting.group_type_unknown');
+  }
+  const groupTypeTextMap: Record<GroupType, string> = {
+    [GroupType.Work]: t('ChatSetting.group_type_work'),
+    [GroupType.Public]: t('ChatSetting.group_type_public'),
+    [GroupType.Meeting]: t('ChatSetting.group_type_meeting'),
+    [GroupType.Community]: t('ChatSetting.group_type_community'),
+    [GroupType.AVChatRoom]: t('ChatSetting.group_type_avchatroom'),
+  };
+  return groupTypeTextMap[props.group.groupType] || t('ChatSetting.group_type_unknown');
+};
 </script>
+
 <style scoped lang="scss">
 @use './GroupInfo.scss';
 </style>

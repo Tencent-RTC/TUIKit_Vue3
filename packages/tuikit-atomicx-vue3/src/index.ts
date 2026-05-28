@@ -2,6 +2,7 @@
 export * from './subEntry/common';
 // chat export
 export * from './subEntry/chat/chat';
+export * from './chat-store';
 // live export
 export * from './subEntry/live/live';
 // room export

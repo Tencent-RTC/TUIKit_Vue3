@@ -1,22 +1,26 @@
-import { StoreName, TUIStore } from '@tencentcloud/chat-uikit-engine-lite';
-import { ConversationType, MessageType } from '../../types/engine';
+// import { StoreName, TUIStore } from '@tencentcloud/chat-uikit-engine-lite';
+// import { ConversationType, MessageType } from '../../types/engine';
 import { transformTextWithEmojiKeyToName } from '../../utils/emoji';
 import type { ChatOfflinePushInfo, OfflinePushAndroidInfo, OfflinePushApnsInfo } from './types';
-import type { ConversationModel } from '../../types/engine';
+// import type { ConversationModel } from '../../types/engine';
+import { useLoginStore } from '../../chat-store';
+import { ConversationType } from '@atomicxcore/core';
+import type { ConversationInfo, MessageType } from '@atomicxcore/core';
 
 /**
  * Generate push notification title based on conversation type
  * - C2C: Use current user's nickname (fallback to userID)
  * - GROUP: Use conversation's display name
  */
-export function genTitle(conversation: ConversationModel): string {
-  const userProfile = TUIStore.getData(StoreName.USER, 'userProfile');
+export function genTitle(conversation: ConversationInfo): string {
+  const loginStore = useLoginStore();
+  const userProfile = loginStore.loginUserInfo.value;
 
   if (conversation.type === ConversationType.C2C) {
-    return userProfile?.nick || userProfile?.userID || '';
+    return userProfile?.nickname || userProfile?.userID || '';
   }
 
-  return conversation.getShowName?.() || '';
+  return conversation.title || conversation.conversationID || '';
 }
 
 /**
@@ -30,25 +34,25 @@ export function genDescription(
   payload: Record<string, any>,
   t: (key: string) => string,
 ): string {
-  if (messageType === MessageType.TEXT) {
+  if (messageType === 'text') {
     return transformTextWithEmojiKeyToName(payload?.text || '');
   }
 
-  if (messageType === MessageType.CUSTOM && payload.description) {
+  if (messageType === 'custom' && payload.description) {
     return payload.description;
   }
 
   // Priority 3: i18n default description
   const typeDescMap: Record<string, string> = {
-    [MessageType.TEXT]: 'OfflinePush.text',
-    [MessageType.IMAGE]: 'OfflinePush.image',
-    [MessageType.VIDEO]: 'OfflinePush.video',
-    [MessageType.FILE]: 'OfflinePush.file',
-    [MessageType.AUDIO]: 'OfflinePush.audio',
-    [MessageType.FACE]: 'OfflinePush.face',
-    [MessageType.LOCATION]: 'OfflinePush.location',
-    [MessageType.MERGER]: 'OfflinePush.merger',
-    [MessageType.CUSTOM]: 'OfflinePush.custom',
+    ['text']: 'OfflinePush.text',
+    ['image']: 'OfflinePush.image',
+    ['video']: 'OfflinePush.video',
+    ['file']: 'OfflinePush.file',
+    ['audio']: 'OfflinePush.audio',
+    ['face']: 'OfflinePush.face',
+    ['location']: 'OfflinePush.location',
+    ['merger']: 'OfflinePush.merger',
+    ['custom']: 'OfflinePush.custom',
   };
 
   const i18nKey = typeDescMap[messageType] || 'OfflinePush.custom';
@@ -59,15 +63,16 @@ export function genDescription(
  * Generate extension JSON with entity info for client-side routing
  * Contains: sender, nickName, chatType, version, action
  */
-export function genExtension(conversation: ConversationModel): string {
-  const userProfile = TUIStore.getData(StoreName.USER, 'userProfile');
+export function genExtension(conversation: ConversationInfo): string {
+  const loginStore = useLoginStore();
+  const userProfile = loginStore.loginUserInfo.value;
 
   const entity = {
-    sender: conversation.type === ConversationType.GROUP
-      ? conversation.groupProfile?.groupID
+    sender: conversation.type === ConversationType.Group
+      ? conversation.conversationID.split('GROUP')[1]
       : userProfile?.userID,
-    nickName: userProfile?.nick || '',
-    chatType: conversation.type === ConversationType.GROUP ? 2 : 1,
+    nickName: userProfile?.nickname || '',
+    chatType: conversation.type === ConversationType.Group ? 2 : 1,
     version: 1,
     action: 1,
   };
@@ -80,7 +85,7 @@ export function genExtension(conversation: ConversationModel): string {
  * Orchestrates genTitle, genDescription, genExtension with static config merge
  */
 export function buildChatOfflinePushInfo(
-  conversation: ConversationModel,
+  conversation: ConversationInfo,
   messageType: MessageType,
   payload: Record<string, any>,
   t: (key: string) => string,

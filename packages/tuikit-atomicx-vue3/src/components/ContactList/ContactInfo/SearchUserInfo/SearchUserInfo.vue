@@ -11,7 +11,7 @@
       </div>
       <div class="contact-search-user-info__avatar-wrap">
         <Avatar
-          :src="user.avatar"
+          :src="user.avatarURL"
           :alt="displayName"
           :size="48"
         />
@@ -25,7 +25,7 @@
         </div>
         <div class="contact-search-user-info__row-value">
           <span class="contact-search-user-info__intro">
-            {{ user.selfSignature || t('TUIContact.None') }}
+            {{ user.aboutMe || t('TUIContact.None') }}
           </span>
         </div>
       </div>
@@ -85,29 +85,32 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useUIKit, TUIButton } from '@tencentcloud/uikit-base-component-vue3';
-import { useContactListState } from '../../../../states/ContactListState';
+import { useContactStore } from '../../../../chat-store';
 import { Avatar } from '../../../Avatar';
 import { TEXTAREA_LENGTH_LIMIT } from '../../constants/const';
-import type { SearchUserInfoProps, UserProfile } from '../../../../types/contact';
+import type { ContactInfo } from '@atomicxcore/core';
+import type { SearchUserInfoProps } from '../../../../types/contact';
 
 const props = withDefaults(defineProps<SearchUserInfoProps>(), {
   showActions: true,
 });
 
 const emit = defineEmits<{
-  addFriend: [user: UserProfile, wording: string];
+  addFriend: [user: ContactInfo, wording: string];
   close: [];
 }>();
 
 const { t } = useUIKit();
-const { addFriend } = useContactListState();
+const { addFriend } = useContactStore();
 
 const wording = ref('');
 const loading = ref(false);
 const status = ref<'idle' | 'success' | 'error'>('idle');
 const errorMessage = ref('');
 
-const displayName = computed(() => props.user.nick || props.user.userID);
+const displayName = computed(() => {
+  return props.user.nickname || props.user.userID;
+});
 
 const handleAddFriend = async () => {
   if (loading.value) {
@@ -121,10 +124,11 @@ const handleAddFriend = async () => {
   const addWording = wording.value.trim();
   emit('addFriend', props.user, addWording);
   try {
+    // New AddFriendParams shape: { userID, source, addWording?, remark? }.
     await addFriend({
       userID: props.user.userID,
-      addSource: 'AddSource_Type_Web',
-      wording: addWording,
+      source: 'AddSource_Type_Web',
+      addWording,
     });
 
     status.value = 'success';

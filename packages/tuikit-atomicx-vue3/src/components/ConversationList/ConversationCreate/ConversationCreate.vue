@@ -36,32 +36,35 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
-import { TUIConversationService } from '@tencentcloud/chat-uikit-engine-lite';
+import { computed, ref, inject } from 'vue';
+import { GroupType } from '@atomicxcore/core';
+import { useChatContext, useGroupStore } from '../../../chat-store';
 import { useUIKit, TUIDialog, TUIToast } from '@tencentcloud/uikit-base-component-vue3';
-import { useConversationListState } from '../../../states/ConversationListState';
 import { useLoginState } from '../../../states/LoginState';
-import { PageStateTypes, CreateConvTypes, GroupType } from '../../../types';
+import { PageStateTypes, CreateConvTypes } from '../../../types/conversation';
 import { isH5 } from '../../../utils/env';
 import { useConversation } from '../hooks/useConversation';
 import { useConversationCreate } from '../hooks/useConversationCreate';
 import ConversationCreateButton from './ConversationCreateButton/ConversationCreateButton.vue';
 import ConversationCreateGroupDetail from './ConversationCreateGroupDetail/ConversationCreateGroupDetail.vue';
 import ConversationCreateUserSelectList from './ConversationCreateUserSelectList/ConversationCreateUserSelectList.vue';
-import type { ConversationModel, ConversationCreateProps, CreateGroupParams, CreateGroupInfo, Friend } from '../../../types';
+import type { ConversationCreateProps, CreateGroupInfo, CreateGroupParams } from '../../../types/conversation';
+import type { ContactInfo, ConversationInfo } from '@atomicxcore/core';
 
 const { t } = useUIKit();
 const { enableSearch } = useConversation();
 const { getDefaultAvatar } = useConversationCreate();
 const { loginUserInfo } = useLoginState();
-const { createC2CConversation, createGroupConversation } = useConversationListState();
+const channel = inject('channel', 'default') as string;
+const { getConversationInfo, setActiveConversation } = useChatContext(channel);
+const groupStore = useGroupStore();
 
 const GROUP_NAME_LIMIT = 20;
 const GROUP_INFO_DEFAULTS: CreateGroupInfo = {
-  avatar: getDefaultAvatar(GroupType.WORK),
+  avatar: getDefaultAvatar(GroupType.Work),
   name: '',
   groupID: '',
-  type: GroupType.WORK,
+  type: GroupType.Work,
 };
 
 const props = withDefaults(defineProps<ConversationCreateProps>(), {
@@ -71,18 +74,18 @@ const props = withDefaults(defineProps<ConversationCreateProps>(), {
 const emit = defineEmits<{
   'update:visible': [visible: boolean];
   'beforeCreateConversation': [params: string | any];
-  'conversationCreated': [conversation: ConversationModel];
+  'conversationCreated': [conversation: ConversationInfo];
 }>();
 
 const showCreateConversation = ref(false);
 const isCreateGroup = ref(false);
 const pageState = ref<PageStateTypes>(PageStateTypes.USER_SELECT);
-const selectList = ref<Friend[]>([]);
+const selectList = ref<ContactInfo[]>([]);
 const groupInfo = ref<CreateGroupInfo>({
-  avatar: getDefaultAvatar(GroupType.WORK),
+  avatar: getDefaultAvatar(GroupType.Work),
   name: '',
   groupID: '',
-  type: GroupType.WORK,
+  type: GroupType.Work,
 });
 
 const setIsCreateGroup = (value: boolean) => {
@@ -93,7 +96,7 @@ const setPageState = (value: PageStateTypes) => {
   pageState.value = value;
 };
 
-const setSelectList = (value: Friend[]) => {
+const setSelectList = (value: ContactInfo[]) => {
   selectList.value = value;
 };
 
@@ -118,9 +121,11 @@ const resetCreatePageState = () => {
   selectList.value = [];
 };
 
-const _onConversationCreated = (conversation: ConversationModel) => {
+const _onConversationCreated = (conversation: ConversationInfo) => {
   resetCreatePageState();
-  TUIConversationService.switchConversation(conversation.conversationID);
+  setTimeout(() => {
+    setActiveConversation(conversation.conversationID);
+  }, 300);
   emit('conversationCreated', conversation);
   props.onConversationCreated?.(conversation);
 };
@@ -167,43 +172,61 @@ const handleCreateC2CConversation = async () => {
   props.onBeforeCreateConversation?.(userID);
 
   try {
-    const conversation = await createC2CConversation(userID);
+    const conversation = await getConversationInfo(`C2C${userID}`);
     _onConversationCreated(conversation);
   } catch (error: any) {
     TUIToast.error({ message: error.message });
   }
 };
 
+const isCreating = ref(false);
+
 const handleCreateGroupConversation = async () => {
+  const { avatar, name, groupID, type } = groupInfo.value;
+  const createParams = {
+    groupName: name,
+    groupID: groupID || undefined,
+    avatarURL: avatar,
+    groupType: type as GroupType,
+    memberList: selectList.value.map((item: ContactInfo) => item.userID),
+  };
+
   const options = {
     ...groupInfo.value,
-    memberList: selectList.value.map(item => ({
+    memberList: selectList.value.map((item: ContactInfo) => ({
       userID: item.userID,
     })),
-  } as unknown as CreateGroupParams;
+  };
 
   emit('beforeCreateConversation', options);
   props.onBeforeCreateConversation?.(options);
 
+  isCreating.value = true;
   try {
-    const conversation = await createGroupConversation(options);
+    const createdGroupConvID = await groupStore.createGroup(createParams);
+    const conversation = await getConversationInfo(`GROUP${createdGroupConvID}`);
     _onConversationCreated(conversation);
   } catch (error: any) {
     if (error.code === 10021) {
       TUIToast.error({ message: t('TUIConversation.group_id_already_used') });
+    } else if (error.code === 10004) {
+      TUIToast.error({ message: t('TUIConversation.group_id_invalid') });
     } else {
-      TUIToast.error({ message: error.message });
+      TUIToast.error({ message: t('TUIConversation.create_group_failed') });
     }
+  } finally {
+    isCreating.value = false;
   }
 };
 
-const generateGroupName = (userList: Friend[]) => {
+const generateGroupName = (userList: ContactInfo[]) => {
   const selfName = loginUserInfo.value?.userName || loginUserInfo.value?.userId || '';
-  const name = `${selfName}、${userList.map(item => item?.remark || item?.nick || item?.userID).join('、')}`;
+  const name = `${selfName}、${userList.map(item => item?.friendRemark || item?.nickname || item?.userID).join('、')}`;
   return name.length >= GROUP_NAME_LIMIT ? name.slice(0, GROUP_NAME_LIMIT) : name;
 };
 
 const handleConfirm = () => {
+  if (isCreating.value) return;
   if (selectList.value.length === 0) {
     TUIToast.error({ message: t('TUIConversation.Participant cannot be empty') });
     return;
@@ -216,7 +239,6 @@ const handleConfirm = () => {
     setPageState(PageStateTypes.CREATE_DETAIL);
   } else if (pageState.value === PageStateTypes.CREATE_DETAIL) {
     handleCreateGroupConversation();
-    toggleCreateConversation(false);
   } else {
     setPageState(PageStateTypes.CREATE_DETAIL);
   }

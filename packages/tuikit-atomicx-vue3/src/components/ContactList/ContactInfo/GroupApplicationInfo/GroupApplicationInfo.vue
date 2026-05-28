@@ -6,7 +6,7 @@
           {{ displayName }}
         </div>
         <div class="contact-group-application-info__id">
-          {{ t('TUIContact.ID') }}：{{ application.applicant }}
+          {{ t('TUIContact.ID') }}：{{ application.fromUser }}
         </div>
         <div class="contact-group-application-info__intro">
           {{ applicationText }}
@@ -14,6 +14,7 @@
       </div>
       <div class="contact-group-application-info__avatar-wrap">
         <Avatar
+          :src="application.fromUserAvatarURL"
           :alt="displayName"
           :size="48"
         />
@@ -25,7 +26,7 @@
           {{ t('TUIContact.Application note') }}
         </div>
         <div class="contact-group-application-info__row-value">
-          {{ application.note || t('TUIContact.None') }}
+          {{ application.requestMsg || t('TUIContact.None') }}
         </div>
       </div>
     </div>
@@ -59,43 +60,55 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useUIKit, TUIButton } from '@tencentcloud/uikit-base-component-vue3';
-import { useContactListState } from '../../../../states/ContactListState';
+import { useGroupStore } from '../../../../chat-store';
 import { Avatar } from '../../../Avatar';
-import type { GroupApplication, GroupApplicationInfoProps } from '../../../../types/contact';
+import type { GroupApplicationInfo } from '@atomicxcore/core';
+import type { GroupApplicationInfoProps } from '../../../../types/contact';
 
 const props = withDefaults(defineProps<GroupApplicationInfoProps>(), {
   showActions: true,
 });
 
 const emit = defineEmits<{
-  accept: [application: GroupApplication];
-  refuse: [application: GroupApplication];
-  groupApplicationAction: [action: 'accept' | 'refuse', application: GroupApplication];
+  accept: [application: GroupApplicationInfo];
+  refuse: [application: GroupApplicationInfo];
+  groupApplicationAction: [action: 'accept' | 'refuse', application: GroupApplicationInfo];
   close: [];
 }>();
 
 const { t } = useUIKit();
-const { acceptGroupApplication, refuseGroupApplication } = useContactListState();
+const { acceptApplication, refuseApplication } = useGroupStore();
 
-const displayName = computed(() => props.application.applicantNick || props.application.applicant);
-const groupName = computed(() => props.application.groupName || props.application.groupID);
+const displayName = computed(
+  () => props.application.fromUserNickname || props.application.fromUser || '',
+);
+const groupDisplay = computed(() => props.application.groupID);
+// 'joinApprovedByAdmin' is a user's request to join; other values indicate invitations.
 const applicationText = computed(() =>
-  props.application.applicationType === 0
-    ? `${t('TUIContact.Apply to join group')}"${groupName.value}"`
-    : `${t('TUIContact.Invite you to join group')}"${groupName.value}"`,
+  props.application.type === 'joinApprovedByAdmin'
+    ? `${t('TUIContact.Apply to join group')}"${groupDisplay.value}"`
+    : `${t('TUIContact.Invite you to join group')}"${groupDisplay.value}"`,
 );
 
-const handleAccept = () => {
+const handleAccept = async () => {
   emit('accept', props.application);
   emit('groupApplicationAction', 'accept', props.application);
-  acceptGroupApplication({ application: props.application });
+  try {
+    await acceptApplication(props.application);
+  } catch (err) {
+    console.error('[GroupApplicationInfo acceptApplication] error', err);
+  }
   emit('close');
 };
 
-const handleRefuse = () => {
+const handleRefuse = async () => {
   emit('refuse', props.application);
   emit('groupApplicationAction', 'refuse', props.application);
-  refuseGroupApplication({ application: props.application });
+  try {
+    await refuseApplication(props.application);
+  } catch (err) {
+    console.error('[GroupApplicationInfo refuseApplication] error', err);
+  }
   emit('close');
 };
 </script>

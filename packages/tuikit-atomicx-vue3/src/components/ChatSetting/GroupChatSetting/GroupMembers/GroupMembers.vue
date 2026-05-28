@@ -1,14 +1,10 @@
 <script lang="ts" setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, inject, watch, onMounted, onUnmounted } from 'vue';
+import { GroupMemberRole } from '@atomicxcore/core';
 import { IconArrowStrokeRight, IconMinus, IconPlus, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import {
-  useGroupSettingState,
-  GroupPermission,
-  GroupMemberRole,
-} from '../../../../states/GroupSettingState';
+import { GroupPermission, hasGroupPermission } from '../../../../types/groupSetting';
 import { Avatar } from '../../../Avatar';
-import { Divider } from '../../Divider';
-import type { GroupMember } from '../../../../states/GroupSettingState';
+import type { GroupMember, GroupInfo } from '@atomicxcore/core';
 
 interface GroupMembersProps {
   showAddButton: boolean; // Whether to show add button
@@ -17,7 +13,7 @@ interface GroupMembersProps {
   title?: string; // Title
   members?: GroupMember[] | undefined; // Member list
   memberCount?: number; // Total member count
-  maxDisplayCount?: number; // Mini version display count, default 6
+  maxRows?: number; // Max rows in collapsed mode, default 2
 
   // Feature toggles
   hiddenMemberCount?: boolean; // Whether to hide member count
@@ -41,7 +37,7 @@ interface GroupMembersProps {
 const props = withDefaults(defineProps<GroupMembersProps>(), {
   title: undefined,
   hiddenMemberCount: false,
-  maxDisplayCount: 6,
+  maxRows: 2,
   showAddButton: true,
   showRemoveButton: true,
   expandable: true,
@@ -50,26 +46,57 @@ const props = withDefaults(defineProps<GroupMembersProps>(), {
 });
 
 const { t } = useUIKit();
+const groupInfo = inject<{ value: GroupInfo | undefined }>('groupInfo');
 
-const getRolePriority = (role: GroupMemberRole): number => {
+const currentUserRole = computed(() => groupInfo?.value?.selfRole);
+const groupType = computed(() => groupInfo?.value?.groupType);
+
+const canViewMemberList = computed(() =>
+  hasGroupPermission(GroupPermission.VIEW_MEMBER_LIST, currentUserRole.value, groupType.value),
+);
+
+const getRolePriority = (role?: GroupMemberRole): number => {
   switch (role) {
-    case GroupMemberRole.OWNER:
-      return 100;
-    case GroupMemberRole.ADMIN:
-      return 80;
-    case GroupMemberRole.COMMON:
-      return 60;
-    default:
-      return 0;
+    case GroupMemberRole.Owner: return 100;
+    case GroupMemberRole.Admin: return 80;
+    case GroupMemberRole.Member: return 60;
+    default: return 0;
   }
 };
 
 const isExpanded = ref(false);
-const scrollContainerRef = ref<HTMLDivElement>();
+const gridRef = ref<HTMLDivElement>();
+const itemsPerRow = ref(5);
 
-const { hasPermission } = useGroupSettingState();
+const ITEM_MIN_WIDTH = 50;
+const GRID_GAP = 6;
+const GRID_PADDING_X = 40; // 20px padding on each side
 
-// Use props data or fallback to store data
+const updateItemsPerRow = () => {
+  if (!gridRef.value) return;
+  const gridWidth = gridRef.value.clientWidth - GRID_PADDING_X;
+  const count = Math.floor((gridWidth + GRID_GAP) / (ITEM_MIN_WIDTH + GRID_GAP));
+  itemsPerRow.value = Math.max(count, 1);
+};
+
+let resizeObserver: ResizeObserver | null = null;
+
+onMounted(() => {
+  if (gridRef.value) {
+    updateItemsPerRow();
+    resizeObserver = new ResizeObserver(updateItemsPerRow);
+    resizeObserver.observe(gridRef.value);
+  }
+});
+
+onUnmounted(() => {
+  resizeObserver?.disconnect();
+  resizeObserver = null;
+});
+
+const maxDisplayCount = computed(() => itemsPerRow.value * props.maxRows);
+
+// Use props data
 const members = computed(() => props.members);
 const memberCount = computed(() => props.memberCount || members.value?.length);
 
@@ -101,14 +128,14 @@ const visibleActionButtons = computed(() => {
   if (isExpanded.value) {
     return [] as Array<'add' | 'remove'>;
   }
-  return actionButtonOrder.value.slice(0, props.maxDisplayCount);
+  return actionButtonOrder.value.slice(0, maxDisplayCount.value);
 });
 
 const displayMiniMembers = computed(() => {
   if (isExpanded.value) {
     return sortedMembers.value;
   }
-  const availableMemberSlots = Math.max(0, props.maxDisplayCount - visibleActionButtons.value.length);
+  const availableMemberSlots = Math.max(0, maxDisplayCount.value - visibleActionButtons.value.length);
   return sortedMembers.value.slice(0, availableMemberSlots);
 });
 
@@ -117,7 +144,7 @@ const skeletonItems = computed(() => {
   if (members.value !== undefined) {
     return [];
   }
-  const availableMemberSlots = Math.max(0, props.maxDisplayCount - visibleActionButtons.value.length);
+  const availableMemberSlots = Math.max(0, maxDisplayCount.value - visibleActionButtons.value.length);
   const skeletonCount = Math.min(props.memberCount || availableMemberSlots, availableMemberSlots);
   return Array.from({ length: skeletonCount }, (_, index) => index);
 });
@@ -125,25 +152,26 @@ const skeletonItems = computed(() => {
 const canShowAddButton = computed(() => visibleActionButtons.value.includes('add'));
 const canShowRemoveButton = computed(() => visibleActionButtons.value.includes('remove'));
 
-const shouldShowExpand = computed(() =>
-  props.expandable && sortedMembers.value.length > props.maxDisplayCount,
-);
+const shouldShowExpand = computed(() => {
+  if (!props.expandable) return false;
+  const availableSlots = maxDisplayCount.value - actionButtonOrder.value.length;
+  return sortedMembers.value.length > availableSlots;
+});
 
 const title = computed(() => props.title || t('ChatSetting.group_members'));
 
 const handleScroll = () => {
-  // Handle scroll to detect reach end
   if (!isExpanded.value || !props.onReachEnd || !props.hasMore || props.loading) {
     return;
   }
 
-  const container = scrollContainerRef.value;
+  const container = gridRef.value;
   if (!container) {
     return;
   }
 
   const { scrollTop, scrollHeight, clientHeight } = container;
-  const threshold = 100; // Trigger when 100px from bottom
+  const threshold = 100;
 
   if (scrollHeight - scrollTop - clientHeight < threshold) {
     props.onReachEnd();
@@ -174,22 +202,19 @@ const handleRemoveMember = () => {
   }
 };
 
-onMounted(() => {
-  if (isExpanded.value && scrollContainerRef.value) {
-    scrollContainerRef.value.addEventListener('scroll', handleScroll);
-  }
-});
-
-onUnmounted(() => {
-  if (scrollContainerRef.value) {
-    scrollContainerRef.value.removeEventListener('scroll', handleScroll);
+watch(isExpanded, (expanded) => {
+  if (!gridRef.value) return;
+  if (expanded) {
+    gridRef.value.addEventListener('scroll', handleScroll);
+  } else {
+    gridRef.value.removeEventListener('scroll', handleScroll);
   }
 });
 </script>
 
 <template>
   <div
-    v-if="hasPermission(GroupPermission.VIEW_MEMBER_LIST)"
+    v-if="canViewMemberList"
     :class="[
       'group-members',
       className
@@ -219,7 +244,7 @@ onUnmounted(() => {
 
     <!-- Member Grid -->
     <div
-      :ref="isExpanded ? el => scrollContainerRef = el : undefined"
+      ref="gridRef"
       :class="[
         'group-members__grid',
         isExpanded && 'group-members__grid--expanded'
@@ -247,12 +272,12 @@ onUnmounted(() => {
         @click="handleMemberClick(member)"
       >
         <Avatar
-          :src="member.avatar"
-          :alt="member.nick || member.userID"
+          :src="member.avatarURL"
+          :alt="member.nickname || member.userID"
           size="md"
         />
         <div class="group-members__name">
-          {{ member.nick || member.userID }}
+          {{ member.nickname || member.userID }}
         </div>
       </div>
 

@@ -28,7 +28,7 @@
     <component
       :is="List"
       :empty="renderConversationList.length === 0"
-      :loading="!conversationList"
+      :loading="isLoading"
       :error="false"
       :PlaceholderEmptyList="PlaceholderEmptyList"
       :PlaceholderLoading="PlaceholderLoading"
@@ -50,8 +50,8 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
-import { useConversationListState } from '../../states/ConversationListState';
+import { computed, ref, watch, provide } from 'vue';
+import { useChatContext, useLoginStore } from '../../chat-store';
 import { isH5 } from '../../utils';
 import { Avatar as DefaultAvatar } from '../Avatar';
 import { ConversationActions as DefaultConversationActions } from './ConversationActions';
@@ -61,19 +61,23 @@ import { ConversationListHeader as DefaultConversationListHeader } from './Conve
 import { ConversationPreview, ConversationPreviewUI as DefaultConversationPreviewUI } from './ConversationPreview';
 import { ConversationSearch as DefaultConversationSearch } from './ConversationSearch';
 import { useConversation } from './hooks/useConversation';
+import { ConversationMarkType } from '@atomicxcore/core';
 import type {
   CreateGroupParams,
-  ConversationModel,
   ConversationListProps,
   ConversationActionsConfig,
   ConversationActionsBaseConfig,
 } from '../../types';
+import type { ConversationInfo } from '@atomicxcore/core';
 
 interface Props extends ConversationListProps {
+  /** Channel key for multi-panel isolation. Default: 'default'. */
+  channel?: string;
   children?: any;
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  channel: 'default',
   enableActions: true,
   enableCreate: true,
   enableSearch: true,
@@ -90,9 +94,9 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  selectConversation: [conversation: ConversationModel];
+  selectConversation: [conversation: ConversationInfo];
   beforeCreateConversation: [params: string | CreateGroupParams];
-  conversationCreated: [conversation: ConversationModel];
+  conversationCreated: [conversation: ConversationInfo];
 }>();
 
 const {
@@ -103,8 +107,32 @@ const {
   onBeforeCreateConversation,
   onConversationCreated,
 } = props;
-const { conversationList, setActiveConversation } = useConversationListState();
+
+const {
+  conversationList,
+  loadConversations,
+  setActiveConversation,
+  clearConversationUnreadCount,
+  markConversation,
+} = useChatContext(props.channel);
+provide('channel', props.channel);
+
 const { setEnableCreate, setEnableSearch } = useConversation();
+const { loginStatus } = useLoginStore();
+
+// Loading: true until logged in and loadConversations has settled
+// (which now waits for isSyncCompleted from SDK).
+const loaded = ref(false);
+const isLoading = computed(() => loginStatus.value !== 'logined' || !loaded.value);
+
+watch(loginStatus, (status) => {
+  if (status === 'logined') {
+    loaded.value = false;
+    loadConversations().finally(() => {
+      loaded.value = true;
+    });
+  }
+}, { immediate: true });
 
 const conversationActionList = ref<string[]>([]);
 
@@ -113,14 +141,14 @@ const renderConversationList = computed(() => {
     return [];
   }
 
-  let _conversationList = conversationList.value;
+  let _conversationList = conversationList.value as ConversationInfo[];
 
   if (props.filter && typeof props.filter === 'function') {
-    _conversationList = props.filter(_conversationList);
+    _conversationList = (props.filter as (list: ConversationInfo[]) => ConversationInfo[])(_conversationList);
   }
 
   if (props.sort && typeof props.sort === 'function') {
-    _conversationList = props.sort(_conversationList);
+    _conversationList = (props.sort as (list: ConversationInfo[]) => ConversationInfo[])(_conversationList);
   }
 
   return _conversationList;
@@ -136,7 +164,7 @@ setEnableSearch(enableSearch.value);
 
 watch(
   (): [ConversationActionsConfig | undefined, string[] | null] => [propActionsConfig, conversationActionList.value],
-  ([newActionsConfig, newConversationActionList]) => {
+  ([newActionsConfig, newConversationActionList]: [ConversationActionsConfig | undefined, string[] | null]) => {
     if (!newActionsConfig && !newConversationActionList) {
       return;
     }
@@ -158,7 +186,9 @@ watch(
   { immediate: true },
 );
 
-const handleSelectConversation = (conversation: ConversationModel) => {
+const handleSelectConversation = (conversation: ConversationInfo) => {
+  clearConversationUnreadCount(conversation.conversationID).catch(() => {});
+  markConversation([conversation.conversationID], ConversationMarkType.Unread, false).catch(() => {});
   setActiveConversation(conversation.conversationID);
   emit('selectConversation', conversation);
 };
@@ -175,7 +205,7 @@ const handleBeforeCreate = (params: string | CreateGroupParams) => {
   return params;
 };
 
-const handleCreated = (conversation: ConversationModel) => {
+const handleCreated = (conversation: ConversationInfo) => {
   emit('conversationCreated', conversation);
   if (onConversationCreated) {
     onConversationCreated(conversation);

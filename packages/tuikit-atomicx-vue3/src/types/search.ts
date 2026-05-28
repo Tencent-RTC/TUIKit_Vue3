@@ -1,12 +1,13 @@
 import type { Component, CSSProperties } from 'vue';
-import { SearchType } from './engine';
+import type { MessageInfo } from '@atomicxcore/core';
+// import { SearchType } from './engine';
 import type {
-  SearchResult,
-  SearchCloudMessagesResultItem,
-  SearchCloudUsersResultItem,
-  SearchCloudGroupsResultItem,
-  SearchParamsMap,
-  MessageModel,
+  // SearchResult,
+  // SearchCloudMessagesResultItem,
+  // SearchCloudUsersResultItem,
+  // SearchCloudGroupsResultItem,
+  // SearchParamsMap,
+  // MessageModel,
 } from './engine';
 
 export enum VariantType {
@@ -16,12 +17,19 @@ export enum VariantType {
   EXACT = 'exact',
 }
 
+export enum SearchType {
+  MESSAGE = 'message',
+  CHAT_MESSAGE = 'chat_message',
+  USER = 'user',
+  GROUP = 'group',
+}
+
 export type SearchTabType = SearchType | 'all';
 
 export interface AdvancedProps {
   variant: VariantType;
-  advancedParams?: Map<SearchType, SearchParamsMap[SearchType]>;
-  onAdvancedParamsChange?: (type: SearchType, params: SearchParamsMap[SearchType]) => void;
+  advancedParams?: Map<SearchType, any>;
+  onAdvancedParamsChange?: (type: SearchType, params: any) => void;
 }
 
 export interface SearchTabProps {
@@ -30,16 +38,13 @@ export interface SearchTabProps {
 }
 
 export type SearchResultItemType =
-  | SearchCloudMessagesResultItem
-  | SearchCloudUsersResultItem
-  | SearchCloudGroupsResultItem
-  | MessageModel;
+  | MessageInfo;
 
 interface ResultItemMap {
-  [SearchType.MESSAGE]: SearchCloudMessagesResultItem;
-  [SearchType.CHAT_MESSAGE]: MessageModel;
-  [SearchType.USER]: SearchCloudUsersResultItem;
-  [SearchType.GROUP]: SearchCloudGroupsResultItem;
+  [SearchType.MESSAGE]: any;
+  [SearchType.CHAT_MESSAGE]: MessageInfo;
+  [SearchType.USER]: any;
+  [SearchType.GROUP]: any;
 }
 
 export interface ResultItemProps<T extends SearchType> {
@@ -70,12 +75,12 @@ export interface SearchBarProps {
 export interface SearchAdvancedProps {
   variant: VariantType;
   searchType: SearchTabType;
-  advancedParams: Map<SearchType, SearchParamsMap[SearchType]>;
-  onAdvancedParamsChange: (type: SearchType, params: SearchParamsMap[SearchType]) => void;
+  advancedParams: Map<SearchType, any>;
+  onAdvancedParamsChange: (type: SearchType, params: any) => void;
 }
 
 export interface SearchResultsProps {
-  results: Map<SearchType, SearchResult<SearchType>>;
+  results: Map<SearchType, any>;
   isLoading: boolean;
   error?: Error | null;
   keyword: string;
@@ -93,6 +98,11 @@ export interface SearchResultsProps {
 export interface SearchProps {
   // 搜索模式
   variant?: VariantType;
+
+  /**
+   * For EMBEDDED variant: scope the message search to this conversation.
+   */
+  conversationID?: string;
 
   // 自定义组件
   SearchBar?: Component<SearchBarProps> | undefined;
@@ -113,7 +123,7 @@ export interface SearchProps {
 
   // 事件回调
   onKeywordChange?: (keyword: string) => void;
-  onSearchComplete?: (results: Map<SearchType, SearchResult<SearchType>>) => void;
+  onSearchComplete?: (results: Map<SearchType, any>) => void;
   onResultItemClick?: (data: SearchResultItemType, type: SearchType) => void;
   onError?: (error: Error) => void;
 }

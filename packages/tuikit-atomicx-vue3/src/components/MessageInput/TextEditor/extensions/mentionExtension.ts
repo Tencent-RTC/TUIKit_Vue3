@@ -1,13 +1,11 @@
 /**
  * TipTap Mention Extension Configuration
  * @description Enables @ mention functionality in the editor
- * Data management is handled by MentionSuggestion component via GroupSettingState
+ * Data management is handled by MentionSuggestion component via useChatContext.
  */
 import Mention from '@tiptap/extension-mention';
 import { VueRenderer } from '@tiptap/vue-3';
-import { useConversationListState } from '../../../../states/ConversationListState';
-import { useGroupSettingState, GroupType } from '../../../../states/GroupSettingState';
-import { ConversationType } from '../../../../types/engine';
+import { useChatContext } from '../../../../chat-store';
 import MentionSuggestion from './MentionSuggestion.vue';
 import type { SuggestionKeyDownProps, SuggestionProps } from '@tiptap/suggestion';
 
@@ -16,10 +14,13 @@ interface MentionComponentRef {
 }
 
 /**
- * Create Mention extension for @ member functionality
- * @returns Configured Mention extension
+ * Create Mention extension for @ member functionality.
+ * MentionSuggestion receives channel explicitly because VueRenderer mounts outside
+ * the normal MessageInput component tree.
  */
-export function createMentionExtension() {
+export function createMentionExtension(channel = 'default') {
+  const { activeConversation } = useChatContext(channel);
+
   return Mention.configure({
     deleteTriggerWithBackspace: true,
     HTMLAttributes: {
@@ -27,7 +28,6 @@ export function createMentionExtension() {
     },
     suggestion: {
       char: '@',
-      // Items are now managed inside the component via GroupSettingState
       items: () => [],
       render: () => {
         let component: VueRenderer | null = null;
@@ -44,28 +44,29 @@ export function createMentionExtension() {
 
         return {
           onStart: (props: SuggestionProps) => {
-            const { activeConversation } = useConversationListState();
-            const { memberCount, groupType } = useGroupSettingState();
-            if (
-              activeConversation.value?.type === ConversationType.GROUP
-              && memberCount.value
-              && memberCount.value > 1
-              && groupType.value !== GroupType.AVCHATROOM
-            ) {
-              component = new VueRenderer(MentionSuggestion, {
-                props,
-                editor: props.editor,
-              });
+            if (activeConversation.value?.conversationID?.startsWith('GROUP') !== true) {
+              return;
+            }
 
-              if (component.element) {
-                element = component.element as HTMLElement;
-                document.body.appendChild(element);
-              }
+            component = new VueRenderer(MentionSuggestion, {
+              props: {
+                ...props,
+                channel,
+              },
+              editor: props.editor,
+            });
+
+            if (component.element) {
+              element = component.element as HTMLElement;
+              document.body.appendChild(element);
             }
           },
 
           onUpdate(props: SuggestionProps) {
-            component?.updateProps(props);
+            component?.updateProps({
+              ...props,
+              channel,
+            });
           },
 
           onKeyDown(props: SuggestionKeyDownProps) {
@@ -73,7 +74,6 @@ export function createMentionExtension() {
               destroy();
               return true;
             }
-
             return (component?.ref as unknown as MentionComponentRef)?.onKeyDown?.(props) || false;
           },
 

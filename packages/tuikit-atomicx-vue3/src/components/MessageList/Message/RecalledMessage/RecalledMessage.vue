@@ -21,16 +21,16 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
+import { MessageType } from '@atomicxcore/core';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
-import { useMessageInputState } from '../../../../states/MessageInputState';
 import { View } from '../../../../baseComp/View';
-import { MessageType } from '../../../../types';
-import type { MessageModel } from '../../../../types';
+import { useChatUIState } from '../../../../context/useChatUIState';
+import type { MessageInfo } from '@atomicxcore/core';
 
 interface IRecalledMessageProps {
-  message: MessageModel;
+  message: MessageInfo;
   class?: string;
   style?: Record<string, any>;
 }
@@ -41,18 +41,17 @@ const props = withDefaults(defineProps<IRecalledMessageProps>(), {
 });
 
 const { t } = useUIKit();
-const { setContent, focusEditor } = useMessageInputState();
+const channel = inject('channel', 'default') as string;
+const { setInputContent, focusInput } = useChatUIState(channel);
 
-const isTextMessage = computed(() => props.message.type === MessageType.TEXT as any);
-const isMessageOwner = computed(() => props.message.flow === 'out');
-const otherDisplayName = computed(() => props.message.nick || props.message.from || '');
+const isTextMessage = computed(() => props.message.messageType === MessageType.Text);
+const isMessageOwner = computed(() => props.message.isSentBySelf);
+const otherDisplayName = computed(() => props.message.from.nickname || props.message.from.userID || '');
 
 function recallMessageToInput() {
-  // Assuming Vue version has similar transformTextWithEmojiKeyToName function
-  // Need to implement or import the corresponding function when actually used
-  const transformedText = props.message.payload.text;
-  setContent(transformedText);
-  focusEditor();
+  const transformedText = (props.message.messagePayload as any)?.text ?? '';
+  setInputContent(transformedText);
+  focusInput();
 }
 </script>
 

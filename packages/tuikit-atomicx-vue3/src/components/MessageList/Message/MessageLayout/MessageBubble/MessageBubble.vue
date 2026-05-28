@@ -1,48 +1,28 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
-import { MessageType } from '../../../../../types/engine'
-import cs from 'classnames';
-import { useMessageListState } from '../../../../../states/MessageListState';
+import { MessageStatus } from '@atomicxcore/core';
 import { MessageActionDropdown } from '../MessageActionDropdown';
 import type { MessageAction } from '../../../../../hooks/useMessageActions';
-import type { MessageModel } from '../../../../../types/engine';
+import type { MessageInfo } from '@atomicxcore/core';
 
 interface MessageBubbleProps {
-  message: MessageModel;
+  message: MessageInfo;
   alignment?: 'left' | 'right' | 'two-sided';
   isLastInChunk?: boolean;
   messageActionList?: MessageAction[];
 }
 
-const MEDIA_MESSAGE_TYPE = [
-  MessageType.IMAGE,
-  MessageType.VIDEO,
-  MessageType.CUSTOM,
-];
-
-const props = withDefaults(defineProps<MessageBubbleProps>(), {
-  message: () => ({} as MessageModel),
+withDefaults(defineProps<MessageBubbleProps>(), {
+  message: () => ({} as MessageInfo),
   alignment: 'two-sided',
   isLastInChunk: true,
   messageActionList: undefined,
 });
-
-const { highlightMessageIDSet } = useMessageListState();
-
-const isMediaMessage = computed(() => MEDIA_MESSAGE_TYPE.includes(props.message.type));
-const isHighlighted = computed(() => highlightMessageIDSet.value.has(props.message.ID));
 </script>
 
 <template>
-  <div
-    class="message-bubble"
-    :class="cs({
-      'highlight--normal': isHighlighted,
-      'highlight--media': isHighlighted && isMediaMessage
-    })"
-  >
+  <div class="message-bubble">
     <div
-      v-if="message.hasRiskContent"
+      v-if="message.status === MessageStatus.Violation"
       class="has-risk-content"
     >
       hasRiskContent
@@ -73,26 +53,5 @@ const isHighlighted = computed(() => highlightMessageIDSet.value.has(props.messa
   background-color: #fa515129;
   color: var(--text-color-error);
   font-size: 14px;
-}
-
-.highlight {
-  &--normal {
-    animation: background-highlight 1s ease-in-out infinite;
-  }
-  &--media {
-    animation: media-highlight 1s ease-in-out infinite;
-  }
-}
-
-@keyframes background-highlight {
-  50% {
-    background-color: rgb(255, 156, 25);
-  }
-}
-
-@keyframes media-highlight {
-  50% {
-    box-shadow: 0 1px 20px 0 rgb(255, 150, 13);
-  }
 }
 </style>

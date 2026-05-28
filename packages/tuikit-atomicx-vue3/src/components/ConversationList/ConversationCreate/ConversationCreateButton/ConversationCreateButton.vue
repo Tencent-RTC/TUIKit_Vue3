@@ -49,9 +49,9 @@ import {
   IconStartGroup,
   useUIKit,
 } from '@tencentcloud/uikit-base-component-vue3';
-import { CreateConvTypes } from '../../../../types';
+import { CreateConvTypes } from '../../../../types/conversation';
 import { useConversation } from '../../hooks/useConversation';
-import type { ConversationCreateButtonProps } from '../../../../types';
+import type { ConversationCreateButtonProps } from '../../../../types/conversation';
 
 const { t } = useUIKit();
 const { enableSearch } = useConversation();

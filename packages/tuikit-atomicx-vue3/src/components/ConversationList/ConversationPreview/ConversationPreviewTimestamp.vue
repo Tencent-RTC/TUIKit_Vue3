@@ -8,16 +8,16 @@
 import { computed } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { getTimeStamp } from '../../../utils/time';
-import type { ConversationModel } from '../../../types';
+import type { ConversationInfo } from '@atomicxcore/core';
 
 const props = defineProps<{
-  conversation: ConversationModel;
+  conversation: ConversationInfo;
 }>();
 
 const { language } = useUIKit();
 
 const time = computed(() => getTimeStamp({
-  time: Number(props.conversation?.lastMessage?.lastTime || 0) * 1000,
+  time: props.conversation?.lastMessage?.timestamp || 0,
   language: language.value,
 }) || '');
 </script>

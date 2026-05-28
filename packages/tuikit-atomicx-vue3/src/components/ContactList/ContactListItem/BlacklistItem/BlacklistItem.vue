@@ -7,13 +7,13 @@
   >
     <div class="blacklist-item__avatar">
       <Avatar
-        :src="profile.avatar"
-        :alt="profile.nick || profile.userID"
+        :src="profile.avatarURL"
+        :alt="displayName"
       />
     </div>
     <div class="blacklist-item__content">
       <div class="blacklist-item__name">
-        {{ profile.nick || profile.userID }}
+        {{ displayName }}
       </div>
     </div>
   </div>
@@ -29,6 +29,8 @@ const props = withDefaults(defineProps<BlacklistItemProps>(), {});
 const emit = defineEmits<{
   click: [profile: any];
 }>();
+
+const displayName = computed(() => props.profile.nickname || props.profile.userID);
 
 const blacklistItemClasses = computed(() => [
   'blacklist-item',

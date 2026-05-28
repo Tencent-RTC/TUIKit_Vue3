@@ -305,7 +305,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, onMounted, onUnmounted, defineProps } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { isH5 } from '../../../../utils';
 

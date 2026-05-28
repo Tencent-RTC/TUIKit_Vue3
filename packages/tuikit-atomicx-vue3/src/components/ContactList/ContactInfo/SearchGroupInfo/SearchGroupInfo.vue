@@ -11,7 +11,7 @@
       </div>
       <div class="contact-search-group-info__avatar-wrap">
         <Avatar
-          :src="group.avatar"
+          :src="group.avatarURL"
           :alt="displayName"
           :size="48"
         />
@@ -24,19 +24,9 @@
           {{ t('TUIContact.Group type') }}
         </div>
         <div class="contact-search-group-info__row-value">
-          {{ getGroupTypeName(group.type) }}
+          {{ groupTypeName }}
         </div>
       </div>
-      <!-- <div class="contact-search-group-info__row">
-        <div class="contact-search-group-info__row-label">
-          {{ t('TUIContact.Group introduction') }}
-        </div>
-        <div class="contact-search-group-info__row-value">
-          <span class="contact-search-group-info__intro">
-            {{ group.introduction || t('TUIContact.No introduction') }}
-          </span>
-        </div>
-      </div> -->
     </div>
 
     <template v-if="status !== 'idle'">
@@ -86,54 +76,53 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import ChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import { useUIKit, TUIButton } from '@tencentcloud/uikit-base-component-vue3';
-import { useContactListState } from '../../../../states/ContactListState';
+import { useGroupStore } from '../../../../chat-store';
+import { GroupType } from '@atomicxcore/core';
 import { Avatar } from '../../../Avatar';
 import { TEXTAREA_LENGTH_LIMIT } from '../../constants/const';
+import type { GroupInfo } from '@atomicxcore/core';
 import type { SearchGroupInfoProps } from '../../../../types/contact';
-import type { GroupModel } from '../../../../types/engine';
-import type { IGroupModel } from '@tencentcloud/chat-uikit-engine-lite';
 
 const props = withDefaults(defineProps<SearchGroupInfoProps>(), {
   showActions: true,
 });
 
 const emit = defineEmits<{
-  joinGroup: [group: GroupModel, note: string];
+  joinGroup: [group: GroupInfo, note: string];
 }>();
 
 const { t } = useUIKit();
-const { joinGroup } = useContactListState();
+const { joinGroup } = useGroupStore();
 
 const note = ref('');
 const loading = ref(false);
 const status = ref<'idle' | 'success' | 'error'>('idle');
 const errorMessage = ref('');
 
-const displayName = computed(() => props.group.name || props.group.groupID);
+const displayName = computed(() => props.group.groupName || props.group.groupID);
 
 const statusClasses = computed(() => [
   'contact-search-group-info__status',
   `contact-search-group-info__status--${status.value}`,
 ]);
 
-const getGroupTypeName = (type: IGroupModel['type']) => {
-  switch (type) {
-    case ChatEngine.TYPES.GRP_WORK:
+const groupTypeName = computed(() => {
+  switch (props.group.groupType) {
+    case GroupType.Work:
       return t('TUIContact.Work group');
-    case ChatEngine.TYPES.GRP_PUBLIC:
+    case GroupType.Public:
       return t('TUIContact.Public group');
-    case ChatEngine.TYPES.GRP_MEETING:
+    case GroupType.Meeting:
       return t('TUIContact.Meeting group');
-    case ChatEngine.TYPES.GRP_AVCHATROOM:
+    case GroupType.AVChatRoom:
       return t('TUIContact.Live group');
-    case ChatEngine.TYPES.GRP_COMMUNITY:
+    case GroupType.Community:
       return t('TUIContact.Community');
     default:
       return t('TUIContact.Unknown');
   }
-};
+});
 
 const handleJoinGroup = async () => {
   if (loading.value) {
@@ -147,10 +136,8 @@ const handleJoinGroup = async () => {
   const applyMessage = note.value.trim();
   emit('joinGroup', props.group, applyMessage);
   try {
-    await joinGroup({
-      groupID: props.group.groupID,
-      applyMessage,
-    });
+    // New GroupStore.joinGroup signature: joinGroup(groupID, message?).
+    await joinGroup(props.group.groupID, applyMessage);
     status.value = 'success';
   } catch (error: any) {
     status.value = 'error';

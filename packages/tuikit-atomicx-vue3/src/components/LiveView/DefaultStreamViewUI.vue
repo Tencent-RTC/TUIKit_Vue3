@@ -1,6 +1,6 @@
 <template>
   <div class="stream-cover">
-    <template v-if="userInfo.userId">
+    <template v-if="userInfo?.userId">
       <div v-if="!isVideoAvailable" class="no-video-container">
         <canvas
           v-if="needCanvasMaskList.length > 0"
@@ -11,7 +11,7 @@
         <Avatar
           class="avatar"
           :size="avatarSize"
-          :src="userInfo.avatarUrl"
+          :src="userInfo?.avatarUrl"
         />
       </div>
       <div v-if="seatListWithUser.length > 1" class="user-details">
@@ -19,7 +19,7 @@
           v-if="!isAudioAvailable"
           class="audio-icon"
           :isMuted="!isAudioAvailable"
-          :audioVolume="speakingUsers.get(userInfo.userId) || 0"
+          :audioVolume="speakingUsers.get(userInfo?.userId) || 0"
         />
         <div class="username">
           {{ displayName }}
@@ -27,7 +27,7 @@
       </div>
     </template>
     <div
-      v-if="!userInfo.userId"
+      v-if="!userInfo?.userId"
       class="empty-position"
       :class="{ 'clickable': !isAnchor }"
     >
@@ -52,8 +52,8 @@ import { Avatar } from '../Avatar';
 import type { SeatUserInfo } from '../../types';
 
 interface Props {
-  userInfo: SeatUserInfo;
-  streamViewInfoList: Array<{ userInfo: SeatUserInfo; region: {
+  userInfo?: SeatUserInfo;
+  streamViewInfoList: Array<{ userInfo?: SeatUserInfo; region: {
     left: string;
     top: string;
     width: string;

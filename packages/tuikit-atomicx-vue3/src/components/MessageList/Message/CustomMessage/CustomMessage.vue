@@ -6,17 +6,21 @@ import { isCallMessage as _isCallMessage } from '../../../../utils/call';
 import { isRoomMessage } from '../../../../utils/room';
 import { CallMessage } from './CallMessage';
 import { QuickConferenceMessage } from './QuickConferenceMessage';
-import type { MessageModel } from '../../../../types';
+import type { MessageInfo } from '@atomicxcore/core';
 
 interface Props {
-  message: MessageModel;
+  message: MessageInfo;
 }
+
+const props = defineProps<Props>();
+
+const classes = useCssModule();
 
 const customMessageClasses = computed(() => cs(
   classes['custom-message'],
   {
-    [classes['custom-message--flow-in']]: props.message.flow === 'in',
-    [classes['custom-message--flow-out']]: props.message.flow === 'out',
+    [classes['custom-message--flow-in']]: !props.message.isSentBySelf,
+    [classes['custom-message--flow-out']]: props.message.isSentBySelf,
   },
 ));
 
@@ -31,15 +35,12 @@ interface CustomMessagePayload {
   extension: string;
 }
 
-const props = defineProps<Props>();
-
-const classes = useCssModule();
-
 const isCallMessage = computed(() => _isCallMessage(props.message));
+const _isRoomMsg = computed(() => isRoomMessage(props.message));
 
 const textLinkData = computed<{ text?: string; link?: string } | null>(() => {
   try {
-    const payload = props.message.payload as unknown as CustomMessagePayload;
+    const payload = props.message.messagePayload as unknown as CustomMessagePayload;
     const parsed = JSON.parse(payload?.data || '{}') as CustomMessageData;
     if (parsed?.businessID === 'text_link') {
       const { text, link } = parsed;
@@ -61,8 +62,8 @@ const textLinkData = computed<{ text?: string; link?: string } | null>(() => {
   />
 
   <QuickConferenceMessage
-    v-else-if="isRoomMessage(props.message)"
-    :message="props.message"
+    v-else-if="_isRoomMsg"
+    :message="(props.message as any)"
   />
 
   <!-- text_link -->

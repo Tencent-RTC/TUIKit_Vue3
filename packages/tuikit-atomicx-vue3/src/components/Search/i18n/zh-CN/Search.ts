@@ -31,7 +31,7 @@ export const Search = {
   // results
   'results.title': '搜索消息',
   'results.relatedTo': '{{count}} 条与',
-  'results.relatedToSuffix': '的消息',
+  'results.relatedToSuffix': '相关的消息',
   'results.foundMessages': '发现 {{count}} 条消息',
 
   // message types

@@ -190,6 +190,23 @@ const isUserInvited = (userId: string, liveId: string) => invitees.value.some(us
 const inPk = computed(() => battleUsers.value.some(user => user.userId === loginUserInfo.value?.userId));
 
 const sentCoHostRequestUserList = ref<Set<string>>(new Set());
+// Map userId -> close() callback of the most recent "invitation sent" toast.
+// Used to dismiss the toast when the invitation is rejected/cancelled/timed
+// out, so the user does not see "invitation sent" and "invitation rejected"
+// at the same time (typically when invitee is busy on another connection).
+const sentToastHandles = ref<Map<string, () => void>>(new Map());
+
+const closeSentToast = (userId: string) => {
+  const close = sentToastHandles.value.get(userId);
+  if (close) {
+    try {
+      close();
+    } catch (e) {
+      // Ignore: toast may already be closed.
+    }
+    sentToastHandles.value.delete(userId);
+  }
+};
 
 const handleSendCoHostRequest = async (user: SeatUserInfo) => {
   try {
@@ -204,7 +221,20 @@ const handleSendCoHostRequest = async (user: SeatUserInfo) => {
     });
     if (result.get(user.liveId) === TUIConnectionCode.TUIConnectionCodeSuccess) {
       sentCoHostRequestUserList.value.add(user.userId);
-      TUIToast({ type: TOAST_TYPE.SUCCESS, message: t('Co-host invitation sent to user', { userName: user.userName || user.userId }) });
+      // Keep a handle to the "invitation sent" toast so we can close it later.
+      // When the invitee is already busy on another co-host connection, the
+      // SDK returns Success here and then fires `onConnectionRequestReject`
+      // almost immediately, which surfaces an "Invitation rejected" toast in
+      // the host app. To avoid showing two conflicting toasts at the same
+      // time, we proactively dismiss the "sent" toast on reject/timeout
+      // (see `handleCoHostRequestRejected` / `handleCoHostRequestTimeout`).
+      const sentToast = TUIToast({
+        type: TOAST_TYPE.SUCCESS,
+        message: t('Co-host invitation sent to user', { userName: user.userName || user.userId }),
+      });
+      if (sentToast?.close) {
+        sentToastHandles.value.set(user.userId, sentToast.close);
+      }
     } else {
       switch (result.get(user.liveId)) {
         case TUIConnectionCode.TUIConnectionCodeRoomNotExist:
@@ -237,6 +267,7 @@ const handleCancelCoHostRequest = async (user: SeatUserInfo) => {
   try {
     await cancelHostConnection({ liveId: user.liveId });
     sentCoHostRequestUserList.value.delete(user.userId);
+    closeSentToast(user.userId);
   } catch (error) {
     TUIToast({ type: TOAST_TYPE.ERROR, message: t('Cancel co-host request failed') });
     throw error;
@@ -298,17 +329,26 @@ const handleCoHostRequestAccepted = ({ invitee }: { invitee: SeatUserInfo }) => 
   if (sentCoHostRequestUserList.value.has(invitee.userId)) {
     sentCoHostRequestUserList.value.delete(invitee.userId);
   }
+  // Drop the toast handle without closing — the "invitation sent" toast can
+  // finish its normal life-cycle since the invitation was actually accepted.
+  sentToastHandles.value.delete(invitee.userId);
 };
 
 const handleCoHostRequestRejected = ({ invitee }: { invitee: SeatUserInfo }) => {
   if (sentCoHostRequestUserList.value.has(invitee.userId)) {
     sentCoHostRequestUserList.value.delete(invitee.userId);
   }
+  // Dismiss the just-shown "invitation sent" toast to avoid showing it
+  // alongside the host app's "invitation rejected" toast.
+  closeSentToast(invitee.userId);
 };
 
 const handleCoHostRequestTimeout = ({ inviter, invitee }: { inviter: SeatUserInfo; invitee: SeatUserInfo }) => {
   if (inviter.userId === loginUserInfo.value?.userId && sentCoHostRequestUserList.value.has(invitee.userId)) {
     sentCoHostRequestUserList.value.delete(invitee.userId);
+  }
+  if (inviter.userId === loginUserInfo.value?.userId) {
+    closeSentToast(invitee.userId);
   }
 };
 

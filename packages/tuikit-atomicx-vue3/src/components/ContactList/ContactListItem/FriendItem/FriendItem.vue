@@ -9,13 +9,13 @@
   >
     <div class="friend-item__avatar">
       <Avatar
-        :src="friend.avatar"
-        :alt="friend.remark || friend?.nick || friend.userID"
+        :src="friend.avatarURL"
+        :alt="displayName"
       />
     </div>
     <div class="friend-item__content">
       <div class="friend-item__name">
-        {{ friend.remark || friend?.nick || friend.userID }}
+        {{ displayName }}
       </div>
     </div>
   </div>
@@ -31,6 +31,11 @@ const props = withDefaults(defineProps<FriendItemProps>(), {});
 const emit = defineEmits<{
   click: [friend: any];
 }>();
+
+// Display priority: friend remark > nickname > userID.
+const displayName = computed(
+  () => props.friend.friendRemark || props.friend.nickname || props.friend.userID,
+);
 
 const friendItemClasses = computed(() => [
   'friend-item',

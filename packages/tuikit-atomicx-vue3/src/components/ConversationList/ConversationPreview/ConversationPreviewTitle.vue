@@ -6,13 +6,13 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
-import type { ConversationModel } from '../../../types/engine';
+import type { ConversationInfo } from '@atomicxcore/core';
 
 const props = defineProps<{
-  conversation: ConversationModel;
+  conversation: ConversationInfo;
 }>();
 
-const title = computed(() => props?.conversation?.getShowName?.() || '');
+const title = computed(() => props?.conversation?.title || '');
 </script>
 
 <style lang="scss" module>

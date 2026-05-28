@@ -37,7 +37,7 @@
   </template>
 
   <template v-else-if="item.id === PlayerControlButton.Volume">
-    <span class="control-btn audio-control-btn">
+    <span :class="['control-btn', 'audio-control-btn', { disabled: isVolumeDisabled }]">
       <AudioControl
         class="audio-control-icon"
         :icon-size="20"
@@ -47,6 +47,15 @@
         :custom-active-icon="buttons[PlayerControlButton.Volume].activeIcon"
         @volume-change="handleVolumeChange"
         @mute-change="handleMuteChange"
+      />
+      <!-- Transparent click-blocker shown only when the consumer disables
+           the volume button via `buttons[PlayerControlButton.Volume].disabled`.
+           Covers both the icon and the pop-up slider so the internal
+           AudioControl never sees pointer events. Aligned with React. -->
+      <span
+        v-if="isVolumeDisabled"
+        class="disabled-overlay"
+        @click.stop="handleDisabledClick"
       />
     </span>
   </template>
@@ -143,6 +152,11 @@ const { t } = useUIKit();
 /**
  * Disabled state computed properties for control buttons.
  * Merges internal logic constraints with external buttons.disabled configuration.
+ *
+ * Note: click handlers distinguish the two sources and surface different
+ * Toast messages — system-level constraints keep their specific copy (e.g.
+ * "Not allow to Pause in PIP"), consumer-driven disables show the generic
+ * `LiveView.ButtonDisabled` (aligned with React).
  */
 
 const isPlayPauseDisabled = computed(() =>
@@ -159,8 +173,36 @@ const isFullscreenDisabled = computed(() =>
   isPictureInPicture.value || buttons[PlayerControlButton.Fullscreen].disabled,
 );
 
+// Volume is a composite (AudioControl) that doesn't expose a disabled
+// input. We surface a disabled-class + overlay based solely on the
+// consumer flag. Aligned with React.
+const isVolumeDisabled = computed(() =>
+  buttons[PlayerControlButton.Volume].disabled,
+);
+
+/**
+ * Emit the generic "button disabled" Toast used when the consumer
+ * disabled a button via `buttons[key].disabled = true`. Kept as a single
+ * helper so the wording is consistent across built-ins, the Volume
+ * overlay, and the custom-button path.
+ */
+const handleDisabledClick = () => {
+  TUIToast({
+    type: TOAST_TYPE.WARNING,
+    message: t('LiveView.ButtonDisabled'),
+  });
+};
+
 const handlePlayPause = () => {
-  if (isPlayPauseDisabled.value) {
+  // Consumer disable takes priority over the system constraint so the
+  // user sees the accurate reason ("this button is disabled") rather than
+  // the PiP-specific copy.
+  if (buttons[PlayerControlButton.Play].disabled) {
+    handleDisabledClick();
+    return;
+  }
+
+  if (isPictureInPicture.value) {
     TUIToast({
       type: TOAST_TYPE.WARNING,
       message: t('LiveView.NotAllowPauseInPIP'),
@@ -177,6 +219,13 @@ const handlePlayPause = () => {
 
 // Picture-in-picture is not allowed in paused state or fullscreen mode
 const handlePictureInPicture = async () => {
+  // Consumer disable takes priority; fall back to the system-constraint
+  // branches below if `buttons.pictureInPicture.disabled` is false.
+  if (buttons[PlayerControlButton.PictureInPicture].disabled) {
+    handleDisabledClick();
+    return;
+  }
+
   if (!isPlaying.value && !isPictureInPicture.value) {
     TUIToast({
       type: TOAST_TYPE.WARNING,
@@ -210,13 +259,19 @@ const handlePictureInPicture = async () => {
 
 // Full-screen mode is not allowed in picture-in-picture mode
 const handleFullscreen = () => {
-  if (isFullscreenDisabled.value) {
+  if (buttons[PlayerControlButton.Fullscreen].disabled) {
+    handleDisabledClick();
+    return;
+  }
+
+  if (isPictureInPicture.value) {
     TUIToast({
       type: TOAST_TYPE.WARNING,
       message: t('LiveView.NotAllowFullscreenInPIP'),
     });
     return;
   }
+
   if (isFullscreen.value) {
     exitFullscreen();
   } else {
@@ -238,6 +293,9 @@ const handleMuteChange = async () => {
 
 const handleCustomButtonClick = async (button: CustomButton) => {
   if (button.disabled) {
+    // Consumer explicitly disabled this button: surface the same generic
+    // Toast as built-in buttons so UX is uniform.
+    handleDisabledClick();
     return;
   }
 
@@ -256,6 +314,7 @@ const renderCustomButtonIcon = (button: CustomButton) => h(button.icon as any, {
 
 <style scoped lang="scss">
 .control-btn {
+  position: relative;
   background: transparent;
   border: none;
   border-radius: 50%;
@@ -290,6 +349,14 @@ const renderCustomButtonIcon = (button: CustomButton) => h(button.icon as any, {
 }
 
 .audio-control-btn {
+  // The volume button's hover/active effects are managed by the inner
+  // AudioControl component (volume-btn) rather than the outer control-btn
+  // wrapper, because the slider popup is a child of this span and would
+  // keep the hover state active even when the pointer is on the slider.
+  &:hover {
+    background: transparent;
+  }
+
   &:active {
     transform: unset;
   }
@@ -300,5 +367,18 @@ const renderCustomButtonIcon = (button: CustomButton) => h(button.icon as any, {
     width: 18px;
     height: 18px;
   }
+}
+
+// Transparent click-blocker layered over composite controls (Volume)
+// when the consumer disables them. Captures pointer events so the
+// internal AudioControl slider / icon never sees a click, and the
+// wrapping span shows the generic disabled Toast instead. Aligned with
+// React's ControlBarItem.module.scss.
+.disabled-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  cursor: not-allowed;
+  background: transparent;
 }
 </style>

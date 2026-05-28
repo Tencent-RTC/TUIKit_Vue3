@@ -1,6 +1,6 @@
 import type { Component, CSSProperties } from 'vue';
-import type { Friend } from './contact';
-import type { ConversationModel } from './engine';
+import { GroupType } from '@atomicxcore/core';
+import type { ContactInfo, ConversationInfo } from '@atomicxcore/core';
 import type { AvatarProps } from '../components/Avatar';
 import type { CreateGroupParams } from '@tencentcloud/chat-uikit-engine-lite';
 
@@ -34,17 +34,17 @@ export interface ConversationListProps {
   /** Specifies a vue component to customize the avatar in list. */
   Avatar?: Component<AvatarProps>;
   /** Specifies a function to filter conversations in the conversation list. */
-  filter?: ((conversationList: ConversationModel[]) => ConversationModel[]);
+  filter?: ((conversationList: ConversationInfo[]) => ConversationInfo[]);
   /** Specifies a function to sort conversations in the conversation list. */
-  sort?: ((conversationList: ConversationModel[]) => ConversationModel[]);
+  sort?: ((conversationList: ConversationInfo[]) => ConversationInfo[]);
   /** Specifies the prop to receive callback when a user clicks a conversation. */
-  onSelectConversation?: ((conversation: ConversationModel) => void);
+  onSelectConversation?: ((conversation: ConversationInfo) => void);
   /** Specifies the prop to execute custom operations before creating a channel. */
   onBeforeCreateConversation?: (
     (params: string | CreateGroupParams) => string | CreateGroupParams
   );
   /** Specifies the prop to receive callback when a conversation is created. */
-  onConversationCreated?: ((conversation: ConversationModel) => void);
+  onConversationCreated?: ((conversation: ConversationInfo) => void);
   /** The custom class name */
   className?: string;
   /** The custom css style */
@@ -87,7 +87,7 @@ export interface ConversationListContentProps {
 
 export interface ConversationPreviewUIProps {
   /** The conversation to be displayed */
-  conversation: ConversationModel;
+  conversation: ConversationInfo;
   /** If the component's Conversation is the active (selected) Conversation */
   isSelected?: boolean;
   /** Whether to show the ConversationActions */
@@ -105,7 +105,7 @@ export interface ConversationPreviewUIProps {
   /** The custom ConversationActions component */
   ConversationActions?: Component<ConversationActionsProps>;
   /** Callback when the user click a conversation from conversation list */
-  onSelectConversation?: ((conversation: ConversationModel) => void);
+  onSelectConversation?: ((conversation: ConversationInfo) => void);
   /** The custom ConversationActions config */
   actionsConfig?: ConversationActionsConfig;
   /** The custom class name */
@@ -127,7 +127,7 @@ export interface ConversationActionItem {
   /** label: The label of the custom action. */
   label: string;
   /** onClick: The function to be called when the custom action is clicked. */
-  onClick: (conversation: ConversationModel, e?: Event) => void;
+  onClick: (conversation: ConversationInfo, e?: Event) => void;
 }
 
 export interface ConversationActionsBaseConfig {
@@ -143,13 +143,13 @@ export interface ConversationActionsBaseConfig {
 
 export interface ConversationActionsConfig extends ConversationActionsBaseConfig {
   /** Function to override the default behavior when user mark a conversation as unread. */
-  onMarkConversationUnread?: (conversation: ConversationModel, e?: Event) => void;
+  onMarkConversationUnread?: (conversation: ConversationInfo, e?: Event) => void;
   /** Function to override the default behavior when user pin or unpin a conversation. */
-  onConversationPin?: (conversation: ConversationModel, e?: Event) => void;
+  onConversationPin?: (conversation: ConversationInfo, e?: Event) => void;
   /** Function to override the default behavior when user mute or unmute a conversation. */
-  onConversationMute?: (conversation: ConversationModel, e?: Event) => void;
+  onConversationMute?: (conversation: ConversationInfo, e?: Event) => void;
   /** Function to override the default behavior when user delete a conversation. */
-  onConversationDelete?: (conversation: ConversationModel, e?: Event) => void;
+  onConversationDelete?: (conversation: ConversationInfo, e?: Event) => void;
   /**
    * An object containing custom conversation actions (key) and object (value).
    * Each value is an object with the following properties:
@@ -164,14 +164,14 @@ export interface ConversationActionsConfig extends ConversationActionsBaseConfig
   /** An array of vue elements to be displayed in the action popup. */
   PopupElements?: Component[];
   /** The function to be called when the action popup is clicked. */
-  onClick?: (e: Event, key?: string, conversation?: ConversationModel) => void;
+  onClick?: (e: Event, key?: string, conversation?: ConversationInfo) => void;
   /** Function to be called when the actions modal is closed (H5 only). */
   onClose?: () => void;
 }
 
 export interface ConversationActionsProps extends ConversationActionsConfig {
   /** The conversation model. */
-  conversation: ConversationModel;
+  conversation: ConversationInfo;
   /** The class name of the root element. */
   className?: string;
   /** The style of the root element. */
@@ -182,8 +182,8 @@ export interface ConversationCreateProps {
   onBeforeCreateConversation?: (
     (params: string | CreateGroupParams) => string | CreateGroupParams
   );
-  onConversationCreated?: ((conversation: ConversationModel) => void);
-  conversationList?: ConversationModel[];
+  onConversationCreated?: ((conversation: ConversationInfo) => void);
+  conversationList?: ConversationInfo[];
 }
 
 export interface ConversationCreateButtonProps {
@@ -198,7 +198,7 @@ export enum PageStateTypes {
 }
 
 export interface ConversationCreateGroupDetailProps {
-  profileList: Friend[];
+  profileList: ContactInfo[];
   pageState: PageStateTypes;
   groupInfo: CreateGroupInfo;
   onUpdateGroupInfo: (info: CreateGroupInfo) => void;
@@ -207,8 +207,8 @@ export interface ConversationCreateGroupDetailProps {
 
 export interface ConversationCreateUserSelectListProps {
   isCreateGroup: boolean;
-  selectList: Friend[];
-  setSelectList: (list: Friend[]) => void;
+  selectList: ContactInfo[];
+  setSelectList: (list: ContactInfo[]) => void;
 }
 
 export interface ConversationGroupTypeInfoProps {
@@ -241,12 +241,32 @@ export enum GroupLabelTypes {
   TYPE = 'type',
 }
 
-export enum GroupType {
-  WORK = 'Private',
-  PUBLIC = 'Public',
-  MEETING = 'ChatRoom',
-  AVCHATROOM = 'AVChatRoom',
-  COMMUNITY = 'Community',
+// export enum GroupType {
+//   WORK = 'Private',
+//   PUBLIC = 'Public',
+//   MEETING = 'ChatRoom',
+//   AVCHATROOM = 'AVChatRoom',
+//   COMMUNITY = 'Community',
+// }
+
+interface GroupMemberItem {
+  userID: string;
+  role?: string;
+  memberCustomField?: any[];
+}
+
+export interface CreateGroupParams {
+  name: string;
+  type: string;
+  groupID?: string;
+  introduction?: string;
+  notification?: string;
+  avatar?: string;
+  maxMemberNum?: number;
+  joinOption: string;
+  memberList?: GroupMemberItem[];
+  groupCustomField?: any[];
+  isSupportTopic?: boolean;
 }
 
 export interface CreateGroupInfo {

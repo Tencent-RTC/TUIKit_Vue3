@@ -20,6 +20,7 @@ export default {
     'Prev': '上一步',
     'Cancel': '取消',
     'Create': '创建',
+    'Participant cannot be empty': '成员不能为空',
 
     // ConversationCreateGroupDetail
     'Group Avatar': '群头像',
@@ -76,5 +77,9 @@ export default {
     'someone_at_me': '有人@我',
     'at_all': '@所有人',
     'group_id_already_used': '当前创建群聊的群ID已被使用，请选择其他群ID',
+    'group_id_invalid': '群ID不合法，请修改后重试',
+    'create_group_failed': '创建群聊失败，请重试',
+    'user_not_found': '该用户不存在',
+    'conversation_not_found': '该会话不存在',
   },
 };

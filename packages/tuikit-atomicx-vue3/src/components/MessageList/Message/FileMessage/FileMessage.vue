@@ -8,42 +8,40 @@ import {
 } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
-import type { MessageModel } from '../../../../types/engine';
+import type { FileMessagePayload, MessageInfo } from '@atomicxcore/core';
 
 interface FileMessageProps {
-  message: MessageModel;
-}
-
-interface FileMessageContent {
-  /** sender show name */
-  showName: string;
-  /** file name */
-  name: string;
-  /** file type */
-  type: string;
-  /** file size */
-  size: string;
-  /** file url */
-  url: string;
+  message: MessageInfo;
 }
 
 const { t } = useUIKit();
 
 const props = withDefaults(defineProps<FileMessageProps>(), {
-  message: () => ({} as MessageModel),
+  message: () => ({} as MessageInfo),
 });
 
-const messageContent = computed(() => props.message.getMessageContent() as FileMessageContent);
+const messageContent = computed(() => props.message.messagePayload as FileMessagePayload);
+
+function formatFileSize(bytes: number | undefined): string {
+  if (!bytes || bytes <= 0) {
+    return '';
+  }
+  const MB = 1024 * 1024;
+  if (bytes >= MB) {
+    return `${(bytes / MB).toFixed(1)} MB`;
+  }
+  return `${(bytes / 1024).toFixed(1)} KB`;
+}
 
 const handleFileClick = async (event: MouseEvent) => {
   // If ctrl key (Windows) or command key (Mac) is pressed, open in new tab
   if (event.metaKey || event.ctrlKey) {
-    window.open(messageContent.value.url, '_blank');
+    window.open(messageContent.value.fileUrl, '_blank');
   } else {
     try {
       event.preventDefault();
 
-      const response = await fetch(messageContent.value.url);
+      const response = await fetch(messageContent.value.fileUrl ?? '');
       if (!response.ok) {
         throw new Error('Download failed');
       }
@@ -53,7 +51,7 @@ const handleFileClick = async (event: MouseEvent) => {
 
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = messageContent.value.name;
+      link.download = messageContent.value.fileName ?? '';
       link.click();
 
       // Clean up blob url
@@ -70,8 +68,8 @@ const handleFileClick = async (event: MouseEvent) => {
 <template>
   <View
     :class="cs('file-message', {
-      'file-message--flow-in': message.flow === 'in',
-      'file-message--flow-out': message.flow === 'out',
+      'file-message--flow-in': !message.isSentBySelf,
+      'file-message--flow-out': message.isSentBySelf,
     })"
     @click="handleFileClick"
   >
@@ -80,10 +78,10 @@ const handleFileClick = async (event: MouseEvent) => {
     </View>
     <View class="file-message__middle">
       <View class="file-message__name">
-        {{ messageContent.name }}
+        {{ messageContent.fileName }}
       </View>
       <View class="file-message__size">
-        {{ messageContent.size }}
+        {{ formatFileSize(messageContent.fileSize) }}
       </View>
     </View>
     <View class="file-message__download">

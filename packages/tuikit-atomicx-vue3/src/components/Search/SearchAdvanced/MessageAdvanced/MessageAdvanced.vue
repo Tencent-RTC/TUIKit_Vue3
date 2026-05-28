@@ -50,9 +50,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, onMounted, onUnmounted, defineProps } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { SearchType } from '../../../../types/engine';
+import { SearchType } from '../../../../types/search';
 import { DateRangePicker } from '../DateRangePicker';
 
 interface IMessageAdvancedProps {

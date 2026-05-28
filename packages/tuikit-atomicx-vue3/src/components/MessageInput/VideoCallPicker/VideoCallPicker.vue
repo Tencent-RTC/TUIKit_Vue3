@@ -40,7 +40,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useCssModule } from 'vue';
+import { computed, ref, useCssModule, inject } from 'vue';
+import { ConversationType } from '@atomicxcore/core';
+import { useChatContext, useLoginStore } from '../../../chat-store';
 import {
   IconVideoDefault,
   TUIDialog,
@@ -48,13 +50,8 @@ import {
 } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../baseComp/View';
-import { useConversationListState } from '../../../states/ConversationListState';
-import { useGroupSettingState } from '../../../states/GroupSettingState';
-import { ConversationType } from '../../../types/engine';
 import { startCall } from '../../../utils/call';
-import {
-  UserPicker,
-} from '../../UserPicker';
+import { UserPicker } from '../../UserPicker';
 
 interface VideoCallPickerProps {
   label?: string;
@@ -63,7 +60,6 @@ interface VideoCallPickerProps {
 }
 
 const VIDEO_CALL_TYPE = 2;
-const MEMBER_PAGE_SIZE = 80;
 const MAX_GROUP_CALL_MEMBERS = 9;
 const MIN_GROUP_CALL_MEMBERS = 1;
 
@@ -75,8 +71,15 @@ const props = withDefaults(defineProps<VideoCallPickerProps>(), {
 
 const styles = useCssModule();
 const { t } = useUIKit();
-const { activeConversation } = useConversationListState();
-const { allMembers, getGroupMemberList, memberCount, currentUserID } = useGroupSettingState();
+const channel = inject('channel', 'default') as string;
+const {
+  activeConversation,
+  memberList,
+  hasMoreMembers,
+  loadMembers,
+  loadMoreMembers,
+} = useChatContext(channel);
+const { loginUserInfo } = useLoginStore();
 
 const isGroupCallDialogVisible = ref(false);
 const groupMemberPickerRef = ref();
@@ -86,13 +89,14 @@ const isPrivateConversation = computed(() =>
 );
 
 const groupMemberOptions = computed(() => {
-  const restructuredMembers = allMembers.value?.map(member => ({
-    key: member.userID,
-    label: member.nick || member.userID,
-    avatarUrl: member.avatar,
-  })) ?? [];
-
-  return restructuredMembers.filter(member => member.key !== currentUserID.value);
+  const myUserID = loginUserInfo.value?.userID;
+  return memberList.value
+    .filter(member => member.userID !== myUserID)
+    .map(member => ({
+      key: member.userID,
+      label: member.nickname || member.userID,
+      avatarUrl: member.avatarURL,
+    }));
 });
 
 const canStartCall = computed(() => {
@@ -104,12 +108,9 @@ const canStartCall = computed(() => {
   return true;
 });
 
-function getCurrentPeerUserId(): string | undefined {
-  return activeConversation.value?.userProfile?.userID;
-}
-
 function initiatePrivateCall(): void {
-  const peerUserId = getCurrentPeerUserId();
+  const conversationID = activeConversation.value?.conversationID ?? '';
+  const peerUserId = conversationID.replace(/^C2C/, '');
   if (!peerUserId) {
     console.warn('No peer user ID found for private call');
     return;
@@ -127,23 +128,14 @@ function initiatePrivateCall(): void {
 }
 
 function loadMoreGroupMembers(): void {
-  if (activeConversation.value?.type !== ConversationType.GROUP) {
+  if (!hasMoreMembers.value) {
     return;
   }
-
-  const currentMemberCount = allMembers.value?.length || 0;
-  const totalMemberCount = memberCount.value || 0;
-
-  if (currentMemberCount < totalMemberCount) {
-    getGroupMemberList({
-      count: MEMBER_PAGE_SIZE,
-      offset: currentMemberCount,
-    });
-  }
+  loadMoreMembers();
 }
 
 function showGroupCallDialog(): void {
-  loadMoreGroupMembers();
+  loadMembers();
   isGroupCallDialogVisible.value = true;
 }
 
@@ -152,7 +144,8 @@ function handleCloseGroupCallDialog() {
 }
 
 function initiateGroupCall(): void {
-  const currentGroupId = activeConversation.value?.groupProfile?.groupID;
+  const conversationID = activeConversation.value?.conversationID ?? '';
+  const currentGroupId = conversationID.replace(/^GROUP/, '');
   if (!groupMemberPickerRef.value || !currentGroupId) {
     console.warn('Missing group information for group call');
     return;
@@ -193,9 +186,7 @@ function handleVideoCallClick() {
 }
 
 const handleLoadMoreGroupMembers = () => {
-  if (activeConversation.value?.type === ConversationType.GROUP) {
-    loadMoreGroupMembers();
-  }
+  loadMoreGroupMembers();
 };
 
 const handleConfirmGroupCall = () => initiateGroupCall();

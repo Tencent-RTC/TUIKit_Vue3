@@ -66,7 +66,6 @@ export type {
   ISearchCloudMessagesResultItem as SearchCloudMessagesResultItem,
   ISearchCloudUsersResultItem as SearchCloudUsersResultItem,
   ISearchCloudGroupsResultItem as SearchCloudGroupsResultItem,
-  CreateGroupParams,
 } from '@tencentcloud/chat-uikit-engine-lite';
 
 export type {
@@ -79,5 +78,5 @@ export type {
 export {
   ConversationType,
   MessageType,
-  SearchType,
+  // SearchType,
 };

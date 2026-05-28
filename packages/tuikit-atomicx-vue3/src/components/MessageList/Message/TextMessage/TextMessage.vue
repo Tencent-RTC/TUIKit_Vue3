@@ -1,32 +1,32 @@
 <template>
   <View
     :class="cs('text-message', {
-      'text-message--flow-in': message.flow === 'in',
-      'text-message--flow-out': message.flow === 'out',
+      'text-message--flow-in': !message.isSentBySelf,
+      'text-message--flow-out': message.isSentBySelf,
     })"
   >
     <View
-      v-if="referencedInfo.content"
+      v-if="$props.message.quoteInfo"
       :class="cs('text-message__reference', {
-        'text-danger': isOriginMessageHasRecalled
+        'text-danger': isOriginMessageHasRecalled || props.message.quoteInfo?.messageType === MessageType.Unknown
       })"
       @click="handleReferenceClick"
     >
-      <template v-if="isOriginMessageHasRecalled">
+      <template v-if="isOriginMessageHasRecalled || props.message.quoteInfo?.messageType === MessageType.Unknown">
         {{ t('MessageList.origin_message_has_been_recalled') }}
       </template>
       <template v-else>
         <View class="text-message__reference__header">
-          {{ referencedInfo.sender }}
+          {{ $props.message.quoteInfo?.sender?.nickname || $props.message.quoteInfo?.sender?.userID }}
         </View>
         <View class="text-message__reference__content">
-          {{ referencedInfo.content }}
+          {{ quotePreview }}
         </View>
       </template>
     </View>
     <View class="text-message__content">
       <template
-        v-for="(item, index) in messageContent.text"
+        v-for="(item, index) in renderContent"
         :key="index"
       >
         <span
@@ -47,73 +47,99 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
+import { MessageStatus, MessageType } from '@atomicxcore/core';
 import { useUIKit, TUIToast } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
-import { useMessageListState } from '../../../../states/MessageListState';
-import { safeJSONParse } from '../../../../utils/json';
-import { MessageListType } from '../../../../types/message';
-import type { ICloudCustomData } from '../../../../types/message';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
+import { useChatContext } from '../../../../chat-store';
+import { emojiUrlMap, emojiBaseUrl } from '../../../../constants/emoji';
+import { useChatUIState } from '../../../../context/useChatUIState';
+import { useMessageNavigation } from '../../../../hooks/useMessageNavigation';
+import { transformTextWithEmojiKeyToName } from '../../../../utils/emoji';
+import type { MessageInfo, TextMessagePayload } from '@atomicxcore/core';
 
 const props = withDefaults(defineProps<{
-  message: IMessageModel;
+  message: MessageInfo;
 }>(), {
-  message: () => ({} as IMessageModel),
+  message: () => ({} as MessageInfo),
 });
 
 const { t } = useUIKit();
-const {
-  messageList,
-  recalledMessageIDSet,
-  fetchMessageList,
-} = useMessageListState();
+const channel = inject('channel', 'default') as string;
+const { messageList } = useChatContext(channel);
+const chatUIState = useChatUIState(channel);
+const { navigateToMessage } = useMessageNavigation(channel);
 
-const messageContent = computed(() => props.message.getMessageContent() as {
-  showName: string;
-  text: any[];
+const messageContent = computed(() => props.message.messagePayload as TextMessagePayload);
+
+const quotePreview = computed(() => {
+  const q = props.message.quoteInfo;
+  if (!q) {
+    return '';
+  }
+  switch (q.messageType) {
+    case MessageType.Text: return transformTextWithEmojiKeyToName((q.messagePayload as TextMessagePayload)?.text || '');
+    case MessageType.Image: return t('MessageList.quote_image');
+    case MessageType.Audio: return t('MessageList.quote_audio');
+    case MessageType.Video: return t('MessageList.quote_video');
+    case MessageType.File: return t('MessageList.quote_file');
+    case MessageType.Face: return t('MessageList.quote_face');
+    case MessageType.Custom: return t('MessageList.quote_custom');
+    case MessageType.Merged: return t('MessageList.quote_merged');
+    default: return t('MessageList.quote_unknown');
+  }
 });
 
-const referencedInfo = computed(() => {
-  const cloudCustomData = safeJSONParse(props.message?.cloudCustomData, {}) as Partial<ICloudCustomData>;
-  const content = cloudCustomData?.messageReply?.messageAbstract || '';
-  const sender = cloudCustomData?.messageReply?.messageSender || '';
-  const messageID = cloudCustomData?.messageReply?.messageID || '';
-  const sequence = cloudCustomData?.messageReply?.messageSequence;
-  const time = cloudCustomData?.messageReply?.messageTime;
-  return {
-    content,
-    sender,
-    messageID,
-    sequence,
-    time,
-  };
+// Emoji key pattern: [TUIEmoji_Xxx]
+const EMOJI_PATTERN = /(\[TUIEmoji_\w+\])/;
+
+type TextNode = { name: 'text'; text: string };
+type EmojiNode = { name: 'img'; src: string; emojiKey: string };
+type RenderNode = TextNode | EmojiNode;
+
+const renderContent = computed((): RenderNode[] => {
+  const raw = messageContent.value?.text ?? '';
+  return raw
+    .split(EMOJI_PATTERN)
+    .filter(segment => segment !== '')
+    .map((segment): RenderNode => {
+      const url = emojiUrlMap[segment];
+      if (url) {
+        return { name: 'img', src: `${emojiBaseUrl}${url}`, emojiKey: segment };
+      }
+      return { name: 'text', text: segment };
+    });
 });
 
-const isOriginMessageHasRecalled = computed(() => recalledMessageIDSet.value.has(referencedInfo.value.messageID));
+// const referencedInfo = computed(() => {
+//   const quoteInfo = props.message.quoteInfo;
+//   return {
+//     content: (quoteInfo?.messagePayload as TextMessagePayload)?.text,
+//     sender: quoteInfo?.sender?.nickname,
+//     messageID: quoteInfo?.msgID,
+//     sequence: quoteInfo?.sequence,
+//     time: quoteInfo?.timestamp,
+//   };
+// });
+
+const isOriginMessageHasRecalled = computed(() => chatUIState.recalledMessageIDSet.value.has(props.message.quoteInfo?.msgID!));
 
 const handleReferenceClick = () => {
-  if (referencedInfo.value.messageID) {
-    const { messageID, sequence, time } = referencedInfo.value;
-    const targetMessage = messageList.value?.find(item => item.ID === messageID);
+  if (props.message.quoteInfo?.msgID) {
+    const { msgID } = props.message.quoteInfo;
+    const targetMessage = messageList.value.find(item => item.msgID === msgID);
 
-    if (isOriginMessageHasRecalled.value || targetMessage?.isDeleted || targetMessage?.isRevoked) {
+    if (isOriginMessageHasRecalled.value || targetMessage?.status === MessageStatus.Deleted || targetMessage?.status === MessageStatus.Recalled) {
       TUIToast.error({
         message: t('MessageList.origin_message_has_been_recalled'),
       });
       return;
     }
 
-    fetchMessageList({
-      conversationID: props.message.conversationID,
-      messageListType: MessageListType.HISTORY,
-      cursor: {
-        conversationID: props.message.conversationID,
-        messageID,
-        sequence,
-        time,
-      },
+    navigateToMessage({
+      messageID: msgID,
+      cursor: props.message.quoteInfo as unknown as MessageInfo,
     });
   }
 };
@@ -199,11 +225,19 @@ const handleReferenceClick = () => {
 }
 
 .text-danger {
-  color: var(--text-color-error);
-  background-color: var(--toast-color-error);
+  color: var(--text-color-tertiary);
+  background-color: var(--button-color-secondary-hover);
+
+  &:hover {
+    background-color: var(--button-color-secondary-hover);
+  }
+
+  &:active {
+    background-color: var(--button-color-secondary-active);
+  }
 
   &::before {
-    background-color: var(--text-color-error);
+    background-color: var(--text-color-tertiary);
   }
 }
 </style>

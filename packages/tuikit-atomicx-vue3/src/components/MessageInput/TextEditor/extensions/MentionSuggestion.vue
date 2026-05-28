@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, watch, onBeforeUnmount, onMounted } from 'vue';
+import { ref, computed, watch, onBeforeUnmount, onMounted, inject } from 'vue';
+import { useChatContext, useLoginStore } from '../../../../chat-store';
+import TencentCloudChat from '@tencentcloud/lite-chat';
+import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import {
   PopoverRoot,
   PopoverContent,
@@ -7,55 +10,72 @@ import {
   PopoverPortal,
 } from 'reka-ui';
 import { throttle } from '../../../../utils/lodash';
-import { TUIChatEngine } from '@tencentcloud/chat-uikit-engine-lite';
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { Avatar } from '../../../Avatar';
-import { useGroupSettingState } from '../../../../states/GroupSettingState';
+import type { GroupMember } from '@atomicxcore/core';
 import type { SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
-import type { GroupMember } from '../../../../states/GroupSettingState';
 
-const props = defineProps<SuggestionProps>();
+type MentionSuggestionProps = SuggestionProps & {
+  channel?: string;
+};
+
+const props = defineProps<MentionSuggestionProps>();
 
 const { t } = useUIKit();
+const { loginUserInfo } = useLoginStore();
+const injectedChannel = inject('channel', 'default') as string;
+const channel = props.channel ?? injectedChannel;
+const { memberList, hasMoreMembers, loadMembers, loadMoreMembers } = useChatContext(channel);
 
 const selectedIndex = ref(0);
 const isOpen = ref(true);
 const listboxRef = ref<HTMLDivElement | null>(null);
 const sentinelRef = ref<HTMLDivElement | null>(null);
 const isLoading = ref(false);
-const resizeKey = ref(0); // Trigger virtualElement recalculation on window resize
+const resizeKey = ref(0);
 
-const { allMembers, currentUserID, groupID, memberCount, getGroupMemberList } = useGroupSettingState();
+interface MentionItem {
+  userID: string;
+  nickname?: string;
+  avatarURL?: string;
+  isAtAll?: boolean;
+}
 
-const availableMembers = computed<Partial<GroupMember>[]>(() => {
-  if (!allMembers.value || !currentUserID.value || !memberCount.value) {
+const availableMembers = computed<MentionItem[]>(() => {
+  const myUserID = loginUserInfo.value?.userID;
+  const members = memberList.value;
+  if (!members.length) {
     return [];
   }
 
-  const excludeSelfMembers: Partial<GroupMember>[] = allMembers.value.filter(member => member.userID !== currentUserID.value);
+  const excludeSelf: MentionItem[] = members
+    .filter((member: GroupMember) => member.userID !== myUserID)
+    .map((member: GroupMember) => ({
+      userID: member.userID,
+      nickname: member.nickname,
+      avatarURL: member.avatarURL,
+    }));
 
-  if (memberCount.value && memberCount.value > 2) {
-    excludeSelfMembers.unshift({
-      userID: TUIChatEngine.TYPES.MSG_AT_ALL,
-      nick: t('MessageInput.at_all_members') || 'all',
-      avatar: '/at_all_members.png',
+  if (members.length > 2) {
+    excludeSelf.unshift({
+      userID: TencentCloudChat.TYPES.MSG_AT_ALL as string,
+      nickname: t('MessageInput.at_all_members') || 'all',
+      avatarURL: '/at_all_members.png',
+      isAtAll: true,
     });
   }
 
-  return excludeSelfMembers;
+  return excludeSelf;
 });
 
-const hasMore = computed(() => (allMembers.value?.length || 0) < (memberCount.value || 0));
+const hasMore = computed(() => hasMoreMembers.value);
 
 const filteredItems = computed(() => {
   const normalizedQuery = props.query.toLowerCase().trim();
-
   if (!normalizedQuery) {
     return availableMembers.value;
   }
-
   return availableMembers.value.filter(item =>
-    item.nick!.toLowerCase().includes(normalizedQuery),
+    (item.nickname || item.userID).toLowerCase().includes(normalizedQuery),
   );
 });
 
@@ -64,17 +84,12 @@ const selectedMember = computed(() => filteredItems.value[selectedIndex.value] |
 const showSentinel = computed(() => hasMore.value || isLoading.value || filteredItems.value.length === 0);
 
 const loadMore = async () => {
-  if (isLoading.value || !hasMore.value || !groupID.value) {
+  if (isLoading.value || !hasMore.value) {
     return;
   }
-
   isLoading.value = true;
-
   try {
-    await getGroupMemberList({
-      count: 100,
-      offset: allMembers.value?.length || 0,
-    });
+    await loadMoreMembers();
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('[MentionSuggestion] Failed to load more members:', error);
@@ -103,7 +118,7 @@ watch(
       loadMore();
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const virtualElement = computed(() => {
@@ -182,7 +197,12 @@ watch([listboxRef, sentinelRef, showSentinel], () => {
   }
 }, { flush: 'post' });
 
+const handleWindowResize = () => {
+  resizeKey.value += 1;
+};
+
 onMounted(() => {
+  loadMembers();
   window.addEventListener('resize', throttle(handleWindowResize, 30));
 });
 
@@ -194,14 +214,10 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', handleWindowResize);
 });
 
-const handleWindowResize = () => {
-  resizeKey.value += 1;
-};
-
 const handleSelectMember = (index: number) => {
   const member = filteredItems.value[index];
   if (member) {
-    props.command({ id: member.userID, label: member.nick, mentionSuggestionChar: '@' });
+    props.command({ id: member.userID, label: member.nickname || member.userID, mentionSuggestionChar: '@' });
   }
 };
 
@@ -300,11 +316,11 @@ defineExpose({
             @mouseenter="selectedIndex = index"
           >
             <Avatar
-              v-if="item.avatar !== '/at_all_members.png'"
+              v-if="!item.isAtAll"
               class="mention-suggestion__avatar"
-              :src="item.avatar"
+              :src="item.avatarURL"
             />
-            <span class="mention-suggestion__name">{{ item.nick || item.userID }}</span>
+            <span class="mention-suggestion__name">{{ item.nickname || item.userID }}</span>
           </div>
 
           <!-- Sentinel element for loading more / showing states -->

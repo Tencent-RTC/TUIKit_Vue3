@@ -25,11 +25,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, useCssModule } from 'vue';
+import { ref, useCssModule, inject } from 'vue';
 import { IconFile } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../baseComp/View';
-import { MessageContentType, useMessageInputState } from '../../../states/MessageInputState';
+import { useChatContext } from '../../../chat-store';
 
 const PICKER_CONSTANTS = {
   ACCEPT_TYPE: '*/*',
@@ -48,8 +48,8 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const styles = useCssModule();
-const { sendMessage } = useMessageInputState();
-
+const channel = inject('channel', 'default') as string;
+const { sendMessage } = useChatContext(channel);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
 function handleButtonClick() {
@@ -66,8 +66,7 @@ function handleFileInput(e: Event) {
   if (!file) {
     return;
   }
-
-  sendMessage([{ type: MessageContentType.FILE, content: file }]);
+  sendMessage({ type: 'fileMessage', file });
   target.value = '';
 }
 </script>

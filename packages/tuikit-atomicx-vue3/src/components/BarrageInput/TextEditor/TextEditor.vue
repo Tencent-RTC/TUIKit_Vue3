@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useConversationListState } from '../../../states/ConversationListState';
+import { useChatContext } from '../../../chat-store';
 import { useMessageInputState } from '../MessageInputState';
 import { ERROR_MESSAGE } from '../constants';
 import { createEditor } from './EditorCore';
@@ -48,7 +48,7 @@ const emit = defineEmits<{
   (e: 'blur'): void;
 }>();
 const { t } = useUIKit();
-const { activeConversation } = useConversationListState();
+const { activeConversation } = useChatContext();
 const { inputRawValue, updateRawValue, sendMessage, setEditorInstance, setContent } = useMessageInputState();
 
 const editorRef = ref<HTMLDivElement | null>(null);

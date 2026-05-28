@@ -1,15 +1,15 @@
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
-import { MessageType, ConversationType } from '../../../types/engine';
-import { transformTextWithEmojiKeyToName, safeJSONParse } from '../../../utils';
-import { parseCallMessageText } from '../../../utils/call';
+import { MessageType, MessageStatus, ConversationType } from '@atomicxcore/core';
+import { safeJSONParse } from '../../../utils';
+import { transformTextWithEmojiKeyToName } from '../../../utils/emoji';
+import { isCallMessage, isCreateGroupMessage, parseCallMessageText } from '../../../utils/call';
 import { resolveGroupTipMessage } from '../../MessageList/Message/GroupTipMessage/resolveGroupTipMessage';
-import type { ConversationModel, MessageModel } from '../../../types/engine';
+import type { ConversationInfo, MessageInfo, TextMessageInfo, TipsMessageInfo, CustomMessageInfo } from '@atomicxcore/core';
 
 export const generateHighlightTitle = (
-  conversation: ConversationModel,
+  conversation: ConversationInfo,
   highlightMatchString?: string,
 ) => {
-  const title = conversation?.getShowName?.();
+  const title = conversation?.title || '';
   if (!highlightMatchString) {
     return [{ text: title, isHighlight: false }];
   }
@@ -23,8 +23,8 @@ export const generateHighlightTitle = (
   }));
 };
 
-export const getLatestMessagePreview = (conversation: ConversationModel, t: (key: string) => string) => {
-  const { draftText } = conversation || {};
+export const getLatestMessagePreview = (conversation: ConversationInfo, t: (key: string) => string) => {
+  const { draft: draftText } = conversation || {};
 
   // Handle draft message
   if (draftText) {
@@ -35,76 +35,70 @@ export const getLatestMessagePreview = (conversation: ConversationModel, t: (key
     return draftInfo.abstract;
   }
 
-  // Handle special operation type messages
-  const OPERATION_MESSAGES: Record<number, string> = {
-    4: t('TUIConversation.you_have_been_removed_from_the_group'),
-    5: t('TUIConversation.the_group_chat_has_been_disbanded'),
-    8: t('TUIConversation.you_have_left_the_group_chat'),
-  };
-  if (conversation.operationType && OPERATION_MESSAGES[conversation.operationType]) {
-    return OPERATION_MESSAGES[conversation.operationType];
-  }
-
-  const { lastMessage } = conversation;
+  // Handle special operation type messages (engine-lite specific field, accessed via cast)
+  // const convAny = conversation as any;
+  // const OPERATION_MESSAGES: Record<number, string> = {
+  //   4: t('TUIConversation.you_have_been_removed_from_the_group'),
+  //   5: t('TUIConversation.the_group_chat_has_been_disbanded'),
+  //   8: t('TUIConversation.you_have_left_the_group_chat'),
+  // };
+  // if (convAny.operationType && OPERATION_MESSAGES[convAny.operationType]) {
+  //   return OPERATION_MESSAGES[convAny.operationType];
+  // }
+  const lastMessage = conversation.lastMessage;
 
   if (!lastMessage) {
     return '';
   }
 
-  const isGroupConversation = conversation.type === ConversationType.GROUP;
-  const typedLastMessage = lastMessage as unknown as MessageModel;
-  const { type, payload } = typedLastMessage;
-
-  if (!type || !payload) {
-    return '';
-  }
+  const isGroupConversation = conversation.type === ConversationType.Group;
 
   let messageContent = '';
 
-  if (lastMessage?.isRevoked) {
+  if (lastMessage.status === MessageStatus.Recalled) {
     messageContent = t('TUIConversation.recalled_a_message');
   } else {
-    switch (type) {
-      case MessageType.TEXT:
-        messageContent = transformTextWithEmojiKeyToName(payload.text || '');
+    switch (lastMessage.messageType) {
+      case MessageType.Text:
+        messageContent = transformTextWithEmojiKeyToName(lastMessage?.messagePayload?.text || '');
         break;
-      case MessageType.IMAGE:
+      case MessageType.Image:
         messageContent = `[${t('TUIConversation.Image')}]`;
         break;
-      case MessageType.AUDIO:
+      case MessageType.Audio:
         messageContent = `[${t('TUIConversation.Audio')}]`;
         break;
-      case MessageType.VIDEO:
+      case MessageType.Video:
         messageContent = `[${t('TUIConversation.Video')}]`;
         break;
-      case MessageType.FILE:
+      case MessageType.File:
         messageContent = `[${t('TUIConversation.File')}]`;
         break;
-      case MessageType.CUSTOM: {
-        const data = safeJSONParse(payload?.data, { businessID: undefined });
-        // Handle CallKit signaling message
-        if (data?.businessID === 1) {
+      case MessageType.Custom: {
+        if (isCallMessage(lastMessage)) {
           try {
-            messageContent = parseCallMessageText(typedLastMessage, t);
+            messageContent = parseCallMessageText(lastMessage, t);
           } catch {
             messageContent = `[${t('TUIConversation.call_message')}]`;
           }
+        } else if (isCreateGroupMessage(lastMessage)) {
+          messageContent = `${lastMessage.from.nickname || lastMessage.from.userID} ${t('MessageList.create_group')}`;
         } else {
-          messageContent = lastMessage.payload.description || `[${t('TUIConversation.Custom')}]`;
+          const customData = (lastMessage as CustomMessageInfo).messagePayload?.customData;
+          const parsed = safeJSONParse(customData, {});
+          messageContent = parsed?.description || `[${t('TUIConversation.Custom')}]`;
         }
         break;
       }
-      case MessageType.LOCATION:
-        messageContent = `[${t('TUIConversation.Location')}]`;
-        break;
-      case MessageType.FACE:
+      case MessageType.Face:
         messageContent = `[${t('TUIConversation.Face')}]`;
         break;
-      case MessageType.MERGER:
+      case MessageType.Merged:
         messageContent = `[${t('TUIConversation.Chat History')}]`;
         break;
-      case MessageType.GRP_TIP:
-        return resolveGroupTipMessage(typedLastMessage)?.text;
+      case MessageType.Tips:
+        messageContent = resolveGroupTipMessage(lastMessage as TipsMessageInfo).text;
+        break;
       default:
         messageContent = `[${t('TUIConversation.unknown_message')}]`;
         break;
@@ -112,17 +106,16 @@ export const getLatestMessagePreview = (conversation: ConversationModel, t: (key
   }
 
   if (isGroupConversation) {
-    let senderName = '';
-    if (lastMessage?.fromAccount === TUIChatEngine.getMyUserID()) {
-      senderName = t('TUIConversation.me');
+    if (lastMessage.messageType === MessageType.Tips || isCreateGroupMessage(lastMessage)) {
+      return messageContent;
     } else {
-      // Priority: friendRemark > nameCard > nick > userID
-      senderName = conversation.remark
-        || typedLastMessage?.nameCard
-        || lastMessage?.nick
-        || lastMessage.fromAccount;
+      const { from } = lastMessage;
+      const isSelf = lastMessage.isSentBySelf;
+      const senderName = isSelf
+        ? t('TUIConversation.me')
+        : from.friendRemark || from.nameCard || from.nickname || from.userID;
+      return senderName ? `${senderName}: ${messageContent}` : messageContent;
     }
-    return senderName ? `${senderName}: ${messageContent}` : messageContent;
   }
 
   return messageContent;

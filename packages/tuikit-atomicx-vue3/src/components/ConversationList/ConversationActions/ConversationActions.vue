@@ -51,16 +51,16 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
+import { computed, ref, watch, inject } from 'vue';
+import { ConversationMarkType, ReceiveMessageOption } from '@atomicxcore/core';
 import { IconEllipsis, useUIKit, TUIDropdown } from '@tencentcloud/uikit-base-component-vue3';
-import { useConversationListState } from '../../../states/ConversationListState';
 import { isH5 } from '../../../utils';
+import { useChatContext } from '../../../chat-store';
 import type {
-  ConversationModel,
   ConversationActionItem,
   ConversationActionsProps,
 } from '../../../types';
+import type { ConversationInfo } from '@atomicxcore/core';
 
 const props = withDefaults(defineProps<ConversationActionsProps>(), {
   enablePin: true,
@@ -70,49 +70,90 @@ const props = withDefaults(defineProps<ConversationActionsProps>(), {
 });
 
 const emit = defineEmits<{
-  click: [e: Event, key?: string, conversation?: ConversationModel];
+  click: [e: Event, key?: string, conversation?: ConversationInfo];
   close: [];
   dropdownVisibleChange: [visible: boolean];
-  markConversationUnread: [conversation: ConversationModel, e?: Event];
-  conversationPin: [conversation: ConversationModel, e?: Event];
-  conversationMute: [conversation: ConversationModel, e?: Event];
-  conversationDelete: [conversation: ConversationModel, e?: Event];
+  markConversationUnread: [conversation: ConversationInfo, e?: Event];
+  conversationPin: [conversation: ConversationInfo, e?: Event];
+  conversationMute: [conversation: ConversationInfo, e?: Event];
+  conversationDelete: [conversation: ConversationInfo, e?: Event];
 }>();
 
 const { t } = useUIKit();
-const { markConversationUnread } = useConversationListState();
+const channel = inject('channel', 'default') as string;
+const {
+  activeConversation,
+  clearConversationUnreadCount,
+  deleteConversation,
+  markConversation,
+  pinConversation,
+  setActiveConversation,
+  setReceiveMessageOpt,
+} = useChatContext(channel);
 
 const markUnreadStatus = ref(true);
 const conversationActions = ref<Record<string, ConversationActionItem>>({});
 
-const enabledActions = computed(() => Object.entries(conversationActions.value)
+const enabledActions = computed(() => (Object.entries(conversationActions.value) as [string, ConversationActionItem][])
   .filter(([, action]) => action.enable !== false)
   .reduce((acc, [key, action]) => {
     acc[key] = action;
     return acc;
   }, {} as Record<string, ConversationActionItem>));
 
+/**
+ * Determine whether the conversation is muted (any non-receive option counts as muted).
+ */
+const isMuted = (conv: ConversationInfo) => conv.receiveOption !== ReceiveMessageOption.Receive;
+
+/**
+ * Replicate the legacy markConversationUnread logic at the component level.
+ * - Has real unread + want to mark read  → clearConversationUnreadCount
+ * - Otherwise                            → markConversation with Unread mark type
+ */
+const markConversationUnread = async (conversationID: string, isUnread: boolean) => {
+  const conv = props.conversation;
+  const isMarked = conv.conversationMarkList?.includes(ConversationMarkType.Unread);
+  const hasUnreadCount = conv.unreadCount > 0;
+  const isNotNeedMarkUnread = isUnread && (hasUnreadCount || isMarked);
+  const isNotNeedMarkRead = !isUnread && !hasUnreadCount && !isMarked;
+
+  if (isNotNeedMarkUnread || isNotNeedMarkRead) {
+    return;
+  }
+
+  if (hasUnreadCount && !isUnread) {
+    clearConversationUnreadCount(conversationID);
+    markConversation([conversationID], ConversationMarkType.Unread, false);
+  } else {
+    await markConversation([conversationID], ConversationMarkType.Unread, isUnread);
+  }
+};
+
 const generateConversationActions = (): Record<string, ConversationActionItem> => ({
   pin: {
     enable: !!props.enablePin,
     label: props.conversation.isPinned ? t('TUIConversation.Unpin') : t('TUIConversation.Pin'),
-    onClick: (_conversation: ConversationModel, e?: Event) => {
-      _conversation.pinConversation();
+    onClick: (_conversation: ConversationInfo, e?: Event) => {
+      pinConversation(_conversation.conversationID, !_conversation.isPinned);
       emit('conversationPin', _conversation, e);
     },
   },
   mute: {
     enable: !!props.enableMute,
-    label: props.conversation.isMuted ? t('TUIConversation.Unmute') : t('TUIConversation.Mute'),
-    onClick: (_conversation: ConversationModel, e?: Event) => {
-      _conversation.muteConversation();
+    label: isMuted(props.conversation) ? t('TUIConversation.Unmute') : t('TUIConversation.Mute'),
+    onClick: (_conversation: ConversationInfo, e?: Event) => {
+      const targetOpt = isMuted(_conversation)
+        ? ReceiveMessageOption.Receive
+        : ReceiveMessageOption.NotNotify;
+      setReceiveMessageOpt(_conversation.conversationID, targetOpt);
       emit('conversationMute', _conversation, e);
     },
   },
   markUnread: {
     enable: !!props.enableMarkUnread,
     label: markUnreadStatus.value ? t('TUIConversation.MarkRead') : t('TUIConversation.MarkUnRead'),
-    onClick: (_conversation: ConversationModel, e?: Event) => {
+    onClick: (_conversation: ConversationInfo, e?: Event) => {
       markConversationUnread(_conversation.conversationID, !markUnreadStatus.value);
       emit('markConversationUnread', _conversation, e);
     },
@@ -120,8 +161,11 @@ const generateConversationActions = (): Record<string, ConversationActionItem> =
   delete: {
     enable: !!props.enableDelete,
     label: t('TUIConversation.Delete'),
-    onClick: (_conversation: ConversationModel, e?: Event) => {
-      _conversation.deleteConversation();
+    onClick: (_conversation: ConversationInfo, e?: Event) => {
+      deleteConversation(_conversation.conversationID);
+      if (activeConversation.value?.conversationID === _conversation.conversationID) {
+        setActiveConversation(undefined);
+      }
       emit('conversationDelete', _conversation, e);
     },
   },
@@ -129,13 +173,12 @@ const generateConversationActions = (): Record<string, ConversationActionItem> =
 
 watch(
   () => props.conversation,
-  (newConversation) => {
+  (newConversation: ConversationInfo) => {
     if (newConversation.unreadCount > 0) {
       markUnreadStatus.value = true;
     } else {
-      const targetValue = TUIChatEngine.TYPES.CONV_MARK_TYPE_UNREAD;
-      const unreadStatus = newConversation?.markList?.includes(targetValue);
-      markUnreadStatus.value = unreadStatus;
+      const unreadStatus = newConversation?.conversationMarkList?.includes(ConversationMarkType.Unread);
+      markUnreadStatus.value = !!unreadStatus;
     }
   },
   { immediate: true },
@@ -143,7 +186,7 @@ watch(
 
 watch(
   [() => props.conversation, () => props.customConversationActions],
-  ([newConversation, newCustomActions]) => {
+  ([_newConversation, newCustomActions]: [ConversationInfo, Record<string, ConversationActionItem> | undefined]) => {
     conversationActions.value = {
       ...generateConversationActions(),
       ...(newCustomActions || {}),
@@ -157,7 +200,7 @@ const onClickMenuItem = (e: Event, key: string) => {
 
   const action = conversationActions.value[key];
   if (action) {
-    action.onClick(props.conversation, e);
+    action.onClick(props.conversation as ConversationInfo, e);
   }
 
   if (props.onClose) {

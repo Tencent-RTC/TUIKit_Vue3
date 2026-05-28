@@ -3,28 +3,28 @@
     <component
       v-if="type === SearchType.MESSAGE"
       :is="Conversation"
-      :data="data as SearchCloudMessagesResultItem"
+      :data="data"
       :keyword="keyword"
       @click="onClick"
     />
     <component
       v-else-if="type === SearchType.USER"
       :is="User"
-      :data="data as SearchCloudUsersResultItem"
+      :data="data"
       :keyword="keyword"
       @click="onClick"
     />
     <component
       v-else-if="type === SearchType.GROUP"
       :is="Group"
-      :data="data as SearchCloudGroupsResultItem"
+      :data="data"
       :keyword="keyword"
       @click="onClick"
     />
     <component
       v-else-if="type === SearchType.CHAT_MESSAGE"
       :is="Message"
-      :data="data as MessageModel"
+      :data="data"
       :keyword="keyword"
       @click="onClick"
     />
@@ -32,13 +32,7 @@
 </template>
 
 <script lang="ts" setup>
-import { SearchType } from '../../../../types/engine';
-import type {
-  SearchCloudMessagesResultItem,
-  SearchCloudUsersResultItem,
-  SearchCloudGroupsResultItem,
-  MessageModel,
-} from '../../../../types/engine';
+import { SearchType } from '../../../../types/search';
 import { Conversation } from './Conversation';
 import { User } from './User';
 import { Group } from './Group';

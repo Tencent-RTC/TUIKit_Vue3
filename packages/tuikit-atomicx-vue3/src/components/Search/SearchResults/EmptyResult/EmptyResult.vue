@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, withDefaults, defineProps } from 'vue';
+import { computed } from 'vue';
 import { useUIKit, IconSearchDefault } from '@tencentcloud/uikit-base-component-vue3';
 
 interface IEmptyResultProps {

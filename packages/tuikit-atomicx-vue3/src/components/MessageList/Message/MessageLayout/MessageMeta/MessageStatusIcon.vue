@@ -1,25 +1,26 @@
 <script lang="ts" setup>
+import { MessageStatus } from '@atomicxcore/core';
 import { IconLiveLoading, IconSuccess, IconErrorToast } from '@tencentcloud/uikit-base-component-vue3';
 import { View } from '../../../../../baseComp/View';
 
 defineProps<{
-  status: 'unSend' | 'success' | 'fail' | string;
+  status: MessageStatus;
 }>();
 </script>
 
 <template>
   <View>
     <IconLiveLoading
-      v-if="status === 'unSend'"
+      v-if="status === MessageStatus.Sending"
       class="message-meta__status--unSend"
       :size="16"
     />
     <IconSuccess
-      v-else-if="status === 'success'"
+      v-else-if="status === MessageStatus.SendSuccess"
       :size="16"
     />
     <IconErrorToast
-      v-else-if="status === 'fail'"
+      v-else-if="status === MessageStatus.SendFail"
       :size="16"
     />
   </View>

@@ -122,9 +122,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, watch } from 'vue';
+import { ref, computed, nextTick, watch, inject } from 'vue';
 import { IconImage, IconVideo, IconEmoji, IconPlus, TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useMessageInputState, MessageContentType } from '../../states/MessageInputState';
+import { useChatContext } from '../../chat-store';
 import ImagePicker from './AttachmentPicker/ImagePicker.vue';
 import VideoPicker from './AttachmentPicker/VideoPicker.vue';
 
@@ -155,8 +155,9 @@ const emit = defineEmits<{
   (e: 'inputAreaExpand'): void;
 }>();
 
-// ==================== Message Input State ====================
-const { sendMessage } = useMessageInputState();
+// ==================== Store ====================
+const channel = inject('channel', 'default') as string;
+const { sendMessage } = useChatContext(channel);
 
 // ==================== Refs ====================
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
@@ -322,12 +323,7 @@ function handleSend(): void {
     return;
   }
 
-  // Use internal sendMessage from state
-  console.log('>>> LOG(1)::REMOVE::sendMessage::getfromsoftinput', text);
-  sendMessage([{
-    type: MessageContentType.TEXT,
-    content: text,
-  }]);
+  sendMessage({ type: 'textMessage', text });
 
   inputValue.value = '';
 

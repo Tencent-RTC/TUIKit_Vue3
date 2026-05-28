@@ -25,11 +25,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, useCssModule } from 'vue';
+import { ref, useCssModule, inject } from 'vue';
 import { IconVideo } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
+import { useChatContext } from '../../../chat-store';
 import { View } from '../../../baseComp/View';
-import { MessageContentType, useMessageInputState } from '../../../states/MessageInputState';
 
 const PICKER_CONSTANTS = {
   ACCEPT_TYPE: '.mp4,.mov,.qt',
@@ -48,7 +48,8 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const styles = useCssModule();
-const { sendMessage } = useMessageInputState();
+const channel = inject('channel', 'default') as string;
+const { sendMessage } = useChatContext(channel);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
 function handleButtonClick() {
@@ -66,7 +67,7 @@ function handleFileInput(e: Event) {
     return;
   }
 
-  sendMessage([{ type: MessageContentType.VIDEO, content: file }]);
+  sendMessage({ type: 'videoMessage', file, duration: 0 });
   target.value = '';
 }
 </script>

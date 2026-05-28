@@ -1,8 +1,8 @@
 <template>
   <View
     :class="cs('audio-message', {
-      'audio-message--flow-in': message.flow === 'in',
-      'audio-message--flow-out': message.flow === 'out',
+      'audio-message--flow-in': !message.isSentBySelf,
+      'audio-message--flow-out': message.isSentBySelf,
     })"
   >
     <View class="audio-message__content">
@@ -16,7 +16,7 @@
         @seek="setProgress"
       />
       <View class="audio-message__duration">
-        {{ formatDuration(messageContent.second) }}
+        {{ formatDuration(messageContent.audioDuration) }}
       </View>
     </View>
   </View>
@@ -29,22 +29,18 @@ import { View } from '../../../../baseComp/View';
 import { useAudioControl } from '../../../../hooks/useAudioControl';
 import PlayButton from './PlayButton.vue';
 import WaveForm from './WaveForm.vue';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
+import type { MessageInfo, AudioMessagePayload } from '@atomicxcore/core';
 
 interface IAudioMessageProps {
-  message: IMessageModel;
-}
-
-interface IAudioMessageContent {
-  url: string;
-  second: number;
+  message: MessageInfo;
 }
 
 const props = defineProps<IAudioMessageProps>();
 
-const messageContent = computed(() => props.message.getMessageContent() as IAudioMessageContent);
+const messageContent = computed(() => props.message.messagePayload as AudioMessagePayload);
+
 const barCount = computed(() => {
-  const count = messageContent.value.second;
+  const count = messageContent.value.audioDuration;
   if (count <= 5) {
     return 10;
   }
@@ -55,7 +51,7 @@ const barCount = computed(() => {
 });
 
 // Generate unique ID
-const audioId = computed(() => `audio-${props.message.ID}`);
+const audioId = computed(() => `audio-${props.message.msgID}`);
 
 // Use audio control hook
 const {
@@ -65,7 +61,7 @@ const {
   pause,
   setProgress,
 } = useAudioControl({
-  url: messageContent.value.url,
+  url: messageContent.value.audioUrl ?? '',
   audioId: audioId.value,
 });
 

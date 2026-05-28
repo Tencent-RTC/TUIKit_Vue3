@@ -2,18 +2,18 @@
 <template>
   <div :class="$style.SearchMessage">
     <div :class="$style['SearchMessage__avatar-wrapper']">
-      <Avatar :src="avatar" :alt="name" />
+      <Avatar :src="senderAvatar" />
     </div>
     <div :class="$style.SearchMessage__content">
       <div :class="$style.SearchMessage__header">
         <span :class="$style.SearchMessage__name" v-html="highlightedName" />
-        <span v-if="time" :class="$style.SearchMessage__time">
-          {{ formatTime(time) }}
+        <span v-if="messageTime" :class="$style.SearchMessage__time">
+          {{ formatTime(messageTime) }}
         </span>
       </div>
       <div :class="$style.SearchMessage__container">
         <div :class="$style['SearchMessage__container-content']">
-          <component :is="renderMessageContent(data, keyword)" />
+          <component :is="renderMessageContent(message, keyword)" />
         </div>
         <div :class="$style['SearchMessage__container-action']" @click="handleClick">
           {{ t('Search.action.locateToChat') }}
@@ -24,39 +24,44 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, h, useCssModule } from 'vue';
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
+import { computed, h, inject, useCssModule } from 'vue';
+import { MessageType } from '@atomicxcore/core';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { SearchType } from '../../../../../types/engine';
-import { MessageListType } from '../../../../../types/message';
-import { useConversationListState } from '../../../../../states/ConversationListState';
-import { useMessageListState } from '../../../../../states/MessageListState';
+import { SearchType } from '../../../../../types/search';
+import { useChatContext } from '../../../../../chat-store';
+import { useChatUIState } from '../../../../../context/useChatUIState';
 import { Avatar } from '../../../../Avatar';
 import { highlightText } from '../utils';
-import type { MessageModel } from '../../../../../types/engine';
 import type { ResultItemProps } from '../../../../../types/search';
+import type { MessageInfo } from '@atomicxcore/core';
+import { transformTextWithEmojiKeyToName } from '../../../../../utils';
 
 const $style = useCssModule();
 
-const formatTime = (timestamp: number): string => new Date(timestamp * 1000).toLocaleString();
+const formatTime = (date?: Date): string => date ? date.toLocaleString() : '';
 
 const props = defineProps<ResultItemProps<SearchType.CHAT_MESSAGE>>();
 
 const { t } = useUIKit();
 
-const { nick, avatar, nameCard, from, time } = props.data as MessageModel;
-const name = computed(() => nameCard || nick || from);
+const message = computed(() => props.data as MessageInfo);
+const senderName = computed(() =>
+  message.value.from?.nameCard || message.value.from?.nickname || message.value.from?.userID || '',
+);
+const senderAvatar = computed(() => message.value.from?.avatarURL);
+const messageTime = computed(() => message.value.timestamp);
 
 const highlightedName = computed(() => {
   if (!props.keyword) {
-    return name.value;
+    return senderName.value;
   }
-  return highlightText(name.value, props.keyword, $style.SearchMessage__highlight);
+  return highlightText(senderName.value, props.keyword, $style.SearchMessage__highlight);
 });
 
-const renderTextContent = (messageContent: any, keyword: string) => {
-  if (messageContent.text && Array.isArray(messageContent.text)) {
-    return messageContent.text
+const renderTextContent = (payload: any, keyword: string) => {
+  const text = payload?.text;
+  if (text && Array.isArray(text)) {
+    return text
       .map((item: any, idx: number) => {
         if (item.name === 'text') {
           return h('span', {
@@ -79,67 +84,47 @@ const renderTextContent = (messageContent: any, keyword: string) => {
       .filter(Boolean);
   }
   return h('span', {
-    innerHTML: highlightText(messageContent.text, keyword, $style.SearchMessage__highlight),
+    innerHTML: highlightText(typeof text === 'string' ? transformTextWithEmojiKeyToName(text) : '', keyword, $style.SearchMessage__highlight),
   });
 };
 
-const renderMessageContent = (message: MessageModel, searchKeyword: string) => {
-  const messageContent = message.getMessageContent?.() || {};
-  const messageType = message.type;
+const renderMessageContent = (msg: MessageInfo, searchKeyword: string) => {
+  const payload = msg.messagePayload as any;
 
-  switch (messageType) {
-    case TUIChatEngine.TYPES.MSG_TEXT:
+  switch (msg.messageType) {
+    case MessageType.Text:
       return h(
         'div',
-        {
-          class: $style.SearchMessage__text,
-        },
-        renderTextContent(messageContent, searchKeyword),
+        { class: $style.SearchMessage__text },
+        renderTextContent(payload, searchKeyword),
       );
 
-    case TUIChatEngine.TYPES.MSG_IMAGE:
+    case MessageType.Image:
       return h('img', {
-        src: messageContent.url,
+        src: payload?.originalImageUrl || payload?.thumbImageUrl || payload?.url,
         class: $style['SearchMessage__image-thumb'],
         alt: t('Search.messageType.image'),
       });
 
-    case TUIChatEngine.TYPES.MSG_VIDEO:
+    case MessageType.Video:
       return h(
         'div',
-        {
-          class: $style['SearchMessage__video-thumb'],
-        },
+        { class: $style['SearchMessage__video-thumb'] },
         [
           h('img', {
-            src: messageContent.snapshotUrl,
+            src: payload?.videoSnapshotUrl || payload?.snapshotUrl,
             alt: t('Search.messageType.videoCover'),
           }),
           h(
             'span',
-            {
-              class: $style['SearchMessage__play-icon'],
-            },
+            { class: $style['SearchMessage__play-icon'] },
             [
               h(
                 'svg',
-                {
-                  width: '24',
-                  height: '24',
-                  viewBox: '0 0 24 24',
-                  fill: 'none',
-                },
+                { width: '24', height: '24', viewBox: '0 0 24 24', fill: 'none' },
                 [
-                  h('circle', {
-                    cx: '12',
-                    cy: '12',
-                    r: '12',
-                    fill: 'rgba(43,93,245,0.15)',
-                  }),
-                  h('polygon', {
-                    points: '9,7 18,12 9,17',
-                    fill: '#2B5DF5',
-                  }),
+                  h('circle', { cx: '12', cy: '12', r: '12', fill: 'rgba(43,93,245,0.15)' }),
+                  h('polygon', { points: '9,7 18,12 9,17', fill: '#2B5DF5' }),
                 ],
               ),
             ],
@@ -147,135 +132,65 @@ const renderMessageContent = (message: MessageModel, searchKeyword: string) => {
         ],
       );
 
-    case TUIChatEngine.TYPES.MSG_FILE:
+    case MessageType.File:
       return h(
         'div',
-        {
-          class: $style['SearchMessage__file-box'],
-        },
+        { class: $style['SearchMessage__file-box'] },
         [
-          h(
-            'span',
-            {
-              class: $style.SearchMessage__text,
-            },
-            messageContent.name,
-          ),
-          h(
-            'span',
-            {
-              class: $style.SearchMessage__text,
-            },
-            messageContent.size,
-          ),
+          h('span', { class: $style.SearchMessage__text }, payload?.fileName),
+          h('span', { class: $style.SearchMessage__text }, payload?.fileSize),
         ],
       );
 
-    case TUIChatEngine.TYPES.MSG_AUDIO:
+    case MessageType.Audio:
       return h(
         'div',
-        {
-          class: $style['SearchMessage__audio-box'],
-        },
+        { class: $style['SearchMessage__audio-box'] },
         [
           h(
             'span',
-            {
-              class: $style['SearchMessage__audio-icon'],
-            },
+            { class: $style['SearchMessage__audio-icon'] },
             [
               h(
                 'svg',
-                {
-                  width: '20',
-                  height: '20',
-                  viewBox: '0 0 20 20',
-                  fill: 'none',
-                },
+                { width: '20', height: '20', viewBox: '0 0 20 20', fill: 'none' },
                 [
-                  h('rect', {
-                    x: '3',
-                    y: '7',
-                    width: '4',
-                    height: '6',
-                    rx: '1',
-                    fill: '#2B5DF5',
-                  }),
-                  h('rect', {
-                    x: '8',
-                    y: '5',
-                    width: '4',
-                    height: '10',
-                    rx: '1',
-                    fill: '#2B5DF5',
-                    fillOpacity: '0.7',
-                  }),
-                  h('rect', {
-                    x: '13',
-                    y: '9',
-                    width: '4',
-                    height: '2',
-                    rx: '1',
-                    fill: '#2B5DF5',
-                    fillOpacity: '0.4',
-                  }),
+                  h('rect', { x: '3', y: '7', width: '4', height: '6', rx: '1', fill: '#2B5DF5' }),
+                  h('rect', { x: '8', y: '5', width: '4', height: '10', rx: '1', fill: '#2B5DF5', fillOpacity: '0.7' }),
+                  h('rect', { x: '13', y: '9', width: '4', height: '2', rx: '1', fill: '#2B5DF5', fillOpacity: '0.4' }),
                 ],
               ),
             ],
           ),
-          h('span', `${messageContent.second}s`),
+          h('span', `${payload?.audioDuration ?? 0}s`),
         ],
       );
-
-    case TUIChatEngine.TYPES.MSG_LOCATION:
-      if (messageContent.businessID === 'text_link') {
-        return h(
-          'span',
-          {
-            class: $style.SearchMessage__text,
-          },
-          [
-            messageContent.text,
-            h(
-              'a',
-              {
-                href: messageContent.link,
-                target: '_blank',
-                rel: 'noopener noreferrer',
-              },
-              `${t('Search.action.readMore')}>>>`,
-            ),
-          ],
-        );
-      }
-      return h('span', t('Search.messageType.custom'));
 
     default:
       return h('span', t('Search.messageType.unsupported'));
   }
 };
 
-const { setActiveConversation } = useConversationListState();
-const { fetchMessageList } = useMessageListState();
+// --- Navigate to message via split chat data and UI state contexts ---
+const channel = inject('channel', 'default') as string;
+const { setActiveConversation } = useChatContext(channel);
+const { setPendingLocateMessage } = useChatUIState(channel);
 
-// Navigate to the target conversation and locate the specific message,
-// then notify the parent via onClick callback for UI cleanup (e.g., closing search panel).
 const handleClick = async () => {
-  const message = props.data as MessageModel;
-  const { conversationID } = message || {};
+  const msg = props.data as MessageInfo;
+  const conversationID = (msg as any).conversationID
+    || (msg.conversationType === 'c2c'
+      ? `C2C${msg.from?.userID}`
+      : `GROUP${msg.to}`);
+
   if (conversationID) {
-    await setActiveConversation(conversationID);
-    await fetchMessageList({
+    setPendingLocateMessage({
       conversationID,
-      messageListType: MessageListType.HISTORY,
-      cursor: {
-        conversationID,
-        ID: message.ID,
-        messageID: message.ID,
-        sequence: message.sequence,
-        time: message.time,
-      },
+      messageID: msg.msgID,
+      sequence: msg.sequence,
+      time: msg.timestamp ? Math.floor(msg.timestamp.getTime() / 1000) : undefined,
     });
+    setActiveConversation(conversationID);
   }
   props.onClick?.(props.data, SearchType.CHAT_MESSAGE);
 };

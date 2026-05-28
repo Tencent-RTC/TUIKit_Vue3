@@ -28,7 +28,6 @@ const props = defineProps<SearchBarProps>();
 const value = ref<string>('');
 
 const handleChange = (e: any) => {
-  console.log('handleChange', e);
   const target = e.target as HTMLInputElement;
   const newValue = target.value;
   value.value = newValue;

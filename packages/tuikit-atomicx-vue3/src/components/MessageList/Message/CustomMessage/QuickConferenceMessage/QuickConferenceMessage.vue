@@ -67,7 +67,7 @@ import { IconHorizontalMore2, useUIKit, TUIToast, TOAST_TYPE } from '@tencentclo
 import { useLoginState } from '../../../../../states/LoginState';
 import { useRoomState } from '../../../../../states/RoomState';
 import { Avatar } from '../../../../Avatar';
-import type { MessageModel } from '../../../../../types';
+import type { CustomMessageInfo, MessageInfo } from '@atomicxcore/core';
 
 enum RoomState {
   CREATING = 'creating',
@@ -78,7 +78,7 @@ enum RoomState {
 const { t } = useUIKit();
 
 const props = defineProps<{
-  message: MessageModel;
+  message: MessageInfo;
 }>();
 
 const { loginUserInfo } = useLoginState();
@@ -109,18 +109,19 @@ const getDefaultRoomMessagePayload = (): RoomMessagePayload => ({
   ownerName: '',
 });
 
-const parseRoomMessagePayload = (message: MessageModel): RoomMessagePayload => {
+const parseRoomMessagePayload = (message: MessageInfo): RoomMessagePayload => {
   try {
+    const customData = (message as CustomMessageInfo).messagePayload?.customData;
     return {
       ...getDefaultRoomMessagePayload(),
-      ...JSON.parse(message.payload.data || '{}'),
+      ...JSON.parse(customData || '{}'),
     };
   } catch {
     return getDefaultRoomMessagePayload();
   }
 };
 
-const handleMessage = (message: MessageModel) => {
+const handleMessage = (message: MessageInfo) => {
   const currentUser = loginUserInfo.value?.userId;
   const messagePayload = parseRoomMessagePayload(message);
   const { businessID, owner, roomId, roomState, roomName, userList, ownerName } = messagePayload;
@@ -130,7 +131,7 @@ const handleMessage = (message: MessageModel) => {
     isInnerRoom,
     isRoomMessage: businessID === 'group_room_message' || businessID === 'quick_conference',
     isRoomCreateByMe,
-    isMessageFromMe: message.from === currentUser,
+    isMessageFromMe: message.from.userID === currentUser,
     roomId,
     roomState,
     roomName,
@@ -156,6 +157,7 @@ const roomCardData = computed<{
   ownerName: string;
   owner: string;
 }>(() => handleMessage(props.message));
+
 const contentTitleClass = computed(() => {
   const stateMap = {
     [RoomState.CREATING]: 'default',

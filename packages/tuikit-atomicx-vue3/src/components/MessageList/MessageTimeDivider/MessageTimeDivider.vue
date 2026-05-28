@@ -1,27 +1,30 @@
 <script lang="ts" setup>
 import { h, computed, Fragment } from 'vue';
 import { getTimeStampAuto } from '../../../utils/time';
-import type { MessageModel } from '../../../types';
+import type { MessageInfo } from '@atomicxcore/core';
 
 interface MessageTimeDividerProps {
-  previousMessage: MessageModel | undefined;
-  currentMessage: MessageModel;
+  previousMessage: MessageInfo | undefined;
+  currentMessage: MessageInfo;
 }
 
 const props = withDefaults(defineProps<MessageTimeDividerProps>(), {
   previousMessage: undefined,
-  currentMessage: () => ({}) as MessageModel,
+  currentMessage: () => ({}) as MessageInfo,
 });
 
 const shouldShowTimeDivider = computed(() => {
-  if (!props.currentMessage?.time) {
+  if (!props.currentMessage?.timestamp) {
     return false;
   }
 
-  const prevTime = props.previousMessage?.time || 0;
-  const currentTime = props.currentMessage.time;
+  const prevMs = props.previousMessage?.timestamp
+    ? props.previousMessage.timestamp.getTime()
+    : 0;
+  const currentMs = props.currentMessage.timestamp.getTime();
 
-  return currentTime - prevTime > 5 * 60;
+  // Show divider when messages are more than 5 minutes apart
+  return currentMs - prevMs > 5 * 60 * 1000;
 });
 
 const renderDefaultContent = () => {
@@ -29,10 +32,10 @@ const renderDefaultContent = () => {
     return h(Fragment, null, []);
   }
 
-  const currentTime = props.currentMessage.time;
+  const currentTimestamp = props.currentMessage.timestamp;
 
   return h('div', { class: 'message-time-divider' }, [
-    h('span', {}, getTimeStampAuto(currentTime * 1000)),
+    h('span', {}, getTimeStampAuto(currentTimestamp ?? new Date())),
   ]);
 };
 </script>

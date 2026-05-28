@@ -169,10 +169,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, onMounted, onUnmounted, computed, defineProps } from 'vue';
-import ChatEngine from '@tencentcloud/chat-uikit-engine-lite';
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
+import { Gender } from '@atomicxcore/core';
 import { IconBack, IconSetting, TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { SearchType } from '../../../../types/engine';
+import { SearchType } from '../../../../types/search';
 import { isH5 } from '../../../../utils';
 import { Slider } from '../Slider';
 
@@ -197,7 +197,7 @@ const birthdayToAge = (birthday: number) => {
 };
 
 const ageToBirthday = (age: number | undefined) => {
-  if (!age) {
+  if (age === undefined || age === null) {
     return undefined;
   }
   const today = new Date();
@@ -223,11 +223,11 @@ const genderList = [
     label: t('Search.filter.gender.any'),
   },
   {
-    value: ChatEngine.TYPES.GENDER_MALE,
+    value: Gender.Male,
     label: t('Search.filter.gender.male'),
   },
   {
-    value: ChatEngine.TYPES.GENDER_FEMALE,
+    value: Gender.Female,
     label: t('Search.filter.gender.female'),
   },
 ];
@@ -260,7 +260,7 @@ watch(
     tempGender.value = userParams?.gender || '不限';
     tempAge.value = {
       min: userParams?.maxBirthday ? birthdayToAge(userParams?.maxBirthday) : undefined,
-      max: userParams?.miniBirthday ? birthdayToAge(userParams?.miniBirthday) : undefined,
+      max: userParams?.minBirthday ? birthdayToAge(userParams?.minBirthday) : undefined,
     };
   },
   { immediate: true },
@@ -283,7 +283,7 @@ const handleAgeChange = (age: { min: number | undefined; max: number | undefined
     const newParams = new Map(props.advancedParams || []);
     newParams.set(SearchType.USER, {
       ...userAdvanced.value,
-      miniBirthday: ageToBirthday(age.max),
+      minBirthday: ageToBirthday(age.max),
       maxBirthday: ageToBirthday(age.min),
     });
     props.onAdvancedParamsChange(newParams);
@@ -318,9 +318,9 @@ const handleAgeConfirm = () => {
 const handleFilterChange = () => {
   toggleFilter();
   const isSameGender = userAdvanced.value?.gender === tempGender.value;
-  const isSameMiniBirthday = userAdvanced.value?.miniBirthday === ageToBirthday(tempAge.value.max);
+  const isSameMinBirthday = userAdvanced.value?.minBirthday === ageToBirthday(tempAge.value.max);
   const isSameMaxBirthday = userAdvanced.value?.maxBirthday === ageToBirthday(tempAge.value.min);
-  if (isSameGender && isSameMiniBirthday && isSameMaxBirthday) {
+  if (isSameGender && isSameMinBirthday && isSameMaxBirthday) {
     return;
   }
   if (props.onAdvancedParamsChange) {
@@ -328,8 +328,8 @@ const handleFilterChange = () => {
     newParams.set(SearchType.USER, {
       ...userAdvanced.value,
       gender: tempGender.value === '不限' ? undefined : tempGender.value,
-      miniBirthday: tempAge.value.max !== 99 ? ageToBirthday(tempAge.value.max) : undefined,
-      maxBirthday: tempAge.value.min !== 0 ? ageToBirthday(tempAge.value.min) : undefined,
+      minBirthday: ageToBirthday(tempAge.value.max),
+      maxBirthday: ageToBirthday(tempAge.value.min),
     });
     props.onAdvancedParamsChange(newParams);
   }
@@ -362,14 +362,14 @@ const minAge = computed(() =>
   userAdvanced.value?.maxBirthday ? birthdayToAge(userAdvanced.value.maxBirthday) : undefined,
 );
 const maxAge = computed(() =>
-  userAdvanced.value?.miniBirthday ? birthdayToAge(userAdvanced.value.miniBirthday) : undefined,
+  userAdvanced.value?.minBirthday ? birthdayToAge(userAdvanced.value.minBirthday) : undefined,
 );
 
 const getGenderText = (gender: string) => {
   switch (gender) {
-    case ChatEngine.TYPES.GENDER_MALE:
+    case Gender.Male:
       return t('Search.filter.gender.male');
-    case ChatEngine.TYPES.GENDER_FEMALE:
+    case Gender.Female:
       return t('Search.filter.gender.female');
     default:
       return t('Search.filter.gender.any');

@@ -7,7 +7,8 @@ type BuiltInAction =
   | 'VideoPicker'
   | 'AttachmentPicker'
   | 'AudioCallPicker'
-  | 'VideoCallPicker';
+  | 'VideoCallPicker'
+  | 'QuickConferencePicker';
 
 export type CustomAction = {
   key: string;
@@ -31,6 +32,8 @@ export interface MessageInputProps {
   maxLength?: number;
   actions?: MessageInputActions;
   slots?: MessageInputSlots;
+  /** Channel key for UIContext isolation, defaults to 'default' */
+  channel?: string;
 }
 
 export interface MessageInputSlots {

@@ -73,25 +73,24 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import { TUIInput, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { PageStateTypes, GroupLabelTypes } from '../../../../types';
+import { PageStateTypes, GroupLabelTypes } from '../../../../types/conversation';
 import { isH5 } from '../../../../utils/env';
 import { Avatar } from '../../../Avatar';
 import { useConversationCreate } from '../../hooks/useConversationCreate';
 import { ConversationGroupTypeInfo } from '../ConversationGroupTypeInfo';
 import type {
   ConversationCreateGroupDetailProps,
-  ConversationModel,
   CreateGroupInfo,
   CreateGroupParams,
-  GroupType,
 } from '../../../../types';
+import type { GroupType, ConversationInfo } from '@atomicxcore/core';
 
 const props = defineProps<ConversationCreateGroupDetailProps>();
 
 const emit = defineEmits<{
   'update:page-state': [state: PageStateTypes];
   'beforeCreateConversation': [params: CreateGroupParams];
-  'conversationCreated': [conversation: ConversationModel];
+  'conversationCreated': [conversation: ConversationInfo];
   'update-group-info': [groupInfo: CreateGroupInfo];
 }>();
 

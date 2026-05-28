@@ -2,10 +2,10 @@ import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import StarterKit from '@tiptap/starter-kit';
 import { Extension, Editor } from '@tiptap/vue-3';
-import { MessageContentType } from '../../../states/MessageInputState';
 import { isMobile } from '../../../utils/environment';
 import { CharacterCount } from './CharacterCountExtension';
-import type { InputContent } from '../../../states/MessageInputState';
+import { MessageContentType } from '../../../types/messageInput';
+import type { InputContent } from '../../../types/messageInput';
 import type { JSONContent, EditorOptions as TiptapEditorOptions } from '@tiptap/vue-3';
 import './Editor.scss';
 

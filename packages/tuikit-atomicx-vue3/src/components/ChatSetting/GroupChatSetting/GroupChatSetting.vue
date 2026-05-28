@@ -1,15 +1,10 @@
 <script lang="ts" setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { onMounted, ref, computed, inject, watch, provide } from 'vue';
+import { GroupType, GroupMemberRole, GroupInviteOption, LoginStore, ContactStore } from '@atomicxcore/core';
+import { useChatContext, useGroupStore } from '../../../chat-store';
 import { IconCopy, TUIDialog, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { View } from '../../../baseComp/View';
-import { useContactListState } from '../../../states/ContactListState';
-import {
-  useGroupSettingState,
-  GroupMemberRole,
-  GroupPermission,
-  GroupInviteType,
-  GroupType,
-} from '../../../states/GroupSettingState';
+import { GroupPermission, hasGroupPermission } from '../../../types/groupSetting';
 import { copyTextToClipboard } from '../../../utils';
 import { UserPicker } from '../../UserPicker';
 import { Divider } from '../Divider';
@@ -20,60 +15,135 @@ import { GroupManagementEntry } from './GroupManagementEntry';
 import { GroupMembers } from './GroupMembers';
 import { PersonalSettings } from './PersonalSettings';
 import type { UserPickerRow, UserPickerRef } from '../../UserPicker';
+import type { GroupMember, GroupInfo } from '@atomicxcore/core';
 
 enum ViewMode {
   MAIN = 'main',
   GROUP_MANAGEMENT = 'group_management',
 }
 
-const {
-  groupID,
-  groupName,
-  notification,
-  groupType,
-  allMembers,
-  memberCount,
-  nameCard,
-  isInGroup,
-  currentUserID,
-  currentUserRole,
-  inviteOption,
-  hasPermission,
-  getGroupMemberList,
-  updateGroupProfile,
-  addGroupMember,
-  deleteGroupMember,
-  setGroupMemberNameCard,
-} = useGroupSettingState();
-
-const { friendList } = useContactListState();
-
 const { t } = useUIKit();
+const channel = inject('channel', 'default') as string;
+const {
+  activeConversation,
+  memberList,
+  hasMoreMembers,
+  addMember,
+  deleteMember,
+  loadMembers,
+  loadMoreMembers,
+} = useChatContext(channel);
+const { joinedGroupList, updateProfile, loadJoinedGroups, getGroupInfo } = useGroupStore();
+
+onMounted(() => {
+  loadJoinedGroups();
+});
+
+const currentGroupID = computed(() => {
+  const id = activeConversation.value?.conversationID;
+  return id?.startsWith('GROUP') ? id.replace(/^GROUP/, '') : undefined;
+});
+
+// Full GroupInfo (including selfRole, notification etc.) fetched on demand
+const fullGroupInfo = ref<GroupInfo | undefined>(undefined);
+
+watch(
+  [currentGroupID],
+  async ([id]) => {
+    if (!id) {
+      fullGroupInfo.value = undefined;
+      return;
+    }
+    try {
+      fullGroupInfo.value = await getGroupInfo(id);
+    } catch {
+      fullGroupInfo.value = undefined;
+    }
+  },
+  { immediate: true },
+);
+
+watch(joinedGroupList, (joinedGroupList) => {
+  const currentGroup = joinedGroupList.find(group => group.groupID === currentGroupID.value);
+  if (currentGroup && fullGroupInfo.value) {
+    for (const [key, value] of Object.entries(currentGroup)) {
+      if (value !== undefined && value !== null) {
+        (fullGroupInfo.value as any)[key] = value;
+      }
+    }
+  } else if (!currentGroup && fullGroupInfo.value) {
+    // No longer in group (quit/dismissed) — clear selfRole so isInGroup becomes false
+    fullGroupInfo.value.selfRole = undefined;
+  }
+}, { immediate: true });
+
+const groupID = computed(() => fullGroupInfo.value?.groupID);
+const groupName = computed(() => fullGroupInfo.value?.groupName);
+const notification = computed(() => fullGroupInfo.value?.notification);
+const groupType = computed(() => fullGroupInfo.value?.groupType);
+const inviteOption = computed(() => fullGroupInfo.value?.inviteOption);
+const isInGroup = computed(() => fullGroupInfo.value?.selfRole !== undefined);
+const currentUserRole = computed(() => fullGroupInfo.value?.selfRole);
+const currentUserID = computed(() => LoginStore.getState().loginUserInfo?.userID);
+
+provide('groupInfo', fullGroupInfo);
+
+watch(
+  [currentGroupID, fullGroupInfo],
+  ([id]) => {
+    const inGroup = fullGroupInfo.value?.selfRole !== undefined;
+    if (id && inGroup) {
+      loadMembers();
+    }
+  },
+  { immediate: true },
+);
+
+// Map friendList from ContactStore (pure state read, no Vue reactivity needed here)
+const friendList = computed(() => ContactStore.getState().friendList);
 
 const prevGroupID = ref('');
 const loading = ref(false);
-const hasMore = ref(true);
 const currentView = ref<ViewMode>(ViewMode.MAIN);
 const isShowUserPickerDialog = ref(false);
 const memberDataSource = ref<UserPickerRow[]>([]);
 const userPickerLockedItems = ref<UserPickerRow[]>([]);
 const memberActionType = ref<'remove' | 'add' | null>(null);
-
 const userPickerRef = ref<UserPickerRef>();
+
+watch(currentGroupID, (newGroupID) => {
+  if (newGroupID && prevGroupID.value !== newGroupID) {
+    loading.value = false;
+    currentView.value = ViewMode.MAIN;
+    prevGroupID.value = newGroupID;
+  }
+});
+
+const canEditName = computed(() =>
+  hasGroupPermission(GroupPermission.EDIT_GROUP_PROFILE_NAME, currentUserRole.value, groupType.value)
+  && isInGroup.value,
+);
+
+const canEditNotification = computed(() =>
+  hasGroupPermission(GroupPermission.EDIT_GROUP_PROFILE_NOTIFICATION, currentUserRole.value, groupType.value)
+  && isInGroup.value,
+);
+
+const canRemoveMember = computed(() =>
+  hasGroupPermission(GroupPermission.REMOVE_MEMBER, currentUserRole.value, groupType.value),
+);
 
 const getGroupTypeText = () => {
   if (!groupType.value) {
     return t('ChatSetting.group_type_unknown');
   }
-
   const groupTypeTextMap: Record<GroupType, string> = {
-    [GroupType.WORK]: t('ChatSetting.group_type_work'),
-    [GroupType.PUBLIC]: t('ChatSetting.group_type_public'),
-    [GroupType.MEETING]: t('ChatSetting.group_type_meeting'),
-    [GroupType.COMMUNITY]: t('ChatSetting.group_type_community'),
-    [GroupType.AVCHATROOM]: t('ChatSetting.group_type_avchatroom'),
+    [GroupType.Work]: t('ChatSetting.group_type_work'),
+    [GroupType.Public]: t('ChatSetting.group_type_public'),
+    [GroupType.Meeting]: t('ChatSetting.group_type_meeting'),
+    [GroupType.Community]: t('ChatSetting.group_type_community'),
+    [GroupType.AVChatRoom]: t('ChatSetting.group_type_avchatroom'),
   };
-
   return groupTypeTextMap[groupType.value] || t('ChatSetting.group_type_unknown');
 };
 
@@ -107,130 +177,79 @@ const validateNotification = (value: string, originalValue?: string) => {
 };
 
 const handleGroupNameConfirm = async (value: string) => {
+  if (!currentGroupID.value) {
+    return;
+  }
   try {
-    await updateGroupProfile({ name: value });
-    TUIToast.success({
-      message: t('ChatSetting.group_name_update_success'),
-    });
+    await updateProfile({ groupID: currentGroupID.value, groupName: value });
+    TUIToast.success({ message: t('ChatSetting.group_name_update_success') });
   } catch {
-    TUIToast.error({
-      message: t('ChatSetting.group_name_update_failed'),
-    });
+    TUIToast.error({ message: t('ChatSetting.group_name_update_failed') });
   }
 };
 
 const handleNotificationConfirm = async (value: string) => {
+  if (!currentGroupID.value) {
+    return;
+  }
   try {
-    await updateGroupProfile({ notification: value });
-    TUIToast.success({
-      message: t('ChatSetting.group_notification_update_success'),
-    });
+    await updateProfile({ groupID: currentGroupID.value, notification: value });
+    TUIToast.success({ message: t('ChatSetting.group_notification_update_success') });
   } catch {
-    TUIToast.error({
-      message: t('ChatSetting.group_notification_update_failed'),
-    });
+    TUIToast.error({ message: t('ChatSetting.group_notification_update_failed') });
   }
 };
 
 const handleCopyGroupID = () => {
   if (groupID.value) {
     copyTextToClipboard(groupID.value).then(() => {
-      TUIToast.success({
-        message: t('ChatSetting.copied'),
-      });
+      TUIToast.success({ message: t('ChatSetting.copied') });
     });
   }
 };
 
-onMounted(() => {
-  if (groupID.value && prevGroupID.value !== groupID.value) {
-    setHasMore(true);
-    loading.value = false;
-    currentView.value = ViewMode.MAIN;
-    prevGroupID.value = groupID.value;
-    setTimeout(() => {
-      getGroupMemberList({ offset: 0, count: 100 });
-    }, 1000);
-  }
-});
-
-watch(groupID, (newGroupID) => {
-  if (newGroupID && prevGroupID.value !== newGroupID) {
-    setHasMore(true);
-    loading.value = false;
-    currentView.value = ViewMode.MAIN;
-    prevGroupID.value = newGroupID;
-    setTimeout(() => {
-      getGroupMemberList({ offset: 0, count: 100 });
-    }, 1000);
-  }
-});
-
-watch([allMembers, memberCount], () => {
-  if (allMembers.value && memberCount.value !== undefined) {
-    setHasMore(allMembers.value.length < memberCount.value);
-  }
-});
-
-function setHasMore(value: boolean) {
-  hasMore.value = value;
-}
-
 const handleLoadMoreMembers = async () => {
-  if (loading.value || !hasMore.value || !groupID.value) {
+  if (loading.value || !hasMoreMembers.value || !currentGroupID.value) {
     return;
   }
   loading.value = true;
   try {
-    await getGroupMemberList({
-      offset: allMembers.value?.length || 0,
-      count: 100,
-    });
+    await loadMoreMembers();
   } catch {
-    TUIToast.error({
-      message: t('ChatSetting.failed_to_load_more_members'),
-    });
+    TUIToast.error({ message: t('ChatSetting.failed_to_load_more_members') });
   } finally {
     loading.value = false;
   }
 };
 
 const onUserPickerDialogOpen = (action: 'remove' | 'add') => {
-  if (!allMembers.value || !action) {
+  if (!memberList.value.length || !action) {
     return;
   }
 
   if (action === 'remove') {
     memberActionType.value = 'remove';
-    const dataSource = (allMembers.value || [])?.map((member) => {
-      let label = member.nick || member.userID;
+    const dataSource = memberList.value.map((member: GroupMember) => {
+      let label = member.nickname || member.userID;
       if (label.length > 20) {
         label = `${label.slice(0, 20)}...`;
       }
-      label = `${label} (${t(`ChatSetting.group_member_role_${member.role.toLowerCase()}`)})`;
-
+      label = `${label} (${t(`ChatSetting.group_member_role_${(member.role ?? '').toLowerCase()}`)})`;
       if (member.userID === currentUserID.value) {
         label = `${label} (${t('ChatSetting.me')})`;
       }
-
-      return {
-        key: member.userID,
-        label,
-        avatarUrl: member.avatar,
-      };
+      return { key: member.userID, label, avatarUrl: member.avatarURL ?? '' };
     });
-
     memberDataSource.value = dataSource;
-
-    const lockedItems = allMembers.value
-      .filter(member =>
+    const lockedItems = memberList.value
+      .filter((member: GroupMember) =>
         member.userID === currentUserID.value
-        || member.role === GroupMemberRole.OWNER
-        || (currentUserRole.value === GroupMemberRole.ADMIN && member.role === GroupMemberRole.ADMIN))
-      .map(member => ({
+        || member.role === GroupMemberRole.Owner
+        || (currentUserRole.value === GroupMemberRole.Admin && member.role === GroupMemberRole.Admin))
+      .map((member: GroupMember) => ({
         key: member.userID,
-        label: member.nick || member.userID,
-        avatarUrl: member.avatar,
+        label: member.nickname || member.userID,
+        avatarUrl: member.avatarURL ?? '',
       }));
     userPickerLockedItems.value = lockedItems;
     isShowUserPickerDialog.value = true;
@@ -238,22 +257,16 @@ const onUserPickerDialogOpen = (action: 'remove' | 'add') => {
 
   if (action === 'add') {
     memberActionType.value = 'add';
-    const dataSource = (friendList.value || [])?.map((friend) => {
-      let label = friend.nick || friend.userID;
-      if (label.length > 20) {
-        label = `${label.slice(0, 20)}...`;
-      }
-      return {
-        key: friend.userID,
-        label,
-        avatarUrl: friend.avatar ?? '',
-      };
-    });
+    const dataSource = friendList.value.map(friend => ({
+      key: friend.userID,
+      label: friend.nickname || friend.userID,
+      avatarUrl: friend.avatarURL ?? '',
+    }));
     memberDataSource.value = dataSource;
-    const lockedItems = allMembers.value?.map(member => ({
+    const lockedItems = memberList.value.map((member: GroupMember) => ({
       key: member.userID,
-      label: member.nick || member.userID,
-      avatarUrl: member.avatar,
+      label: member.nickname || member.userID,
+      avatarUrl: member.avatarURL ?? '',
     }));
     userPickerLockedItems.value = lockedItems;
     isShowUserPickerDialog.value = true;
@@ -268,30 +281,20 @@ const onUserPickerConfirm = () => {
   const selectedItems = userPickerRef.value?.getSelectedItems();
   if (memberActionType.value === 'remove') {
     if (selectedItems && selectedItems.length > 0) {
-      deleteGroupMember({
-        userIDList: selectedItems.map(item => item.key),
-      })
+      deleteMember(selectedItems.map(item => item.key))
         .then(() => {
-          TUIToast.success({
-            message: t('ChatSetting.group_member_remove_success'),
-          });
+          TUIToast.success({ message: t('ChatSetting.group_member_remove_success') });
         })
         .catch(() => {
-          TUIToast.error({
-            message: t('ChatSetting.group_member_remove_failed'),
-          });
+          TUIToast.error({ message: t('ChatSetting.group_member_remove_failed') });
         });
     }
   } else if (memberActionType.value === 'add') {
     if (selectedItems && selectedItems.length > 0) {
-      addGroupMember({
-        userIDList: selectedItems.map(item => item.key),
-      })
+      addMember(selectedItems.map(item => item.key))
         .then((result) => {
-          if (result.data.successUserIDList.length < selectedItems.length) {
-            TUIToast.warning({
-              message: t('ChatSetting.group_member_add_partially_failed'),
-            });
+          if (result.successUserIDList.length < selectedItems.length) {
+            TUIToast.warning({ message: t('ChatSetting.group_member_add_partially_failed') });
           } else {
             TUIToast.success({
               message: t('ChatSetting.group_member_add_success'),
@@ -299,9 +302,7 @@ const onUserPickerConfirm = () => {
           }
         })
         .catch(() => {
-          TUIToast.error({
-            message: t('ChatSetting.group_member_add_failed'),
-          });
+          TUIToast.error({ message: t('ChatSetting.group_member_add_failed') });
         });
     }
   }
@@ -309,25 +310,11 @@ const onUserPickerConfirm = () => {
   isShowUserPickerDialog.value = false;
 };
 
-const userPickerDialogTitle = computed(() => {
-  if (memberActionType.value === 'remove') {
-    return t('ChatSetting.remove_member_dialog_title');
-  }
-  return t('ChatSetting.add_member_dialog_title');
-});
-
-// const handleNameCardConfirm = async (value: string) => {
-//   try {
-//     await setGroupMemberNameCard({ nameCard: value });
-//     TUIToast.success({
-//       message: t('ChatSetting.group_name_card_update_success'),
-//     });
-//   } catch {
-//     TUIToast.error({
-//       message: t('ChatSetting.group_name_card_update_failed'),
-//     });
-//   }
-// };
+const userPickerDialogTitle = computed(() =>
+  memberActionType.value === 'remove'
+    ? t('ChatSetting.remove_member_dialog_title')
+    : t('ChatSetting.add_member_dialog_title'),
+);
 </script>
 
 <template>
@@ -345,7 +332,7 @@ const userPickerDialogTitle = computed(() => {
       :label="t('ChatSetting.group_name')"
       :value="groupName || ''"
       :placeholder="t('ChatSetting.group_name_placeholder')"
-      :editable="Boolean(hasPermission(GroupPermission.EDIT_GROUP_PROFILE_NAME) && isInGroup)"
+      :editable="canEditName"
       :validator="validateGroupName"
       @confirm="handleGroupNameConfirm"
     />
@@ -371,13 +358,13 @@ const userPickerDialogTitle = computed(() => {
       <Divider variant="section" />
       <GroupMembers
         :key="groupID"
-        :members="allMembers"
-        :member-count="memberCount || 0"
-        :hidden-member-count="typeof memberCount === 'undefined'"
+        :members="(memberList as any)"
+        :member-count="fullGroupInfo?.memberCount"
+        :hidden-member-count="inviteOption === GroupInviteOption.Any || inviteOption === GroupInviteOption.Auth"
         :loading="loading"
-        :has-more="hasMore"
-        :show-add-button="inviteOption === GroupInviteType.FREE_ACCESS || inviteOption === GroupInviteType.NEED_PERMISSION"
-        :show-remove-button="hasPermission(GroupPermission.REMOVE_MEMBER)"
+        :has-more="hasMoreMembers"
+        :show-add-button="inviteOption === GroupInviteOption.Any || inviteOption === GroupInviteOption.Auth"
+        :show-remove-button="canRemoveMember"
         @reach-end="handleLoadMoreMembers"
         @remove-button-click="() => onUserPickerDialogOpen('remove')"
         @add-button-click="() => onUserPickerDialogOpen('add')"
@@ -391,7 +378,7 @@ const userPickerDialogTitle = computed(() => {
       :value="notification || ''"
       :placeholder="t('ChatSetting.group_notification_placeholder')"
       :rows="4"
-      :editable="Boolean(hasPermission(GroupPermission.EDIT_GROUP_PROFILE_NOTIFICATION) && isInGroup)"
+      :editable="canEditNotification"
       :validator="validateNotification"
       @confirm="handleNotificationConfirm"
     />

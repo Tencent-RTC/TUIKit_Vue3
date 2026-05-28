@@ -19,21 +19,26 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
 import { IconArrowStrokeRight, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useGroupSettingState, GroupPermission } from '../../../../states/GroupSettingState';
+import { GroupPermission, hasGroupPermission } from '../../../../types/groupSetting';
+import { Divider } from '../../Divider';
+import type { GroupInfo } from '@atomicxcore/core';
 
 const emit = defineEmits<{
   click: [];
 }>();
 
 const { t } = useUIKit();
-const { hasPermission } = useGroupSettingState();
+const groupInfo = inject<{ value: GroupInfo | undefined }>('groupInfo');
+
+const currentUserRole = computed(() => groupInfo?.value?.selfRole);
+const groupType = computed(() => groupInfo?.value?.groupType);
 
 const shouldShowGroupManagement = computed(() => (
-  hasPermission(GroupPermission.SET_MEMBER_ROLE)
-  || hasPermission(GroupPermission.MUTE_MEMBER)
-  || hasPermission(GroupPermission.MUTE_ALL_MEMBERS)
+  hasGroupPermission(GroupPermission.SET_MEMBER_ROLE, currentUserRole.value, groupType.value)
+  || hasGroupPermission(GroupPermission.MUTE_MEMBER, currentUserRole.value, groupType.value)
+  || hasGroupPermission(GroupPermission.MUTE_ALL_MEMBERS, currentUserRole.value, groupType.value)
 ));
 
 const handleClick = () => {

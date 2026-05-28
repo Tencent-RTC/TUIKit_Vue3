@@ -1,42 +1,36 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
+import { ConversationType, MessageType } from '@atomicxcore/core';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
-import { ConversationType } from '../../../../types/engine';
-import { isCallMessage, parseCallMessageText } from '../../../../utils/call';
+import { isCallMessage, parseCallMessageText, isCreateGroupMessage } from '../../../../utils/call';
 import { resolveGroupTipMessage } from './resolveGroupTipMessage';
-import type { MessageModel } from '../../../../types/engine';
+import type { MessageInfo, TipsMessageInfo } from '@atomicxcore/core';
 
 interface GroupTipMessageProps {
-  message: MessageModel;
-}
-
-interface GroupTipMessageContent {
-  text: string;
-  businessID?: string;
-  showName?: string;
-}
-
-interface CustomMessageContent {
-  businessID?: string;
-  showName?: string;
-  custom?: string;
+  message: MessageInfo;
 }
 
 const props = defineProps<GroupTipMessageProps>();
 
 const { t } = useUIKit();
 
-const messageContent = props.message.getMessageContent() as GroupTipMessageContent & CustomMessageContent;
-
 const renderText = computed(() => {
-  if (messageContent.businessID === 'group_create') {
-    return `${messageContent.showName || ''} ${t('MessageList.create_group')}`;
+  if (isCreateGroupMessage(props.message)) {
+    const {
+      nameCard,
+      nickname,
+      userID,
+    } = props.message.from;
+    return `${nameCard || nickname || userID} ${t('MessageList.create_group')}`;
   }
-  if (isCallMessage(props.message) && props.message.conversationType === ConversationType.GROUP) {
+  if (isCallMessage(props.message) && props.message.conversationType === ConversationType.Group) {
     return parseCallMessageText(props.message, t);
   }
-  return resolveGroupTipMessage(props.message).text;
+  if (props.message.messageType === MessageType.Tips) {
+    return resolveGroupTipMessage(props.message as TipsMessageInfo).text;
+  }
+  return '';
 });
 </script>
 
@@ -51,5 +45,6 @@ const renderText = computed(() => {
   color: var(--text-color-secondary);
   text-align: center;
   font-size: 14px;
+  margin: 4px 0;
 }
 </style>

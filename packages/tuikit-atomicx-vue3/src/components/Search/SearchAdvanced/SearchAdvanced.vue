@@ -22,9 +22,7 @@
 </template>
 
 <script lang="ts" setup>
-import { defineProps, withDefaults } from 'vue';
-import { useSearchState } from '../../../states/SearchState';
-import { SearchType } from '../../../types/engine';
+import { SearchType } from '../../../types/search';
 import { VariantType } from '../../../types/search';
 import { MessageAdvanced } from './MessageAdvanced';
 import { SearchTab } from './SearchTab';
@@ -36,10 +34,12 @@ const props = withDefaults(defineProps<SearchAdvancedProps>(), {
   searchType: 'all',
 });
 
-const { setSelectedType } = useSearchState(props.variant);
+const emit = defineEmits<{
+  'tab-change': [tab: SearchTabType];
+}>();
 
 const handleTabChange = (tab: SearchTabType) => {
-  setSelectedType(tab);
+  emit('tab-change', tab);
 };
 
 const handleMessageAdvancedChange = (params: Map<SearchType, any>) => {

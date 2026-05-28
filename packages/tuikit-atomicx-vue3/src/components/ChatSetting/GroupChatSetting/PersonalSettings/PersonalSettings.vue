@@ -31,19 +31,39 @@
 </template>
 
 <script lang="ts" setup>
+import { computed, inject } from 'vue';
+import { ReceiveMessageOption } from '@atomicxcore/core';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useGroupSettingState } from '../../../../states/GroupSettingState';
+import { useChatContext } from '../../../../chat-store';
 import { Divider } from '../../Divider';
 import { SettingItem } from '../../SettingItem';
 
 const { t } = useUIKit();
+const channel = inject('channel', 'default') as string;
+const { activeConversation, setReceiveMessageOpt, pinConversation } = useChatContext(channel);
 
-const {
-  isMuted,
-  isPinned,
-  setChatMuted,
-  setChatPinned,
-} = useGroupSettingState();
+const isMuted = computed(() => {
+  const opt = activeConversation.value?.receiveOption;
+  if (opt === undefined) {
+    return undefined;
+  }
+  return opt !== ReceiveMessageOption.Receive;
+});
+
+const isPinned = computed(() => activeConversation.value?.isPinned);
+
+const setChatMuted = async (mute: boolean) => {
+  const id = activeConversation.value?.conversationID;
+  if (!id) return;
+  const opt = mute ? ReceiveMessageOption.NotNotify : ReceiveMessageOption.Receive;
+  await setReceiveMessageOpt(id, opt);
+};
+
+const setChatPinned = async (pin: boolean) => {
+  const id = activeConversation.value?.conversationID;
+  if (!id) return;
+  await pinConversation(id, pin);
+};
 </script>
 
 <style lang="scss" scoped>

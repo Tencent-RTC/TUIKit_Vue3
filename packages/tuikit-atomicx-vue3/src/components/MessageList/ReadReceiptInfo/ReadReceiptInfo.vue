@@ -1,34 +1,17 @@
 <script lang="ts" setup>
-import { ref, computed, watch } from 'vue';
-import { TUIStore, TUIChatService } from '@tencentcloud/chat-uikit-engine-lite';
+import { ref, watch, onUnmounted } from 'vue';
+import { useMessageActionStore } from '../../../chat-store';
+// import { TUIStore, TUIChatService } from '@tencentcloud/chat-uikit-engine-lite';
 import { useUIKit, IconLoading, IconClose } from '@tencentcloud/uikit-base-component-vue3';
-
 import { Modal } from '../../../baseComp/Modal';
 import { View } from '../../../baseComp/View';
 import { Avatar } from '../../Avatar';
-
-// Types
-interface IUserInfo {
-  userID: string;
-  nick?: string;
-  avatar?: string;
-}
-
-interface IGroupMessageReadMemberListResponse {
-  code: number;
-  data: {
-    cursor: string;
-    isCompleted: boolean;
-    messageID: string;
-    readUserInfoList?: IUserInfo[];
-    unreadUserInfoList?: IUserInfo[];
-  };
-}
+import type { MessageInfo } from '@atomicxcore/core';
 
 // Props
 interface ReadReceiptInfoProps {
-  /** Message ID */
-  messageID: string;
+  /** Message */
+  message: MessageInfo;
   /** Whether the forward modal is open */
   open: boolean;
   /** Read count */
@@ -42,7 +25,7 @@ interface ReadReceiptInfoProps {
 }
 
 const props = withDefaults(defineProps<ReadReceiptInfoProps>(), {
-  messageID: '',
+  message: () => ({}) as MessageInfo,
   open: false,
   readCount: 0,
   unreadCount: 0,
@@ -55,69 +38,44 @@ const emits = defineEmits<{
 }>();
 
 const { t } = useUIKit();
+const {
+  readMemberList,
+  unreadMemberList,
+  hasMoreReadMembers,
+  hasMoreUnreadMembers,
+  loadReadMembers,
+  loadUnreadMembers,
+  loadMoreMembers,
+} = useMessageActionStore(props.message);
 
 // State
 const activeTab = ref<'read' | 'unread'>('read');
-const readListRef = ref<HTMLDivElement>();
-const unreadListRef = ref<HTMLDivElement>();
 
 // Read users state
-const readUsers = ref<IUserInfo[]>([]);
-const readCursor = ref('');
-const readCompleted = ref(false);
 const readLoading = ref(false);
 const readListVisible = ref(false);
 
 // Unread users state
-const unreadUsers = ref<IUserInfo[]>([]);
-const unreadCursor = ref('');
-const unreadCompleted = ref(false);
 const unreadLoading = ref(false);
 const unreadListVisible = ref(false);
 
-// Computed
-const getMessageModel = computed(() => {
-  if (!props.messageID) {
-    throw new Error('ReadReceiptInfo::Message ID is required');
+// Separate loading flag for load-more pagination to prevent concurrent requests
+const loadMoreLoading = ref(false);
+
+// Debounce timer for scroll handler
+let scrollDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+onUnmounted(() => {
+  if (scrollDebounceTimer !== null) {
+    clearTimeout(scrollDebounceTimer);
   }
-  return TUIStore.getMessageModel(props.messageID);
 });
 
 // Methods
-const loadReadUsers = async (cursor = '') => {
-  const message = getMessageModel.value;
-  if (!message) {
-    return;
-  }
-
-  // Reset completed state when starting fresh load
-  if (cursor === '') {
-    readCompleted.value = false;
-  }
-
+const loadReadUsers = async () => {
   readLoading.value = true;
   try {
-    const response = await TUIChatService.getGroupMessageReadMemberList({
-      message,
-      filter: 0, // 0 indicates read members
-      cursor,
-      count: 100,
-    }) as IGroupMessageReadMemberListResponse;
-
-    if (response.code === 0 && response.data) {
-      const { isCompleted, cursor: nextCursor, readUserInfoList = [] } = response.data;
-
-      readCursor.value = nextCursor;
-      readCompleted.value = isCompleted;
-
-      if (cursor === '') {
-        // Initial load
-        readUsers.value = readUserInfoList;
-      } else {
-        // Load more
-        readUsers.value = [...readUsers.value, ...readUserInfoList];
-      }
-    }
+    await loadReadMembers(100);
   } catch (error) {
     console.error('Failed to load read users:', error);
   } finally {
@@ -125,40 +83,10 @@ const loadReadUsers = async (cursor = '') => {
   }
 };
 
-const loadUnreadUsers = async (cursor = '') => {
-  const message = getMessageModel.value;
-  if (!message) {
-    return;
-  }
-
-  // Reset completed state when starting fresh load
-  if (cursor === '') {
-    unreadCompleted.value = false;
-  }
-
+const loadUnreadUsers = async () => {
   unreadLoading.value = true;
   try {
-    const response = await TUIChatService.getGroupMessageReadMemberList({
-      message,
-      filter: 1, // 1 indicates unread members
-      cursor,
-      count: 50,
-    }) as IGroupMessageReadMemberListResponse;
-
-    if (response.code === 0 && response.data) {
-      const { isCompleted, cursor: nextCursor, unreadUserInfoList = [] } = response.data;
-
-      unreadCursor.value = nextCursor;
-      unreadCompleted.value = isCompleted;
-
-      if (cursor === '') {
-        // Initial load
-        unreadUsers.value = unreadUserInfoList;
-      } else {
-        // Load more
-        unreadUsers.value = [...unreadUsers.value, ...unreadUserInfoList];
-      }
-    }
+    await loadUnreadMembers(50);
   } catch (error) {
     console.error('Failed to load unread users:', error);
   } finally {
@@ -167,16 +95,10 @@ const loadUnreadUsers = async (cursor = '') => {
 };
 
 const resetReadState = () => {
-  readUsers.value = [];
-  readCursor.value = '';
-  readCompleted.value = false;
   readListVisible.value = false;
 };
 
 const resetUnreadState = () => {
-  unreadUsers.value = [];
-  unreadCursor.value = '';
-  unreadCompleted.value = false;
   unreadListVisible.value = false;
 };
 
@@ -185,17 +107,39 @@ const setActiveTab = (tab: 'read' | 'unread') => {
 };
 
 const handleScroll = (event: Event) => {
-  const target = event.target as HTMLDivElement;
+  // Use currentTarget (the bound element) for accurate scroll measurements
+  const target = (event.currentTarget ?? event.target) as HTMLElement;
   const { scrollTop, scrollHeight, clientHeight } = target;
 
-  // Load more when scrolled to bottom
-  if (scrollHeight - scrollTop - clientHeight < 50) {
-    if (activeTab.value === 'read' && !readCompleted.value && !readLoading.value && readCursor.value) {
-      loadReadUsers(readCursor.value);
-    } else if (activeTab.value === 'unread' && !unreadCompleted.value && !unreadLoading.value && unreadCursor.value) {
-      loadUnreadUsers(unreadCursor.value);
-    }
+  if (scrollHeight - scrollTop - clientHeight >= 50) {
+    return;
   }
+
+  if (scrollDebounceTimer !== null) {
+    clearTimeout(scrollDebounceTimer);
+  }
+
+  scrollDebounceTimer = setTimeout(() => {
+    scrollDebounceTimer = null;
+
+    if (loadMoreLoading.value) {
+      return;
+    }
+
+    const shouldLoadMore
+      = (activeTab.value === 'read' && hasMoreReadMembers.value && !readLoading.value)
+        || (activeTab.value === 'unread' && hasMoreUnreadMembers.value && !unreadLoading.value);
+
+    if (!shouldLoadMore) {
+      return;
+    }
+
+    loadMoreLoading.value = true;
+    loadMoreMembers(activeTab.value === 'read')
+      .finally(() => {
+        loadMoreLoading.value = false;
+      });
+  }, 200);
 };
 
 const handleClose = (e?: unknown, reason?: 'backdropClick' | 'escapeKeyDown') => {
@@ -215,38 +159,37 @@ watch(() => props.open, (newOpen) => {
   }
 });
 
+// Skip the first trigger that fires simultaneously with `open` becoming true.
+// That initial load is already handled by the open watcher above.
 watch([() => props.readCount, () => props.unreadCount], () => {
-  // Only refresh data when modal is open and counts change
-  // This ensures the lists stay updated without causing flicker
-  if (props.open && props.messageID) {
-    // Refresh the currently active tab's data
-    if (activeTab.value === 'read') {
-      loadReadUsers();
-    } else {
-      loadUnreadUsers();
-    }
+  if (!props.open || !props.message.msgID) {
+    return;
+  }
+  if (readLoading.value || unreadLoading.value) {
+    return;
+  }
+  if (activeTab.value === 'read') {
+    loadReadUsers();
+  } else {
+    loadUnreadUsers();
   }
 });
 
-// Add visibility class when user list is loaded
-watch(() => [readUsers.value.length, readLoading.value], () => {
-  let timer: any;
-  if (readUsers.value.length > 0 && !readLoading.value) {
-    timer = setTimeout(() => {
-      readListVisible.value = true;
-    }, 50);
+// Add visibility class when member list is loaded from store
+watch([() => readMemberList.value.length, readLoading], ([length, loading]) => {
+  if (length > 0 && !loading) {
+    readListVisible.value = true;
+  } else if (length === 0) {
+    readListVisible.value = false;
   }
-  return () => clearTimeout(timer);
 });
 
-watch(() => [unreadUsers.value.length, unreadLoading.value], () => {
-  let timer: any;
-  if (unreadUsers.value.length > 0 && !unreadLoading.value) {
-    timer = setTimeout(() => {
-      unreadListVisible.value = true;
-    }, 50);
+watch([() => unreadMemberList.value.length, unreadLoading], ([length, loading]) => {
+  if (length > 0 && !loading) {
+    unreadListVisible.value = true;
+  } else if (length === 0) {
+    unreadListVisible.value = false;
   }
-  return () => clearTimeout(timer);
 });
 </script>
 
@@ -290,11 +233,10 @@ watch(() => [unreadUsers.value.length, unreadLoading.value], () => {
     <View class="read-receipt-info__content">
       <View
         v-if="activeTab === 'read'"
-        ref="readListRef"
         class="read-receipt-info__user-list"
         @scroll="handleScroll"
       >
-        <template v-if="readUsers.length === 0">
+        <template v-if="readMemberList.length === 0">
           <View
             v-if="readLoading"
             class="read-receipt-info__loading"
@@ -319,17 +261,17 @@ watch(() => [unreadUsers.value.length, unreadLoading.value], () => {
             ]"
           >
             <View
-              v-for="user in readUsers"
-              :key="user.userID"
+              v-for="user in readMemberList"
+              :key="user.userID || ''"
               class="read-receipt-info__user-item"
             >
               <Avatar
-                :src="user.avatar ?? ''"
-                :alt="user.nick || user.userID"
+                :src="user.avatarURL ?? ''"
+                :alt="user.friendRemark || user.nameCard || user.nickname || user.userID"
               />
               <View class="read-receipt-info__user-item-info">
                 <View class="read-receipt-info__user-item-name">
-                  {{ user.nick || user.userID }}
+                  {{ user.friendRemark || user.nameCard || user.nickname || user.userID }}
                 </View>
               </View>
             </View>
@@ -343,7 +285,7 @@ watch(() => [unreadUsers.value.length, unreadLoading.value], () => {
               </View>
             </View>
             <View
-              v-if="readCompleted"
+              v-if="!hasMoreReadMembers"
               class="read-receipt-info__list-end"
             >
               {{ t('MessageList.no_more') }}
@@ -354,11 +296,10 @@ watch(() => [unreadUsers.value.length, unreadLoading.value], () => {
 
       <View
         v-if="activeTab === 'unread'"
-        ref="unreadListRef"
         class="read-receipt-info__user-list"
         @scroll="handleScroll"
       >
-        <template v-if="unreadUsers.length === 0">
+        <template v-if="unreadMemberList.length === 0">
           <View
             v-if="unreadLoading"
             class="read-receipt-info__loading"
@@ -383,17 +324,17 @@ watch(() => [unreadUsers.value.length, unreadLoading.value], () => {
             ]"
           >
             <View
-              v-for="user in unreadUsers"
+              v-for="user in unreadMemberList"
               :key="user.userID"
               class="read-receipt-info__user-item"
             >
               <Avatar
-                :src="user.avatar ?? ''"
-                :alt="user.nick || user.userID"
+                :src="user.avatarURL ?? ''"
+                :alt="user.friendRemark || user.nameCard || user.nickname || user.userID"
               />
               <View class="read-receipt-info__user-item-info">
                 <View class="read-receipt-info__user-item-name">
-                  {{ user.nick || user.userID }}
+                  {{ user.friendRemark || user.nameCard || user.nickname || user.userID }}
                 </View>
               </View>
             </View>
@@ -407,7 +348,7 @@ watch(() => [unreadUsers.value.length, unreadLoading.value], () => {
               </View>
             </View>
             <View
-              v-if="unreadCompleted"
+              v-if="!hasMoreUnreadMembers"
               class="read-receipt-info__list-end"
             >
               {{ t('MessageList.no_more') }}
