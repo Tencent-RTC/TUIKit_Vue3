@@ -1,97 +1,74 @@
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
-import ChatEngine from '@tencentcloud/chat-uikit-engine-lite';
+import { ref, computed, inject, watch } from 'vue';
+import { useChatContext } from '../../../chat-store';
 import { useUIKit, IconClose, TUIToast, TUIButton } from '@tencentcloud/uikit-base-component-vue3';
 import { Modal } from '../../../baseComp/Modal';
 import { View } from '../../../baseComp/View';
-import { useConversationListState } from '../../../states/ConversationListState';
-import { useMessageActionState } from '../../../states/MessageActionState';
+import { useChatUIState } from '../../../context/useChatUIState';
 import { UserPicker } from '../../UserPicker';
-import type { UserPickerRef, UserPickerRow } from '../../UserPicker/type';
+import type { UserPickerRef, UserPickerResult } from '../../UserPicker/type';
+import type { ForwardMessageOption } from '@atomicxcore/core';
 
 const { t } = useUIKit();
-const {
-  forwardMessageIDList,
-  forwardConversationIDList,
-  isForwardMessageSelectionDone,
-  forwardMessage,
-} = useMessageActionState();
-
+const channel = inject('channel', 'default') as string;
+const { isForwardModalOpen, forwardMessages, closeForwardModal } = useChatUIState(channel);
 const {
   conversationList,
-} = useConversationListState();
+  forwardMessages: forwardMessagesToConversation,
+  loadConversations,
+} = useChatContext(channel);
+
+// Load conversation list when modal opens
+watch(isForwardModalOpen, (open) => {
+  if (open) {
+    loadConversations();
+  }
+});
 
 // UserPicker ref
 const userPickerRef = ref<UserPickerRef<undefined> | null>(null);
 
-// Convert conversation list to UserPicker data format
-const forwardListDataSource = computed((): any[] => {
-  if (!conversationList.value) {
-    return [];
-  }
-
-  return conversationList.value.map((conversation) => {
-    const { type, remark, groupProfile, userProfile } = conversation;
-    const userPickerRow: UserPickerRow<undefined> = {
-      key: conversation.conversationID,
-      label: '',
-      avatarUrl: conversation.getAvatar() || '',
-    };
-
-    // resolve c2c conversation
-    if (type === ChatEngine.TYPES.CONV_C2C) {
-      const userDisplayName = remark || userProfile?.nick || userProfile?.userID;
-      userPickerRow.label = userDisplayName || '';
-    }
-
-    // resolve group conversation
-    if (type === ChatEngine.TYPES.CONV_GROUP) {
-      const groupDisplayName = groupProfile?.name || groupProfile?.groupID;
-      userPickerRow.label = groupDisplayName || '';
-    }
-
-    return userPickerRow;
-  });
-});
-
 // Track if forward button should be disabled
 const isDisableConfirm = ref(true);
 
-function handleSelectedChange(selectedItems: any[]) {
+// Convert conversation list to UserPicker data format
+const forwardListDataSource = computed(() =>
+  conversationList.value.map(conversation => ({
+    key: conversation.conversationID,
+    label: conversation.title || conversation.conversationID,
+    avatarUrl: conversation.avatarURL || '',
+  })),
+);
+
+function handleSelectedChange(selectedItems: UserPickerResult) {
   isDisableConfirm.value = selectedItems.length === 0;
-  // Update forwardConversationIDList to maintain compatibility with existing logic
-  forwardConversationIDList.value = selectedItems.map(item => item.key);
 }
 
-function forward() {
-  if (!isForwardMessageSelectionDone.value) {
+async function forward() {
+  const selectedItems = userPickerRef.value?.getSelectedItems();
+  if (!selectedItems || selectedItems.length === 0) {
     return;
   }
 
-  const selectedConversationList = userPickerRef.value?.getSelectedItems();
+  const option: ForwardMessageOption = { forwardType: 'separate' };
+  const forwardPromises = selectedItems.map(
+    item => forwardMessagesToConversation(forwardMessages.value, option, item.key),
+  );
 
-  if (selectedConversationList && selectedConversationList.length > 0) {
-    forwardMessage({
-      messageIDList: forwardMessageIDList.value,
-      conversationIDList: selectedConversationList.map(item => item.key),
-      isMergeForward: false,
-    });
-    closeMessageForward();
-  }
+  await Promise.allSettled(forwardPromises);
+  closeForwardModal();
 }
 
-function closeMessageForward() {
-  forwardMessageIDList.value = [];
-  forwardConversationIDList.value = [];
-  isForwardMessageSelectionDone.value = false;
+function handleClose() {
+  closeForwardModal();
 }
 </script>
 
 <template>
   <Modal
-    :open="isForwardMessageSelectionDone"
+    :open="isForwardModalOpen"
     content-class="forward-container"
-    @on-close="closeMessageForward"
+    @on-close="handleClose"
   >
     <View
       class="forward-header"
@@ -100,7 +77,7 @@ function closeMessageForward() {
       <IconClose
         size="28"
         class="forward-header__close"
-        @click="closeMessageForward"
+        @click="handleClose"
       />
       <span class="forward-header__title">
         {{ t('MessageList.forward') }}

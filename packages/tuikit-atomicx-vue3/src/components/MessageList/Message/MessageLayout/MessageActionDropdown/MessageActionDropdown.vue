@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import {
@@ -12,20 +12,21 @@ import {
 import { useMessageActions } from '../../../../../hooks/useMessageActions';
 import classes from './MessageActionDropdown.module.scss';
 import type { MessageAction } from '../../../../../hooks/useMessageActions';
-import type { MessageModel } from '../../../../../types/engine';
+import type { MessageInfo } from '@atomicxcore/core';
 
 interface MessageActionDropdownProps {
-  message: MessageModel;
+  message: MessageInfo;
   messageActionList?: MessageAction[] | undefined;
 }
 
 const props = withDefaults(defineProps<MessageActionDropdownProps>(), {
   messageActionList: undefined,
-  message: () => ({}) as MessageModel,
+  message: () => ({}) as MessageInfo,
 });
 
 const { t } = useUIKit();
-const defaultActionList = useMessageActions();
+const channel = inject('channel', 'default') as string;
+const defaultActionList = useMessageActions(undefined, channel);
 
 // Get visible action list
 const visibleActions = computed(() => {

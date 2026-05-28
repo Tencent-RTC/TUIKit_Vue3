@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import cs from 'classnames';
+import type { ImageMessageInfo } from '@atomicxcore/core';
 import ImagePreview from './ImagePreview.vue';
-import type { IMessageModel as MessageModel } from '@tencentcloud/chat-uikit-engine-lite';
 
 interface ImageMessageProps {
-  message: MessageModel;
+  message: ImageMessageInfo;
   isLastMessage?: boolean;
 }
 
@@ -19,6 +19,7 @@ interface ImageMessageContent {
 defineOptions({ inheritAttrs: false });
 
 const MAX_HEIGHT = 320;
+const MAX_WIDTH = 480;
 const MIN_HEIGHT = 50;
 const DEFAULT_ASPECT_RATIO = 4 / 3;
 
@@ -26,7 +27,14 @@ const props = withDefaults(defineProps<ImageMessageProps>(), {
   isLastMessage: false,
 });
 
-const messageContent = computed(() => props.message.getMessageContent() as ImageMessageContent);
+const messageContent = computed((): ImageMessageContent => {
+  const p = props.message.messagePayload;
+  return {
+    url: p.originalImageUrl || p.largeImageUrl || p.thumbImageUrl || '',
+    width: p.originalImageWidth,
+    height: p.originalImageHeight,
+  };
+});
 
 const getInitialLoadingState = (url: string): 'loading' | 'loaded' | 'error' => {
   // For blob URLs, usually newly created and need loading
@@ -81,8 +89,8 @@ const displaySize = computed(() => {
   // If no natural size info, use default values
   if (!naturalSize.value) {
     return {
-      height: MAX_HEIGHT, // Use max height to avoid size changes after loading
-      width: MAX_HEIGHT * DEFAULT_ASPECT_RATIO,
+      height: MAX_HEIGHT,
+      width: Math.min(MAX_HEIGHT * DEFAULT_ASPECT_RATIO, MAX_WIDTH),
       aspectRatio: DEFAULT_ASPECT_RATIO,
     };
   }
@@ -93,16 +101,22 @@ const displaySize = computed(() => {
   let finalWidth = originalWidth;
   let finalHeight = originalHeight;
 
-  // Step 1: If height exceeds max height, scale down proportionally
+  // Step 1: Clamp height to MAX_HEIGHT
   if (finalHeight > MAX_HEIGHT) {
     finalHeight = MAX_HEIGHT;
     finalWidth = finalHeight * aspectRatio;
   }
 
-  // Step 2: If height is less than min height, scale up proportionally
+  // Step 2: Clamp width to MAX_WIDTH
+  if (finalWidth > MAX_WIDTH) {
+    finalWidth = MAX_WIDTH;
+    finalHeight = finalWidth / aspectRatio;
+  }
+
+  // Step 3: Ensure minimum height, but never exceed MAX_WIDTH again
   if (finalHeight < MIN_HEIGHT) {
     finalHeight = MIN_HEIGHT;
-    finalWidth = finalHeight * aspectRatio;
+    finalWidth = Math.min(finalHeight * aspectRatio, MAX_WIDTH);
   }
 
   return {

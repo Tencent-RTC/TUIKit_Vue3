@@ -1,8 +1,8 @@
-import { onMounted, onUnmounted, watch } from 'vue';
-import { TUIChatService, TUIStore } from '@tencentcloud/chat-uikit-engine-lite';
+import { inject, onMounted, onUnmounted, watch } from 'vue';
 import { handleChatErrorWithModal } from '../../components/UIKitModal/chatErrorModal';
 import { throttle } from '../../utils/lodash';
-import type { IMessageModel } from '@tencentcloud/chat-uikit-engine-lite';
+import type { MessageInfo } from '@atomicxcore/core';
+import { useChatContext } from '../../chat-store';
 
 interface UseReadReceiptOptions {
   /**
@@ -38,7 +38,12 @@ interface UseReadReceiptOptions {
   /**
    * Function to decide if a message should send read receipt
    */
-  shouldSendReadReceipt?: (message: IMessageModel) => boolean;
+  shouldSendReadReceipt?: (message: MessageInfo) => boolean;
+
+  /**
+   * Channel id for active conversation context.
+   */
+  channel?: string;
 }
 
 export function useReadReceipt({
@@ -46,16 +51,20 @@ export function useReadReceipt({
   containerSelector,
   messageSelector = '[data-message-id]',
   getMessageIDFromDom,
-  shouldSendReadReceipt = message => message.flow === 'in',
+  shouldSendReadReceipt = message => !message.isSentBySelf,
   intersectionThreshold = 0.5,
   delay = 1000,
+  channel,
 }: UseReadReceiptOptions) {
   // IntersectionObserver instance - 使用普通变量，不需要响应式
   let observer: IntersectionObserver | null = null;
   // Message objects pending to send read receipt - 使用普通变量，不需要响应式
-  const pendingReadReceiptMessages = new Map<string, IMessageModel>();
+  const pendingReadReceiptMessages = new Map<string, MessageInfo>();
   // Message IDs that have already been processed - 使用普通变量，不需要响应式
   const processedMessageIds = new Set<string>();
+
+  const resolvedChannel = channel ?? (inject('channel', 'default') as string);
+  const { messageList, sendMessageReadReceipts } = useChatContext(resolvedChannel);
 
   // Throttled function to batch send read receipts
   const sendBatchReadReceipts = throttle(() => {
@@ -63,7 +72,7 @@ export function useReadReceipt({
       return;
     }
     const messagesToSend = Array.from(pendingReadReceiptMessages.values());
-    TUIChatService.sendMessageReadReceipt(messagesToSend)
+    sendMessageReadReceipts(messagesToSend)
       .then(() => {
         // Successfully sent read receipts
       })
@@ -78,7 +87,7 @@ export function useReadReceipt({
     if (processedMessageIds.has(messageID)) {
       return false;
     }
-    const message = TUIStore.getMessageModel(messageID);
+    const message = messageList.value.find(message => message.msgID === messageID);
     if (!message) {
       return false;
     }
@@ -154,7 +163,7 @@ export function useReadReceipt({
       if (processedMessageIds.has(messageID)) {
         return;
       }
-      const message = TUIStore.getMessageModel(messageID);
+      const message = messageList.value.find(message => message.msgID === messageID);
       if (message && shouldSendReadReceipt(message)) {
         observer?.observe(element);
       }

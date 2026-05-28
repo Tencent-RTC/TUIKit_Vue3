@@ -20,6 +20,7 @@ export default {
     'Prev': 'Prev',
     'Cancel': 'Cancel',
     'Create': 'Create',
+    'Participant cannot be empty': 'Participant cannot be empty',
 
     // ConversationCreateGroupDetail
     'Group Avatar': 'Group Avatar',
@@ -76,5 +77,9 @@ export default {
     'someone_at_me': 'You were mentioned',
     'at_all': '@All',
     'group_id_already_used': 'The group ID for creating the group chat is already in use, please choose a different group ID.',
+    'group_id_invalid': 'Invalid group ID, please modify and try again',
+    'create_group_failed': 'Failed to create group, please try again',
+    'user_not_found': 'User does not exist',
+    'conversation_not_found': 'Conversation does not exist',
   },
 };

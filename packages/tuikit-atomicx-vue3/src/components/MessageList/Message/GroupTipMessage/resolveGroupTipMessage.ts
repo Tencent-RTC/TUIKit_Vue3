@@ -1,97 +1,97 @@
-import { TUIChatEngine } from '@tencentcloud/chat-uikit-engine-lite';
 import { i18next } from '@tencentcloud/uikit-base-component-vue3';
-import type { MessageModel } from '../../../../types/engine';
+import type { TipsMessageInfo } from '@atomicxcore/core';
+import type { GroupTipsInfo } from '@atomicxcore/core';
+import { GroupJoinOption, GroupInviteOption } from '@atomicxcore/core';
 
-function substringByLength(str: string, len = 12) {
-  return str.length > len ? `${str.slice(0, len)}...` : str;
+function memberName(member: { nickname?: string; userID: string }): string {
+  const name = member.nickname || member.userID;
+  return name.length > 12 ? `${name.slice(0, 12)}...` : name;
 }
 
-function handleGroupProfileUpdated(message: MessageModel) {
-  const { t } = i18next;
-  const { nick, payload } = message;
-  const { newGroupProfile, memberList, operatorID } = payload;
-  let text = '';
-
-  const showName: string = nick || operatorID;
-  const key: string = Object.keys(newGroupProfile)[0];
-  switch (key) {
-    case 'muteAllMembers':
-      if (newGroupProfile[key]) {
-        text = `${t('MessageList.administrator')} ${showName} ${t('MessageList.enabled_mute_all_members')}`;
-      } else {
-        text = `${t('MessageList.administrator')} ${showName} ${t('MessageList.disabled_mute_all_members')}`;
-      }
-      break;
-    case 'ownerID':
-      text = `${memberList[0].nick || memberList[0].userID} ${t('MessageList.became_new_group_owner')}`;
-      break;
-    case 'groupName':
-      text = `${showName} ${t('MessageList.changed_group_name_to')} ${newGroupProfile[key]}`;
-      break;
-    case 'notification':
-      text = `${showName} ${t('MessageList.published_new_announcement')}`;
-      break;
-    default:
-      break;
-  }
-  return text;
+function memberNames(members: Array<{ nickname?: string; userID: string }>): string {
+  return members.map(memberName).join(', ');
 }
 
-function resolveGroupTipMessage(message: MessageModel) {
-  const ret: {
-    text: string;
-  } = {
-    text: '',
-  };
-
+function describeTip(tip: GroupTipsInfo): string {
   const { t } = i18next;
 
-  let showName: string = message?.nick || message?.payload?.userIDList?.join(',');
-  if (message?.payload?.memberList?.length > 0) {
-    showName = '';
-    message?.payload?.memberList?.map((user: any) => {
-      const _showName = user?.nick || user?.userID;
-      showName += `${substringByLength(_showName)},`;
-      return user;
-    });
-    showName = showName?.slice(0, -1);
-  }
+  switch (tip.type) {
+    case 'joinGroup':
+      return `${memberName(tip.joinMember)} ${t('MessageList.joined_group')}`;
 
-  switch (message.payload.operationType) {
-    case TUIChatEngine.TYPES.GRP_TIP_MBR_JOIN:
-      ret.text = `${showName} ${t('MessageList.joined_group')}`;
-      break;
-    case TUIChatEngine.TYPES.GRP_TIP_MBR_QUIT:
-      ret.text = `${t('MessageList.group_member')}: ${showName} ${t('MessageList.left_group')}`;
-      break;
-    case TUIChatEngine.TYPES.GRP_TIP_MBR_KICKED_OUT:
-      ret.text = `${t('MessageList.group_member')}: ${showName} ${t('MessageList.was')} ${t('MessageList.kicked_out_of_group')}`;
-      break;
-    case TUIChatEngine.TYPES.GRP_TIP_MBR_SET_ADMIN:
-      ret.text = `${t('MessageList.group_member')}: ${showName} ${t('MessageList.became_admin')}`;
-      break;
-    case TUIChatEngine.TYPES.GRP_TIP_MBR_CANCELED_ADMIN:
-      ret.text = `${t('MessageList.group_member')}: ${showName} ${t('MessageList.admin_privileges_revoked')}`;
-      break;
-    case TUIChatEngine.TYPES.GRP_TIP_GRP_PROFILE_UPDATED:
-      ret.text = handleGroupProfileUpdated(message);
-      break;
-    case TUIChatEngine.TYPES.GRP_TIP_MBR_PROFILE_UPDATED:
-      message.payload.memberList.forEach((member: any) => {
-        if (member.muteTime > 0) {
-          ret.text = `${t('MessageList.group_member')}: ${showName} ${t('MessageList.was_muted')}`;
-        } else {
-          ret.text = `${t('MessageList.group_member')}: ${showName} ${t('MessageList.was_unmuted')}`;
-        }
-      });
-      break;
-    default:
-      ret.text = `[${t('MessageList.group_tip_message')}]`;
-      break;
+    case 'inviteToGroup':
+      return `${memberName(tip.inviter)} ${t('MessageList.invited')} ${memberNames(tip.invitees)} ${t('MessageList.joined_group')}`;
+
+    case 'quitGroup':
+      return `${t('MessageList.group_member')}: ${memberName(tip.quitMember)} ${t('MessageList.left_group')}`;
+
+    case 'kickedFromGroup':
+      return `${t('MessageList.group_member')}: ${memberNames(tip.kickedMembers)} ${t('MessageList.was')} ${t('MessageList.kicked_out_of_group')}`;
+
+    case 'setGroupAdmin':
+      return `${t('MessageList.group_member')}: ${memberNames(tip.setAdminMembers)} ${t('MessageList.became_admin')}`;
+
+    case 'cancelGroupAdmin':
+      return `${t('MessageList.group_member')}: ${memberNames(tip.cancelAdminMembers)} ${t('MessageList.admin_privileges_revoked')}`;
+
+    case 'changeGroupName':
+      return `${memberName(tip.opUser)} ${t('MessageList.changed_group_name_to')} ${tip.groupName}`;
+
+    case 'changeGroupAvatar':
+      return `${memberName(tip.opUser)} ${t('MessageList.changed_group_avatar')}`;
+
+    case 'changeGroupNotification':
+      return `${memberName(tip.opUser)} ${t('MessageList.published_new_announcement')}`;
+
+    case 'changeGroupIntroduction':
+      return `${memberName(tip.opUser)} ${t('MessageList.changed_group_introduction')}`;
+
+    case 'changeGroupOwner':
+      return `${tip.groupOwner} ${t('MessageList.became_new_group_owner')}`;
+
+    case 'changeGroupMuteAll':
+      return tip.isMuteAll
+        ? `${memberName(tip.opUser)} ${t('MessageList.enabled_mute_all_members')}`
+        : `${memberName(tip.opUser)} ${t('MessageList.disabled_mute_all_members')}`;
+
+    case 'changeGroupJoinOption': {
+      const joinOptionKey = {
+        [GroupJoinOption.Any]: 'join_option_any',
+        [GroupJoinOption.Auth]: 'join_option_auth',
+        [GroupJoinOption.Forbid]: 'join_option_forbid',
+      }[tip.joinOption];
+      return `${memberName(tip.opUser)} ${t('MessageList.changed_group_join_option')} "${t(`MessageList.${joinOptionKey}`)}"`;
+    }
+
+    case 'changeGroupInviteOption': {
+      const inviteOptionKey = {
+        [GroupInviteOption.Any]: 'invite_option_any',
+        [GroupInviteOption.Auth]: 'invite_option_auth',
+        [GroupInviteOption.Forbid]: 'invite_option_forbid',
+      }[tip.inviteOption];
+      return `${memberName(tip.opUser)} ${t('MessageList.changed_group_invite_option')} "${t(`MessageList.${inviteOptionKey}`)}"`;
+    }
+
+    case 'muteGroupMember':
+      return tip.muteTime > 0
+        ? `${memberNames(tip.mutedGroupMembers)} ${t('MessageList.was_muted')}`
+        : `${memberNames(tip.mutedGroupMembers)} ${t('MessageList.was_unmuted')}`;
+
+    case 'pinGroupMessage':
+      return `${memberName(tip.opUser)} ${t('MessageList.pinned_a_message')}`;
+
+    case 'unpinGroupMessage':
+      return `${memberName(tip.opUser)} ${t('MessageList.unpinned_a_message')}`;
+
+    case 'unknown':
+      return `[${t('MessageList.group_tip_message')}]`;
   }
-  return ret;
 }
 
-export {
-  resolveGroupTipMessage,
-};
+function resolveGroupTipMessage(message: TipsMessageInfo): { text: string } {
+  const tips = message.messagePayload?.groupTips ?? [];
+  const text = tips.map(describeTip).filter(Boolean).join('、') || `[${i18next.t('MessageList.group_tip_message')}]`;
+  return { text };
+}
+
+export { resolveGroupTipMessage };

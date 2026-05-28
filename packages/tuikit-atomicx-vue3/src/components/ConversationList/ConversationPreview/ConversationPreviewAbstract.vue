@@ -14,48 +14,50 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
+import { GroupAtType } from '@atomicxcore/core';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { ConversationType } from '../../../types';
 import { JSONStringToParse } from '../../../utils';
 import { getLatestMessagePreview } from './utils';
-import type { ConversationModel } from '../../../types';
+import type { ConversationInfo } from '@atomicxcore/core';
 
 const props = defineProps<{
-  conversation: ConversationModel;
+  conversation: ConversationInfo;
 }>();
 
 const { t } = useUIKit();
 
 const draftTextAbstract = computed(() => {
-  const { draftText = '' } = props?.conversation || {};
-  return JSONStringToParse(draftText)?.abstract || draftText;
+  const { draft = '' } = props?.conversation || {};
+  return JSONStringToParse(draft)?.abstract || draft;
 });
 
 const latestMessagePreview = computed(() => getLatestMessagePreview(props.conversation, t));
 
 /**
- * Get group @ info preview text.
- * atTypeArray[0] values: 1 = someone @me, 2 = @all, 3 = @all + someone @me
+ * Get group @ info preview text based on GroupAtType enum.
  */
 const atInfoPreview = computed(() => {
   const { type, groupAtInfoList } = props?.conversation || {};
 
   // Only show @ info for group conversations with valid groupAtInfoList
-  if (type !== ConversationType.GROUP || !groupAtInfoList?.length) {
+  if (type !== 'group' || !groupAtInfoList?.length) {
     return '';
   }
 
-  const atInfoTextList: string[] = [
-    `[${t('TUIConversation.someone_at_me')}]`,
-    `[${t('TUIConversation.at_all')}]`,
-    `[${t('TUIConversation.at_all')}][${t('TUIConversation.someone_at_me')}]`,
-  ];
-
   let atInfo = '';
   groupAtInfoList.forEach((item) => {
-    const atType = item?.atTypeArray?.[0];
-    if (atType && atType >= 1 && atType <= 3) {
-      atInfo = atInfoTextList[atType - 1];
+    switch (item.atType) {
+      case GroupAtType.AtMe:
+        atInfo = `[${t('TUIConversation.someone_at_me')}]`;
+        break;
+      case GroupAtType.AtAll:
+        atInfo = `[${t('TUIConversation.at_all')}]`;
+        break;
+      case GroupAtType.AtAllAtMe:
+        atInfo = `[${t('TUIConversation.at_all')}][${t('TUIConversation.someone_at_me')}]`;
+        break;
+      default:
+        break;
     }
   });
 

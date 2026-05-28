@@ -2,12 +2,12 @@
 <template>
   <div :class="$style.SearchUser" @click="handleClick">
     <div :class="$style['SearchUser__avatar']">
-      <Avatar :src="profile?.avatar" :alt="profile?.nick || profile?.userID" />
+      <Avatar :src="profile?.avatarURL" :alt="profile?.nickname || profile?.userID" />
     </div>
     <div :class="$style['SearchUser__profile']">
       <div
         :class="$style['SearchUser__nickname']"
-        v-html="highlightText(profile?.nick || profile?.userID, keyword, $style['SearchUser__highlight'])"
+        v-html="highlightText(profile?.nickname || profile?.userID, keyword, $style['SearchUser__highlight'])"
       ></div>
       <div
         v-if="profile?.selfSignature"
@@ -24,13 +24,13 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, defineProps } from 'vue';
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
-import { SearchType } from '../../../../../types/engine';
-import type { ResultItemProps } from '../../../../../types/search';
+import { computed } from 'vue';
+import { Gender } from '@atomicxcore/core';
+import { SearchType } from '../../../../../types/search';
 import { Avatar } from '../../../../Avatar';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { highlightText } from '../utils';
+import type { ResultItemProps } from '../../../../../types/search';
 
 const { t } = useUIKit();
 
@@ -53,9 +53,9 @@ const profile = computed(() => props.data.profile);
 
 const getGenderText = (gender: string) => {
   switch (gender) {
-    case TUIChatEngine.TYPES.GENDER_MALE:
+    case Gender.Male:
       return t('Search.filter.gender.male');
-    case TUIChatEngine.TYPES.GENDER_FEMALE:
+    case Gender.Female:
       return t('Search.filter.gender.female');
     default:
       return t('Search.filter.gender.secret');

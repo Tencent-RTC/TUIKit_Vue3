@@ -1,42 +1,69 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref, computed, inject } from 'vue';
+import { ReceiveMessageOption } from '@atomicxcore/core';
+import { useChatContext, useContactStore } from '../../../chat-store';
 import { IconCopy, TUIButton, TUIDialog, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useC2CSettingState } from '../../../states/C2CSettingState';
 import { copyTextToClipboard } from '../../../utils';
 import { Divider } from '../Divider';
 import { SettingItem } from '../SettingItem';
 
 const { t } = useUIKit();
-
+const channel = inject('channel', 'default') as string;
 const {
-  userID,
-  nick,
-  signature,
-  remark,
-  isMuted,
-  isPinned,
-  isContact,
-  setChatPinned,
-  setChatMuted,
-  setUserRemark,
-  clearHistoryMessage,
-} = useC2CSettingState();
+  activeConversation,
+  pinConversation,
+  setReceiveMessageOpt,
+  clearConversationMessages,
+} = useChatContext(channel);
+const { friendList, setFriendRemark } = useContactStore();
+
+const userID = computed(() => {
+  const id = activeConversation.value?.conversationID;
+  return id?.startsWith('C2C') ? id.replace(/^C2C/, '') : undefined;
+});
+
+const friendInfo = computed(() => {
+  const friend = friendList.value.find(f => f.userID === userID.value);
+  return friend;
+});
+
+const nick = computed(() => friendInfo.value?.nickname);
+const signature = computed(() => friendInfo.value?.aboutMe);
+const remark = computed(() => friendInfo.value?.friendRemark);
+const isContact = computed(() => friendInfo.value?.isFriend ?? false);
+
+const isMuted = computed(() => {
+  const opt = activeConversation.value?.receiveOption;
+  if (opt === undefined) {
+    return undefined;
+  }
+  return opt !== ReceiveMessageOption.Receive;
+});
+
+const isPinned = computed(() => activeConversation.value?.isPinned);
 
 const isShowClearHistoryDialog = ref(false);
 
 function handlePinnedChange(value: boolean) {
-  setChatPinned(value);
+  const id = activeConversation.value?.conversationID;
+  if (id) {
+    pinConversation(id, value);
+  }
 }
 
 function handleMutedChange(value: boolean) {
-  setChatMuted(value);
+  const id = activeConversation.value?.conversationID;
+  if (id) {
+    setReceiveMessageOpt(id, value ? ReceiveMessageOption.NotNotify : ReceiveMessageOption.Receive);
+  }
 }
 
 function handleRemarkConfirm(value: string) {
-  setUserRemark(value).then(() => {
-    TUIToast.success({
-      message: t('ChatSetting.remark_update_success'),
-    });
+  if (!userID.value) {
+    return;
+  }
+  setFriendRemark(userID.value, value).then(() => {
+    TUIToast.success({ message: t('ChatSetting.remark_update_success') });
   }).catch((err) => {
     TUIToast.error({
       message: err.code === 2700 ? t('ChatSetting.you_are_not_friend') : t('ChatSetting.remark_update_failed'),
@@ -47,24 +74,22 @@ function handleRemarkConfirm(value: string) {
 function handleCopyUserID() {
   if (userID.value) {
     copyTextToClipboard(userID.value).then(() => {
-      TUIToast.success({
-        message: t('ChatSetting.copied'),
-      });
+      TUIToast.success({ message: t('ChatSetting.copied') });
     });
   }
 }
 
 async function handleClearHistoryMessage() {
+  const conversationID = activeConversation.value?.conversationID;
+  if (!conversationID) {
+    return;
+  }
   try {
-    await clearHistoryMessage();
+    await clearConversationMessages(conversationID);
     isShowClearHistoryDialog.value = false;
-    TUIToast.success({
-      message: t('ChatSetting.clear_history_success'),
-    });
+    TUIToast.success({ message: t('ChatSetting.clear_history_success') });
   } catch {
-    TUIToast.error({
-      message: t('ChatSetting.clear_history_failed'),
-    });
+    TUIToast.error({ message: t('ChatSetting.clear_history_failed') });
   }
 }
 </script>

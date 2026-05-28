@@ -7,6 +7,7 @@
   >
     <div class="groupApplicationItem__avatar">
       <Avatar
+        :src="application.fromUserAvatarURL"
         :alt="displayName"
       />
     </div>
@@ -22,7 +23,7 @@
       <TUIButton
         type="primary"
         size="small"
-        @click.stop="handleAction('accept', $event)"
+        @click.stop="handleAccept"
       >
         {{ t('TUIContact.Agree') }}
       </TUIButton>
@@ -33,24 +34,28 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useUIKit, TUIButton } from '@tencentcloud/uikit-base-component-vue3';
-import { useContactListState } from '../../../../states/ContactListState';
+import { useGroupStore } from '../../../../chat-store';
 import { Avatar } from '../../../Avatar';
+import type { GroupApplicationInfo } from '@atomicxcore/core';
 import type { GroupApplicationItemProps } from '../../../../types/contact';
 
 const props = withDefaults(defineProps<GroupApplicationItemProps>(), {});
 
 const emit = defineEmits<{
-  click: [application: any];
-  action: [action: 'accept' | 'refuse', application: any];
+  click: [application: GroupApplicationInfo];
+  action: [action: 'accept' | 'refuse', application: GroupApplicationInfo];
 }>();
 
 const { t } = useUIKit();
-const { acceptGroupApplication } = useContactListState();
+const { acceptApplication } = useGroupStore();
 
-const displayName = computed(() => props.application.applicantNick || props.application.applicant);
-const groupName = computed(() => props.application.groupName || props.application.groupID);
+const displayName = computed(
+  () => props.application.fromUserNickname || props.application.fromUser || '',
+);
+const groupName = computed(() => props.application.groupID);
 const applicationText = computed(() =>
-  props.application.applicationType === 0
+  // 'joinApprovedByAdmin' means the user requested to join; other types are invitations.
+  props.application.type === 'joinApprovedByAdmin'
     ? `${t('TUIContact.Apply to join group')}"${groupName.value}"`
     : `${t('TUIContact.Invite you to join group')}"${groupName.value}"`,
 );
@@ -66,10 +71,14 @@ const handleClick = () => {
   emit('click', props.application);
 };
 
-const handleAction = (action: 'accept' | 'refuse', event: Event) => {
+const handleAccept = async (event: Event) => {
   event.stopPropagation();
-  acceptGroupApplication({ application: props.application });
-  emit('action', action, props.application);
+  try {
+    await acceptApplication(props.application);
+    emit('action', 'accept', props.application);
+  } catch (err) {
+    console.error('[GroupApplicationItem acceptApplication] error', err);
+  }
 };
 </script>
 

@@ -24,15 +24,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, useCssModule } from 'vue';
+import { ref, useCssModule, inject } from 'vue';
 import { TUICore, TUIConstants } from '@tencentcloud/tui-core-lite';
 import { IconLoading, IconConference, useUIKit, TUIToast, TOAST_TYPE } from '@tencentcloud/uikit-base-component-vue3';
 import { View } from '../../../baseComp/View';
 import { useLoginState } from '../../../states/LoginState';
-import { useMessageInputState } from '../../../states/MessageInputState';
 import { useRoomParticipantState } from '../../../states/RoomParticipantState';
 import { useRoomState } from '../../../states/RoomState';
-import type { MessageModel } from '../../../types';
+import { reportStoreUsageData, StoreName } from '@atomicxcore/core';
+import { useChatContext } from '../../../chat-store';
 
 interface QuickConferencePickerProps {
   label?: string;
@@ -48,10 +48,11 @@ const props = withDefaults(defineProps<QuickConferencePickerProps>(), {
 
 const styles = useCssModule();
 const { t } = useUIKit();
+const channel = inject('channel', 'default') as string;
 const { loginUserInfo } = useLoginState();
 const isLoading = ref(false);
 
-const { sendCustomMessage } = useMessageInputState();
+const { sendMessage } = useChatContext(channel);
 const { currentRoom } = useRoomState();
 const { localParticipant } = useRoomParticipantState();
 const generateRoomId = () => String(Date.now()) + String(Math.floor(Math.random() * 1000)).padStart(3, '0');
@@ -98,6 +99,7 @@ const handleQuickConferenceClick = async () => {
   if (props.disabled || isLoading.value) {
     return;
   }
+  reportStoreUsageData({ storeName: StoreName.ChatEvokeRoom });
   if (currentRoom.value?.roomId) {
     TUIToast({
       type: TOAST_TYPE.WARNING,
@@ -117,26 +119,38 @@ const handleQuickConferenceClick = async () => {
       },
     });
 
-    const sentMessage = await sendCustomMessage({
-      payload: {
-        data: JSON.stringify({
-          businessID: 'group_room_message',
-          owner: loginUserInfo.value?.userId,
-          roomId,
-          roomState: 'created',
-          roomName,
-          userList: createCurrentUserPayload(),
-          ownerName: getConferenceOwnerProfile().nickName,
-        }),
-      },
+    const sentMessage = await sendMessage({
+      type: 'customMessage',
+      customData: JSON.stringify({
+        businessID: 'group_room_message',
+        owner: loginUserInfo.value?.userId,
+        roomId,
+        roomState: 'created',
+        roomName,
+        userList: createCurrentUserPayload(),
+        ownerName: getConferenceOwnerProfile().nickName,
+      }),
     });
+    // const sentMessage = await sendCustomMessage({
+    //   payload: {
+    //     data: JSON.stringify({
+    //       businessID: 'group_room_message',
+    //       owner: loginUserInfo.value?.userId,
+    //       roomId,
+    //       roomState: 'created',
+    //       roomName,
+    //       userList: createCurrentUserPayload(),
+    //       ownerName: getConferenceOwnerProfile().nickName,
+    //     }),
+    //   },
+    // });
 
     TUICore.notifyEvent(
       TUIConstants.TUIRoom.SERVICE.NAME,
       TUIConstants.TUIRoom.SERVICE.EVENT.QUICK_CONFERENCE_MESSAGE_CREATED,
       {
         roomId,
-        message: sentMessage as MessageModel | undefined,
+        message: sentMessage,
       },
     );
   } catch (error: unknown) {

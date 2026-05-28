@@ -40,19 +40,18 @@
       </div>
     </div>
     <slot name="footerToolbar">
-      <div :class="styles['message-input__footerToolbar']">
-      </div>
+      <div :class="styles['message-input__footerToolbar']" />
     </slot>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useMessageInputState } from '../../states/MessageInputState';
+import { computed, provide } from 'vue';
 import { AttachmentPicker, FilePicker, ImagePicker, VideoPicker } from './AttachmentPicker';
 import { AudioCallPicker } from './AudioCallPicker';
 import { EmojiPicker } from './EmojiPicker';
 import styles from './MessageInput.module.scss';
+import { QuickConferencePicker } from './QuickConferencePicker';
 import { QuotedMessagePreview } from './QuotedMessagePreview';
 import { TextEditor as DefaultTextEditor } from './TextEditor';
 import { VideoCallPicker } from './VideoCallPicker';
@@ -66,6 +65,7 @@ const DEFAULT_ACTIONS = [
   { key: 'VideoPicker', component: VideoPicker },
   { key: 'AudioCallPicker', component: AudioCallPicker },
   { key: 'VideoCallPicker', component: VideoCallPicker },
+  { key: 'QuickConferencePicker', component: QuickConferencePicker },
 ];
 
 const props = withDefaults(defineProps<MessageInputProps>(), {
@@ -75,10 +75,11 @@ const props = withDefaults(defineProps<MessageInputProps>(), {
   placeholder: undefined,
   maxLength: undefined,
   attachmentPickerMode: 'collapsed',
-  actions: () => ['EmojiPicker', 'ImagePicker', 'FilePicker', 'VideoPicker'],
+  actions: () => ['EmojiPicker', 'ImagePicker', 'FilePicker', 'VideoPicker', 'QuickConferencePicker'],
+  channel: 'default',
 });
 
-const { setContent, sendMessage } = useMessageInputState();
+provide('channel', props.channel);
 
 const pickProps = <T extends object, K extends keyof T>(
   sourceObject: T,
@@ -112,8 +113,4 @@ const actionList = computed(() =>
     .filter(({ Component }) => Component !== null),
 );
 
-const sendInputMessage = () => {
-  sendMessage();
-  setContent('');
-};
 </script>

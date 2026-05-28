@@ -140,7 +140,7 @@ import {
   IconClose1,
   useUIKit,
 } from '@tencentcloud/uikit-base-component-vue3';
-import { useContactListState } from '../../states/ContactListState';
+import { useContactStore, useLoginStore } from '../../chat-store';
 import { Avatar } from '../Avatar';
 import { UserPicker } from '../UserPicker';
 import Datepicker from './Datepicker.vue';
@@ -175,7 +175,17 @@ const internalForm = ref({
   selectedUserList: [] as UserPickerDataSource,
 });
 
-const { friendList } = useContactListState();
+const { friendList, loadFriends } = useContactStore();
+const { loginStatus } = useLoginStore();
+
+// ContactStore is a singleton, but its data must be loaded explicitly after
+// login. Trigger the load here so the picker has something to render.
+watch(loginStatus, (status) => {
+  if (status === 'logined') {
+    loadFriends().catch(err => console.error('[RoomEdit loadFriends]', err));
+  }
+}, { immediate: true });
+
 const userPickerRef = ref();
 const userPickerVisible = ref(false);
 const searchUserId = ref('');
@@ -183,8 +193,8 @@ const searchUserId = ref('');
 const userPickerData = computed(() =>
   friendList.value.map(item => ({
     key: item.userID,
-    label: item.nick,
-    avatarUrl: item.avatar,
+    label: item.friendRemark || item.nickname || item.userID,
+    avatarUrl: item.avatarURL ?? '',
     extraData: item,
   })),
 );
@@ -281,7 +291,7 @@ const handleUserSearchChange = (value: string) => userPickerData.value
   .map(item => ({
     label: item.label,
     value: item.key,
-    avatarUrl: item.extraData.avatar,
+    avatarUrl: item.extraData.avatarURL,
     extraData: item.extraData,
   }));
 

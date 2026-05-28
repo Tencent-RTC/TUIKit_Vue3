@@ -1,3 +1,7 @@
 @use '../detail-layout' as detail;
 
 @include detail.panel('contact-friend-application-info');
+
+.contact-friend-application-info__row-label--rejected {
+  color: var(--text-color-error);
+}

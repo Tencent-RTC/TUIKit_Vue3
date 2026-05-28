@@ -1,4 +1,4 @@
-import { GroupType } from '../../../types';
+import { GroupType } from '@atomicxcore/core';
 import {
   DEFAULT_GROUP_AVATAR_AVCHATROOM,
   DEFAULT_GROUP_AVATAR_COMMON,
@@ -9,15 +9,15 @@ import {
 
 const getDefaultAvatar = (type: GroupType) => {
   switch (type) {
-    case GroupType.WORK:
+    case GroupType.Work:
       return DEFAULT_GROUP_AVATAR_WORK;
-    case GroupType.PUBLIC:
+    case GroupType.Public:
       return DEFAULT_GROUP_AVATAR_PUBLIC;
-    case GroupType.MEETING:
+    case GroupType.Meeting:
       return DEFAULT_GROUP_AVATAR_MEETING;
-    case GroupType.AVCHATROOM:
+    case GroupType.AVChatRoom:
       return DEFAULT_GROUP_AVATAR_AVCHATROOM;
-    case GroupType.COMMUNITY:
+    case GroupType.Community:
       return DEFAULT_GROUP_AVATAR_COMMON;
     default:
       return '';

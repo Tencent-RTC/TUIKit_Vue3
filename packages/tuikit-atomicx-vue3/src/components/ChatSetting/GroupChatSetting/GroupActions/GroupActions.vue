@@ -122,24 +122,31 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
+import type { Ref } from 'vue';
+import { LoginStore } from '@atomicxcore/core';
+import { useChatContext, useGroupStore } from '../../../../chat-store';
 import { TUIButton, TUIDialog, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useGroupSettingState, GroupPermission } from '../../../../states/GroupSettingState';
+import { GroupPermission, hasGroupPermission } from '../../../../types/groupSetting';
 import { UserPicker } from '../../../UserPicker';
 import { Divider } from '../../Divider';
 import type { UserPickerRef } from '../../../UserPicker';
+import type { GroupMember, GroupInfo } from '@atomicxcore/core';
 
 const { t } = useUIKit();
+const channel = inject('channel', 'default') as string;
+const { activeConversation, memberList, clearConversationMessages } = useChatContext(channel);
+const { dismissGroup, quitGroup, changeOwner } = useGroupStore();
 
-const {
-  allMembers,
-  currentUserID,
-  dismissGroup,
-  quitGroup,
-  hasPermission,
-  changeGroupOwner,
-  clearHistoryMessage,
-} = useGroupSettingState();
+const currentGroupID = computed(() => {
+  const id = activeConversation.value?.conversationID;
+  return id?.startsWith('GROUP') ? id.replace(/^GROUP/, '') : undefined;
+});
+
+const groupInfo = inject<Ref<GroupInfo | undefined>>('groupInfo');
+const currentUserRole = computed(() => groupInfo?.value?.selfRole);
+const groupType = computed(() => groupInfo?.value?.groupType);
+const currentUserID = computed(() => LoginStore.getState().loginUserInfo?.userID);
 
 const isShowTransferDialog = ref(false);
 const isShowClearHistoryDialog = ref(false);
@@ -149,99 +156,87 @@ const loading = ref(false);
 
 const userPickerRef = ref<UserPickerRef>();
 
-// Check permissions for different actions
-const canDismissGroup = computed(() => hasPermission(GroupPermission.DISMISS_GROUP));
-const canQuitGroup = computed(() => hasPermission(GroupPermission.QUIT_GROUP));
-const canChangeGroupOwner = computed(() => hasPermission(GroupPermission.TRANSFER_OWNERSHIP));
+const canDismissGroup = computed(() => hasGroupPermission(GroupPermission.DISMISS_GROUP, currentUserRole.value, groupType.value));
+const canQuitGroup = computed(() => hasGroupPermission(GroupPermission.QUIT_GROUP, currentUserRole.value, groupType.value));
+const canChangeGroupOwner = computed(() => hasGroupPermission(GroupPermission.TRANSFER_OWNERSHIP, currentUserRole.value, groupType.value));
 
-// Handle change group owner
 const handleChangeGroupOwner = () => {
   isShowTransferDialog.value = true;
 };
 
-// Handle transfer confirm
 const handleTransferConfirm = async () => {
   const selectedItems = userPickerRef.value?.getSelectedItems();
   if (!selectedItems || selectedItems.length === 0) {
-    TUIToast.error({
-      message: t('ChatSetting.select_new_owner_error'),
-    });
+    TUIToast.error({ message: t('ChatSetting.select_new_owner_error') });
     return;
   }
-
   if (selectedItems.length > 1) {
-    TUIToast.error({
-      message: t('ChatSetting.only_one_owner_error'),
-    });
+    TUIToast.error({ message: t('ChatSetting.only_one_owner_error') });
     return;
   }
-
   const newOwnerID = selectedItems[0].key;
-
+  if (!currentGroupID.value) {
+    return;
+  }
   try {
     loading.value = true;
-    await changeGroupOwner({ newOwnerID });
-    TUIToast.success({
-      message: t('ChatSetting.transfer_owner_success'),
-    });
+    await changeOwner(currentGroupID.value, newOwnerID);
+    TUIToast.success({ message: t('ChatSetting.transfer_owner_success') });
     isShowTransferDialog.value = false;
   } catch {
-    TUIToast.error({
-      message: t('ChatSetting.transfer_owner_failed'),
-    });
+    TUIToast.error({ message: t('ChatSetting.transfer_owner_failed') });
   } finally {
     loading.value = false;
   }
 };
 
-// Get available members for transfer (exclude current user and owner)
 const transferDataSource = computed(() => {
-  if (!allMembers.value) {
-    return [];
-  }
-
-  return allMembers.value
-    .map((member) => {
-      let label = member.nick || member.userID;
-      if (label.length > 20) {
-        label = `${label.slice(0, 20)}...`;
-      }
-      label = `${label} (${t(`ChatSetting.group_member_role_${member.role.toLowerCase()}`)})`;
-
-      if (member.userID === currentUserID.value) {
-        label = `${label} (${t('ChatSetting.me')})`;
-      }
-
-      return {
-        key: member.userID,
-        label,
-        avatarUrl: member.avatar,
-      };
-    });
+  return (memberList.value as GroupMember[]).map((member: GroupMember) => {
+    let label = member.nickname || member.userID;
+    if (label.length > 20) {
+      label = `${label.slice(0, 20)}...`;
+    }
+    label = `${label} (${t(`ChatSetting.group_member_role_${(member.role ?? '').toLowerCase()}`)})`;
+    if (member.userID === currentUserID.value) {
+      label = `${label} (${t('ChatSetting.me')})`;
+    }
+    return { key: member.userID, label, avatarUrl: member.avatarURL ?? '' };
+  });
 });
 
-// Handle quit group
-const handleQuitGroup = () => {
-  quitGroup();
+const handleQuitGroup = async () => {
+  if (currentGroupID.value) {
+    try {
+      await quitGroup(currentGroupID.value);
+      isShowQuitDialog.value = false;
+    } catch {
+      TUIToast.error({ message: t('ChatSetting.quit_group_failed') });
+    }
+  }
 };
 
-// Handle dismiss group
-const handleDismissGroup = () => {
-  dismissGroup();
+const handleDismissGroup = async () => {
+  if (currentGroupID.value) {
+    try {
+      await dismissGroup(currentGroupID.value);
+      isShowDismissDialog.value = false;
+    } catch {
+      TUIToast.error({ message: t('ChatSetting.dismiss_group_failed') });
+    }
+  }
 };
 
-// Handle clear history
 const handleClearHistory = async () => {
+  const conversationID = activeConversation.value?.conversationID;
+  if (!conversationID) {
+    return;
+  }
   try {
-    await clearHistoryMessage();
+    await clearConversationMessages(conversationID);
     isShowClearHistoryDialog.value = false;
-    TUIToast.success({
-      message: t('ChatSetting.clear_history_success'),
-    });
+    TUIToast.success({ message: t('ChatSetting.clear_history_success') });
   } catch {
-    TUIToast.error({
-      message: t('ChatSetting.clear_history_failed'),
-    });
+    TUIToast.error({ message: t('ChatSetting.clear_history_failed') });
   }
 };
 </script>

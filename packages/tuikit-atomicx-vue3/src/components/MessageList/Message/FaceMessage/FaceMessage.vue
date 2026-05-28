@@ -1,8 +1,8 @@
 <template>
   <div
     :class="cs('face-message', {
-      'face-message--flow-in': message.flow === 'in',
-      'face-message--flow-out': message.flow === 'out',
+      'face-message--flow-in': !message.isSentBySelf,
+      'face-message--flow-out': message.isSentBySelf,
     })"
   >
     <img
@@ -14,10 +14,10 @@
 
 <script lang="ts" setup>
 import cs from 'classnames';
-import type { MessageModel } from '../../../../types/engine';
+import type { MessageInfo } from '@atomicxcore/core';
 
 interface FaceMessageProps {
-  message: MessageModel;
+  message: MessageInfo;
 }
 
 interface FaceMessageContent {
@@ -32,7 +32,7 @@ interface FaceMessageContent {
 }
 
 const props = withDefaults(defineProps<FaceMessageProps>(), {
-  message: () => ({} as MessageModel),
+  message: () => ({} as MessageInfo),
 });
 
 const messageContent = {

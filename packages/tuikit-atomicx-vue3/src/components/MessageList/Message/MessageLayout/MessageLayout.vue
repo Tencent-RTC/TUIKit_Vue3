@@ -1,13 +1,14 @@
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
 import type { Component } from 'vue';
+import { MessageType, ConversationType, MessageStatus } from '@atomicxcore/core';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
-import { MessageType, ConversationType } from '../../../../types/engine';
-import { isCallMessage } from '../../../../utils/call';
+import { isCallMessage, isCreateGroupMessage } from '../../../../utils/call';
 import { getTimeStampAuto } from '../../../../utils/time';
 import { Avatar } from '../../../Avatar';
+import { useChatUIState } from '../../../../context/useChatUIState';
 import { useMessageListContext } from '../../MessageListContext';
 import { ReadReceiptInfo } from '../../ReadReceiptInfo';
 import { AudioMessage } from '../AudioMessage';
@@ -16,7 +17,7 @@ import { FaceMessage } from '../FaceMessage';
 import { FileMessage } from '../FileMessage';
 import { GroupTipMessage } from '../GroupTipMessage';
 import { ImageMessage } from '../ImageMessage';
-import { LocationMessage } from '../LocationMessage';
+// import { LocationMessage } from '../LocationMessage';
 import { MergerMessage } from '../MergerMessage';
 import { RecalledMessage } from '../RecalledMessage';
 import { TextMessage } from '../TextMessage';
@@ -25,10 +26,11 @@ import { MessageBubble } from './MessageBubble';
 import { MessageStatusIcon } from './MessageMeta';
 import { useMessageLayoutClasses } from './useMessageLayoutClasses';
 import type { MessageAction } from '../../../../hooks/useMessageActions';
-import type { MessageModel } from '../../../../types/engine';
+// import type { MessageModel } from '../../../../types/engine';
+import type { MessageInfo } from '@atomicxcore/core';
 
 interface MessageLayoutProps {
-  message: MessageModel;
+  message: MessageInfo;
   nick?: string;
   isAggregated?: boolean;
   isHiddenMessageAvatar?: boolean;
@@ -43,7 +45,7 @@ interface MessageLayoutProps {
 }
 
 const props = withDefaults(defineProps<MessageLayoutProps>(), {
-  message: () => ({}) as MessageModel,
+  message: () => ({}) as MessageInfo,
   alignment: 'two-sided',
   nick: undefined,
   isAggregated: false,
@@ -62,63 +64,69 @@ const isHovered = ref(false);
 const isReadReceiptInfoOpen = ref(false);
 
 const shouldRenderAsGroupTip = computed(() => {
-  if (props.message.type === MessageType.CUSTOM && props.message.getMessageContent().businessID === 'group_create') {
+  if (props.message.messageType === MessageType.Custom && isCreateGroupMessage(props.message)) {
     return true;
   }
   if (
-    props.message.type === MessageType.CUSTOM
+    props.message.messageType === MessageType.Custom
     && isCallMessage(props.message)
-    && props.message.conversationType === ConversationType.GROUP
+    && props.message.conversationType === ConversationType.Group
   ) {
     return true;
   }
   return false;
 });
 
-const MessageComponentsFactory: Record<MessageType, Component> = {
-  [MessageType.TEXT]: TextMessage,
-  [MessageType.IMAGE]: ImageMessage,
-  [MessageType.AUDIO]: AudioMessage,
-  [MessageType.VIDEO]: VideoMessage,
-  [MessageType.FILE]: FileMessage,
-  [MessageType.FACE]: FaceMessage,
-  [MessageType.LOCATION]: LocationMessage,
-  [MessageType.MERGER]: MergerMessage,
-  [MessageType.CUSTOM]: CustomMessage,
-  [MessageType.GRP_TIP]: GroupTipMessage,
+const MessageComponentsFactory: Record<MessageType, Component | null> = {
+  [MessageType.Unknown]: null,
+  [MessageType.Stream]: null,
+  // [MessageType.Location]: LocationMessage,
+  [MessageType.Text]: TextMessage,
+  [MessageType.Image]: ImageMessage,
+  [MessageType.Audio]: AudioMessage,
+  [MessageType.Video]: VideoMessage,
+  [MessageType.File]: FileMessage,
+  [MessageType.Face]: FaceMessage,
+  [MessageType.Merged]: MergerMessage,
+  [MessageType.Custom]: CustomMessage,
+  [MessageType.Tips]: GroupTipMessage,
 };
+
+const channel = inject('channel', 'default') as string;
+const { highlightMessageIDSet } = useChatUIState(channel);
+const isHighlighted = computed(() => highlightMessageIDSet.value.has(props.message.msgID));
 
 const messageListContext = useMessageListContext('MessageLayout');
 
 const MessageComponent = computed(() => {
   const renderers = messageListContext?.messageRenderers;
-  const { type } = props.message;
-  if (renderers?.[type]) {
-    return renderers[type];
+  const { messageType } = props.message;
+  if (renderers?.[messageType]) {
+    return renderers[messageType];
   }
-  return MessageComponentsFactory[type];
+  return MessageComponentsFactory[messageType];
 });
 
-const isMessageOwner = computed(() => props.message.flow === 'out');
-const isGroup = computed(() => props.message.conversationType === ConversationType.GROUP);
+const isMessageOwner = computed(() => props.message.isSentBySelf);
+const isGroup = computed(() => props.message.conversationType === ConversationType.Group);
 
-const displayTime = computed(() => getTimeStampAuto(props.message.time * 1000));
+const displayTime = computed(() => getTimeStampAuto(props.message.timestamp!));
 
 const showSendStatus = computed(() => (
   isMessageOwner.value
-  && (props.message.status === 'unSend' || props.message.status === 'fail')
+  && (props.message.status === MessageStatus.Sending || props.message.status === MessageStatus.SendFail)
 ));
 
 const showReadReceipt = computed(() => (
   isMessageOwner.value
-  && props.message.status === 'success'
+  && props.message.status === MessageStatus.SendSuccess
   && props.message.needReadReceipt
 ));
 
 const readReceiptText = computed(() => {
   if (
     !props.message.needReadReceipt
-    || props.message.status !== 'success'
+    || props.message.status !== MessageStatus.SendSuccess
     || !props.message.readReceiptInfo
     || !isMessageOwner.value
   ) {
@@ -168,29 +176,35 @@ function handleReadReceiptClose() {
 // - isHiddenMessageAvatar=true: visually hide avatar but keep DOM space (no layout shift)
 const isSingleSideAlignment = computed(() => props.alignment === 'left' || props.alignment === 'right');
 const shouldRenderAvatar = computed(() => {
-  if (isSingleSideAlignment.value) return true;
+  if (isSingleSideAlignment.value) {
+    return true;
+  }
   return !props.removeAvatar;
 });
 const avatarVisibility = computed(() => {
-  if (isSingleSideAlignment.value) return 'visible';
+  if (isSingleSideAlignment.value) {
+    return 'visible';
+  }
   return props.isHiddenMessageAvatar ? 'hidden' : 'visible';
 });
 </script>
 
 <template>
   <RecalledMessage
-    v-if="message.isRevoked"
+    v-if="message.status === MessageStatus.Recalled"
     class="message-recalled"
     :message="message"
   />
   <GroupTipMessage
-    v-else-if="message.type === MessageType.GRP_TIP || shouldRenderAsGroupTip"
+    v-else-if="message.messageType === MessageType.Tips || shouldRenderAsGroupTip"
     :message="message"
   />
   <View
     v-else-if="MessageComponent"
-    :data-message-id="message.ID"
-    :class="layoutClasses"
+    :data-message-id="message.msgID"
+    :class="cs(layoutClasses, {
+      'highlight--normal': isHighlighted,
+    })"
     :style="style"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
@@ -199,13 +213,13 @@ const avatarVisibility = computed(() => {
       v-if="shouldRenderAvatar"
       :class="cs(avatarClasses)"
       :style="{ visibility: avatarVisibility }"
-      :src="message.avatar"
+      :src="message.from.avatarURL"
       size="sm"
     />
     <View :class="cs(contentClasses)">
       <View v-if="!isAggregated" :class="cs(headerClasses)">
         <View v-if="!isHiddenMessageNick" :class="cs('message-layout__nick')">
-          {{ props.nick || message.nameCard || message.nick || message.from }}
+          {{ props.nick || message.from.nameCard || message.from.nickname || message.from.userID }}
         </View>
         <span class="message-layout__time" :style="{ visibility: isHovered ? 'visible' : 'hidden' }">{{ displayTime }}</span>
       </View>
@@ -258,10 +272,10 @@ const avatarVisibility = computed(() => {
   </View>
   <ReadReceiptInfo
     :open="isReadReceiptInfoOpen"
-    :messageID="message.ID"
-    :read-count="message.readReceiptInfo.readCount"
-    :unread-count="message.readReceiptInfo.unreadCount"
-    :is-peer-read="message.readReceiptInfo.isPeerRead"
+    :message="message"
+    :read-count="message.readReceiptInfo?.readCount"
+    :unread-count="message.readReceiptInfo?.unreadCount"
+    :is-peer-read="message.readReceiptInfo?.isPeerRead"
     @on-close="handleReadReceiptClose"
   />
 </template>
@@ -403,5 +417,23 @@ $message-avatar-gap: 8px;
   color: #ff584c;
   margin-left: 8px;
   cursor: pointer;
+}
+
+.highlight {
+  &--normal {
+    animation: background-highlight 1s ease-in-out infinite;
+  }
+}
+
+@keyframes background-highlight {
+  50% {
+    background-color: rgb(255, 199, 126);
+  }
+}
+
+@keyframes media-highlight {
+  50% {
+    box-shadow: 0 1px 20px 0 rgb(255, 199, 126);
+  }
 }
 </style>

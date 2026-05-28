@@ -142,12 +142,17 @@ function handleKeyPress(event: KeyboardEvent) {
   }
 }
 
-// Handle switch change
-function handleSwitchChange(event: Event) {
-  if (props.type === SettingItemType.SWITCH) {
-    const target = event.target as HTMLInputElement;
-    emit('change', target.checked);
+// Handle switch click
+const isSwitchLocked = ref(false);
+function handleSwitchClick() {
+  if (props.type !== SettingItemType.SWITCH || props.disabled || isSwitchLocked.value) {
+    return;
   }
+  isSwitchLocked.value = true;
+  emit('change', !props.value);
+  window.setTimeout(() => {
+    isSwitchLocked.value = false;
+  }, 500);
 }
 </script>
 
@@ -172,15 +177,15 @@ function handleSwitchChange(event: Event) {
       <label
         v-if="type === SettingItemType.SWITCH"
         :class="classes['setting-item__switch']"
+        @click="handleSwitchClick"
       >
-        <input
-          :class="classes['setting-item__switch-input']"
-          type="checkbox"
-          :checked="value"
-          :disabled="disabled"
-          @change="handleSwitchChange"
-        >
-        <span :class="classes['setting-item__switch-slider']" />
+        <span
+          :class="[
+            classes['setting-item__switch-slider'],
+            { [classes['setting-item__switch-slider--checked']]: value },
+            { [classes['setting-item__switch-slider--disabled']]: disabled },
+          ]"
+        />
       </label>
 
       <!-- Input type content -->
@@ -408,26 +413,6 @@ function handleSwitchChange(event: Event) {
     cursor: pointer;
   }
 
-  &__switch-input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-
-    &:checked + .setting-item__switch-slider {
-      background-color: var(--switch-color-on);
-
-      &:before {
-        transform: translateX(16px);
-      }
-    }
-
-    &:disabled + .setting-item__switch-slider {
-      cursor: not-allowed;
-
-      background-color: var(--fill-color-disabled);
-    }
-  }
-
   &__switch-slider {
     position: absolute;
     cursor: pointer;
@@ -440,7 +425,7 @@ function handleSwitchChange(event: Event) {
 
     background-color: var(--switch-color-off);
 
-    &:before {
+    &::before {
       position: absolute;
       content: "";
       height: 18px;
@@ -450,6 +435,19 @@ function handleSwitchChange(event: Event) {
       border-radius: 50%;
       transition: 0.2s;
       background-color: white;
+    }
+
+    &--checked {
+      background-color: var(--switch-color-on);
+
+      &::before {
+        transform: translateX(16px);
+      }
+    }
+
+    &--disabled {
+      cursor: not-allowed;
+      background-color: var(--fill-color-disabled);
     }
   }
 

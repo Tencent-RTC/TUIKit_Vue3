@@ -32,9 +32,9 @@ import {
   ConversationPreviewTitle,
   ConversationPreviewUnread } from '.';
 import type {
-  ConversationModel,
   ConversationPreviewProps,
 } from '../../../types';
+import type { ConversationInfo } from '@atomicxcore/core';
 
 const props = withDefaults(defineProps<ConversationPreviewProps>(), {
   isSelected: false,
@@ -45,7 +45,7 @@ const props = withDefaults(defineProps<ConversationPreviewProps>(), {
 });
 
 const emit = defineEmits<{
-  selectConversation: [conversation: ConversationModel];
+  selectConversation: [conversation: ConversationInfo];
 }>();
 
 const Title = computed(() => h(props.Title || ConversationPreviewTitle, {
@@ -64,7 +64,7 @@ const Unread = computed(() => h(props.Unread || ConversationPreviewUnread, {
   conversation: props.conversation,
 }));
 
-const handleSelectConversation = (conversation: ConversationModel) => {
+const handleSelectConversation = (conversation: ConversationInfo) => {
   emit('selectConversation', conversation);
 };
 </script>

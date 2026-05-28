@@ -64,7 +64,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, defineProps, withDefaults, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { IconBack, IconCloseInput, IconSearch, TUIInput, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { VariantType } from '../../../types/search';
 import { isH5 } from '../../../utils/env';

@@ -55,13 +55,13 @@
         <span :class="$style['SearchResults__message-detail-title']">
           {{ t('Search.results.relatedTo', { count: results?.get(SearchType.CHAT_MESSAGE)?.totalCount || 0 }) }}
           {{ t('Search.results.relatedToSuffix') }}
-          <span :class="$style.SearchResults__highlight">  {{ keyword }}  </span>
+          <span :class="$style.SearchResults__highlight">  {{ keyword }}  </span>
         </span>
       </div>
       <div :class="$style['SearchResults__message-detail-content']">
         <div
-          v-for="(item, index) in chatMessageResult?.messageList"
-          :key="`${item.ID}-${index}`"
+          v-for="(item, index) in chatMessageList"
+          :key="`${item.id || item.msgID}-${index}`"
         >
           <component
             :is="SearchResultItem"
@@ -142,7 +142,7 @@
     </div>
 
     <div
-      v-if="activeConversation && !isH5"
+      v-if="activeConversationID && !isH5"
       :class="$style.SearchResults__list"
     >
       <component
@@ -156,7 +156,7 @@
         >
           <span :class="$style['SearchResults__section-header-title']">
             {{ t('Search.results.relatedTo', { count: results?.get(SearchType.CHAT_MESSAGE)?.totalCount || 0 }) }}
-            <span :class="$style.SearchResults__highlight">  {{ keyword }}  </span>
+            <span :class="$style.SearchResults__highlight">  {{ keyword }}  </span>
             {{ t('Search.results.relatedToSuffix') }}
           </span>
           <TUIButton
@@ -170,8 +170,8 @@
         </div>
         <div :class="$style['SearchResults__result-items']">
           <div
-            v-for="(item, index) in chatMessageResult?.messageList"
-            :key="`${item.ID}-${index}`"
+            v-for="(item, index) in chatMessageList"
+            :key="`${item.id || item.msgID}-${index}`"
           >
             <component
               :is="SearchResultItem"
@@ -201,21 +201,14 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch, useCssModule, withDefaults, defineProps } from 'vue';
+import { ref, computed, watch, watchEffect, useCssModule } from 'vue';
 import { IconBack, IconChevronRight, TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { SearchType } from '../../../types/engine';
+import { SearchType } from '../../../types/search';
 import { VariantType, defaultTypeLabels } from '../../../types/search';
 import { isH5 } from '../../../utils';
 import { EmptyResult } from './EmptyResult';
 import { Loading } from './Loading';
 import DefaultSearchResultsItem from './SearchResultsItem';
-import type {
-  SearchCloudMessagesResultItem,
-  ConversationModel,
-  MessageModel,
-  SearchCloudUsersResultItem,
-  SearchCloudGroupsResultItem,
-} from '../../../types/engine';
 import type { SearchResultItemType, SearchResultsProps } from '../../../types/search';
 
 const props = withDefaults(defineProps<SearchResultsProps>(), {
@@ -242,22 +235,21 @@ const defaultMiniInitLimits = new Map([
 const miniInitLimits = ref<Map<SearchType, number>>(defaultMiniInitLimits);
 const loadingType = ref<SearchType | ''>('');
 const showMessageDetail = ref(false);
-const activeConversation = ref<ConversationModel | undefined>(undefined);
+const activeConversationID = ref<string | undefined>(undefined);
 
 function updateActiveConversation() {
   const newResults = props.results;
-  const { conversation } = (newResults?.get(SearchType.CHAT_MESSAGE)?.resultList[0]
-    || {}) as SearchCloudMessagesResultItem;
+  const chatMessageData = newResults?.get(SearchType.CHAT_MESSAGE)?.resultList[0] as any;
+  const chatConversationID = chatMessageData?.conversationID;
   const { resultList = [] } = newResults?.get(SearchType.MESSAGE) || {};
   const existConversation = resultList.find((item: any) => {
-    const { conversationID } = (item as SearchCloudMessagesResultItem).conversation || {};
-    return conversationID === conversation?.conversationID;
+    return item.conversationID === chatConversationID;
   });
   const showStandardMessageList = props.variant === VariantType.STANDARD && props.searchType === SearchType.MESSAGE;
   const isEmbedded = props.variant === VariantType.EMBEDDED;
   const shouldSetConversation = showStandardMessageList && existConversation && !isH5;
-  const currentConversation = shouldSetConversation || isEmbedded ? conversation : undefined;
-  activeConversation.value = currentConversation;
+  const currentConversationID = shouldSetConversation || isEmbedded ? chatConversationID : undefined;
+  activeConversationID.value = currentConversationID;
   if (isEmbedded && isH5) {
     showMessageDetail.value = true;
   }
@@ -324,8 +316,25 @@ const currentResults = computed(() => {
 });
 
 const chatMessageResult = computed(
-  () => props.results?.get(SearchType.CHAT_MESSAGE)?.resultList[0] as SearchCloudMessagesResultItem,
+  () => props.results?.get(SearchType.CHAT_MESSAGE)?.resultList[0] as any,
 );
+
+const chatMessageList = computed(
+  () => chatMessageResult.value?.messageList ?? [],
+);
+
+watchEffect(() => {
+  if (props.variant === VariantType.EMBEDDED) {
+    console.log('[SearchResults EMBEDDED]', {
+      activeConversationID: activeConversationID.value,
+      isH5,
+      loadingType: loadingType.value,
+      chatMessageListLength: chatMessageList.value.length,
+      currentResultsSize: currentResults.value.size,
+      resultsSize: props.results?.size,
+    });
+  }
+});
 
 const renderOrder = computed(() => {
   if (props.variant !== VariantType.EXACT) {
@@ -354,9 +363,9 @@ const generateActiveItemClassName = (type: SearchType, item: SearchResultItemTyp
   if (type !== SearchType.MESSAGE || !chatMessageResult.value) {
     return '';
   }
-  const { conversationID } = (item as SearchCloudMessagesResultItem).conversation || {};
-  const { conversationID: currentConversationID } = chatMessageResult.value.conversation || {};
-  return conversationID === currentConversationID ? $style['SearchResults__item--active'] : '';
+  const itemConvID = (item as any).conversationID;
+  const currentConvID = chatMessageResult.value.conversationID;
+  return itemConvID === currentConvID ? $style['SearchResults__item--active'] : '';
 };
 
 const handleLoadMore = (type: SearchType) => {
@@ -381,16 +390,16 @@ const handleBack = () => {
 
 const generateKey = (type: SearchType, item: SearchResultItemType, index: number) => {
   if (type === SearchType.MESSAGE) {
-    return `${type}-${(item as SearchCloudMessagesResultItem).conversation?.conversationID}-${index}`;
+    return `${type}-${(item as any).conversationID}-${index}`;
   }
   if (type === SearchType.CHAT_MESSAGE) {
-    return `${type}-${(item as MessageModel)?.ID}-${index}`;
+    return `${type}-${(item as any).id || (item as any).msgID}-${index}`;
   }
   if (type === SearchType.USER) {
-    return `${type}-${(item as SearchCloudUsersResultItem)?.profile.userID}-${index}`;
+    return `${type}-${(item as any).profile?.userID}-${index}`;
   }
   if (type === SearchType.GROUP) {
-    return `${type}-${(item as SearchCloudGroupsResultItem)?.groupInfo.groupID}-${index}`;
+    return `${type}-${(item as any).groupInfo?.groupID}-${index}`;
   }
 };
 </script>

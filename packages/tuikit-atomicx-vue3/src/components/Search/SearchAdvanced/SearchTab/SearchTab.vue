@@ -19,9 +19,9 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, defineProps, defineEmits } from 'vue';
+import { computed } from 'vue';
 import { TUIButton, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { SearchType } from '../../../../types/engine';
+import { SearchType } from '../../../../types/search';
 import type { SearchTabType } from '../../../../types/search';
 
 interface SearchTabItem {

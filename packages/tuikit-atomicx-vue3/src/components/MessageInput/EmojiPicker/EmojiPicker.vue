@@ -52,13 +52,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, defineProps, useCssModule, ref } from 'vue';
+import { onMounted, useCssModule, ref, inject } from 'vue';
 import { useUIKit, IconEmoji } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui';
 import { View } from '../../../baseComp/View';
 import { emojiUrlMap, emojiBaseUrl } from '../../../constants/emoji';
-import { useMessageInputState, MessageContentType } from '../../../states/MessageInputState';
+import { useChatUIState } from '../../../context/useChatUIState';
+import { MessageContentType } from '../../../types/messageInput';
 import { transformTextWithEmojiKeyToName } from '../../../utils/emoji';
 
 defineOptions({
@@ -82,7 +83,8 @@ const isOpen = ref(false);
 
 const styles = useCssModule();
 const { t } = useUIKit();
-const { insertContent } = useMessageInputState();
+const channel = inject('channel', 'default') as string;
+const { insertInputContent } = useChatUIState(channel);
 
 // Image preload
 onMounted(() => {
@@ -101,7 +103,7 @@ const handleOpenChange = (open: boolean) => {
 
 function insertEmojiToInput(emojiKey: string) {
   if (emojiKey) {
-    insertContent([
+    insertInputContent([
       {
         type: MessageContentType.EMOJI,
         content: {

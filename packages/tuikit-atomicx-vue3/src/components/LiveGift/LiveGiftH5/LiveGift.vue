@@ -65,7 +65,7 @@ watch(
 
 <style scoped lang="scss">
 .live-gift-h5-container {
-  --gift-more-button-color: #7a65fa;
+  --gift-more-button-color: var(--text-color-warning, #E37F32);
 
   position: relative;
   display: flex;

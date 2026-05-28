@@ -7,13 +7,13 @@
   >
     <div class="group-item__avatar">
       <Avatar
-        :src="group.avatar"
-        :alt="group.name || group.groupID"
+        :src="group.avatarURL"
+        :alt="displayName"
       />
     </div>
     <div class="group-item__content">
       <div class="group-item__name">
-        {{ group.name || group.groupID }}
+        {{ displayName }}
       </div>
     </div>
   </div>
@@ -29,6 +29,8 @@ const props = withDefaults(defineProps<GroupItemProps>(), {});
 const emit = defineEmits<{
   click: [group: any];
 }>();
+
+const displayName = computed(() => props.group.groupName || props.group.groupID);
 
 const groupItemClasses = computed(() => [
   'group-item',

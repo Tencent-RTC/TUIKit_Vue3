@@ -16,45 +16,59 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
-import { useContactListState } from '../../../../states/ContactListState';
+import { computed, watch } from 'vue';
+import { useContactStore, useLoginStore } from '../../../../chat-store';
 import { isH5 } from '../../../../utils/env';
 import { UserPicker } from '../../../UserPicker';
-import type {
-  ConversationCreateUserSelectListProps,
-  Friend,
-} from '../../../../types';
+import type { ConversationCreateUserSelectListProps } from '../../../../types';
 import type { UserPickerResult } from '../../../UserPicker';
+import type { ContactInfo } from '@atomicxcore/core';
 
 const props = defineProps<ConversationCreateUserSelectListProps>();
 
 const emit = defineEmits<{
   'update:is-create-group': [value: boolean];
-  'update:select-list': [list: Friend[]];
+  'update:select-list': [list: ContactInfo[]];
 }>();
 
-const { friendList } = useContactListState();
+const { friendList, loadFriends } = useContactStore();
+const { loginStatus } = useLoginStore();
 
-const selectList = computed(() => props.selectList.map((item) => {
-  const { userID, nick, avatar, remark } = item;
-  return {
-    key: userID,
-    label: remark || nick || userID,
-    avatarUrl: avatar,
-  };
-}));
+// Ensure the friend list is populated once logged in.
+watch(loginStatus, (status) => {
+  if (status === 'logined') {
+    loadFriends().catch(err =>
+      console.error('[ConversationCreateUserSelectList loadFriends]', err),
+    );
+  }
+}, { immediate: true });
 
-const renderFriendList = computed(() => friendList.value.map((item) => {
-  const { userID, nick, avatar, remark } = item;
-  return {
-    key: userID,
-    label: remark || nick || userID,
-    avatarUrl: avatar,
-  };
-}));
+const selectList = computed(() =>
+  props.selectList.map((item) => {
+    const { userID, nickname, avatarURL, friendRemark } = item;
+    return {
+      key: userID,
+      label: friendRemark || nickname || userID,
+      avatarUrl: avatarURL ?? '',
+    };
+  }),
+);
+
+const renderFriendList = computed(() =>
+  friendList.value.map((item) => {
+    const { userID, nickname, avatarURL, friendRemark } = item;
+    return {
+      key: userID,
+      label: friendRemark || nickname || userID,
+      avatarUrl: avatarURL ?? '',
+    };
+  }),
+);
 
 const handleSelectListUpdate = (list: UserPickerResult) => {
-  const selectFriendList = friendList.value.filter(item => list.some(selected => selected.key === item.userID));
+  const selectFriendList = friendList.value.filter(
+    item => list.some(selected => selected.key === item.userID),
+  );
   emit('update:select-list', selectFriendList);
   props.setSelectList(selectFriendList);
 };

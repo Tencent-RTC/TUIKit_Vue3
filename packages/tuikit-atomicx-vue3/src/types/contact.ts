@@ -1,12 +1,31 @@
 import { Component } from 'vue';
-import type { GroupModel } from './engine';
+import type {
+  ContactInfo,
+  FriendApplicationInfo,
+  GroupApplicationInfo,
+  GroupInfo,
+} from '@atomicxcore/core';
 import type TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 
-export type ContactItem = Friend
-  | GroupModel
-  | UserProfile
-  | FriendApplication
-  | GroupApplication;
+/**
+ * Runtime contact item carried by ContactList / ContactInfo.
+ *
+ * M3 aligns ContactList components with `@atomicxcore/core` types:
+ *   - Friend / Blacklist user  → ContactInfo
+ *   - Group                    → GroupInfo
+ *   - Friend application       → FriendApplicationInfo
+ *   - Group application        → GroupApplicationInfo
+ *
+ * Legacy engine-lite types (`Friend`, `UserProfile`, `GroupApplication`,
+ * `FriendApplication`, `GroupModel`) are kept in this file for modules that
+ * have not been migrated yet (Search, ChatSetting, demos). They will be
+ * removed in M7.
+ */
+export type ContactItem =
+  | ContactInfo
+  | GroupInfo
+  | FriendApplicationInfo
+  | GroupApplicationInfo;
 
 export enum ContactItemType {
   FRIEND = 'friend',
@@ -17,6 +36,18 @@ export enum ContactItemType {
   SEARCH_USER = 'searchUser',
   SEARCH_GROUP = 'searchGroup',
 }
+
+/**
+ * Discriminated union — use `item.type` to narrow `item.data` automatically.
+ */
+export type ContactGroupItem =
+  | { type: ContactItemType.FRIEND; data: ContactInfo }
+  | { type: ContactItemType.BLACK; data: ContactInfo }
+  | { type: ContactItemType.GROUP; data: GroupInfo }
+  | { type: ContactItemType.SEARCH_GROUP; data: GroupInfo }
+  | { type: ContactItemType.SEARCH_USER; data: ContactInfo }
+  | { type: ContactItemType.FRIEND_REQUEST; data: FriendApplicationInfo }
+  | { type: ContactItemType.GROUP_REQUEST; data: GroupApplicationInfo };
 
 export enum DeleteFriendType {
   SINGLE = 'Delete_Type_Single',
@@ -153,16 +184,11 @@ export interface JoinGroupParams {
   applyMessage?: string;
 }
 
-export interface ContactGroupItem {
-  type: ContactItemType;
-  data: ContactItem;
-}
-
 export interface ContactLetterSection {
   key: string;
   title: string;
   count: number;
-  items: Friend[];
+  items: ContactInfo[];
 }
 
 export interface ContactGroup {
@@ -202,11 +228,12 @@ export interface ContactListProps {
   PlaceholderEmptyList?: Component;
 
   onContactItemClick?: (item: ContactGroupItem) => void;
-  onFriendApplicationAction?: (action: 'accept' | 'refuse', application: FriendApplication) => void;
-  onGroupApplicationAction?: (action: 'accept' | 'refuse', application: GroupApplication) => void;
+  onFriendApplicationAction?: (action: 'accept' | 'refuse', application: FriendApplicationInfo) => void;
+  onGroupApplicationAction?: (action: 'accept' | 'refuse', application: GroupApplicationInfo) => void;
 }
 
 export interface ContactInfoBaseProps {
+  channel?: string;
   showActions?: boolean;
   onClose?: () => void;
 }
@@ -221,100 +248,105 @@ export interface ContactInfoProps extends ContactInfoBaseProps {
   GroupApplicationInfoComponent?: Component;
   SearchGroupInfoComponent?: Component;
   SearchUserInfoComponent?: Component;
-  onSendMessage?: (friend: Friend) => void;
-  onDeleteFriend?: (friend: Friend) => void;
-  onUpdateFriendRemark?: (friend: Friend, remark: string) => void;
-  onAddToBlacklist?: (friend: Friend) => void;
-  onRemoveFromBlacklist?: (profile: UserProfile) => void;
-  onEnterGroup?: (group: GroupModel) => void;
-  onLeaveGroup?: (group: GroupModel) => void;
-  onDismissGroup?: (group: GroupModel) => void;
-  onFriendApplicationAction?: (action: 'accept' | 'refuse', application: FriendApplication) => void;
-  onGroupApplicationAction?: (action: 'accept' | 'refuse', application: GroupApplication) => void;
-  onAddFriend?: (user: UserProfile, wording: string) => void;
-  onJoinGroup?: (group: GroupModel, note: string) => void;
+  onSendMessage?: (friend: ContactInfo) => void;
+  onDeleteFriend?: (friend: ContactInfo) => void;
+  onUpdateFriendRemark?: (friend: ContactInfo, remark: string) => void;
+  onAddToBlacklist?: (friend: ContactInfo) => void;
+  onRemoveFromBlacklist?: (profile: ContactInfo) => void;
+  onEnterGroup?: (group: GroupInfo) => void;
+  onLeaveGroup?: (group: GroupInfo) => void;
+  onDismissGroup?: (group: GroupInfo) => void;
+  onFriendApplicationAction?: (action: 'accept' | 'refuse', application: FriendApplicationInfo) => void;
+  onGroupApplicationAction?: (action: 'accept' | 'refuse', application: GroupApplicationInfo) => void;
+  onAddFriend?: (user: ContactInfo, wording: string) => void;
+  onJoinGroup?: (group: GroupInfo, note: string) => void;
 }
 
 export interface BlacklistInfoProps extends ContactInfoBaseProps {
-  profile: UserProfile;
-  onRemoveFromBlacklist?: (profile: UserProfile) => void;
+  profile: ContactInfo;
+  onRemoveFromBlacklist?: (profile: ContactInfo) => void;
 }
 
 export interface FriendApplicationInfoProps extends ContactInfoBaseProps {
-  application: FriendApplication;
-  onAccept?: (application: FriendApplication) => void;
-  onRefuse?: (application: FriendApplication) => void;
+  application: FriendApplicationInfo;
+  onAccept?: (application: FriendApplicationInfo) => void;
+  onRefuse?: (application: FriendApplicationInfo) => void;
 }
 
 export interface FriendInfoProps extends ContactInfoBaseProps {
-  friend: Friend;
-  onSendMessage?: (friend: Friend) => void;
-  onDeleteFriend?: (friend: Friend) => void;
-  onAddToBlacklist?: (friend: Friend) => void;
-  onUpdateFriendRemark?: (friend: Friend, remark: string) => void;
+  friend: ContactInfo;
+  onSendMessage?: (friend: ContactInfo) => void;
+  onDeleteFriend?: (friend: ContactInfo) => void;
+  onAddToBlacklist?: (friend: ContactInfo) => void;
+  onUpdateFriendRemark?: (friend: ContactInfo, remark: string) => void;
 }
 
 export interface GroupApplicationInfoProps extends ContactInfoBaseProps {
-  application: GroupApplication;
-  onAccept?: (application: GroupApplication) => void;
-  onRefuse?: (application: GroupApplication) => void;
+  application: GroupApplicationInfo;
+  onAccept?: (application: GroupApplicationInfo) => void;
+  onRefuse?: (application: GroupApplicationInfo) => void;
 }
 
 export interface GroupInfoProps extends ContactInfoBaseProps {
-  group: GroupModel;
-  onEnterGroup?: (group: GroupModel) => void;
-  onLeaveGroup?: (group: GroupModel) => void;
-  onDismissGroup?: (group: GroupModel) => void;
+  group: GroupInfo;
+  onEnterGroup?: (group: GroupInfo) => void;
+  onLeaveGroup?: (group: GroupInfo) => void;
+  onDismissGroup?: (group: GroupInfo) => void;
 }
 
+/**
+ * Search-user / search-group info panels consume the unified `ContactInfo` /
+ * `GroupInfo` model. `ContactList` normalizes the raw payload emitted from
+ * the legacy `ContactSearch` into these types at the boundary.
+ */
 export interface SearchGroupInfoProps extends ContactInfoBaseProps {
-  group: GroupModel;
-  onJoinGroup?: (group: GroupModel, note: string) => void;
+  group: GroupInfo;
+  onJoinGroup?: (group: GroupInfo, note: string) => void;
 }
 
 export interface SearchUserInfoProps extends ContactInfoBaseProps {
-  user: UserProfile;
-  onAddFriend?: (user: UserProfile, wording: string) => void;
+  user: ContactInfo;
+  onAddFriend?: (user: ContactInfo, wording: string) => void;
 }
 
 export interface ContactListItemProps {
   contactItem: ContactGroupItem;
   activeContactItem?: ContactGroupItem | undefined;
   onClick?: (type: ContactItemType, item: ContactItem) => void;
-  onFriendApplicationAction?: (action: 'accept' | 'refuse', application: FriendApplication) => void;
-  onGroupApplicationAction?: (action: 'accept' | 'refuse', application: GroupApplication) => void;
+  onFriendApplicationAction?: (action: 'accept' | 'refuse', application: FriendApplicationInfo) => void;
+  onGroupApplicationAction?: (action: 'accept' | 'refuse', application: GroupApplicationInfo) => void;
 }
 
 export interface BlacklistItemProps {
-  profile: UserProfile;
+  profile: ContactInfo;
   isActive?: boolean;
-  onClick?: (profile: UserProfile) => void;
+  onClick?: (profile: ContactInfo) => void;
 }
 
 export interface FriendApplicationItemProps {
-  application: FriendApplication;
+  application: FriendApplicationInfo;
   isActive?: boolean;
-  onClick?: (application: FriendApplication) => void;
-  onAction?: (action: 'accept' | 'refuse', application: FriendApplication) => void;
+  onClick?: (application: FriendApplicationInfo) => void;
+  onAction?: (action: 'accept' | 'refuse', application: FriendApplicationInfo) => void;
 }
 
 export interface FriendItemProps {
-  friend: Friend;
+  friend: ContactInfo;
   isActive?: boolean;
-  onClick?: (friend: Friend) => void;
+  onClick?: (friend: ContactInfo) => void;
 }
 
 export interface GroupApplicationItemProps {
-  application: GroupApplication;
+  application: GroupApplicationInfo;
   isActive?: boolean;
-  onClick?: (application: GroupApplication) => void;
-  onAction?: (action: 'accept' | 'refuse', application: GroupApplication) => void;
+  onClick?: (application: GroupApplicationInfo) => void;
+  onAction?: (action: 'accept' | 'refuse', application: GroupApplicationInfo) => void;
 }
 
 export interface GroupItemProps {
-  group: GroupModel;
+  group: GroupInfo;
   isActive?: boolean;
-  onClick?: (group: GroupModel) => void;
+  onClick?: (group: GroupInfo) => void;
 }
 
 export interface ContactSearchProps {

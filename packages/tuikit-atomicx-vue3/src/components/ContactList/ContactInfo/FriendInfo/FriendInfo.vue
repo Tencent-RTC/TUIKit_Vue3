@@ -11,7 +11,7 @@
       </div>
       <div class="contact-friend-info__avatar-wrap">
         <Avatar
-          :src="friend.avatar"
+          :src="friend.avatarURL"
           :alt="displayName"
           :size="48"
         />
@@ -27,10 +27,10 @@
           <template v-if="isEditing">
             <div class="contact-friend-info__remark-editor">
               <TUIInput
+                ref="remarkInputRef"
                 v-model="remarkInput"
                 :max-length="32"
                 :disabled="remarkLoading"
-                auto-focus
                 @blur="handleRemarkSave"
                 @keydown.enter="handleRemarkSave"
               />
@@ -63,7 +63,7 @@
         </div>
         <div class="contact-friend-info__row-value">
           <span class="contact-friend-info__signature">
-            {{ friend?.selfSignature || t('TUIContact.None') }}
+            {{ friend?.aboutMe || t('TUIContact.None') }}
           </span>
         </div>
       </div>
@@ -119,12 +119,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { useUIKit, TUIButton, TUIInput, TUISwitch, IconEditNameCard, TUIDialog } from '@tencentcloud/uikit-base-component-vue3';
-import { useContactListState } from '../../../../states/ContactListState';
-import { useConversationListState } from '../../../../states/ConversationListState';
+import { computed, ref, watch, nextTick } from 'vue';
+import {
+  useUIKit,
+  TUIButton,
+  TUIInput,
+  TUISwitch,
+  IconEditNameCard,
+  TUIDialog,
+} from '@tencentcloud/uikit-base-component-vue3';
+import { useChatContext, useContactStore } from '../../../../chat-store';
 import { Avatar } from '../../../Avatar';
-import type { Friend, FriendInfoProps } from '../../../../types';
+import type { ContactInfo } from '@atomicxcore/core';
+import type { FriendInfoProps } from '../../../../types/contact';
 
 const props = withDefaults(defineProps<FriendInfoProps>(), {
   showActions: true,
@@ -132,31 +139,33 @@ const props = withDefaults(defineProps<FriendInfoProps>(), {
 
 const emit = defineEmits<{
   close: [];
-  sendMessage: [friend: Friend];
-  deleteFriend: [friend: Friend];
-  addToBlacklist: [friend: Friend];
-  updateFriendRemark: [friend: Friend, remark: string];
+  sendMessage: [friend: ContactInfo];
+  deleteFriend: [friend: ContactInfo];
+  addToBlacklist: [friend: ContactInfo];
+  updateFriendRemark: [friend: ContactInfo, remark: string];
 }>();
 
 const { t } = useUIKit();
 const {
+  blackList,
   deleteFriend,
   addToBlacklist,
   removeFromBlacklist,
   setFriendRemark,
-  blackList,
-} = useContactListState();
-const { setActiveConversation } = useConversationListState();
+} = useContactStore();
+
+const { setActiveConversation } = useChatContext(props.channel);
 
 const isEditing = ref(false);
 const currentUserID = ref('');
-const remark = ref(props.friend.remark || '');
-const remarkInput = ref(props.friend.remark || '');
+const remark = ref(props.friend.friendRemark || '');
+const remarkInput = ref(props.friend.friendRemark || '');
+const remarkInputRef = ref<any>(null);
 const remarkLoading = ref(false);
 const blackLoading = ref(false);
 const visible = ref(false);
 
-watch(() => props.friend.remark, (newRemark) => {
+watch(() => props.friend.friendRemark, (newRemark) => {
   remark.value = newRemark || '';
   remarkInput.value = newRemark || '';
 });
@@ -168,29 +177,36 @@ watch(() => props.friend.userID, () => {
   currentUserID.value = props.friend.userID;
 });
 
-const displayName = computed(() => remark.value || props.friend?.nick || props.friend.userID);
+const displayName = computed(() => remark.value || props.friend?.nickname || props.friend.userID);
 
-const isBlacklisted = computed(() => blackList.value.some(item => item.userID === props.friend.userID));
+const isBlacklisted = computed(() =>
+  blackList.value.some(item => item.userID === props.friend.userID),
+);
 
 const startEditRemark = () => {
   remarkInput.value = remark.value;
   isEditing.value = true;
+  nextTick(() => {
+    const el = remarkInputRef.value?.$el?.querySelector('input') as HTMLInputElement | null;
+    el?.focus();
+  });
 };
 
 const handleRemarkSave = async () => {
-  if (remarkInput.value.trim() === remark.value) {
+  const trimmed = remarkInput.value.trim();
+  if (trimmed === remark.value) {
     isEditing.value = false;
     return;
   }
 
   remarkLoading.value = true;
   try {
-    await setFriendRemark({ userID: props.friend.userID, remark: remarkInput.value.trim() });
-    remark.value = remarkInput.value.trim();
+    await setFriendRemark(props.friend.userID, trimmed);
+    remark.value = trimmed;
     isEditing.value = false;
-    emit('updateFriendRemark', { ...props.friend, remark: remarkInput.value.trim() }, remarkInput.value.trim());
+    emit('updateFriendRemark', { ...props.friend, friendRemark: trimmed }, trimmed);
   } catch (err) {
-    console.error('[ContactInfo setFriendRemark] error', err);
+    console.error('[FriendInfo setFriendRemark] error', err);
   } finally {
     remarkLoading.value = false;
   }
@@ -200,13 +216,13 @@ const handleBlacklistChange = async (checked: string | number | boolean) => {
   blackLoading.value = true;
   try {
     if (checked) {
-      await addToBlacklist([props.friend.userID]);
+      await addToBlacklist(props.friend.userID);
       emit('addToBlacklist', props.friend);
     } else {
-      await removeFromBlacklist([props.friend.userID]);
+      await removeFromBlacklist(props.friend.userID);
     }
   } catch (err) {
-    console.error(`[ContactInfo ${checked ? 'addToBlacklist' : 'removeFromBlacklist'}] error`, err);
+    console.error(`[FriendInfo ${checked ? 'addToBlacklist' : 'removeFromBlacklist'}] error`, err);
   } finally {
     blackLoading.value = false;
   }
@@ -214,19 +230,20 @@ const handleBlacklistChange = async (checked: string | number | boolean) => {
 
 const handleDeleteFriend = async () => {
   try {
-    await deleteFriend({ userIDList: [props.friend.userID] });
+    await deleteFriend(props.friend.userID);
     emit('deleteFriend', props.friend);
   } catch (err) {
-    console.error('[ContactInfo deleteFriend] error', err);
+    console.error('[FriendInfo deleteFriend] error', err);
   }
 
   visible.value = false;
   emit('close');
 };
 
-const handleSendMessage = () => {
+const handleSendMessage = async () => {
   emit('sendMessage', props.friend);
-  setActiveConversation(`C2C${props.friend.userID}`);
+  const conversationID = `C2C${props.friend.userID}`;
+  setActiveConversation(conversationID);
   emit('close');
 };
 </script>

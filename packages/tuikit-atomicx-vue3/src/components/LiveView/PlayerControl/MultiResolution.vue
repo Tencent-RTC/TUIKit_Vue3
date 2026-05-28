@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { useUIKit, TUIToast, TOAST_TYPE } from '@tencentcloud/uikit-base-component-vue3';
 import vClickOutside from '../../../directives/vClickOutside';
 import { usePlayerControlState, Resolution } from './PlayerControlState';
 import { PlayerControlButton } from '../../../types/player';
@@ -73,6 +73,12 @@ const handleClickOutside = () => {
 
 const handleClickCurrentResolution = () => {
   if (isDisabled.value) {
+    // Consumer disabled the resolution button: surface the generic
+    // "button disabled" Toast, aligned with React.
+    TUIToast({
+      type: TOAST_TYPE.WARNING,
+      message: t('LiveView.ButtonDisabled'),
+    });
     return;
   }
   isShowResolutionList.value = !isShowResolutionList.value;
@@ -82,6 +88,15 @@ const handleClickResolution = async (event: MouseEvent) => {
   event.stopPropagation();
 
   if (isDisabled.value) {
+    // Defense-in-depth: `handleClickCurrentResolution` already blocks the
+    // dropdown from opening when disabled, so normally this branch is
+    // unreachable. Kept (with the same generic Toast) so that any future
+    // interaction path into the dropdown (keyboard activation, programmatic
+    // open, etc.) still produces a consistent UX. Aligned with React.
+    TUIToast({
+      type: TOAST_TYPE.WARNING,
+      message: t('LiveView.ButtonDisabled'),
+    });
     return;
   }
   

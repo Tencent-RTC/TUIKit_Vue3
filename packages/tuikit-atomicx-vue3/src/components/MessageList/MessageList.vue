@@ -10,17 +10,15 @@ import {
   computed,
 } from 'vue';
 import type { Component } from 'vue';
+import { MessageStatus } from '@atomicxcore/core';
 import cs from 'classnames';
 import { ObserverView } from '../../baseComp/ObserverView';
 import { View } from '../../baseComp/View';
+import { useChatContext } from '../../chat-store';
+import { useChatUIState } from '../../context/useChatUIState';
 import { useReadReceipt } from '../../hooks/useReadReceipt/useReadReceipt';
 import { useScroll } from '../../hooks/useScroll';
-import { useConversationListState } from '../../states/ConversationListState';
-import { useGroupSettingState } from '../../states/GroupSettingState';
-import { useMessageListState } from '../../states/MessageListState';
-import { ConversationType, MessageType } from '../../types/engine';
-import { MessageListType } from '../../types/message';
-import { isCallMessage } from '../../utils/call';
+import { isCallMessage, isCreateGroupMessage } from '../../utils/call';
 import { throttle } from '../../utils/lodash';
 import { Message as DefaultMessage } from './Message';
 import { MessageForward } from './MessageForward';
@@ -28,37 +26,39 @@ import { MessageListContextSymbol } from './MessageListContext';
 import { MessageTimeDivider as DefaultMessageTimeDivider } from './MessageTimeDivider';
 import { ScrollToBottom } from './ScrollToBottom';
 import type { MessageAction } from '../../hooks/useMessageActions';
-import type { MessageModel } from '../../types/engine';
+import type { MessageInfo, MessageType } from '@atomicxcore/core';
+import { TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 
 // Define message chunk interface
 interface MessageChunk {
-  timestamp: number;
-  messages: MessageModel[];
+  timestamp: number; // Milliseconds
+  messages: MessageInfo[];
   key: string;
 }
 
 interface MessageListProps {
+  /** channel */
+  channel?: string | undefined;
   alignment?: 'left' | 'right' | 'two-sided';
-  /** max time between message group */
+  /** max time between message group (in seconds) */
   messageAggregationTime?: number | undefined;
   /** enable read receipt */
   enableReadReceipt?: boolean | undefined;
   /** message actions e.g. recall, delete, etc. */
   messageActionList?: MessageAction[] | undefined;
   /** custom filter function */
-  filter?: ((message: MessageModel) => boolean) | undefined;
+  filter?: ((message: MessageInfo) => boolean) | undefined;
   /** custom message component */
   Message?: Component | undefined;
   /** custom message timeline component */
   MessageTimeDivider?: Component | undefined;
-  /** conversation id */
-  conversationID?: string | undefined;
   /** custom renderers to override built-in message bubble content by MessageType */
   messageRenderers?: Record<MessageType, Component> | undefined;
 }
 
 const props = withDefaults(defineProps<MessageListProps>(), {
   /** props */
+  channel: 'default',
   alignment: 'two-sided',
   messageAggregationTime: 5 * 60,
   enableReadReceipt: false,
@@ -67,7 +67,6 @@ const props = withDefaults(defineProps<MessageListProps>(), {
   /** custom components */
   Message: undefined,
   MessageTimeDivider: undefined,
-  conversationID: undefined,
   messageRenderers: undefined,
 });
 
@@ -79,93 +78,96 @@ provide(MessageListContextSymbol, {
   },
 });
 
-const autoScrollThreshold = 150;
-const isFinishFirstRender = ref<boolean>(false);
-const distanceToBottom = ref<number>(0);
-const isLoadingHistory = ref<boolean>(false);
+const { t } = useUIKit();
+
+const NEAR_BOTTOM_THRESHOLD = 150;
+const isNearBottom = ref(true);
+const newMessageCount = ref(0);
+const didInitialScroll = ref(false);
+const loadingOlder = ref(false);
 const scrollContainer = ref<HTMLElement | null>(null);
-const isScrollToBottomVisible = ref<boolean>(false);
-const shouldScrollToBottomAfterBack = ref<boolean>(false);
 
-const storeDistanceToBottom = ref<number>(0);
-
+const chatUIState = useChatUIState(props.channel);
 const {
-  messageList,
-  loadMoreOlderMessage,
   activeConversationID,
-  messageListType,
-  pendingScrollTargetMessageID,
-  isDisableScroll,
-  fetchMessageList,
-  highlightMessage,
-  setIsDisableScroll,
-  setEnableReadReceipt,
-} = useMessageListState();
+  messageList,
+  hasNewerMessages,
+  clearConversationUnreadCount,
+  loadMessages,
+  loadOlderMessages,
+  messageListOnEvent,
+  setActiveConversation,
+} = useChatContext(props.channel);
+const {
+  enableReadReceipt, highlightMessage, recalledMessageIDSet,
+  listMode,
+  pendingLocateMessage, setPendingLocateMessage,
+} = chatUIState;
 
-const { getGroupMemberList } = useGroupSettingState();
+provide('channel', props.channel);
 
 const { scrollToBottom, scrollToMessage } = useScroll();
-const { activeConversation, setActiveConversation } = useConversationListState();
 const {
   observeMessageList,
   resetProcessedMessages,
 } = useReadReceipt({
   enabled: props.enableReadReceipt ?? false,
+  channel: props.channel,
   containerSelector: '#messageScrollList',
   getMessageIDFromDom: dom => (dom as HTMLElement).dataset.messageId || '',
 });
 
-const isGroup = computed(() => activeConversation.value?.type === ConversationType.GROUP);
 const enableMessageAggregation = computed(() => props.messageAggregationTime && props.messageAggregationTime > 0);
-const isMessageJumping = computed(() => messageListType.value === MessageListType.HISTORY);
 
 // Message aggregation logic
 const messageChunks = computed(() => {
   if (!messageList.value) {
     return [];
   }
+
   // Apply filter first
   const filteredMessageList = props.filter
     ? messageList.value.filter(props.filter)
-    : messageList.value.filter(message => !message.isDeleted);
+    : messageList.value.filter(message => message.status !== MessageStatus.Deleted);
 
   // Clear logic for messageAggregationTime: enable message aggregation when value > 0, otherwise disable
   if (!props.messageAggregationTime || props.messageAggregationTime <= 0) {
     // No message aggregation, each message becomes a separate chunk
     return filteredMessageList.map(message => ({
-      timestamp: message.time,
+      timestamp: message.timestamp ? message.timestamp.getTime() : 0,
       messages: [message],
-      key: `chunk-${message.ID}`,
+      key: `chunk-${message.msgID}`,
     }));
   }
 
   // Perform message aggregation
   const chunks: MessageChunk[] = [];
-  const MAX_TIME_BETWEEN_MESSAGE_GROUP = props.messageAggregationTime;
+  // Convert seconds to milliseconds to match Date.getTime() unit
+  const MAX_TIME_BETWEEN_MESSAGE_GROUP = props.messageAggregationTime * 1000;
 
   filteredMessageList.forEach((message, index, messages) => {
-    const messageTime = message.time;
+    const messageTime = message.timestamp ? message.timestamp.getTime() : 0;
     const prevChunk = chunks.length > 0 ? chunks[chunks.length - 1] : undefined;
     const prevMessage = index > 0 ? messages[index - 1] : undefined;
 
     const shouldCreateNewChunk = !prevChunk
       || messageTime - prevChunk.timestamp > MAX_TIME_BETWEEN_MESSAGE_GROUP
-      || prevChunk.messages[0].from !== message.from
-      || message.isRevoked
-      || (prevMessage && prevMessage.isRevoked)
-      || message.status === 'fail'
-      || (prevMessage && prevMessage.status === 'fail')
-      || message.hasRiskContent
-      || (prevMessage && prevMessage.hasRiskContent)
+      || prevChunk.messages[0].from.userID !== message.from.userID
+      || message.status === MessageStatus.Recalled
+      || (prevMessage && prevMessage.status === MessageStatus.Recalled)
+      || message.status === MessageStatus.Deleted
+      || (prevMessage && prevMessage.status === MessageStatus.Deleted)
+      || message.status === MessageStatus.Violation
+      || (prevMessage && prevMessage.status === MessageStatus.Violation)
       || isCallMessage(message)
       || (prevMessage && isCallMessage(prevMessage))
-      || (prevMessage && prevMessage.type === MessageType.CUSTOM && prevMessage.getMessageContent().businessID === 'group_create');
+      || (prevMessage && isCreateGroupMessage(prevMessage));
 
     if (shouldCreateNewChunk) {
       chunks.push({
         timestamp: messageTime,
         messages: [message],
-        key: `chunk-${message.ID}`,
+        key: `chunk-${message.msgID}`,
       });
     } else {
       prevChunk.messages.push(message);
@@ -177,200 +179,198 @@ const messageChunks = computed(() => {
 
 // Monitor scroll events
 const handleScroll = throttle(() => {
-  if (!scrollContainer.value) {
-    return;
-  }
-
-  distanceToBottom.value
-    = scrollContainer.value.scrollHeight
-      - scrollContainer.value.scrollTop
-      - scrollContainer.value.clientHeight;
-
-  if (distanceToBottom.value > autoScrollThreshold) {
-    setIsDisableScroll(true);
-    isScrollToBottomVisible.value = true;
-  }
-
-  // Reset user scroll state if scrolled near bottom
-  if (distanceToBottom.value < autoScrollThreshold) {
-    setIsDisableScroll(false);
-    isScrollToBottomVisible.value = false;
+  const el = scrollContainer.value;
+  if (!el) return;
+  const wasNearBottom = isNearBottom.value;
+  isNearBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_THRESHOLD;
+  if (isNearBottom.value && listMode.value === 'latest') {
+    if (newMessageCount.value > 0) {
+      newMessageCount.value = 0;
+    }
+    // Clear unread on edge: user scrolled back to bottom
+    if (!wasNearBottom && activeConversationID.value) {
+      clearConversationUnreadCount(activeConversationID.value).catch(() => {});
+    }
   }
 }, 100);
 
 // Initialize message list
 const initializeMessageList = async () => {
-  isFinishFirstRender.value = false;
-  setIsDisableScroll(false);
-  isScrollToBottomVisible.value = false;
+  didInitialScroll.value = false;
+  newMessageCount.value = 0;
   resetProcessedMessages();
+
+  const locateInfo = pendingLocateMessage.value;
+  if (locateInfo && locateInfo.conversationID === activeConversationID.value) {
+    listMode.value = 'fragment';
+    await loadMessages({
+      messageListType: 'history',
+      cursor: {
+        msgID: locateInfo.messageID,
+        sequence: locateInfo.sequence,
+        timestamp: locateInfo.time != null ? new Date(locateInfo.time * 1000) : undefined,
+      } as any,
+      direction: 'both',
+    })
+    .then(() => {
+      listMode.value = 'fragment';
+      nextTick(() => {
+        scrollToMessage(scrollContainer.value, locateInfo.messageID, {
+          block: 'center',
+          behavior: 'instant',
+        }).catch(() => {});
+        highlightMessage({ messageID: locateInfo.messageID, duration: 3000 });
+        setPendingLocateMessage(null);
+        didInitialScroll.value = true;
+        observeMessageList();
+      });
+    })
+    .catch(() => {
+      setPendingLocateMessage(null);
+      TUIToast.error({
+        message: t('MessageList.origin_message_has_been_recalled'),
+      });
+      if (!didInitialScroll.value) {
+        loadMessages();
+      }
+    });
+  } else {
+    listMode.value = 'latest';
+    await loadMessages();
+    await nextTick();
+    await nextTick();
+    scrollToBottom(scrollContainer.value, 'auto');
+    didInitialScroll.value = true;
+    observeMessageList();
+  }
 };
 
-// Load more history messages
-const loadMoreHistory = async () => {
-  // Skip if initial loading or already loading
-  if (
-    messageListType.value !== MessageListType.LATEST
-    || !isFinishFirstRender.value
-    || isLoadingHistory.value
-    || !messageList.value?.length
-  ) {
-    return;
+// Load more older messages
+const handleLoadOlder = async () => {
+  if (loadingOlder.value || listMode.value === 'fragment') return;
+  const el = scrollContainer.value;
+  if (!el || !messageList.value?.length) return;
+  const oldScrollHeight = el.scrollHeight;
+  loadingOlder.value = true;
+  try {
+    await loadOlderMessages();
+    await nextTick();
+    if (scrollContainer.value) {
+      scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight - oldScrollHeight;
+    }
+  } finally {
+    loadingOlder.value = false;
   }
-
-  setIsDisableScroll(true);
-  isLoadingHistory.value = true;
-
-  // Record current distance from bottom
-  if (!scrollContainer.value) {
-    isLoadingHistory.value = false;
-    return;
-  }
-
-  // Calculate distance from bottom before loading
-  storeDistanceToBottom.value = scrollContainer.value.scrollHeight
-    - scrollContainer.value.scrollTop
-    - scrollContainer.value.clientHeight;
-
-  // Load more messages
-  await loadMoreOlderMessage();
-
-  // Wait for DOM update
-  await nextTick();
-
-  // Restore scroll position to maintain the same distance from bottom
-  if (scrollContainer.value) {
-    const newScrollTop = scrollContainer.value.scrollHeight
-      - scrollContainer.value.clientHeight
-      - storeDistanceToBottom.value;
-
-    // Ensure scroll position is within valid range
-    scrollContainer.value.scrollTop = Math.max(0, Math.min(
-      scrollContainer.value.scrollHeight - scrollContainer.value.clientHeight,
-      newScrollTop,
-    ));
-  }
-
-  isLoadingHistory.value = false;
 };
 
 const handleBackToLatest = async () => {
-  if (!activeConversationID.value) {
+  if (!activeConversationID.value) return;
+  listMode.value = 'latest';
+  newMessageCount.value = 0;
+  await loadMessages();
+  await nextTick();
+  scrollToBottom(scrollContainer.value, 'instant');
+  observeMessageList();
+};
+
+let unsubscribeEvent: (() => void) | null = null;
+
+function handleNewMessage(message: MessageInfo) {
+  // 自己发的消息：fragment 模式先切回 latest，latest 模式直接滚底
+  if (message.isSentBySelf) {
+    if (listMode.value === 'fragment') {
+      handleBackToLatest();
+    } else {
+      nextTick(() => scrollToBottom(scrollContainer.value, 'smooth'));
+    }
     return;
   }
 
-  isScrollToBottomVisible.value = false;
-  shouldScrollToBottomAfterBack.value = true;
-  await fetchMessageList({
-    conversationID: activeConversationID.value,
-    messageListType: MessageListType.LATEST,
-  });
-};
+  // Other's message
+  if (activeConversationID.value) {
+    clearConversationUnreadCount(activeConversationID.value).catch(() => {});
+  }
+  if (listMode.value === 'fragment') {
+    newMessageCount.value++;
+    return;
+  }
+  if (isNearBottom.value) {
+    nextTick(() => scrollToBottom(scrollContainer.value, 'smooth'));
+  } else {
+    newMessageCount.value++;
+  }
+}
 
 watch(activeConversationID, () => {
+  recalledMessageIDSet.value = new Set();
+  if (unsubscribeEvent) {
+    unsubscribeEvent();
+  }
+  unsubscribeEvent = messageListOnEvent((event) => {
+    if (event.type === 'onReceiveNewMessage') {
+      handleNewMessage(event.message);
+    }
+  });
   initializeMessageList();
 });
 
-// Monitor message list changes
-watch(messageList, (newMessages, oldMessages) => {
-  if (oldMessages === undefined && newMessages && !isFinishFirstRender.value) {
-    // Switch to a new conversation. In history mode, only finish initialization;
-    // the actual target scroll will be handled by pendingScrollTargetMessageID.
-    nextTick(() => {
-      isFinishFirstRender.value = true;
-      observeMessageList();
-      if (messageListType.value !== MessageListType.HISTORY) {
-        scrollToBottom({ behavior: 'instant' });
+// Same-conversation search locate
+watch(pendingLocateMessage, (locateInfo) => {
+  if (!locateInfo) return;
+  if (locateInfo.conversationID === activeConversationID.value) {
+    initializeMessageList();
+  }
+});
+
+// Fragment 模式下翻到最新时，自动切回 latest
+watch(hasNewerMessages, (hasNewer) => {
+  if (hasNewer === false && listMode.value === 'fragment') {
+    listMode.value = 'latest';
+    newMessageCount.value = 0;
+    nextTick(() => scrollToBottom(scrollContainer.value, 'auto'));
+  }
+});
+
+// Populate recalledMessageIDSet by scanning messageList for recalled messages.
+// UIContext only holds the container (and keeps it append-only across the app
+// lifecycle); MessageList owns the filling logic because only it has access to
+// the messageList data source. Mirrors the legacy MessageListState behaviour
+// of `if (message.isRevoked) recalledMessageIDSet.add(message.ID)`, mapped to
+// the new API where `msgID` replaces `ID` and `MessageStatus.Recalled` replaces
+// the `isRevoked` boolean.
+watch(messageList, (currentMessageList) => {
+  if (!currentMessageList?.length) {
+    return;
+  }
+  let updated: Set<string> | null = null;
+  for (const message of currentMessageList) {
+    if (message.status === MessageStatus.Recalled || message.status === MessageStatus.Deleted) {
+      if (updated === null) {
+        updated = new Set(recalledMessageIDSet.value);
       }
-    });
-    if (isGroup.value) {
-      getGroupMemberList();
-    }
-    return;
-  }
-
-  if (!oldMessages || !newMessages || !newMessages.length) {
-    return;
-  }
-
-  if (messageListType.value === MessageListType.HISTORY) {
-    return;
-  }
-
-  const newLastMessage = newMessages[newMessages.length - 1];
-  const oldLastMessage = oldMessages[oldMessages.length - 1];
-
-  if (newLastMessage?.ID !== oldLastMessage?.ID) {
-    nextTick(() => {
-      observeMessageList();
-    });
-    // new message coming
-    const shouldAutoScroll = newLastMessage.flow === 'out'
-      || (!isDisableScroll.value && distanceToBottom.value < autoScrollThreshold);
-
-    if (shouldAutoScroll) {
-      scrollToBottom({ behavior: 'smooth' });
-    } else {
-      // TODO: new message notification
+      updated.add(message.msgID);
     }
   }
-}, {
-  immediate: true,
-});
-
-watch([pendingScrollTargetMessageID, messageList], async ([targetMessageID, currentMessageList]) => {
-  if (!targetMessageID || !currentMessageList?.some(message => message.ID === targetMessageID)) {
-    return;
+  if (updated !== null) {
+    recalledMessageIDSet.value = updated;
   }
-
-  await nextTick();
-  await scrollToMessage(targetMessageID, {
-    block: 'center',
-    skipIfVisible: false,
-    behavior: 'instant',
-  }).catch(() => {});
-
-  highlightMessage({
-    messageID: targetMessageID,
-    duration: 3000,
-  });
-  pendingScrollTargetMessageID.value = undefined;
-});
-
-watch([messageList, messageListType], async ([currentMessageList, currentMessageListType]) => {
-  if (
-    !shouldScrollToBottomAfterBack.value
-    || currentMessageListType !== MessageListType.LATEST
-    || !currentMessageList?.length
-  ) {
-    return;
-  }
-
-  await nextTick();
-  await scrollToBottom({ behavior: 'instant' });
-  observeMessageList();
-  setIsDisableScroll(false);
-  shouldScrollToBottomAfterBack.value = false;
-});
+}, { immediate: true });
 
 watch(() => props.enableReadReceipt, (newEnableReadReceipt) => {
-  setEnableReadReceipt(newEnableReadReceipt);
-}, {
-  immediate: true,
-});
-
-watch(() => props?.conversationID, (newConversationId) => {
-  if (newConversationId) {
-    setActiveConversation(newConversationId);
-  }
+  enableReadReceipt.value = newEnableReadReceipt;
 }, {
   immediate: true,
 });
 
 onMounted(() => {
   if (scrollContainer.value) {
-    scrollContainer.value.addEventListener('scroll', handleScroll);
+    scrollContainer.value.addEventListener('scroll', handleScroll, { passive: true });
   }
+  unsubscribeEvent = messageListOnEvent((event) => {
+    if (event.type === 'onReceiveNewMessage') {
+      handleNewMessage(event.message);
+    }
+  });
   initializeMessageList();
 });
 
@@ -378,10 +378,14 @@ onUnmounted(() => {
   if (scrollContainer.value) {
     scrollContainer.value.removeEventListener('scroll', handleScroll);
   }
+  if (unsubscribeEvent) {
+    unsubscribeEvent();
+    unsubscribeEvent = null;
+  }
 });
 
 defineExpose({
-  scrollToBottom,
+  scrollToBottom: (behavior?: ScrollBehavior) => scrollToBottom(scrollContainer.value, behavior),
 });
 </script>
 
@@ -393,11 +397,11 @@ defineExpose({
       class="message-list-container"
     >
       <ObserverView
-        v-if="!isMessageJumping"
+        v-if="listMode === 'latest'"
         root="#messageScrollList"
         :rootMargin="'50px 0px 0px 0px'"
         :threshold="0.1"
-        @on-show="loadMoreHistory"
+        @on-show="handleLoadOlder"
       >
         <div id="loadMore" />
       </ObserverView>
@@ -407,6 +411,7 @@ defineExpose({
         :key="chunk.key"
         :class="cs('message-chunk--container')"
       >
+        <!-- <div>11</div> -->
         <!-- Time Divider -->
         <component
           :is="props.MessageTimeDivider || DefaultMessageTimeDivider"
@@ -418,7 +423,7 @@ defineExpose({
         <div class="message-chunk">
           <template
             v-for="(message, messageIndex) in chunk.messages"
-            :key="message.ID"
+            :key="message.msgID"
           >
             <component
               :is="props.Message || DefaultMessage"
@@ -432,12 +437,12 @@ defineExpose({
                 Boolean(enableMessageAggregation && messageIndex !== 0)
               "
               :removeAvatar="
-                Boolean(alignment === 'two-sided' && message.flow === 'out')
+                Boolean(alignment === 'two-sided' && message.isSentBySelf)
               "
               :is-hidden-message-nick="
                 Boolean(
                   (alignment === 'two-sided'
-                    ? enableMessageAggregation && messageIndex !== 0 || message.flow === 'out'
+                    ? enableMessageAggregation && messageIndex !== 0 || message.isSentBySelf
                     : enableMessageAggregation && messageIndex !== 0)
                 )
               "
@@ -449,9 +454,9 @@ defineExpose({
     </div>
     <MessageForward />
     <ScrollToBottom
-      v-if="isScrollToBottomVisible || isMessageJumping"
+      v-if="listMode === 'fragment' || (!isNearBottom && listMode === 'latest')"
       :class="cs('scroll-to-bottom')"
-      @click="isMessageJumping ? handleBackToLatest() : scrollToBottom({ behavior: 'smooth' })"
+      @click="listMode === 'fragment' ? handleBackToLatest() : scrollToBottom(scrollContainer, 'smooth')"
     />
   </div>
 </template>

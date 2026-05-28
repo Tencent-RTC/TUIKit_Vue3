@@ -164,7 +164,7 @@ import {
   TUIDialog,
   IconClose1,
 } from '@tencentcloud/uikit-base-component-vue3';
-import { useContactListState } from '../../states/ContactListState';
+import { useContactStore, useLoginStore } from '../../chat-store';
 import { useLoginState } from '../../states/LoginState';
 import { useRoomState } from '../../states/RoomState';
 import { Avatar } from '../Avatar';
@@ -198,8 +198,17 @@ const emit = defineEmits<Emits>();
 const { t } = useUIKit();
 const { loginUserInfo } = useLoginState();
 const { scheduleRoom, getRoomInfo } = useRoomState();
-const { friendList } = useContactListState();
+const { friendList, loadFriends } = useContactStore();
+const { loginStatus } = useLoginStore();
 const { handleErrorWithModal } = useRoomModal();
+
+// ContactStore is a singleton; kick off loading once login completes so the
+// participant picker has fresh data.
+watch(loginStatus, (status) => {
+  if (status === 'logined') {
+    loadFriends().catch(err => console.error('[ScheduleRoomPanel loadFriends]', err));
+  }
+}, { immediate: true });
 
 const formData = ref({
   roomName: '',
@@ -223,8 +232,8 @@ const isScheduling = ref(false);
 const userPickerData = computed(() =>
   friendList.value.map(item => ({
     key: item.userID,
-    label: item.nick,
-    avatarUrl: item.avatar,
+    label: item.friendRemark || item.nickname || item.userID,
+    avatarUrl: item.avatarURL ?? '',
     extraData: item,
   })),
 );
@@ -376,7 +385,7 @@ const handleUserSearchChange = (value: string) => userPickerData.value
   .map(item => ({
     label: item.label,
     value: item.key,
-    avatarUrl: item.extraData.avatar,
+    avatarUrl: item.extraData.avatarURL,
     extraData: item.extraData,
   }));
 

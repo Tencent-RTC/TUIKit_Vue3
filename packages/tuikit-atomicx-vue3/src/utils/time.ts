@@ -9,7 +9,7 @@ import {
 import { zhCN, enUS } from 'date-fns/locale';
 
 interface GetTimeStampOptions {
-  time: number;
+  time: number | Date;
   language?: 'zh-CN' | 'zh-TW' | 'en-US' | 'ja-JP' | 'ko-KR' | string;
 }
 
@@ -26,7 +26,7 @@ function getTimeStamp({ time, language = 'en-US' }: GetTimeStampOptions) {
     defaultValue: 'Yesterday',
   });
 
-  if (!time) {
+  if (!time || (typeof time === 'number' && time <= 0)) {
     return '';
   }
 
@@ -75,11 +75,10 @@ function getTimeStamp({ time, language = 'en-US' }: GetTimeStampOptions) {
  * 4. If earlier than current week but within this year, show date format based on locale
  * 5. Otherwise show full date + time
  *
- * @param time Timestamp in milliseconds
- * @param language Language code, default is 'en-US'
+ * @param time Timestamp in milliseconds or Date object
  * @returns Formatted time string
  */
-function getTimeStampAuto(time: number) {
+function getTimeStampAuto(time: number | Date) {
   const { language } = useUIKit();
   return getTimeStamp({ time, language: language.value });
 }

@@ -1,5 +1,7 @@
+// Re-exports for backwards compatibility.
+// New code should import directly from '../types/groupSetting'.
 export {
   GroupMemberRole,
   GroupPermission,
-  GroupInviteType,
-} from '../states/GroupSettingState/types';
+  GroupType,
+} from './groupSetting';

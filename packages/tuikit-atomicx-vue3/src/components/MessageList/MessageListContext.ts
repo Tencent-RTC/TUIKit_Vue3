@@ -1,5 +1,5 @@
 import { inject } from 'vue';
-import { MessageType } from '../../types/engine';
+import { MessageType } from '@atomicxcore/core';
 import type { Component, Slots } from 'vue';
 
 

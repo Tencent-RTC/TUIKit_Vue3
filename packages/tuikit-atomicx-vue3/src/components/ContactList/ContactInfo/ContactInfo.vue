@@ -14,6 +14,7 @@
     </header>
     <component
       :is="getComponentByType(contactInfo?.type)"
+      :key="`${contactInfo?.type}-${'groupID' in contactInfo.data ? contactInfo.data.groupID : 'userID' in contactInfo.data ? contactInfo.data.userID : ''}`"
       v-bind="getComponentProps(contactInfo.type)"
       :show-actions="showActions"
       @close="handleCloseContactInfo"
@@ -35,9 +36,9 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref } from 'vue';
+import { computed, watch } from 'vue';
 import { IconChevronLeft } from '@tencentcloud/uikit-base-component-vue3';
-import { useContactListState } from '../../../states/ContactListState';
+import { ContactStore, GroupStore } from '../../../chat-store';
 import { ContactItemType } from '../../../types/contact';
 import { isH5 } from '../../../utils/env';
 import { useContactList } from '../hooks';
@@ -48,8 +49,16 @@ import { GroupApplicationInfo } from './GroupApplicationInfo';
 import { GroupInfo } from './GroupInfo';
 import { SearchGroupInfo } from './SearchGroupInfo';
 import { SearchUserInfo } from './SearchUserInfo';
-import type { Friend, GroupModel, UserProfile } from '../../../types';
-import type { ContactInfoProps, ContactGroupItem, FriendApplication, GroupApplication } from '../../../types/contact';
+import type {
+  ContactInfo as ContactInfoType,
+  FriendApplicationInfo as FriendApplicationInfoType,
+  GroupApplicationInfo as GroupApplicationInfoType,
+  GroupInfo as GroupInfoType,
+} from '@atomicxcore/core';
+import type {
+  ContactInfoProps,
+  ContactGroupItem,
+} from '../../../types/contact';
 
 const props = withDefaults(defineProps<ContactInfoProps>(), {
   showActions: true,
@@ -65,63 +74,168 @@ const props = withDefaults(defineProps<ContactInfoProps>(), {
 
 const emit = defineEmits<{
   close: [];
-  sendMessage: [data: Friend];
-  deleteFriend: [data: Friend];
-  addToBlacklist: [data: Friend];
-  removeFromBlacklist: [data: UserProfile];
-  updateFriendRemark: [data: Friend, remark: string];
-  enterGroup: [data: GroupModel];
-  leaveGroup: [data: GroupModel];
-  dismissGroup: [data: GroupModel];
-  friendApplicationAction: [action: 'accept' | 'refuse', application: FriendApplication];
-  groupApplicationAction: [action: 'accept' | 'refuse', application: GroupApplication];
-  addFriend: [data: UserProfile, wording: string];
-  joinGroup: [data: GroupModel, note: string];
+  sendMessage: [data: ContactInfoType];
+  deleteFriend: [data: ContactInfoType];
+  addToBlacklist: [data: ContactInfoType];
+  removeFromBlacklist: [data: ContactInfoType];
+  updateFriendRemark: [data: ContactInfoType, remark: string];
+  enterGroup: [data: GroupInfoType];
+  leaveGroup: [data: GroupInfoType];
+  dismissGroup: [data: GroupInfoType];
+  friendApplicationAction: [action: 'accept' | 'refuse', application: FriendApplicationInfoType];
+  groupApplicationAction: [action: 'accept' | 'refuse', application: GroupApplicationInfoType];
+  addFriend: [data: ContactInfoType, wording: string];
+  joinGroup: [data: GroupInfoType, note: string];
 }>();
 
-const { friendList, groupList, blackList } = useContactListState();
+const { friendList, blackList, friendApplicationList } = ContactStore();
+const { joinedGroupList } = GroupStore();
+
 const { activeContact, setActiveContact, contactGroupTitles } = useContactList();
 
-const contactInfo = ref<ContactGroupItem | undefined>(undefined);
-
-const handleContactInfo = (contactGroupItem?: ContactGroupItem) => {
-  const newContactInfo = contactGroupItem ? { ...contactGroupItem } : undefined;
-
-  if (contactGroupItem?.type === ContactItemType.SEARCH_USER) {
-    const blackUser = blackList.value.find(
-      userInfo => userInfo.userID === (contactGroupItem?.data as UserProfile).userID,
-    );
-    const friend = friendList.value.find(
-      userInfo => userInfo.userID === (contactGroupItem?.data as UserProfile).userID,
-    );
-
-    if (blackUser && newContactInfo) {
-      newContactInfo.type = ContactItemType.BLACK;
-      newContactInfo.data = blackUser;
-    } else if (friend && newContactInfo) {
-      newContactInfo.type = ContactItemType.FRIEND;
-      newContactInfo.data = friend;
-    }
-  } else if (contactGroupItem?.type === ContactItemType.SEARCH_GROUP) {
-    const group = groupList.value.find(
-      g => g.groupID === (contactGroupItem?.data as GroupModel).groupID,
-    );
-    if (group && newContactInfo) {
-      newContactInfo.type = ContactItemType.GROUP;
-      newContactInfo.data = group;
-    }
-  } else if (contactGroupItem?.type === ContactItemType.FRIEND) {
-    const blackUser = blackList.value.find(
-      userInfo => userInfo.userID === (contactGroupItem?.data as Friend).userID,
-    );
-    if (blackUser && newContactInfo) {
-      newContactInfo.type = ContactItemType.BLACK;
-      newContactInfo.data = blackUser;
-    }
+/**
+ * Derived displayed contact panel, computed from `activeContact` and the
+ * latest store snapshots.
+ *
+ * Why a pure computed instead of a ref + watchers that write back into
+ * `activeContact`:
+ *   - The previous design used three watchers that observed both the store
+ *     lists and `activeContact`, and called `setActiveContact(...)` inside
+ *     the handler to "keep the active entry in sync with the latest store
+ *     object reference". Combined with the Store handing out fresh object
+ *     references on every `_setState` call, this formed a runaway loop that
+ *     tripped Vue's "Maximum recursive updates" guard on first click.
+ *   - Deriving the panel data instead of mutating `activeContact` keeps the
+ *     reactive graph strictly unidirectional: store + activeContact → panel.
+ *     Store updates automatically refresh the panel; no writes back.
+ *   - Special behaviors (SEARCH_USER → promote to FRIEND/BLACK, FRIEND whose
+ *     id appears in blackList → show as BLACK, etc.) are all expressed here
+ *     as transformations, not as side-effectful writes.
+ */
+const contactInfo = computed<ContactGroupItem | undefined>(() => {
+  const source = activeContact.value;
+  if (!source) {
+    return undefined;
   }
 
-  contactInfo.value = newContactInfo;
-};
+  // SEARCH_USER: promote to FRIEND / BLACK / FRIEND_REQUEST if the user is already known.
+  if (source.type === ContactItemType.SEARCH_USER) {
+    const userID = source.data.userID;
+    const black = blackList.value.find(u => u?.userID === userID);
+    if (black) {
+      return { type: ContactItemType.BLACK, data: black };
+    }
+    const friend = friendList.value.find(u => u?.userID === userID);
+    if (friend) {
+      return { type: ContactItemType.FRIEND, data: friend };
+    }
+    const application = friendApplicationList.value.find(item => item.userID === userID);
+    if (application) {
+      return { type: ContactItemType.FRIEND_REQUEST, data: application };
+    }
+    return { ...source };
+  }
+
+  // SEARCH_GROUP: promote to GROUP if the user has already joined.
+  if (source.type === ContactItemType.SEARCH_GROUP) {
+    const searchData = source.data;
+    const groupID = searchData.groupID;
+    const joined = joinedGroupList.value.find(g => g?.groupID === groupID);
+    if (joined) {
+      // Merge: prefer store data but fall back to search data for fields
+      // that may be absent in the GROUP_LIST_UPDATED event payload.
+      return {
+        type: ContactItemType.GROUP,
+        data: {
+          ...searchData,
+          ...joined,
+          groupName: joined.groupName || searchData.groupName,
+          avatarURL: joined.avatarURL || searchData.avatarURL,
+        },
+      };
+    }
+    return { ...source };
+  }
+
+  // FRIEND: auto-switch to BLACK, or clear when the user is no longer a friend.
+  if (source.type === ContactItemType.FRIEND) {
+    const userID = source.data.userID;
+    const black = blackList.value.find(u => u?.userID === userID);
+    if (black) {
+      return { type: ContactItemType.BLACK, data: black };
+    }
+    const friend = friendList.value.find(u => u?.userID === userID);
+    if (!friend) {
+      return undefined;
+    }
+    return { type: ContactItemType.FRIEND, data: friend };
+  }
+
+  // BLACK: mirror the latest blacklist entry so unblacklisting transitions cleanly.
+  if (source.type === ContactItemType.BLACK) {
+    const userID = source.data.userID;
+    const black = blackList.value.find(u => u?.userID === userID);
+    if (!black) {
+      // No longer in blacklist — see if it is now a friend instead.
+      const friend = friendList.value.find(u => u?.userID === userID);
+      if (friend) {
+        return { type: ContactItemType.FRIEND, data: friend };
+      }
+      return undefined;
+    }
+    return { type: ContactItemType.BLACK, data: black };
+  }
+
+  // FRIEND_REQUEST: switch to friend when accepted; otherwise keep the old request for rejected/handled status.
+  if (source.type === ContactItemType.FRIEND_REQUEST) {
+    const userID = source.data.userID;
+    const friend = friendList.value.find(item => item.userID === userID);
+    if (friend) {
+      return { type: ContactItemType.FRIEND, data: friend };
+    }
+    const application = friendApplicationList.value.find(item => item.userID === userID);
+    return {
+      type: ContactItemType.FRIEND_REQUEST,
+      data: application ?? source.data,
+    };
+  }
+
+  // GROUP: mirror the latest joined-group entry.
+  if (source.type === ContactItemType.GROUP) {
+    const groupID = source.data.groupID;
+    const joined = joinedGroupList.value.find(g => g?.groupID === groupID);
+    if (!joined) {
+      return undefined;
+    }
+    return { type: ContactItemType.GROUP, data: joined };
+  }
+
+  // GROUP_REQUEST: render as-is.
+  return { ...source };
+});
+
+watch(
+  contactInfo,
+  (newContactInfo) => {
+    if (
+      activeContact.value?.type === ContactItemType.SEARCH_USER
+      && newContactInfo?.type === ContactItemType.FRIEND_REQUEST
+    ) {
+      // Persist this transition so later request updates start from the application state.
+      setActiveContact(newContactInfo);
+      return;
+    }
+
+    if (
+      activeContact.value?.type === ContactItemType.FRIEND_REQUEST
+      && newContactInfo?.type === ContactItemType.FRIEND
+      && activeContact.value.data.userID === newContactInfo.data.userID
+    ) {
+      // Persist acceptance so deleting the new friend clears from FRIEND state.
+      setActiveContact(newContactInfo);
+    }
+  },
+);
 
 watch(
   () => props.contactItem,
@@ -131,61 +245,6 @@ watch(
     }
   },
   { immediate: true },
-);
-
-watch(
-  () => activeContact.value,
-  (newActiveContact) => {
-    handleContactInfo(newActiveContact || undefined);
-  },
-  { immediate: true },
-);
-
-watch(
-  (): [GroupModel[], ContactGroupItem | undefined] => [groupList.value, activeContact.value],
-  ([newGroupList, newActiveContact]) => {
-    if (newGroupList.length > 0 && newActiveContact && newActiveContact.type === ContactItemType.GROUP) {
-      const group = newGroupList.find(
-        g => g?.groupID === (newActiveContact?.data as GroupModel)?.groupID,
-      );
-      if (group) {
-        if (newActiveContact?.data !== group) {
-          setActiveContact({
-            type: ContactItemType.GROUP,
-            data: group,
-          });
-        }
-      } else {
-        setActiveContact(undefined);
-      }
-    }
-  },
-);
-
-watch(
-  (): [UserProfile[], Friend[], ContactGroupItem | undefined] => [blackList.value, friendList.value, activeContact.value],
-  ([newBlackList, newFriendList, newActiveContact]) => {
-    if (newActiveContact) {
-      const blackUser = newBlackList?.find(
-        userInfo => userInfo?.userID === (newActiveContact?.data as UserProfile)?.userID,
-      );
-      const user = newFriendList?.find(
-        userInfo => userInfo?.userID === (newActiveContact?.data as UserProfile)?.userID,
-      );
-
-      if (blackUser && newActiveContact.type !== ContactItemType.BLACK) {
-        setActiveContact({
-          type: ContactItemType.BLACK,
-          data: blackUser,
-        });
-      } else if (user && newActiveContact.type === ContactItemType.FRIEND && newActiveContact.data !== user) {
-        setActiveContact({
-          type: ContactItemType.FRIEND,
-          data: user,
-        });
-      }
-    }
-  },
 );
 
 const getComponentByType = (type?: ContactItemType) => {
@@ -214,21 +273,25 @@ const getComponentProps = (type?: ContactItemType) => {
     return {};
   }
 
+  const baseProps = {
+    channel: props.channel,
+  };
+
   switch (type) {
     case ContactItemType.FRIEND:
-      return { friend: contactInfo.value.data };
+      return { ...baseProps, friend: contactInfo.value.data };
     case ContactItemType.GROUP:
-      return { group: contactInfo.value.data };
+      return { ...baseProps, group: contactInfo.value.data };
     case ContactItemType.BLACK:
-      return { profile: contactInfo.value.data };
+      return { ...baseProps, profile: contactInfo.value.data };
     case ContactItemType.FRIEND_REQUEST:
-      return { application: contactInfo.value.data };
+      return { ...baseProps, application: contactInfo.value.data };
     case ContactItemType.GROUP_REQUEST:
-      return { application: contactInfo.value.data };
+      return { ...baseProps, application: contactInfo.value.data };
     case ContactItemType.SEARCH_USER:
-      return { user: contactInfo.value.data };
+      return { ...baseProps, user: contactInfo.value.data };
     case ContactItemType.SEARCH_GROUP:
-      return { group: contactInfo.value.data };
+      return { ...baseProps, group: contactInfo.value.data };
     default:
       return {};
   }
@@ -239,18 +302,25 @@ const handleCloseContactInfo = () => {
   emit('close');
 };
 
-const handleSendMessage = (data: Friend) => emit('sendMessage', data);
-const handleDeleteFriend = (data: Friend) => emit('deleteFriend', data);
-const handleAddToBlacklist = (data: Friend) => emit('addToBlacklist', data);
-const handleRemoveFromBlacklist = (data: UserProfile) => emit('removeFromBlacklist', data);
-const handleUpdateFriendRemark = (data: Friend, remark: string) => emit('updateFriendRemark', data, remark);
-const handleEnterGroup = (data: GroupModel) => emit('enterGroup', data);
-const handleLeaveGroup = (data: GroupModel) => emit('leaveGroup', data);
-const handleDismissGroup = (data: GroupModel) => emit('dismissGroup', data);
-const handleFriendApplicationAction = (action: 'accept' | 'refuse', application: FriendApplication) => emit('friendApplicationAction', action, application);
-const handleGroupApplicationAction = (action: 'accept' | 'refuse', application: GroupApplication) => emit('groupApplicationAction', action, application);
-const handleAddFriend = (data: UserProfile, wording: string) => emit('addFriend', data, wording);
-const handleJoinGroup = (data: GroupModel, note: string) => emit('joinGroup', data, note);
+const handleSendMessage = (data: ContactInfoType) => emit('sendMessage', data);
+const handleDeleteFriend = (data: ContactInfoType) => emit('deleteFriend', data);
+const handleAddToBlacklist = (data: ContactInfoType) => emit('addToBlacklist', data);
+const handleRemoveFromBlacklist = (data: ContactInfoType) => emit('removeFromBlacklist', data);
+const handleUpdateFriendRemark = (data: ContactInfoType, remark: string) =>
+  emit('updateFriendRemark', data, remark);
+const handleEnterGroup = (data: GroupInfoType) => emit('enterGroup', data);
+const handleLeaveGroup = (data: GroupInfoType) => emit('leaveGroup', data);
+const handleDismissGroup = (data: GroupInfoType) => emit('dismissGroup', data);
+const handleFriendApplicationAction = (
+  action: 'accept' | 'refuse',
+  application: FriendApplicationInfoType,
+) => emit('friendApplicationAction', action, application);
+const handleGroupApplicationAction = (
+  action: 'accept' | 'refuse',
+  application: GroupApplicationInfoType,
+) => emit('groupApplicationAction', action, application);
+const handleAddFriend = (data: ContactInfoType, wording: string) => emit('addFriend', data, wording);
+const handleJoinGroup = (data: GroupInfoType, note: string) => emit('joinGroup', data, note);
 </script>
 
 <style scoped lang="scss">

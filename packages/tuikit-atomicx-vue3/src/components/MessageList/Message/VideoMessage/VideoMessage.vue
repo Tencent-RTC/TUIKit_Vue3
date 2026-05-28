@@ -2,31 +2,23 @@
 import { ref, computed, watch } from 'vue';
 import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
-import type { MessageModel } from '../../../../types/engine';
+import type { MessageInfo, VideoMessagePayload } from '@atomicxcore/core';
 
 interface VideoMessageProps {
-  message: MessageModel;
+  message: MessageInfo;
   isLastInChunk?: boolean;
-}
-
-interface VideoMessageContent {
-  showName: string;
-  snapshotHeight: number;
-  snapshotWidth: number;
-  snapshotUrl: string;
-  url: string;
 }
 
 const props = withDefaults(defineProps<VideoMessageProps>(), {
   isLastInChunk: false,
-  message: () => ({} as MessageModel),
+  message: () => ({} as MessageInfo),
 });
 
 // SDK uses 200×200 as placeholder before actual dimensions are available
 const isPlaceholderSize = (width: number, height: number): boolean => width === 200 && height === 200;
 
 const messageContent = computed(() =>
-  props.message.getMessageContent() as VideoMessageContent,
+  props.message.messagePayload as VideoMessagePayload,
 );
 
 const videoNaturalSize = ref<{ height: number; aspectRatio: number } | null>(null);
@@ -40,14 +32,14 @@ const naturalSize = computed(() => {
 
   const content = messageContent.value;
 
-  if (isPlaceholderSize(content.snapshotWidth, content.snapshotHeight)) {
+  if (isPlaceholderSize(content.videoSnapshotWidth, content.videoSnapshotHeight)) {
     return null;
   }
 
-  if (content.snapshotWidth && content.snapshotHeight) {
+  if (content.videoSnapshotWidth && content.videoSnapshotHeight) {
     return {
-      height: content.snapshotHeight,
-      aspectRatio: content.snapshotWidth / content.snapshotHeight,
+      height: content.videoSnapshotHeight,
+      aspectRatio: content.videoSnapshotWidth / content.videoSnapshotHeight,
     };
   }
 
@@ -81,7 +73,7 @@ const displaySize = computed(() => {
   };
 });
 
-const isMessageOwner = computed(() => props.message.flow === 'out');
+const isMessageOwner = computed(() => props.message.isSentBySelf);
 
 const onVideoLoad = (e: Event) => {
   const video = e.target as HTMLVideoElement;
@@ -95,7 +87,7 @@ const onVideoLoad = (e: Event) => {
 };
 
 // Reset state when message ID changes (e.g., URL switches from blob to real)
-watch(() => props.message.ID, () => {
+watch(() => props.message.msgID, () => {
   loaded.value = false;
   videoNaturalSize.value = null;
 });
@@ -120,8 +112,8 @@ watch(() => props.message.ID, () => {
     />
     <video
       class="video-message__video"
-      :src="messageContent.url"
-      :poster="messageContent.snapshotUrl"
+      :src="messageContent.videoUrl"
+      :poster="messageContent.videoSnapshotUrl"
       controls
       muted
       :autoplay="false"

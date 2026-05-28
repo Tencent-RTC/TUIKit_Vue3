@@ -7,7 +7,7 @@
       <div :class="styles['quoted__message__preview__content']">
         <div :class="styles['quoted__message__preview__content--header']">
           <div :class="styles['quoted__message__preview__content--title']">
-            {{ quotedMessage.nick || quotedMessage.from }}
+            {{ quotedMessage.from?.nickname || quotedMessage.from?.userID }}
           </div>
         </div>
         <div :class="styles['quoted__message__preview__content--text']">
@@ -26,18 +26,17 @@
 </template>
 
 <script setup lang="ts">
-import { watch, onUnmounted } from 'vue';
+import { inject, watch, onUnmounted } from 'vue';
 import { useUIKit, IconClose } from '@tencentcloud/uikit-base-component-vue3';
-import { useMessageActionState } from '../../../states/MessageActionState';
-import { useMessageInputState } from '../../../states/MessageInputState';
-import { MessageType } from '../../../types/engine';
+import { MessageType } from '@atomicxcore/core';
+import type { MessageInfo } from '@atomicxcore/core';
+import { useChatUIState } from '../../../context/useChatUIState';
 import { transformTextWithEmojiKeyToName } from '../../../utils';
 import styles from './QuotedMessagePreview.module.scss';
-import type { MessageModel } from '../../../types/engine';
 
 const { t } = useUIKit();
-const { focusEditor } = useMessageInputState();
-const { quotedMessage, clearQuotedMessage } = useMessageActionState();
+const channel = inject('channel', 'default') as string;
+const { quotedMessage, clearQuotedMessage, focusInput } = useChatUIState(channel);
 
 onUnmounted(() => {
   clearQuotedMessage();
@@ -45,7 +44,7 @@ onUnmounted(() => {
 
 watch(quotedMessage, (newVal) => {
   if (newVal) {
-    focusEditor();
+    focusInput();
   }
 });
 
@@ -53,24 +52,22 @@ const handleCloseQuotedMessage = () => {
   clearQuotedMessage();
 };
 
-const calculateReferenceContent = (message: MessageModel | undefined): string => {
+const calculateReferenceContent = (message: MessageInfo | undefined): string => {
   if (!message) {
     return 'no reference';
   }
-  switch (message.type) {
-    case MessageType.TEXT:
-      return transformTextWithEmojiKeyToName(message.payload?.text || '');
-    case MessageType.IMAGE:
+  switch (message.messageType) {
+    case MessageType.Text:
+      return transformTextWithEmojiKeyToName((message.messagePayload as any)?.text || '');
+    case MessageType.Image:
       return t('MessageInput.image');
-    case MessageType.AUDIO:
+    case MessageType.Audio:
       return t('MessageInput.audio');
-    case MessageType.VIDEO:
+    case MessageType.Video:
       return t('MessageInput.video');
-    case MessageType.FILE:
+    case MessageType.File:
       return t('MessageInput.file');
-    case MessageType.LOCATION:
-      return t('MessageInput.location');
-    case MessageType.CUSTOM:
+    case MessageType.Custom:
       return t('MessageInput.custom_message');
     default:
       return t('MessageInput.unknown');

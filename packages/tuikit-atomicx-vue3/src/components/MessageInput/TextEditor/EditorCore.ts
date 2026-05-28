@@ -23,6 +23,7 @@ interface ExtensionOptions {
   maxLength?: number;
   showPlaceholderOnlyWhenEditable?: boolean;
   onEnter?: () => void;
+  channel?: string;
 }
 
 /**
@@ -34,6 +35,7 @@ function createExtensions(options: ExtensionOptions = {}): Extensions {
     maxLength,
     showPlaceholderOnlyWhenEditable = true,
     onEnter,
+    channel = 'default',
   } = options;
 
   return [
@@ -58,7 +60,7 @@ function createExtensions(options: ExtensionOptions = {}): Extensions {
     createEnterKeyExtension(onEnter),
     createEmojiExtension(),
     createImageExtension(),
-    createMentionExtension(),
+    createMentionExtension(channel),
     Placeholder.configure({
       placeholder,
       showOnlyWhenEditable: showPlaceholderOnlyWhenEditable,

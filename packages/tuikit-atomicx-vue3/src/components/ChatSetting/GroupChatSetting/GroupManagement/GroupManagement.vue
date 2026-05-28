@@ -1,6 +1,6 @@
 <template>
   <View
-    v-if="groupID"
+    v-if="currentGroupID"
     :class="'group-management'"
   >
     <!-- Header -->
@@ -20,13 +20,13 @@
 
     <!-- Admin Management -->
     <GroupMembers
-      v-if="hasPermission(GroupPermission.SET_MEMBER_ROLE, GroupMemberRole.OWNER)"
+      v-if="hasPermission(GroupPermission.SET_MEMBER_ROLE, GroupMemberRole.Owner)"
       :title="t('ChatSetting.group_admin')"
       :members="adminMembers"
       :member-count="adminMembers?.length || 0"
       :hidden-member-count="true"
-      :show-add-button="currentUserRole === GroupMemberRole.OWNER"
-      :show-remove-button="currentUserRole === GroupMemberRole.OWNER"
+      :show-add-button="currentUserRole === GroupMemberRole.Owner"
+      :show-remove-button="currentUserRole === GroupMemberRole.Owner"
       :expandable="true"
       @add-button-click="() => handleAdminManagement('promote')"
       @remove-button-click="() => handleAdminManagement('demote')"
@@ -82,71 +82,59 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
+import type { Ref } from 'vue';
+import { LoginStore, GroupMemberRole } from '@atomicxcore/core';
+import { useChatContext, useGroupStore } from '../../../../chat-store';
 import { TUIDialog, TUIToast, IconArrowStrokeBack, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { View } from '../../../../baseComp/View';
-import {
-  useGroupSettingState,
-  GroupPermission,
-  GroupMemberRole,
-} from '../../../../states/GroupSettingState';
+import { GroupPermission, hasGroupPermission } from '../../../../types/groupSetting';
 import { UserPicker } from '../../../UserPicker';
 import { SettingItem } from '../../SettingItem';
 import { GroupMembers } from '../GroupMembers';
 import type { UserPickerRow, UserPickerRef } from '../../../UserPicker';
+import type { GroupInfo, GroupMember } from '@atomicxcore/core';
 
 const emit = defineEmits<{
   back: [];
 }>();
 
 const { t } = useUIKit();
+const channel = inject('channel', 'default') as string;
+const groupInfo = inject<Ref<GroupInfo | undefined>>('groupInfo');
+const { memberList, loadMembers, muteMember, setMemberRole } = useChatContext(channel);
+const { muteAllMembers } = useGroupStore();
 
-const {
-  groupID,
-  allMembers,
-  adminMembers,
-  currentUserID,
-  currentUserRole,
-  isMuteAllMembers,
-  hasPermission,
-  // Business actions
-  getGroupMemberList,
-  setGroupMemberRole,
-  setGroupMemberMuteTime,
-  setMuteAllMember,
-} = useGroupSettingState();
+const currentGroupID = computed(() => groupInfo?.value?.groupID);
+const currentUserID = computed(() => LoginStore.getState().loginUserInfo?.userID);
+const currentUserRole = computed(() => groupInfo?.value?.selfRole);
+const groupType = computed(() => groupInfo?.value?.groupType);
+const isMuteAllMembers = computed(() => groupInfo?.value?.isAllMuted);
+
+const allMembers = computed<GroupMember[]>(() => memberList.value as GroupMember[]);
+const adminMembers = computed<GroupMember[]>(() =>
+  allMembers.value.filter(m => m.role === GroupMemberRole.Admin),
+);
+
+const hasPermission = (permission: GroupPermission, role?: GroupMemberRole) =>
+  hasGroupPermission(permission, role ?? currentUserRole.value, groupType.value);
 
 const isShowUserPickerDialog = ref(false);
 const userPickerTitle = ref('');
-const userPickerLockedItems = ref<any[]>([]);
+const userPickerLockedItems = ref<UserPickerRow[]>([]);
 
 const userPickerRef = ref<UserPickerRef>();
 const memberActionRef = ref<'promote_admin' | 'demote_admin' | 'mute' | 'unmute' | null>(null);
 
-// Filter muted members
-const mutedMembers = computed(() => {
-  if (!allMembers.value) {
-    return [];
-  }
-  return allMembers.value.filter((member) => {
-    if (!member.muteUntil) {
-      return false;
-    }
-    const muteTime = parseInt(member.muteUntil, 10);
-    return muteTime > Date.now() / 1000;
-  });
-});
+const mutedMembers = computed<GroupMember[]>(() =>
+  allMembers.value.filter(m => m.muteUntil !== undefined && m.muteUntil > Date.now()),
+);
 
 const handleBack = () => {
   emit('back');
 };
 
-// Handle admin management
 const handleAdminManagement = (action: 'promote' | 'demote') => {
-  if (!allMembers.value) {
-    return;
-  }
-
   if (action === 'promote') {
     memberActionRef.value = 'promote_admin';
     userPickerTitle.value = t('ChatSetting.set_admin');
@@ -154,49 +142,26 @@ const handleAdminManagement = (action: 'promote' | 'demote') => {
   } else {
     memberActionRef.value = 'demote_admin';
     userPickerTitle.value = t('ChatSetting.unset_admin');
-    // Lock current user if they are admin
-    const lockedItems = currentUserRole.value === GroupMemberRole.ADMIN
-      ? [{
-        key: currentUserID.value!,
-      }]
+    userPickerLockedItems.value = currentUserRole.value === GroupMemberRole.Admin
+      ? [{ key: currentUserID.value ?? '', label: '', avatarUrl: '' }]
       : [];
-
-    userPickerLockedItems.value = lockedItems;
   }
   isShowUserPickerDialog.value = true;
 };
 
-// Handle mute management
 const handleMuteManagement = (action: 'mute' | 'unmute') => {
-  if (!allMembers.value) {
-    return;
-  }
-
   isShowUserPickerDialog.value = true;
 
   if (action === 'mute') {
     memberActionRef.value = 'mute';
     userPickerTitle.value = t('ChatSetting.mute_members');
-    // Lock privileged users based on current user role
-    const lockedItems = allMembers.value
-      .filter((member) => {
-        if (member.userID === currentUserID.value) {
-          return true;
-        }
-        if (member.role === GroupMemberRole.OWNER) {
-          return true;
-        }
-        if (currentUserRole.value === GroupMemberRole.ADMIN && member.role === GroupMemberRole.ADMIN) {
-          return true;
-        }
-        return false;
-      })
-      .map(member => ({
-        key: member.userID,
-        label: member.nick || member.userID,
-        avatarUrl: member.avatar,
-      }));
-    userPickerLockedItems.value = lockedItems;
+    userPickerLockedItems.value = allMembers.value
+      .filter(m =>
+        m.userID === currentUserID.value
+        || m.role === GroupMemberRole.Owner
+        || (currentUserRole.value === GroupMemberRole.Admin && m.role === GroupMemberRole.Admin),
+      )
+      .map(m => ({ key: m.userID, label: m.nickname || m.userID, avatarUrl: m.avatarURL ?? '' }));
   } else {
     memberActionRef.value = 'unmute';
     userPickerTitle.value = t('ChatSetting.unmute_members');
@@ -204,13 +169,11 @@ const handleMuteManagement = (action: 'mute' | 'unmute') => {
   }
 };
 
-// Handle user picker confirm
 const handleUserPickerConfirm = async () => {
   const selectedItems = userPickerRef.value?.getSelectedItems();
   if (!selectedItems || selectedItems.length === 0) {
     return;
   }
-
   const action = memberActionRef.value;
   if (!action) {
     return;
@@ -220,96 +183,69 @@ const handleUserPickerConfirm = async () => {
     const promises = selectedItems.map((item) => {
       switch (action) {
         case 'promote_admin':
-          return setGroupMemberRole({
-            userID: item.key,
-            role: GroupMemberRole.ADMIN,
-          });
+          return setMemberRole(item.key, GroupMemberRole.Admin);
         case 'demote_admin':
-          return setGroupMemberRole({
-            userID: item.key,
-            role: GroupMemberRole.COMMON,
-          });
+          return setMemberRole(item.key, GroupMemberRole.Member);
         case 'mute':
-          return setGroupMemberMuteTime({
-            userID: item.key,
-            time: 86400 * 30,
-          });
+          return muteMember(item.key, 86400 * 30);
         case 'unmute':
-          return setGroupMemberMuteTime({
-            userID: item.key,
-            time: 0,
-          });
+          return muteMember(item.key, 0);
         default:
           return Promise.resolve();
       }
     });
 
     await Promise.all(promises);
-
-    TUIToast.success({
-      message: t('ChatSetting.operation_success'),
-    });
-
+    TUIToast.success({ message: t('ChatSetting.operation_success') });
     isShowUserPickerDialog.value = false;
-
-    // Refresh member list
-    await getGroupMemberList({ offset: 0, count: 100 });
+    await loadMembers();
   } catch {
-    TUIToast.error({
-      message: t('ChatSetting.operation_failed'),
-    });
+    TUIToast.error({ message: t('ChatSetting.operation_failed') });
   }
 };
 
-// Handle mute all members toggle
 const handleMuteAllToggle = (checked: boolean) => {
-  setMuteAllMember(checked).then(() => {
+  const id = currentGroupID.value;
+  if (!id) {
+    return;
+  }
+  muteAllMembers(id, checked).then(() => {
     TUIToast.success({
       message: checked ? t('ChatSetting.all_members_muted') : t('ChatSetting.all_members_unmuted'),
     });
   }).catch(() => {
-    TUIToast.error({
-      message: t('ChatSetting.mute_all_failed'),
-    });
+    TUIToast.error({ message: t('ChatSetting.mute_all_failed') });
   });
 };
 
-// Get filtered data source for user picker
-const userPickerDataSource = computed(() => {
-  if (!allMembers.value || !isShowUserPickerDialog.value) {
+const userPickerDataSource = computed<UserPickerRow[]>(() => {
+  if (!isShowUserPickerDialog.value) {
     return [];
   }
-
   const action = memberActionRef.value;
-  let filteredMembers = allMembers.value;
+  let filtered: GroupMember[] = allMembers.value;
 
   switch (action) {
     case 'promote_admin':
-      filteredMembers = allMembers.value.filter(member => member.role === GroupMemberRole.COMMON);
+      filtered = allMembers.value.filter(m => m.role === GroupMemberRole.Member);
       break;
     case 'demote_admin':
-      filteredMembers = adminMembers.value || [];
+      filtered = adminMembers.value;
       break;
     case 'mute':
-      filteredMembers = allMembers.value.filter((member) => {
-        const muteTime = member.muteUntil ? parseInt(member.muteUntil, 10) : 0;
-        return muteTime * 1000 <= Date.now();
-      });
+      filtered = allMembers.value.filter(m => !m.muteUntil || m.muteUntil <= Date.now());
       break;
     case 'unmute':
-      filteredMembers = allMembers.value.filter((member) => {
-        const muteTime = member.muteUntil ? parseInt(member.muteUntil, 10) : 0;
-        return muteTime * 1000 > Date.now();
-      });
+      filtered = allMembers.value.filter(m => m.muteUntil !== undefined && m.muteUntil > Date.now());
       break;
     default:
       break;
   }
 
-  return filteredMembers.map(member => ({
-    key: member.userID,
-    label: `${member.nick || member.userID} (${member.userID === currentUserID.value ? t('ChatSetting.me') : t(`ChatSetting.group_member_role_${member.role.toLowerCase()}`)})`,
-    avatarUrl: member.avatar,
+  return filtered.map(m => ({
+    key: m.userID,
+    label: `${m.nickname || m.userID} (${m.userID === currentUserID.value ? t('ChatSetting.me') : t(`ChatSetting.group_member_role_${(m.role ?? '').toLowerCase()}`)})`,
+    avatarUrl: m.avatarURL ?? '',
   }));
 });
 </script>

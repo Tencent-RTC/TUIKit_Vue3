@@ -11,7 +11,7 @@
       </div>
       <div class="contact-blacklist-info__avatar-wrap">
         <Avatar
-          :src="profile?.avatar"
+          :src="profile?.avatarURL"
           :alt="displayName"
           :size="48"
         />
@@ -25,7 +25,7 @@
         </div>
         <div class="contact-blacklist-info__row-value">
           <span class="contact-blacklist-info__intro">
-            {{ profile?.selfSignature || t('TUIContact.None') }}
+            {{ profile?.aboutMe || t('TUIContact.None') }}
           </span>
         </div>
       </div>
@@ -51,30 +51,32 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useUIKit, TUIButton } from '@tencentcloud/uikit-base-component-vue3';
-import { useContactListState } from '../../../../states/ContactListState';
+import { ContactStore } from '../../../../chat-store';
 import { ContactItemType } from '../../../../types/contact';
 import { Avatar } from '../../../Avatar';
 import { useContactList } from '../../hooks';
-import type { BlacklistInfoProps, UserProfile } from '../../../../types/contact';
+import type { ContactInfo } from '@atomicxcore/core';
+import type { BlacklistInfoProps } from '../../../../types/contact';
 
 const props = withDefaults(defineProps<BlacklistInfoProps>(), {
   showActions: true,
 });
 
 const emit = defineEmits<{
-  removeFromBlacklist: [profile: UserProfile];
+  removeFromBlacklist: [profile: ContactInfo];
   close: [];
 }>();
 
 const { t } = useUIKit();
-const { friendList, removeFromBlacklist } = useContactListState();
+const { friendList, removeFromBlacklist } = ContactStore();
 const { setActiveContact } = useContactList();
 
-const displayName = computed(() => props.profile?.nick || props.profile?.userID);
+const displayName = computed(() => props.profile?.nickname || props.profile?.userID);
 
 const handleRemoveFromBlacklist = async () => {
   try {
-    await removeFromBlacklist([props.profile?.userID]);
+    await removeFromBlacklist(props.profile?.userID);
+    // After unblocking, the user may transparently become a friend again.
     const friend = friendList.value.find(item => item.userID === props.profile?.userID);
 
     if (friend) {
@@ -89,7 +91,7 @@ const handleRemoveFromBlacklist = async () => {
 
     emit('removeFromBlacklist', props.profile);
   } catch (err) {
-    console.error('[ContactInfo removeFromBlacklist] error', err);
+    console.error('[BlacklistInfo removeFromBlacklist] error', err);
   }
 };
 </script>

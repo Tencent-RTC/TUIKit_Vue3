@@ -6,9 +6,7 @@
           :is="ContactSearch"
           v-if="enableSearch"
           :placeholder="searchPlaceholder"
-          @result-click="(item: ContactGroupItem) => {
-            handleContactClick(item.type, item.data);
-          }"
+          @result-click="handleSearchResultClick"
         />
         <div class="contact-list__content">
           <template v-if="contactGroups.length > 0">
@@ -116,9 +114,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, watchEffect } from 'vue';
+import { ContactOnlineStatus } from '@atomicxcore/core';
+import { useContactStore, useGroupStore, useLoginStore } from '../../chat-store';
 import { IconArrowStrokeSelectDown, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useContactListState } from '../../states/ContactListState';
 import { ContactItemType } from '../../types/contact';
 import { UNREAD_COUNT_LIMIT } from './constants/const';
 import { ContactListItem } from './ContactListItem';
@@ -127,14 +126,18 @@ import { useContactList } from './hooks';
 import { buildFriendSections } from './utils/buildFriendSections';
 import type {
   ContactGroupItem,
-  FriendApplication,
-  GroupApplication,
+  ContactItem,
   ContactListProps,
   ContactGroup,
   CustomGroupConfig,
-  ContactItem,
-  Friend,
 } from '../../types/contact';
+import type {
+  ContactInfo,
+  FriendApplicationInfo,
+  GroupApplicationInfo,
+  GroupInfo,
+  GroupType,
+} from '@atomicxcore/core';
 
 const props = withDefaults(defineProps<ContactListProps>(), {
   enableSearch: true,
@@ -148,38 +151,84 @@ const props = withDefaults(defineProps<ContactListProps>(), {
 
 const emit = defineEmits<{
   'contact-item-click': [item: ContactGroupItem];
-  'friend-application-action': [action: 'accept' | 'refuse', application: FriendApplication];
-  'group-application-action': [action: 'accept' | 'refuse', application: GroupApplication];
+  'friend-application-action': [action: 'accept' | 'refuse', application: FriendApplicationInfo];
+  'group-application-action': [action: 'accept' | 'refuse', application: GroupApplicationInfo];
 }>();
 
 const { t } = useUIKit();
 
 const {
   friendList,
-  groupList,
   blackList,
   friendApplicationList,
-  groupApplicationList,
   friendApplicationUnreadCount,
+  loadFriends,
+  loadBlackList,
+  loadFriendApplications,
   acceptFriendApplication,
   refuseFriendApplication,
-  acceptGroupApplication,
-  refuseGroupApplication,
-  markFriendApplicationAsRead,
-} = useContactListState();
+  clearFriendApplicationUnreadCount,
+} = useContactStore();
+
+const {
+  joinedGroupList,
+  applicationList: groupApplicationList,
+  unreadApplicationCount: groupApplicationUnreadCount,
+  loadJoinedGroups,
+  loadApplications,
+  acceptApplication,
+  refuseApplication,
+  clearApplicationUnreadCount,
+} = useGroupStore();
+
+const { loginStatus } = useLoginStore();
+
+// Trigger data loading once login completes.
+// Store instances are singletons, so provide/inject is unnecessary — any
+// consumer that calls useContactStore / useGroupStore reads the same data.
+watch(loginStatus, (status) => {
+  if (status === 'logined') {
+    loadFriends().catch(err => console.error('[ContactList loadFriends]', err));
+    loadBlackList().catch(err => console.error('[ContactList loadBlackList]', err));
+    loadFriendApplications().catch(err => console.error('[ContactList loadFriendApplications]', err));
+    loadJoinedGroups().catch(err => console.error('[ContactList loadJoinedGroups]', err));
+    loadApplications().catch(err => console.error('[ContactList loadApplications]', err));
+  }
+}, { immediate: true });
 
 const { activeContact, setActiveContact, setContactGroupTitles } = useContactList();
 
-const defaultGroupTitles = computed<Partial<Record<ContactItemType, string>>>(() => {
-  const groupTitle = {
-    [ContactItemType.FRIEND_REQUEST]: t('TUIContact.New contacts'),
-    [ContactItemType.GROUP_REQUEST]: t('TUIContact.Group applications'),
-    [ContactItemType.FRIEND]: t('TUIContact.My friends'),
-    [ContactItemType.GROUP]: t('TUIContact.My groups'),
-    [ContactItemType.BLACK]: t('TUIContact.Blacklist'),
-  };
-  setContactGroupTitles(groupTitle);
-  return groupTitle;
+/**
+ * Pure computed: no side effects inside the getter. Previously this computed
+ * used to also write into the shared `contactGroupTitles` ref from within its
+ * getter — that pattern is a reactivity hazard (Vue treats side-effectful
+ * getters as "scheduling a new effect during another effect", and in practice
+ * it triggered "Maximum recursive updates exceeded" when combined with the
+ * nested watchers below).
+ *
+ * Side effects are now moved to the dedicated watchEffect right after so the
+ * reactive graph stays strictly unidirectional: i18n → titles → UI.
+ */
+const defaultGroupTitles = computed<Partial<Record<ContactItemType, string>>>(() => ({
+  [ContactItemType.FRIEND_REQUEST]: t('TUIContact.New contacts'),
+  [ContactItemType.GROUP_REQUEST]: t('TUIContact.Group applications'),
+  [ContactItemType.FRIEND]: t('TUIContact.My friends'),
+  [ContactItemType.GROUP]: t('TUIContact.My groups'),
+  [ContactItemType.BLACK]: t('TUIContact.Blacklist'),
+}));
+
+// Sync default titles to the shared `useContactList().contactGroupTitles` ref.
+// Runs when i18n-driven titles change; merges with `props.groupConfig` overrides.
+watchEffect(() => {
+  const defaults = defaultGroupTitles.value;
+  const override = props.groupConfig as Partial<Record<ContactItemType, CustomGroupConfig>> | undefined;
+  const merged: Partial<Record<ContactItemType, string>> = { ...defaults };
+  if (override) {
+    (Object.keys(defaults) as ContactItemType[]).forEach((key) => {
+      merged[key] = override[key]?.title || defaults[key] || '';
+    });
+  }
+  setContactGroupTitles(merged);
 });
 
 watch(
@@ -200,19 +249,28 @@ const toggleGroupExpanded = (groupKey: string) => {
     newExpanded.delete(groupKey);
   } else {
     newExpanded.add(groupKey);
-  }
-  if (groupKey === ContactItemType.FRIEND_REQUEST && friendApplicationUnreadCount.value > 0) {
-    markFriendApplicationAsRead();
+    // Clear unread count when expanding
+    if (groupKey === ContactItemType.FRIEND_REQUEST && friendApplicationUnreadCount.value > 0) {
+      clearFriendApplicationUnreadCount().catch(err =>
+        console.error('[ContactList clearFriendApplicationUnreadCount]', err),
+      );
+    }
+    if (groupKey === ContactItemType.GROUP_REQUEST && groupApplicationUnreadCount.value > 0) {
+      clearApplicationUnreadCount();
+    }
   }
   expandedGroups.value = newExpanded;
 };
 
 const getItemId = (item: ContactItem): string => {
-  if ('userID' in item) {
+  if ('userID' in item && item.userID) {
     return item.userID;
   }
-  if ('groupID' in item) {
+  if ('groupID' in item && item.groupID) {
     return item.groupID;
+  }
+  if ('fromUser' in item && (item as GroupApplicationInfo).fromUser) {
+    return (item as GroupApplicationInfo).fromUser as string;
   }
   return '';
 };
@@ -224,7 +282,7 @@ const getContactItemKey = (
 ): string => `${type}_${getItemId(item)}_${index}`;
 
 const handleContactClick = (type: ContactItemType, item: ContactItem) => {
-  const contactGroupItem: ContactGroupItem = { type, data: item };
+  const contactGroupItem = { type, data: item } as ContactGroupItem;
   emit('contact-item-click', contactGroupItem);
   setActiveContact(contactGroupItem);
   if (props.onContactItemClick) {
@@ -232,18 +290,72 @@ const handleContactClick = (type: ContactItemType, item: ContactItem) => {
   }
 };
 
+/**
+ * Boundary adapter for `ContactSearch`.
+ *
+ * `ContactSearch` is not migrated in M3 and still emits legacy engine-lite
+ * payloads — `UserProfile` with `nick`/`avatar`/`selfSignature`, and
+ * `GroupModel` with `name`/`avatar`/`type`. This handler normalizes the
+ * payload into the unified `ContactInfo` / `GroupInfo` shape at the boundary
+ * so that the entire ContactList subtree only ever sees new types.
+ *
+ * Whenever possible, we prefer the store's own entry (for friends / groups
+ * already joined, etc.) over the raw search payload so the UI can immediately
+ * show the richer data the store holds. Strangers are represented by a
+ * minimal `ContactInfo` / `GroupInfo` constructed from the search payload.
+ *
+ * This boundary disappears in M7 when Search/ContactSearch is migrated.
+ */
+const handleSearchResultClick = (item: ContactGroupItem) => {
+  const legacyData = item.data as Record<string, any>;
+
+  if (item.type === ContactItemType.SEARCH_USER) {
+    const { userID } = legacyData as { userID: string };
+    // Prefer the latest store entry if it exists.
+    const fromStore = friendList.value.find(u => u.userID === userID)
+      ?? blackList.value.find(u => u.userID === userID);
+    const normalized: ContactInfo = fromStore ?? {
+      userID,
+      nickname: legacyData.nickname ?? legacyData.nick ?? '',
+      avatarURL: legacyData.avatarURL ?? legacyData.avatar ?? '',
+      aboutMe: legacyData.aboutMe ?? legacyData.selfSignature ?? '',
+      friendRemark: '',
+      onlineStatus: ContactOnlineStatus.Unknown,
+      isInBlacklist: false,
+      isFriend: false,
+    };
+    handleContactClick(ContactItemType.SEARCH_USER, normalized);
+    return;
+  }
+
+  if (item.type === ContactItemType.SEARCH_GROUP) {
+    const { groupID } = legacyData as { groupID: string };
+    const fromStore = joinedGroupList.value.find(g => g.groupID === groupID);
+    const normalized: GroupInfo = fromStore ?? {
+      groupID,
+      groupName: legacyData.groupName ?? legacyData.name ?? '',
+      avatarURL: legacyData.groupAvatarURL ?? legacyData.avatarURL ?? legacyData.avatar ?? '',
+      groupType: legacyData.groupType ?? (legacyData.type as GroupType),
+      memberCount: legacyData.memberCount,
+    };
+    handleContactClick(ContactItemType.SEARCH_GROUP, normalized);
+    return;
+  }
+
+  // Other types (FRIEND / GROUP / BLACK / …) can be forwarded as-is if the
+  // search layer ever emits them.
+  handleContactClick(item.type, item.data);
+};
+
 const handleFriendApplicationAction = async (
   action: 'accept' | 'refuse',
-  application: FriendApplication,
+  application: FriendApplicationInfo,
 ) => {
   try {
     if (action === 'accept') {
-      await acceptFriendApplication({
-        userID: application.userID,
-        type: application.type as any,
-      });
+      await acceptFriendApplication(application);
     } else {
-      await refuseFriendApplication(application.userID);
+      await refuseFriendApplication(application);
     }
     emit('friend-application-action', action, application);
     if (props.onFriendApplicationAction) {
@@ -256,18 +368,13 @@ const handleFriendApplicationAction = async (
 
 const handleGroupApplicationAction = async (
   action: 'accept' | 'refuse',
-  application: GroupApplication,
+  application: GroupApplicationInfo,
 ) => {
   try {
-    const params = {
-      handleMessage: '',
-      application,
-    };
-
     if (action === 'accept') {
-      await acceptGroupApplication(params);
+      await acceptApplication(application);
     } else {
-      await refuseGroupApplication(params);
+      await refuseApplication(application);
     }
     emit('group-application-action', action, application);
     if (props.onGroupApplicationAction) {
@@ -282,23 +389,26 @@ watch(
   () => props.groupConfig,
   (newConfig) => {
     if (newConfig) {
-      const newGroupTitles: Partial<Record<ContactItemType, string>> = defaultGroupTitles.value;
-      (Object.keys(defaultGroupTitles) as ContactItemType[]).forEach((key) => {
-        newGroupTitles[key] = newConfig[key]?.title || defaultGroupTitles.value[key] || '';
-      });
-      setContactGroupTitles(newGroupTitles);
+      // Titles merging is handled by the watchEffect above; nothing extra to do.
+      // The watch is kept only as an extension point.
     }
   },
 );
 
 const contactGroups = computed<ContactGroup[]>(() => {
-  const friendSections = buildFriendSections(friendList.value as Friend[]);
+  const friends = friendList.value as ContactInfo[];
+  const groups = joinedGroupList.value as GroupInfo[];
+  const blackUsers = blackList.value as ContactInfo[];
+  const friendRequests = friendApplicationList.value as FriendApplicationInfo[];
+  const groupRequests = groupApplicationList.value as GroupApplicationInfo[];
+
+  const friendSections = buildFriendSections(friends);
 
   const groupConfigs = [
     {
       type: ContactItemType.FRIEND_REQUEST,
       title: defaultGroupTitles.value[ContactItemType.FRIEND_REQUEST],
-      items: friendApplicationList.value,
+      items: friendRequests,
       unreadCount: friendApplicationUnreadCount.value,
       showTotalCount: false,
       order: 1,
@@ -306,15 +416,16 @@ const contactGroups = computed<ContactGroup[]>(() => {
     {
       type: ContactItemType.GROUP_REQUEST,
       title: defaultGroupTitles.value[ContactItemType.GROUP_REQUEST],
-      items: groupApplicationList.value,
+      items: groupRequests,
+      unreadCount: groupApplicationUnreadCount.value,
       showTotalCount: false,
       order: 2,
     },
     {
       type: ContactItemType.FRIEND,
       title: defaultGroupTitles.value[ContactItemType.FRIEND],
-      items: friendList.value,
-      count: friendList.value.length,
+      items: friends,
+      count: friends.length,
       sections: friendSections,
       showTotalCount: true,
       order: 3,
@@ -322,16 +433,16 @@ const contactGroups = computed<ContactGroup[]>(() => {
     {
       type: ContactItemType.GROUP,
       title: defaultGroupTitles.value[ContactItemType.GROUP],
-      items: groupList.value,
-      count: groupList.value.length,
+      items: groups,
+      count: groups.length,
       showTotalCount: true,
       order: 4,
     },
     {
       type: ContactItemType.BLACK,
       title: defaultGroupTitles.value[ContactItemType.BLACK],
-      items: blackList.value,
-      count: blackList.value.length,
+      items: blackUsers,
+      count: blackUsers.length,
       showTotalCount: true,
       order: 5,
     },
@@ -339,13 +450,13 @@ const contactGroups = computed<ContactGroup[]>(() => {
 
   const customGroupConfig = props.groupConfig as Partial<Record<ContactItemType, CustomGroupConfig>>;
 
-  const groups = groupConfigs
+  return groupConfigs
     .filter(config => !customGroupConfig?.[config.type]?.hidden)
     .map(config => ({
       key: config.type,
       type: config.type,
       title: customGroupConfig?.[config.type]?.title ?? config.title ?? '',
-      items: config.items,
+      items: config.items as ContactItem[],
       ...(config.count !== undefined && { count: config.count }),
       ...(config.sections !== undefined && { sections: config.sections }),
       ...(config.unreadCount !== undefined && { unreadCount: config.unreadCount }),
@@ -354,8 +465,6 @@ const contactGroups = computed<ContactGroup[]>(() => {
       order: customGroupConfig?.[config.type]?.order ?? config.order,
     }))
     .sort((a, b) => a.order - b.order);
-
-  return groups;
 });
 
 const searchPlaceholder = computed(() => props.searchPlaceholder || t('TUIContact.Search contacts'));

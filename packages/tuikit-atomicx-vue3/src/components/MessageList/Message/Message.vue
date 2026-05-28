@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { MessageLayout } from './MessageLayout';
 import type { MessageAction } from '../../../hooks/useMessageActions';
-import type { MessageModel } from '../../../types/engine';
+import type { MessageInfo } from '@atomicxcore/core';
 
 interface MessageProps {
-  message: MessageModel;
+  message: MessageInfo;
   nick?: string;
   alignment?: 'left' | 'right' | 'two-sided';
   messageActionList?: MessageAction[] | undefined;

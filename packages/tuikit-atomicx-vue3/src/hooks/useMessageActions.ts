@@ -9,11 +9,14 @@ import {
   TUIToast,
   i18next,
 } from '@tencentcloud/uikit-base-component-vue3';
-import { useMessageActionState } from '../states/MessageActionState';
+import { useMessageActionStore } from '../chat-store';
+import { MessageStatus, MessageType } from '@atomicxcore/core';
+import type { MessageInfo } from '@atomicxcore/core';
+import { useChatUIState } from '../context/useChatUIState';
 import { isCallMessage } from '../utils/call';
-import { MessageType } from '../types/engine';
-import type { MessageModel } from '../types/engine';
 import { isRoomMessage } from '../utils/room';
+import { copyTextToClipboard } from '../utils/copyText';
+import { transformTextWithEmojiKeyToName } from '../utils';
 
 /**
  * Message action interface
@@ -26,9 +29,9 @@ interface MessageAction {
   /** Action icon component */
   icon?: Component | string;
   /** Action click handler function */
-  onClick?: (message: MessageModel) => void;
+  onClick?: (message: MessageInfo) => void;
   /** Action visibility control */
-  visible?: boolean | ((message: MessageModel) => boolean);
+  visible?: boolean | ((message: MessageInfo) => boolean);
   /** Custom component */
   component?: Component;
   /** Custom class name */
@@ -44,35 +47,35 @@ const DEFAULT_ACTIONS: Record<string, MessageAction> = {
   copy: {
     key: 'copy',
     label: 'copy',
-    visible: (message: MessageModel) => message.type === MessageType.TEXT,
+    visible: (message: MessageInfo) => message.messageType === MessageType.Text,
     icon: IconCopy,
   },
   recall: {
     key: 'recall',
     label: 'recall',
-    visible: (message: MessageModel) =>
-      !isCallMessage(message) && message.flow === 'out'
-      && message.status === 'success'
-      && Date.now() - message.time * 1000 < 60 * 2 * 1000,
+    visible: (message: MessageInfo) =>
+      !isCallMessage(message) && message.isSentBySelf
+      && message.status === MessageStatus.SendSuccess
+      && Date.now() - (message.timestamp?.getTime() ?? 0) < 60 * 2 * 1000,
     icon: IconMsgRevoke,
   },
   quote: {
     key: 'quote',
     label: 'quote',
-    visible: (message: MessageModel) => !isCallMessage(message) && !isRoomMessage(message),
+    visible: (message: MessageInfo) => !isCallMessage(message) && !isRoomMessage(message) && message.status === MessageStatus.SendSuccess,
     icon: IconMsgQuote,
   },
   forward: {
     key: 'forward',
     label: 'forward',
-    visible: (message: MessageModel) => !isCallMessage(message) && !isRoomMessage(message),
+    visible: (message: MessageInfo) => !isCallMessage(message) && !isRoomMessage(message) && message.status === MessageStatus.SendSuccess,
     icon: IconMsgForward,
   },
   delete: {
     key: 'delete',
     label: 'delete',
     icon: IconMsgDel,
-    visible: true,
+    visible: (message: MessageInfo) => message.status === MessageStatus.SendSuccess,
     style: {
       color: 'var(--text-color-error)',
     },
@@ -90,13 +93,14 @@ const DEFAULT_ACTION_ORDER: Array<MessageAction['key']> = ['copy', 'recall', 'qu
  * @param propsActionList - Custom action list, can be an array of action keys or action objects
  * @returns Processed message action list
  */
-function useMessageActions(propsActionList?: Array<MessageAction['key'] | MessageAction>): MessageAction[] {
-  const state = useMessageActionState();
+function useMessageActions(propsActionList?: Array<MessageAction['key'] | MessageAction>, channel = 'default'): MessageAction[] {
+  const { openForwardModal, setQuotedMessage, focusInput } = useChatUIState(channel);
 
   // Default action handlers
-  const defaultActionHandlers: Record<string, (message: MessageModel) => void> = {
+  const defaultActionHandlers: Record<string, (message: MessageInfo) => void> = {
     copy: (message) => {
-      state.copyTextMessage(message)
+      const text = (message.messagePayload as any)?.text ?? '';
+      copyTextToClipboard(transformTextWithEmojiKeyToName(text))
         .then(() => TUIToast.success({
           message: i18next.t('MessageList.copy_success'),
         }))
@@ -105,27 +109,33 @@ function useMessageActions(propsActionList?: Array<MessageAction['key'] | Messag
         }));
     },
     recall: (message) => {
-      state.recallMessage(message)
-        .then(() => TUIToast.success({
-          message: i18next.t('MessageList.recall_success'),
-        }))
+      const actionStore = useMessageActionStore(message);
+      actionStore.revoke()
+        .then(() => {
+          TUIToast.success({ message: i18next.t('MessageList.recall_success') });
+        })
         .catch(err => TUIToast.error({
           message: err.code === 20016 ? i18next.t('MessageList.recall_time_limit_exceeded') : i18next.t('MessageList.recall_failed'),
-        }));
+        }))
+        .finally(() => actionStore.destroy());
     },
-    quote: state.quoteMessage,
+    quote: (message) => {
+      setQuotedMessage(message);
+      focusInput();
+    },
     forward: (message) => {
-      state.setForwardMessageIDList([message.ID]);
-      state.setIsForwardMessageSelectionDone(true);
+      openForwardModal([message]);
     },
     delete: (message) => {
-      state.deleteMessage(message)
-        .then(() => TUIToast.success({
-          message: i18next.t('MessageList.delete_success'),
-        }))
+      const actionStore = useMessageActionStore(message);
+      actionStore.delete()
+        .then(() => {
+          TUIToast.success({ message: i18next.t('MessageList.delete_success') });
+        })
         .catch(() => TUIToast.error({
           message: i18next.t('MessageList.delete_failed'),
-        }));
+        }))
+        .finally(() => actionStore.destroy());
     },
   };
 

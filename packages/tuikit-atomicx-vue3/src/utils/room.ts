@@ -1,22 +1,16 @@
-import { MessageModel } from "../types";
+import type { CustomMessageInfo, MessageInfo } from '@atomicxcore/core';
+import { safeJSONParse } from './json';
 
 interface RoomMessageData {
   businessID: string;
   [key: string]: any;
 }
 
-interface RoomMessagePayload {
-  data: string;
-  description: string;
-  extension: string;
-}
-
-export const isRoomMessage = (message: MessageModel) => {
+export const isRoomMessage = (message: MessageInfo): boolean => {
   try {
-    const payload = message.payload as unknown as RoomMessagePayload;
-    const payloadData = JSON.parse(payload?.data || '{}') as RoomMessageData;
+    const payloadData = safeJSONParse((message as CustomMessageInfo).messagePayload?.customData, {} as RoomMessageData);
     return payloadData.businessID === 'group_room_message';
   } catch {
     return false;
   }
-}
+};

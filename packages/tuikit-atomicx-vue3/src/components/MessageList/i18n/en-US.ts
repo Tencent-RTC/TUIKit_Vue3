@@ -8,6 +8,7 @@ const MessageList = {
   changed_group_name_to: 'changed group name to',
   published_new_announcement: 'published new group notification',
   joined_group: 'joined the group',
+  invited: 'invited',
   group_member: 'Group member',
   left_group: 'left the group',
   was: 'was',
@@ -17,6 +18,18 @@ const MessageList = {
   was_muted: 'was muted',
   was_unmuted: 'was unmuted',
   group_tip_message: 'Group tip message',
+  changed_group_avatar: 'changed group avatar',
+  changed_group_introduction: 'changed group introduction',
+  changed_group_join_option: 'changed group join option to',
+  changed_group_invite_option: 'changed group invite option to',
+  join_option_any: 'Free Access',
+  join_option_auth: 'Need Approval',
+  join_option_forbid: 'Disabled',
+  invite_option_any: 'Free Invite',
+  invite_option_auth: 'Need Approval',
+  invite_option_forbid: 'Disabled',
+  pinned_a_message: 'pinned a message',
+  unpinned_a_message: 'unpinned a message',
   people: '',
 
   // TUIChat
@@ -28,7 +41,7 @@ const MessageList = {
   you: 'You',
   recalled_a_message: 'recalled a message',
   reedit: 'Re-edit',
-  origin_message_has_been_recalled: 'Original message has been recalled',
+  origin_message_has_been_recalled: 'Original message has been deleted or recalled',
   forward: 'Forward',
   copy: 'Copy',
   recall: 'Recall',
@@ -51,6 +64,16 @@ const MessageList = {
   recall_time_limit_exceeded: 'Recall time limit exceeded',
   delete_success: 'Deleted',
   delete_failed: 'Delete Failed',
+
+  // Quote preview
+  quote_image: '[Image]',
+  quote_audio: '[Audio]',
+  quote_video: '[Video]',
+  quote_file: '[File]',
+  quote_face: '[Emoji]',
+  quote_custom: '[Custom]',
+  quote_merged: '[Chat History]',
+  quote_unknown: '[Message]',
 };
 
 const CallMessage = {

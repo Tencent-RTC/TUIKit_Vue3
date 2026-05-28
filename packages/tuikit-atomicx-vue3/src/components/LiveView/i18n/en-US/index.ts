@@ -23,6 +23,7 @@ export const resource = {
   'LiveView.NotAllowFullscreenInPIP': 'Not allow to "Fullscreen" in picture-in-picture mode',
   'LiveView.NotAllowPIPInNonPlaying': 'Not allow to "Picture in Picture" in non-playing mode',
   'LiveView.NotAllowPIPInFullscreen': 'Not allow to "Picture in Picture" in fullscreen mode',
+  'LiveView.ButtonDisabled': 'This button is disabled',
   'LiveView.BattleEnded': 'Battle ended',
   'LiveView.VoiceChatNotSupported': 'Voice chat room display is not currently supported on the Web',
   'LiveView.AnchorAway': 'The host is temporarily away',

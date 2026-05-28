@@ -1,16 +1,15 @@
-import { TUIFriendService, TUIUserService, TUIChatEngine } from '@tencentcloud/chat-uikit-engine-lite';
 import TUICore, { TUIConstants } from '@tencentcloud/tui-core-lite';
-import { reportStateUsageData, StateUsageType } from '../report/stateUsageReport';
+import { LoginStore, ContactStore } from '@atomicxcore/core';
+import { reportStoreUsageData, StoreName } from '@atomicxcore/core';
 import { safeJSONParse } from './json';
-import { enableSampleTaskStatus } from './enableSampleTaskStatus';
 import { showChatErrorModalById, ChatErrorModalId } from '../components/UIKitModal/chatErrorModal';
 import { useOfflinePushInfo } from '../hooks/useOfflinePushInfo';
 import type { StartCallParams, CallMessagePayload } from '../types/call';
-import type { MessageModel } from '../types/engine';
+import type { CustomMessageInfo, MessageInfo } from '@atomicxcore/core';
 
-function isCallMessage(message: MessageModel) {
+function isCallMessage(message: MessageInfo) {
   try {
-    const payloadData = safeJSONParse(message.payload.data, {} as any);
+    const payloadData = safeJSONParse((message as CustomMessageInfo).messagePayload?.customData, {} as any);
     if (payloadData.businessID === 1 && payloadData.data) {
       const payloadDataData = safeJSONParse(payloadData.data, {} as any);
       if (payloadDataData.businessID === 'av_call' || payloadDataData.businessID === 'rtc_call') {
@@ -23,8 +22,13 @@ function isCallMessage(message: MessageModel) {
   return false;
 }
 
+function isCreateGroupMessage(message: MessageInfo) {
+  const payloadData = safeJSONParse((message as CustomMessageInfo).messagePayload?.customData, {} as any);
+  return payloadData?.businessID === 'group_create';
+}
+
 function startCall(params: StartCallParams) {
-  reportStateUsageData({ type: StateUsageType.ChatEvokeCall });
+  reportStoreUsageData({ storeName: StoreName.ChatEvokeCall });
   const result = TUICore.getService(TUIConstants.TUICalling.SERVICE.NAME);
 
   if (!result) {
@@ -46,11 +50,14 @@ function startCall(params: StartCallParams) {
       ...(callOfflinePushInfo && !params.offlinePushInfo ? { offlinePushInfo: callOfflinePushInfo } : {}),
     },
   });
-  enableSampleTaskStatus('call');
 }
 
-function parseCallMessage(message: MessageModel): CallMessagePayload | undefined {
-  const dataContent = safeJSONParse<any>(message.payload.data, undefined);
+function parseCallMessage(message: MessageInfo): CallMessagePayload | undefined {
+  if (ContactStore.getState().friendList.length === 0) {
+    ContactStore.loadFriends();
+  }
+  const customData = (message as CustomMessageInfo).messagePayload?.customData;
+  const dataContent = safeJSONParse<any>(customData, undefined);
 
   if (!dataContent) {
     return undefined;
@@ -62,9 +69,10 @@ function parseCallMessage(message: MessageModel): CallMessagePayload | undefined
     return undefined;
   }
 
+  const customPayload = (message as CustomMessageInfo).messagePayload;
   const result: CallMessagePayload = {
-    description: message.payload.description,
-    extension: message.payload.extension,
+    description: customPayload?.description ?? '',
+    extension: customPayload?.extensionInfo ?? '',
     data: {
       businessID: dataContent.businessID,
       timeout: dataContent.timeout,
@@ -118,8 +126,8 @@ function substringByLength(str: string, maxLength = 12): string {
 }
 
 function getUserRemarkByUserID(userID: string): string {
-  const remarkMap = TUIFriendService.getFriendRemark([userID]);
-  return remarkMap[userID] || '';
+  const friend = ContactStore.getState().friendList.find(f => f.userID === userID);
+  return friend?.friendRemark || '';
 }
 
 /**
@@ -131,7 +139,7 @@ const userShowNameMap = new Map<string, string>();
  */
 const requestedUserMap = new Map<string, number>();
 
-function parseCallMessageText(message: MessageModel, t: any): string {
+function parseCallMessageText(message: MessageInfo, t: any): string {
   const callMessagePayload = parseCallMessage(message);
 
   if (!callMessagePayload || callMessagePayload.data.businessID !== 1) {
@@ -140,11 +148,11 @@ function parseCallMessageText(message: MessageModel, t: any): string {
 
   const { data } = callMessagePayload;
   const objectData = data.data;
-  const userID: string = (message as any).fromAccount || message.from;
+  const userID: string = message.from?.userID ?? '';
   const remark = getUserRemarkByUserID(userID);
-  const myUserID = TUIChatEngine.getMyUserID();
+  const myUserID = LoginStore.getState().loginUserInfo?.userID ?? '';
 
-  let messageSender = remark || message.nameCard || message.nick || userID;
+  let messageSender = remark || message.from?.nameCard || message.from?.nickname || userID;
   messageSender = substringByLength(messageSender);
 
   switch (data.actionType) {
@@ -237,12 +245,12 @@ function handleCallKitTimeoutSignaling(inviteeList: string[] = []) {
   if (inviteeList.length === 0) {
     return;
   }
-  const friendRemarkResult = TUIFriendService.getFriendRemark(inviteeList);
   const userIDList: string[] = [];
   inviteeList.forEach((userID: string) => {
-    const showName = friendRemarkResult[userID];
-    if (showName) {
-      userShowNameMap.set(userID, showName);
+    const friend = ContactStore.getState().friendList.find(f => f.userID === userID);
+    const remark = friend?.friendRemark;
+    if (remark) {
+      userShowNameMap.set(userID, remark);
     } else if (!requestedUserMap.has(userID)) {
       userIDList.push(userID);
       requestedUserMap.set(userID, 1);
@@ -250,12 +258,10 @@ function handleCallKitTimeoutSignaling(inviteeList: string[] = []) {
   });
   // note: request once for each callKit timeout signaling, do not use rate limiting processing for now
   if (userIDList.length > 0) {
-    TUIUserService.getUserProfile({ userIDList }).then((imResponse: any) => {
-      const profileList = imResponse.data || [];
-      profileList.forEach((profile: any) => {
-        const { userID, nick } = profile;
-        const showName = nick || userID;
-        userShowNameMap.set(userID, showName);
+    ContactStore.getContactInfo(userIDList).then((contactList) => {
+      contactList.forEach((contact) => {
+        const showName = contact.nickname || contact.userID;
+        userShowNameMap.set(contact.userID, showName);
       });
     }).catch(() => {
       // capture exceptions when requests fail to avoid blocking code execution process
@@ -263,4 +269,4 @@ function handleCallKitTimeoutSignaling(inviteeList: string[] = []) {
   }
 }
 
-export { startCall, isCallMessage, parseCallMessage, parseCallMessageText };
+export { startCall, isCallMessage, parseCallMessage, parseCallMessageText, isCreateGroupMessage };

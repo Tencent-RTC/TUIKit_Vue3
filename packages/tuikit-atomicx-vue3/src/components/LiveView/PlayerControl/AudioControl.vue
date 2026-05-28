@@ -1,5 +1,5 @@
 <template>
-  <div class="audio-control" :style="iconSizeStyle" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
+  <div class="audio-control" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
     <span class="control-btn volume-btn" :title="props.isMuted ? t('LiveView.OpenSpeaker') : t('LiveView.CloseSpeaker')" @click="handleVolumeIconClick">
       <template v-if="props.isMuted">
         <component v-if="props.customActiveIcon" :is="renderButtonIcon(props.customActiveIcon, props.iconSize)" />
@@ -13,8 +13,6 @@
     <div v-show="isVolumeSliderVisible" class="volume-slider-container">
       <div
         class="volume-slider-wrapper"
-        @mouseenter="handleVolumeSliderMouseEnter"
-        @mouseleave="handleVolumeSliderMouseLeave"
       >
         <div class="volume-slider-wrapper-inner">
           <div
@@ -100,11 +98,6 @@ const volumePercentage = computed(() => {
   return Math.round(props.volume);
 });
 
-const iconSizeStyle = computed(() => ({
-  width: `${props.iconSize}px`,
-  height: `${props.iconSize}px`,
-}));
-
 const updateVolume = (newVolume: number) => {
   // Clamp volume to valid range
   const clampedVolume = Math.max(VOLUME_CONSTANTS.MIN_VOLUME, Math.min(VOLUME_CONSTANTS.MAX_VOLUME, newVolume));
@@ -153,9 +146,12 @@ const handleMouseEnter = () => {
   // Only handle mouse events on PC
   if (isMobile) return;
 
-  // On PC, show volume slider and start auto-hide timer
+  // On PC, show the volume slider and cancel any pending auto-hide. The
+  // slider stays visible as long as the mouse remains within the
+  // `.audio-control` region (icon or slider popup). Auto-hide is only
+  // started once the mouse leaves the entire region (handleMouseLeave).
   isVolumeSliderVisible.value = true;
-  startVolumeSliderAutoHideTimer();
+  stopVolumeSliderAutoHideTimer();
 };
 
 const handleMouseLeave = () => {
@@ -212,10 +208,9 @@ const handleSliderMove = (event: MouseEvent | TouchEvent) => {
 
 const handleSliderEnd = () => {
   isDragging.value = false;
-  // Restart auto-hide timer when dragging ends
-  if (isVolumeSliderVisible.value) {
-    startVolumeSliderAutoHideTimer();
-  }
+  // Don't start auto-hide here — the mouse is likely still within the
+  // `.audio-control` region. Auto-hide will be triggered by
+  // `handleMouseLeave` when the pointer actually leaves the area.
   removeGlobalEventListeners();
 };
 
@@ -243,23 +238,6 @@ const handleVolumeSliderAreaClick = () => {
   }
 };
 
-const handleVolumeSliderMouseEnter = () => {
-  // Only handle mouse events on PC
-  if (isMobile) return;
-  // On PC, stop auto-hide timer when mouse enters slider area
-  stopVolumeSliderAutoHideTimer();
-};
-
-const handleVolumeSliderMouseLeave = () => {
-  // Only handle mouse events on PC
-  if (isMobile) return;
-  // On PC, start auto-hide timer when mouse leaves slider area
-  // But don't start if currently dragging
-  if (!isDragging.value) {
-    startVolumeSliderAutoHideTimer();
-  }
-};
-
 onUnmounted(() => {
   removeGlobalEventListeners();
   if (volumeSliderAutoHideTimer.value) {
@@ -276,15 +254,26 @@ onUnmounted(() => {
 }
 
 .volume-btn {
-  width: 100%;
-  height: 100%;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: background-color 0.2s ease;
+
+  @media (hover: hover) {
+    &:hover {
+      background: rgba(125, 125, 125, 0.4);
+    }
+  }
 }
 
 .volume-slider-container {
   position: absolute;
+  width: 60px;
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);

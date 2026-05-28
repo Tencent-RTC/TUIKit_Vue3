@@ -1,12 +1,22 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
-import { TUIChatEngine } from '@tencentcloud/chat-uikit-engine-lite';
+import { computed, provide } from 'vue';
+import { ConversationType } from '@atomicxcore/core';
 import { IconClose1, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useConversationListState } from '../../states/ConversationListState';
+import { useChatContext } from '../../chat-store';
 import { C2CChatSetting } from './C2CChatSetting';
 import { GroupChatSetting } from './GroupChatSetting';
 
-const { activeConversation } = useConversationListState();
+interface ChatSettingProps {
+  channel?: string;
+}
+
+const props = withDefaults(defineProps<ChatSettingProps>(), {
+  channel: 'default',
+});
+
+provide('channel', props.channel);
+
+const { activeConversation } = useChatContext(props.channel);
 const { t } = useUIKit();
 const emit = defineEmits<{
   close: [];
@@ -14,7 +24,7 @@ const emit = defineEmits<{
 
 const chatType = computed(() => activeConversation.value?.type);
 const headerTitle = computed(() =>
-  chatType.value === TUIChatEngine.TYPES.CONV_GROUP
+  chatType.value === ConversationType.Group
     ? t('ChatSetting.group_setting_title')
     : t('ChatSetting.chat_setting_title'),
 );
@@ -34,9 +44,9 @@ const headerTitle = computed(() =>
       />
     </div>
     <!-- C2C Chat Setting -->
-    <C2CChatSetting v-if="chatType === TUIChatEngine.TYPES.CONV_C2C" />
+    <C2CChatSetting v-if="chatType === ConversationType.C2C" />
     <!-- Group Chat Setting -->
-    <GroupChatSetting v-else-if="chatType === TUIChatEngine.TYPES.CONV_GROUP" />
+    <GroupChatSetting v-else-if="chatType === ConversationType.Group" />
   </div>
   <div v-else>
     [null active conversation]

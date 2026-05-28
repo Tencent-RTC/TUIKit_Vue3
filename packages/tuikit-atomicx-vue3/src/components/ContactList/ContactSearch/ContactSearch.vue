@@ -18,6 +18,7 @@
 
     <Search
       v-else
+      ref="searchRef"
       :variant="VariantType.EXACT"
       :SearchBar="CustomSearchBar"
       :SearchResultsPresearch="CustomSearchResultsPresearch"
@@ -30,12 +31,10 @@
 <script setup lang="ts">
 import { ref, h } from 'vue';
 import { IconSearchMore, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useSearchState } from '../../../states/SearchState';
-import { VariantType, SearchType, ContactItemType } from '../../../types';
+import { VariantType, ContactItemType } from '../../../types';
+import { SearchType } from '../../../types/search';
 import { Search, SearchBar } from '../../Search';
 import type {
-  SearchCloudUsersResultItem,
-  SearchCloudGroupsResultItem,
   SearchResultItemType,
   SearchBarProps,
 } from '../../../types';
@@ -46,28 +45,28 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useUIKit();
-const { setKeyword } = useSearchState();
 
 const isShowSearch = ref(false);
+const searchRef = ref<any>(null);
 
 const handleResultItemClick = (item: SearchResultItemType, type: SearchType) => {
   if (type === SearchType.USER) {
     emit('result-click', {
       type: ContactItemType.SEARCH_USER,
-      data: (item as SearchCloudUsersResultItem).profile,
+      data: (item as any).profile,
     });
   }
 
   if (type === SearchType.GROUP) {
     emit('result-click', {
       type: ContactItemType.SEARCH_GROUP,
-      data: (item as SearchCloudGroupsResultItem).groupInfo,
+      data: (item as any).groupInfo,
     });
   }
 };
 
 const handleCancel = () => {
-  setKeyword('');
+  searchRef.value?.setKeyword?.('');
   isShowSearch.value = false;
 };
 

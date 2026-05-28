@@ -12,6 +12,7 @@ enum StateUsageType {
   SearchState = 1006,
   ContactState = 1007,
   ChatEvokeCall = 1020,
+  ChatEvokeRoom = 1021,
 }
 
 interface StateUsageReportOptions {

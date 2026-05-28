@@ -44,7 +44,8 @@ import {
 } from '../../../Avatar';
 import { useConversationCreate } from '../../hooks/useConversationCreate';
 import { typeInfoList } from './type';
-import type { GroupType, ConversationGroupTypeInfoProps } from '../../../../types';
+import type { ConversationGroupTypeInfoProps } from '../../../../types/conversation';
+import type { GroupType } from '@atomicxcore/core';
 
 const props = defineProps<ConversationGroupTypeInfoProps>();
 

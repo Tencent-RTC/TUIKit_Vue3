@@ -12,6 +12,13 @@ module.exports = {
     tsconfigRootDir: __dirname,
     extraFileExtensions: ['.vue'],
   },
+  settings: {
+    'import/resolver': {
+      typescript: {
+        project: './tsconfig.eslint.json',
+      },
+    },
+  },
   rules: {
     'vue/multi-word-component-names': 'off',
     'vue/attribute-hyphenation': 'off',

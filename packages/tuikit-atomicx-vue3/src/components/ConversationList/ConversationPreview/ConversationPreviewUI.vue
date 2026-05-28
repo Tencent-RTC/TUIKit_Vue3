@@ -6,10 +6,10 @@
                isH5 && [$style['conversationPreview--mobile']],
                (isSelected || conversation?.conversationID === activeConversation?.conversationID)
                  && [$style['conversationPreview--active']],
-               (!conversation?.isMuted && (conversation?.unreadCount > 0 || conversation?.markList?.includes(TUIChatEngine.TYPES.CONV_MARK_TYPE_UNREAD)))
+               (conversation?.receiveOption === 'receive' && (conversation?.unreadCount > 0 || conversation?.conversationMarkList?.includes(2)))
                  && [$style['conversationPreview--unread']],
                conversation?.isPinned && [$style['conversationPreview--pin']],
-               conversation?.isMuted && [$style['conversationPreview--mute']],
+               conversation?.receiveOption !== 'receive' && [$style['conversationPreview--mute']],
       ]"
       :style="style"
       v-bind="longPressEvents"
@@ -19,7 +19,7 @@
         <div :class="$style['conversationPreview__avatar']">
           <component
             :is="Avatar"
-            :src="conversation?.getAvatar?.()"
+            :src="conversation?.avatarURL"
             size="sm"
             :unreadCount="avatarUnreadCount"
             :isDotUnreadCount="avatarIsDotUnread"
@@ -44,7 +44,7 @@
               :conversation="conversation"
             />
             <div
-              v-if="conversation?.isMuted && !isActionMenuActive"
+              v-if="conversation?.receiveOption !== 'receive' && !isActionMenuActive"
               :class="$style['conversationPreview__mute-icon']"
             >
               <IconMute />
@@ -78,12 +78,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch } from 'vue';
-import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
-import { useLongPress, useMouseHover } from '../../../hooks';
-import { useConversationListState } from '../../../states/ConversationListState';
-import { isH5 } from '../../../utils';
+import { ref, computed, watch, inject } from 'vue';
+import { ConversationMarkType, ReceiveMessageOption } from '@atomicxcore/core';
 import { IconMute } from '@tencentcloud/uikit-base-component-vue3';
+import { useChatContext } from '../../../chat-store';
+import { useLongPress, useMouseHover } from '../../../hooks';
+import { isH5 } from '../../../utils';
 import { Avatar as DefaultAvatar } from '../../Avatar';
 import { ConversationActions as DefaultConversationActions } from '../ConversationActions';
 import { default as DefaultLastMessageAbstract } from './ConversationPreviewAbstract.vue';
@@ -91,9 +91,9 @@ import { default as DefaultLastMessageTimestamp } from './ConversationPreviewTim
 import { default as DefaultTitle } from './ConversationPreviewTitle.vue';
 import { default as DefaultUnread } from './ConversationPreviewUnread.vue';
 import type {
-  ConversationModel,
   ConversationPreviewUIProps,
 } from '../../../types';
+import type { ConversationInfo } from '@atomicxcore/core';
 
 const props = withDefaults(defineProps<ConversationPreviewUIProps>(), {
   isSelected: false,
@@ -107,25 +107,35 @@ const props = withDefaults(defineProps<ConversationPreviewUIProps>(), {
 });
 
 const emit = defineEmits<{
-  selectConversation: [conversation: ConversationModel];
+  selectConversation: [conversation: ConversationInfo];
 }>();
 
-const { activeConversation } = useConversationListState();
+const channel = inject('channel', 'default') as string;
+const { activeConversation } = useChatContext(channel);
 
 const avatarUnreadCount = computed(() => {
-  const conv = props.conversation;
-  if (!conv) return 0;
-  const hasUnreadMark = conv.markList?.includes(TUIChatEngine.TYPES.CONV_MARK_TYPE_UNREAD);
-  if (conv.isMuted) {
+  const conv = props.conversation as unknown as ConversationInfo;
+  if (!conv) {
+    return 0;
+  }
+  const hasUnreadMark = conv.conversationMarkList?.includes(ConversationMarkType.Unread);
+  const isMuted = conv.receiveOption !== ReceiveMessageOption.Receive;
+  if (isMuted) {
     return (conv.unreadCount > 0 || hasUnreadMark) ? 1 : 0;
   }
-  if (conv.unreadCount > 0) return conv.unreadCount;
-  if (hasUnreadMark) return 1;
+  if (conv.unreadCount > 0) {
+    return conv.unreadCount;
+  }
+  if (hasUnreadMark) {
+    return 1;
+  }
   return 0;
 });
 
 const avatarIsDotUnread = computed(() => {
-  return !!(props.conversation?.isMuted && avatarUnreadCount.value > 0);
+  const conv = props.conversation as unknown as ConversationInfo;
+  const isMuted = conv?.receiveOption !== ReceiveMessageOption.Receive;
+  return !!(isMuted && avatarUnreadCount.value > 0);
 });
 
 const conversationPreviewRef = ref<HTMLElement>();
@@ -152,7 +162,7 @@ watch(isHovered, (newValue) => {
 });
 
 const handleClick = () => {
-  emit('selectConversation', props.conversation);
+  emit('selectConversation', props.conversation as unknown as ConversationInfo);
 };
 
 const handleCloseActionsModal = () => {
@@ -160,7 +170,6 @@ const handleCloseActionsModal = () => {
 };
 
 const handleDropdownVisibleChange = (visible: boolean) => {
-  console.log('[ConversationPreview] dropdown visible changed:', visible);
   isDropdownOpen.value = visible;
   // When dropdown closes and mouse is not hovering, hide actions
   if (!visible && !isHovered.value) {

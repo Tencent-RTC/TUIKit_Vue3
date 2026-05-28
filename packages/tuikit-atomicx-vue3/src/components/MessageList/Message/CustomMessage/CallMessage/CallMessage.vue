@@ -1,33 +1,34 @@
 <script setup lang="ts">
-import { computed, useCssModule } from 'vue';
+import { computed, inject, useCssModule } from 'vue';
+import { ConversationType } from '@atomicxcore/core';
 import { IconCall1Filled, IconVideoDefaultFilled, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { View } from '../../../../../baseComp/View';
-import { useConversationListState } from '../../../../../states/ConversationListState';
-import { ConversationType } from '../../../../../types/engine';
+import { useChatContext } from '../../../../../chat-store';
 import { parseCallMessage, startCall, parseCallMessageText } from '../../../../../utils/call';
-import type { MessageModel } from '../../../../../types';
+import type { MessageInfo } from '@atomicxcore/core';
 
 interface Props {
-  message: MessageModel;
+  message: MessageInfo;
 }
 
 const props = defineProps<Props>();
 
 const { t } = useUIKit();
 const classes = useCssModule();
-const { activeConversation } = useConversationListState();
+const channel = inject('channel', 'default') as string;
+const { activeConversation } = useChatContext(channel);
 
 const text = computed(() => parseCallMessageText(props.message, t));
 const payload = computed(() => parseCallMessage(props.message));
 
 const callAgain = () => {
-  if (!activeConversation.value || !payload.value || props.message.conversationType === ConversationType.GROUP) {
+  if (!activeConversation.value || !payload.value || props.message.conversationType === ConversationType.Group) {
     return;
   }
 
   startCall({
     type: payload.value.data.data.call_type,
-    userIDList: [activeConversation.value.userProfile?.userID],
+    userIDList: [activeConversation.value.conversationID.replace(/^C2C/, '')],
   });
 };
 </script>

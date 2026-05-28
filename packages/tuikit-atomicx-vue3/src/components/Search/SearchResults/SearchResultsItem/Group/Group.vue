@@ -2,12 +2,12 @@
 <template>
   <div :class="$style.SearchGroup" @click="handleClick">
     <div :class="$style['SearchGroup__avatar']">
-      <Avatar :src="groupInfo.avatar" :alt="groupInfo?.name || groupInfo?.groupID" />
+      <Avatar :src="groupInfo?.groupAvatarURL" :alt="groupInfo?.groupName || groupInfo?.groupID" />
     </div>
     <div :class="$style['SearchGroup__info']">
       <div
         :class="$style['SearchGroup__name']"
-        v-html="highlightText(groupInfo?.name || groupInfo?.groupID, keyword, $style['SearchGroup__highlight'])"
+        v-html="highlightText(groupInfo?.groupName || groupInfo?.groupID, keyword, $style['SearchGroup__highlight'])"
       ></div>
       <div
         v-if="groupInfo"
@@ -19,8 +19,8 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, defineProps } from 'vue';
-import { SearchType } from '../../../../../types/engine';
+import { computed } from 'vue';
+import { SearchType } from '../../../../../types/search';
 import type { ResultItemProps } from '../../../../../types/search';
 import { Avatar } from '../../../../Avatar';
 import { highlightText } from '../utils';
