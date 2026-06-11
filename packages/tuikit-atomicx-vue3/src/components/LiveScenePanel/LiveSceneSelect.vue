@@ -100,7 +100,7 @@ const handleAddMaterial = (type: TRTCMediaSourceType) => {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-color-primary);
   font-size: 14px;
   line-height: 22px;
   font-weight: 500;
@@ -116,7 +116,7 @@ const handleAddMaterial = (type: TRTCMediaSourceType) => {
       width: 100%;
       height: 40px;
       border-radius: 20px;
-      background-color: #383f4d;
+      background-color: var(--button-color-secondary-default);
       color: var(--text-color-primary);
       font-size: 12px;
       font-weight: 400;
@@ -124,7 +124,7 @@ const handleAddMaterial = (type: TRTCMediaSourceType) => {
       cursor: pointer;
       gap: 4px;
       &:hover {
-        background-color: #4f586b;
+        background-color: var(--button-color-secondary-hover);
       }
     }
   }
@@ -146,7 +146,7 @@ const handleAddMaterial = (type: TRTCMediaSourceType) => {
     width: 100%;
     height: 40px;
     border-radius: 20px;
-    background-color: #383f4d;
+    background-color: var(--button-color-secondary-default);
     color: var(--text-color-primary);
     font-size: 12px;
     font-weight: 400;
@@ -155,7 +155,7 @@ const handleAddMaterial = (type: TRTCMediaSourceType) => {
     transition: background-color 0.2s ease;
 
     &:hover {
-      background-color: #4f586b;
+      background-color: var(--button-color-secondary-hover);
     }
   }
 
@@ -178,7 +178,7 @@ const handleAddMaterial = (type: TRTCMediaSourceType) => {
       align-items: center;
       width: 100%;
       height: 40px;
-      color: #d5e0f2;
+      color: var(--text-color-primary);
       font-size: 12px;
       font-weight: 400;
       border-radius: 4px;
@@ -187,7 +187,7 @@ const handleAddMaterial = (type: TRTCMediaSourceType) => {
       gap: 4px;
 
       &:hover {
-        background-color: rgba(209, 217, 236, 0.1);
+        background-color: var(--dropdown-color-hover);
       }
     }
   }

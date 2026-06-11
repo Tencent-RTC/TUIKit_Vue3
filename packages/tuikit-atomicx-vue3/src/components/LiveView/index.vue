@@ -80,9 +80,36 @@
       </div>
     </div>
     <!-- Autoplay prompt overlay: shown when browser autoplay policy blocks playback -->
+    <!--
+      Touch handling rationale (H5):
+      The overlay sits above an interactive `.empty-position` underneath
+      (apply-to-link area in DefaultStreamViewUI). On mobile, a tap fires
+      `touchstart` -> `touchend` -> a synthetic `click` shortly after. If we
+      dismiss the overlay during `touchstart`, Vue detaches it before the
+      synthetic `click` is dispatched, which then lands on the underlying
+      element and unintentionally triggers it.
+      Strategy: drive everything from the touch path and never rely on the
+      synthetic click.
+        - `@touchstart.stop` only blocks bubbling (no DOM change yet).
+        - `@touchend.stop.prevent` always preventDefault to suppress the
+          synthetic click for this tap, then dispatches based on the actual
+          target:
+            - tap inside a resume button (default class
+              `.autoplay-prompt-action`, or any element flagged with the
+              `data-autoplay-resume` attribute for custom slots): call
+              `handleAutoPlayResume()` directly.
+            - tap on the blank area: call `dismissAutoPlayPrompt()`.
+        - `@click.stop="dismissAutoPlayPrompt"` covers desktop / non-touch
+          input. Inside the default prompt, the button's own click handler
+          fires first and unmounts the overlay before this stop handler runs,
+          so it does not interfere with the resume flow.
+    -->
     <div
       v-if="isAutoPlayFailed && !isAnchor"
       class="autoplay-prompt-overlay"
+      @touchstart.stop
+      @touchend.stop.prevent="handleOverlayTouchEnd"
+      @click.stop="dismissAutoPlayPrompt"
     >
       <slot name="autoplay-prompt" v-bind="{ resume: handleAutoPlayResume }">
         <DefaultAutoPlayPrompt :visible="true" @resume="handleAutoPlayResume" />
@@ -119,7 +146,7 @@ import DefaultAutoPlayPrompt from './DefaultAutoPlayPrompt.vue';
 import DefaultStreamViewUI from './DefaultStreamViewUI.vue';
 import { useOverlayState } from './OverlayState';
 import { usePlayerControlState } from './PlayerControl';
-import { LIVE_STREAM_CONTENT_VIEW } from './index';
+import { LIVE_STREAM_CONTENT_VIEW } from './constants';
 import PlayerControl from './PlayerControl/PlayerControl.vue';
 import type { SeatInfo, SeatUserInfo } from '../../types';
 
@@ -169,31 +196,54 @@ function handleAutoPlayResume() {
   isPlaying.value = true;
 }
 
-// Dismiss the autoplay prompt as soon as the user interacts with ANY part
-// of the page. Browsers unlock autoplay after a user gesture (click or
-// touch), so by that point the stream has almost certainly resumed.
-// Keeping the prompt up would be a stale UX.
-// Note: keyboard events don't count as autoplay-unlocking gestures in most
-// browsers, so we only listen for pointer-based gestures (click / touchstart).
-const dismissAutoPlayPromptOnGesture = () => {
+// Dismiss the prompt without explicitly resuming. The cached resume callback
+// is dropped so it cannot fire later.
+//
+// Why we still flip `isPlaying` to true here:
+//   `isShowPlayerControl` (above) gates `<PlayerControl>` with
+//   `!isAutoPlayFailed.value`, so toggling `isAutoPlayFailed` to false causes
+//   the control bar to be destroyed and re-mounted. On re-mount,
+//   `ControlBarItem` reads `isPlaying` synchronously to choose the play /
+//   pause icon. If `isPlaying` is left as false at this exact moment (which
+//   it can be, because some engine paths flip it false alongside
+//   `onAutoPlayFailed`), the user sees a "play" (▶) icon on a screen they
+//   believe is playing the live stream — a confusing mismatch.
+//
+//   We optimistically flip `isPlaying` to true here on the assumption that
+//   the user's tap (the gesture that dismissed the prompt) has unlocked the
+//   browser autoplay policy and the engine will resume on its own shortly.
+//   The real `onPlaying` / `pause()` events remain authoritative and will
+//   correct this value if the assumption turns out to be wrong.
+//
+//   This pairs with `handleAutoPlayResume` which sets the same flag for the
+//   same UX reason on the explicit-resume path.
+function dismissAutoPlayPrompt() {
   cachedAutoPlayResume = null;
   isAutoPlayFailed.value = false;
   isPlaying.value = true;
-};
+}
 
-// `capture: true` so we observe the gesture even if child handlers call
-// stopPropagation. `once: true` cleans up automatically after first fire.
-const autoPlayGestureOpts: AddEventListenerOptions = { capture: true, once: true };
+// Selector matching elements that should trigger autoplay resume on tap.
+// `.autoplay-prompt-action` is the default prompt's button class. Custom
+// slot users can opt in by adding the `data-autoplay-resume` attribute on
+// any descendant they want to act as the resume trigger.
+const AUTOPLAY_RESUME_SELECTOR = '.autoplay-prompt-action, [data-autoplay-resume]';
 
-watch(isAutoPlayFailed, (failed) => {
-  if (failed) {
-    document.addEventListener('click', dismissAutoPlayPromptOnGesture, autoPlayGestureOpts);
-    document.addEventListener('touchstart', dismissAutoPlayPromptOnGesture, autoPlayGestureOpts);
-  } else {
-    document.removeEventListener('click', dismissAutoPlayPromptOnGesture, autoPlayGestureOpts);
-    document.removeEventListener('touchstart', dismissAutoPlayPromptOnGesture, autoPlayGestureOpts);
+// Drive both branches from `touchend` so we never rely on the synthetic
+// `click` to reach the right target:
+//   - tapped inside a resume element  => call resume directly.
+//   - tapped on the blank overlay     => dismiss directly.
+// `.prevent` on the template suppresses the synthetic click that would
+// otherwise fire ~immediately after `touchend` and could leak into the
+// underlying `.empty-position` if it shares the touch target.
+function handleOverlayTouchEnd(event: TouchEvent) {
+  const target = event.target as Element | null;
+  if (target?.closest(AUTOPLAY_RESUME_SELECTOR)) {
+    handleAutoPlayResume();
+    return;
   }
-});
+  dismissAutoPlayPrompt();
+}
 
 const isMounted = ref(false);
 const seatListWithRealSize = ref<Array<{ userInfo: SeatUserInfo; region: any }>>([]);
@@ -249,13 +299,6 @@ onBeforeUnmount(async () => {
   roomEngine.instance?.off(TUIRoomEvents.onAutoPlayFailed, handleAutoPlayFailed);
   isAutoPlayFailed.value = false;
   cachedAutoPlayResume = null;
-  // Defensive cleanup: if the component is unmounted while the autoplay
-  // prompt is still showing, the `once: true` listeners would normally be
-  // cleaned up by the `watch(isAutoPlayFailed)` handler above (since we
-  // reset the flag right before this). Still, remove them explicitly in
-  // case the watcher fires after we've detached.
-  document.removeEventListener('click', dismissAutoPlayPromptOnGesture, autoPlayGestureOpts);
-  document.removeEventListener('touchstart', dismissAutoPlayPromptOnGesture, autoPlayGestureOpts);
   // Clean up observer first, then stop the stream
   stopObserving();
   await stopPlayStream();

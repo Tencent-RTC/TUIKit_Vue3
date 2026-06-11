@@ -46,6 +46,7 @@ import {
 import { isMobile } from '../../../utils';
 import ControlBarItem from './ControlBarItem.vue';
 import { usePlayerControlState } from './PlayerControlState';
+import { DOM_IDS, DOM_SELECTORS } from './utils/domHelpers';
 import { PlayerControlButton } from '../../../types/player';
 import type { CustomButton } from '../../../types/player';
 import type { ControlItem } from './types';
@@ -249,9 +250,35 @@ const calculateTouchDistance = (start: { x: number; y: number }, end: Touch) => 
 
 const isPlayerControlTarget = (target: Node) => playerControlRef.value?.contains(target) || false;
 
-const isLiveCoreViewTarget = (target: Node) => {
-  const container = document.getElementById('live-core-view-container');
+// Determine whether a tap inside the live core view should toggle the player
+// control bar.
+//
+// DOM layout reminder (see LiveView/index.vue + DefaultStreamViewUI.vue):
+//   #live-core-view-container
+//     └── .live-core-view  (relative)
+//           ├── #atomicx-live-stream-content  ← SDK mounts <video> here
+//           ├── .center-overlay               (pointer-events: none on host)
+//           └── .live-core-ui                 (pointer-events varies by role)
+//                 └── per-seat <div> (has @click)
+//                       └── DefaultStreamViewUI
+//                             └── .empty-position (pointer-events: auto)
+//                                   ← THE only real interactive button
+//
+// Rule (per product spec):
+//   • Whenever the tap is inside the live core view container, toggle the
+//     control bar — show it if hidden, hide it if currently shown. This is
+//     the standard "tap-to-show/tap-to-hide" video player UX.
+//   • The single exception is the `.empty-position` button ("apply for
+//     co-host" / "waiting for connection"). Taps on it must reach its own
+//     click handler without first being intercepted by the control bar.
+const isInsideLiveCoreView = (target: Node) => {
+  const container = document.getElementById(DOM_IDS.LIVE_CORE_VIEW_CONTAINER);
   return container?.contains(target) || false;
+};
+
+const isBusinessInteractiveTarget = (target: Node) => {
+  const node = target instanceof Element ? target : (target.parentElement ?? null);
+  return node?.closest(DOM_SELECTORS.EMPTY_POSITION) != null;
 };
 
 // Handle the touch in the player control area
@@ -304,9 +331,21 @@ const handleScreenTouchEnd = (event: TouchEvent) => {
 
   if (isPlayerControlTarget(target)) {
     handlePlayerControlTouch();
-  } else if (isLiveCoreViewTarget(target)) {
-    handleLiveCoreViewTouch();
-  } else {
+  } else if (isInsideLiveCoreView(target)) {
+    if (isBusinessInteractiveTarget(target)) {
+      // Tap landed on the only whitelisted business button (the empty-seat
+      // "apply for co-host" button). Do not toggle the control bar — let the
+      // native click reach its handler so the user gets immediate feedback
+      // on the first tap.
+    } else {
+      // Any other tap inside the live core view (video area, seat with an
+      // occupant, container background, etc.) toggles the control bar:
+      // show when hidden, hide when visible.
+      handleLiveCoreViewTouch();
+    }
+  } else if (controlBarVisible.value) {
+    // Tap landed completely outside the player — hide the control bar if
+    // it is currently shown.
     setControlBarVisible(false);
   }
 

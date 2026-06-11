@@ -79,6 +79,7 @@ import { CoHostLayoutTemplate, CoHostEvent, LiveOrientation } from '../../types'
 import UserList from './UserList.vue';
 import RecommendHostList from './RecommendHostList.vue';
 import type { SeatUserInfo } from '../../types';
+import { COHOST_REQUEST_TIMEOUT_SECONDS } from './constants';
 
 const { t } = useUIKit();
 const props = defineProps<{
@@ -128,9 +129,9 @@ const handleSendBattleRequest = async (user: SeatUserInfo) => {
     const result = await requestHostConnection({
       liveId: user.liveId,
       layoutTemplate: effectiveCoHostLayoutTemplate.value,
-      timeout: 10,
+      timeout: COHOST_REQUEST_TIMEOUT_SECONDS,
       extensionInfo: JSON.stringify({
-        timeout: 10,
+        timeout: COHOST_REQUEST_TIMEOUT_SECONDS,
         withBattle: true,
       }),
     });
@@ -235,9 +236,11 @@ onUnmounted(() => {
 .exit-co-host-dialog {
   width: 300px;
   border-radius: 16px;
-  border: 1px solid var(--stroke-color-module);
-  background: var(--bg-color-operate);
-  box-shadow: 0 1px 8px 0 var(---Black-5), 0 4px 12px 0 var(---Black-5), 0 10px 30px 0 var(---Black-5);
+  border: 1px solid var(--stroke-color-module, #48494F);
+  background: var(--bg-color-operate, #1F2024);
+  box-shadow: 0 1px 8px 0 rgba(0, 0, 0, 0.40),
+              0 4px 12px 0 rgba(0, 0, 0, 0.40),
+              0 10px 30px 0 rgba(0, 0, 0, 0.40);
 }
 </style>
 

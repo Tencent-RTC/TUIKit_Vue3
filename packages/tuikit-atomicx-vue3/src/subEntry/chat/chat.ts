@@ -1,20 +1,20 @@
 // Components
 export { View } from '../../baseComp/View';
-export { ChatSetting } from '../../components/ChatSetting';
-export {
-  ContactList,
-  ContactListItem,
-  ContactInfo,
-} from '../../components/ContactList';
-export {
-  ConversationList,
-  ConversationActions,
-  ConversationListHeader,
-  ConversationListContent,
-  ConversationPreview,
-  ConversationPreviewUI,
-  ConversationSearch,
-} from '../../components/ConversationList';
+// export { ChatSetting } from '../../components/ChatSetting';
+// export {
+//   ContactList,
+//   ContactListItem,
+//   ContactInfo,
+// } from '../../components/ContactList';
+// export {
+//   ConversationList,
+//   ConversationActions,
+//   ConversationListHeader,
+//   ConversationListContent,
+//   ConversationPreview,
+//   ConversationPreviewUI,
+//   ConversationSearch,
+// } from '../../components/ConversationList';
 export {
   MessageInput,
   MessageInputH5,
@@ -32,15 +32,15 @@ export {
   Message,
   CustomMessage,
 } from '../../components/MessageList';
-export {
-  Search,
-  SearchAdvanced,
-  MessageAdvanced,
-  UserAdvanced,
-  SearchResultItem,
-  SearchBar,
-  SearchResults,
-} from '../../components/Search';
+// export {
+//   Search,
+//   SearchAdvanced,
+//   MessageAdvanced,
+//   UserAdvanced,
+//   SearchResultItem,
+//   SearchBar,
+//   SearchResults,
+// } from '../../components/Search';
 
 // Hooks
 export { useMessageActions } from '../../hooks/useMessageActions';
@@ -163,6 +163,8 @@ export type {
   MessageSearchResultItem,
   SearchStoreInstance,
   ChannelSnapshot,
+  ContactInfo,
+  FriendApplicationInfo,
 } from '@atomicxcore/core';
 
 // Types
@@ -173,3 +175,5 @@ export * from '../../types/conversation';
 export * from '../../types/contact';
 export * from '../../types/call';
 export * from '../../types/chatSetting';
+
+export * from '../../chat-store';

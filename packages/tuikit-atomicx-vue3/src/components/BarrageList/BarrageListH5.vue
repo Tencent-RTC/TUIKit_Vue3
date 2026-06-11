@@ -42,6 +42,14 @@ const isFinishFirstRender = ref<boolean>(false);
 const isDisableAutoScroll = ref<boolean>(false);
 const distanceToBottom = ref<number>(0);
 const scrollContainer = ref<HTMLElement | null>(null);
+// Records a pending scroll intent decided by the barrage-received event,
+// to be consumed by the messageList watcher AFTER the DOM has actually
+// rendered the new message. See BarrageList.vue for the same rationale:
+// `useBarrageListState().messageList` is fed by an async batched queue
+// in BarrageListState (delay up to ~1s), so the DOM lags the SDK event
+// by an unpredictable number of ticks — `nextTick` alone cannot bridge
+// that gap.
+const pendingScroll = ref<ScrollBehavior | false>(false);
 
 const { messageList, messageGroupTip } = useBarrageListState();
 const {
@@ -50,6 +58,15 @@ const {
 } = useBarrageState();
 
 const { scrollToBottom } = useScroll();
+
+// Local adapter: bind the generic `scrollToBottom(container, behavior)` API
+// to this component's own scroll container, so callers / event handlers
+// only need to pass a `behavior` string. Without this adapter, the prior
+// call style `scrollToBottom({ behavior: '...' })` was silently a no-op
+// because the options object was being passed where the hook expects an
+// `HTMLElement | null` container — auto-scroll on new messages stopped
+// working entirely.
+const scrollListToBottom = (behavior: ScrollBehavior = 'auto') => scrollToBottom(scrollContainer.value, behavior);
 
 // Calculate action menu position to prevent overflow beyond scrollContainer boundaries
 const calculateActionMenuPosition = (targetRect: DOMRect) => {
@@ -129,33 +146,59 @@ const handleScroll = throttle(() => {
 const initializeMessageList = async () => {
   isFinishFirstRender.value = false;
   isDisableAutoScroll.value = false;
+  distanceToBottom.value = 0;
+  pendingScroll.value = false;
 };
 
 watch(() => currentLive.value?.liveId, () => {
   initializeMessageList();
 });
 
-// Handle new barrage message for auto-scrolling
+// Event-driven intent handler: only records WHETHER (and HOW) we should
+// scroll on the next DOM update. The actual scroll is deferred to the
+// `messageList` watcher below, where we can be sure the new message
+// bubble has been rendered and `scrollHeight` reflects the post-append
+// layout. Aligned with the React BarrageList's `pendingScrollRef +
+// useEffect([messageList])` two-phase model.
 const handleBarrageReceived = (message: Barrage) => {
   if (!isFinishFirstRender.value) {
-    nextTick(() => {
-      scrollToBottom({ behavior: 'instant' });
-      isFinishFirstRender.value = true;
-    });
+    pendingScroll.value = 'auto';
     return;
   }
 
+  // Always scroll to bottom when the message is sent by the current user —
+  // this matches the chat-app convention that "I sent something, take me
+  // to my own message" overrides any scroll-up state. For messages from
+  // others, only follow if the user is already near the bottom; otherwise
+  // we'd hijack their reading scroll position.
   const shouldAutoScroll
     = message.sender.userId === loginUserInfo.value?.userId
     || (!isDisableAutoScroll.value && distanceToBottom.value < autoScrollThreshold);
   if (shouldAutoScroll) {
-    nextTick(() => {
-      scrollToBottom({ behavior: 'smooth' });
-    });
+    pendingScroll.value = 'smooth';
   } else {
     // TODO: new message notification
   }
 };
+
+// Consume pending scroll intent AFTER the BarrageListState batched queue
+// has actually pushed the new message(s) into `messageList` and Vue has
+// rendered them. `flush: 'post'` waits for the DOM update of the same
+// reactive tick, and the extra `requestAnimationFrame` waits for layout
+// so the freshly mounted bubble contributes to `scrollHeight`.
+watch(() => messageList.value.length, (newLen) => {
+  if (newLen === 0 || pendingScroll.value === false) {
+    return;
+  }
+  const behavior = pendingScroll.value;
+  pendingScroll.value = false;
+  requestAnimationFrame(() => {
+    scrollListToBottom(behavior);
+    if (!isFinishFirstRender.value) {
+      isFinishFirstRender.value = true;
+    }
+  });
+}, { flush: 'post' });
 
 const handleTouchStart = () => {
   const activeElement = document.activeElement as HTMLElement;
@@ -169,6 +212,19 @@ onMounted(() => {
     scrollContainer.value.addEventListener('scroll', handleScroll);
   }
   initializeMessageList();
+
+  // Cold-mount catch-up: when the component is mounted into an already-
+  // populated room (e.g. re-entering a live with existing chat history),
+  // the messageList watcher won't fire because length doesn't change, so
+  // we need an explicit one-shot scroll-to-bottom on mount. Use 'auto'
+  // (instant) — the user has just opened the panel and shouldn't see
+  // any animation before their first frame.
+  if (messageList.value.length > 0) {
+    nextTick(() => {
+      scrollListToBottom('auto');
+      isFinishFirstRender.value = true;
+    });
+  }
 
   // Subscribe to barrage received event for auto-scrolling
   subscribeBarrageEvent(BarrageEvent.onBarrageReceived, handleBarrageReceived);

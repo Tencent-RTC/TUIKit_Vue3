@@ -4,7 +4,7 @@ import { ConversationType, MessageType } from '@atomicxcore/core';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { isCallMessage, parseCallMessageText, isCreateGroupMessage } from '../../../../utils/call';
-import { resolveGroupTipMessage } from './resolveGroupTipMessage';
+import { resolveGroupTipMessage } from '../../../../utils/resolveGroupTipMessage';
 import type { MessageInfo, TipsMessageInfo } from '@atomicxcore/core';
 
 interface GroupTipMessageProps {

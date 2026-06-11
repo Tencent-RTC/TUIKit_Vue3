@@ -46,14 +46,31 @@ const autoScrollThreshold = 150;
 const isFinishFirstRender = ref<boolean>(false);
 const isDisableAutoScroll = ref<boolean>(false);
 const distanceToBottom = ref<number>(0);
+// Records a pending scroll intent decided by the barrage-received event,
+// to be consumed by the messageList watcher AFTER the DOM has actually
+// rendered the new message. Direct scroll inside the event handler is
+// unsafe here because `useBarrageListState().messageList` is fed by an
+// async batched queue in BarrageListState (MESSAGE_QUEUE_PROCESS_DELAY
+// can be up to ~1s), so the DOM lags the SDK event by an unpredictable
+// number of ticks — `nextTick` alone cannot bridge that gap.
+const pendingScroll = ref<ScrollBehavior | false>(false);
 
 const { messageList, messageGroupTip } = useBarrageListState();
 const { subscribeEvent: subscribeGiftEvent, unsubscribeEvent: unsubscribeGiftEvent } = useLiveGiftState();
 const { appendLocalTip, subscribeEvent: subscribeBarrageEvent, unsubscribeEvent: unsubscribeBarrageEvent } = useBarrageState();
 const { scrollToBottom } = useScroll();
 
+// Local adapter: bind the generic `scrollToBottom(container, behavior)` API
+// to this component's own scroll container, so callers / event handlers
+// only need to pass a `behavior` string. Keeping the closure here (rather
+// than passing `scrollContainer.value` at every call site) means consumers
+// of the exposed `scrollToBottom` (via template ref) also get the
+// correctly-bound container automatically — they cannot accidentally
+// scroll an unrelated element.
+const scrollListToBottom = (behavior: ScrollBehavior = 'auto') => scrollToBottom(scrollContainer.value, behavior);
+
 defineExpose({
-  scrollToBottom,
+  scrollToBottom: scrollListToBottom,
 });
 
 // Handle gift message received event
@@ -64,12 +81,20 @@ const handleGiftMessage = (gift: LiveGiftEventMap[LiveGiftEvents.ON_RECEIVE_GIFT
     sequence = lastBarrage.sequence + 1;
   }
 
+  // Locally injected gift bubble.
+  // We deliberately use `BarrageType.text` here instead of `BarrageType.custom`:
+  // `BarrageType.custom` now represents "SDK-forwarded business custom message"
+  // (delivered through `BarrageEvent.onCustomMessageReceived`) and is no longer
+  // expected to appear inside `messageList`. The list rendering pipeline
+  // (`MessageLayout` factory) only knows how to render `text`, while the gift
+  // bubble itself is short-circuited above by `isGiftMessage(message)` in the
+  // template, so the `messageType` value here only acts as a fallback hint.
   const barrage: Barrage = {
     liveId: gift.liveId,
     sender: gift.sender,
     sequence,
     timestampInSecond: Date.now() / 1000,
-    messageType: BarrageType.custom,
+    messageType: BarrageType.text,
     textContent: '',
     extensionInfo: null,
     businessId: 'gift',
@@ -164,40 +189,78 @@ const handleScroll = throttle(() => {
 const initializeMessageList = async () => {
   isFinishFirstRender.value = false;
   isDisableAutoScroll.value = false;
+  distanceToBottom.value = 0;
+  pendingScroll.value = false;
 };
 
 watch(() => currentLive.value?.liveId, () => {
   initializeMessageList();
 });
 
-// Handle new barrage message for auto-scrolling
+// Event-driven intent handler: only records WHETHER (and HOW) we should
+// scroll on the next DOM update. The actual scroll is deferred to the
+// `messageList` watcher below, where we can be sure the new message
+// bubble has been rendered and `scrollHeight` reflects the post-append
+// layout. Aligned with the React BarrageList's `pendingScrollRef +
+// useEffect([messageList])` two-phase model.
 const handleBarrageReceived = (message: Barrage) => {
   if (!isFinishFirstRender.value) {
-    nextTick(() => {
-      scrollToBottom({ behavior: 'instant' });
-      isFinishFirstRender.value = true;
-    });
+    pendingScroll.value = 'auto';
     return;
   }
 
+  // Always scroll to bottom when the message is sent by the current user —
+  // this matches the chat-app convention that "I sent something, take me
+  // to my own message" overrides any scroll-up state. For messages from
+  // others, only follow if the user is already near the bottom; otherwise
+  // we'd hijack their reading scroll position.
   const shouldAutoScroll
     = message.sender.userId === loginUserInfo.value?.userId
     || (!isDisableAutoScroll.value && distanceToBottom.value < autoScrollThreshold);
   if (shouldAutoScroll) {
-    nextTick(() => {
-      scrollToBottom({ behavior: 'smooth' });
-    });
+    pendingScroll.value = 'smooth';
   } else {
     // TODO: new message notification
   }
 };
+
+// Consume pending scroll intent AFTER the BarrageListState batched queue
+// has actually pushed the new message(s) into `messageList` and Vue has
+// rendered them. `flush: 'post'` waits for the DOM update of the same
+// reactive tick, and the extra `requestAnimationFrame` waits for layout
+// so the freshly mounted bubble contributes to `scrollHeight`.
+watch(() => messageList.value.length, (newLen) => {
+  if (newLen === 0 || pendingScroll.value === false) {
+    return;
+  }
+  const behavior = pendingScroll.value;
+  pendingScroll.value = false;
+  requestAnimationFrame(() => {
+    scrollListToBottom(behavior);
+    if (!isFinishFirstRender.value) {
+      isFinishFirstRender.value = true;
+    }
+  });
+}, { flush: 'post' });
 
 onMounted(() => {
   if (scrollContainer.value) {
     scrollContainer.value.addEventListener('scroll', handleScroll);
   }
   initializeMessageList();
-  scrollToBottom({ behavior: 'smooth' });
+
+  // Cold-mount catch-up: when the component is mounted into an already-
+  // populated room (e.g. re-entering a live with existing chat history),
+  // the messageList watcher won't fire because length doesn't change, so
+  // we need an explicit one-shot scroll-to-bottom on mount. Use 'auto'
+  // (instant) — the user has just opened the panel and shouldn't see
+  // any animation before their first frame.
+  if (messageList.value.length > 0) {
+    nextTick(() => {
+      scrollListToBottom('auto');
+      isFinishFirstRender.value = true;
+    });
+  }
 
   // Subscribe to gift message event
   subscribeGiftEvent(LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE, handleGiftMessage);

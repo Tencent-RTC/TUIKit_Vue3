@@ -2,13 +2,23 @@
  * DOM operation helper utility module
  */
 
+// DOM id constants (raw id strings, no leading `#`)
+export const DOM_IDS = {
+  LIVE_CORE_VIEW_CONTAINER: 'live-core-view-container',
+} as const;
+
 // DOM selector constants
 export const DOM_SELECTORS = {
-  LIVE_CORE_VIEW_CONTAINER: '.live-core-view-container',
+  LIVE_CORE_VIEW_CONTAINER: `.${DOM_IDS.LIVE_CORE_VIEW_CONTAINER}`,
   LIVE_CORE_VIEW: '.live-core-view',
   VIDEO_ELEMENT: '#atomicx-live-stream-content video',
   TCPLAYER_ELEMENT: '.tcplayer',
   LEB_PLAYER_ELEMENT: '#video_vp',
+  // Business-side interactive elements that must not be intercepted by the
+  // player control bar's tap-to-toggle handler. Currently only the empty-seat
+  // "apply for co-host" / "waiting for connection" button rendered by
+  // DefaultStreamViewUI.vue.
+  EMPTY_POSITION: '.empty-position',
 };
 
 /**

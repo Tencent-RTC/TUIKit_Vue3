@@ -9,3 +9,9 @@ export * from './subEntry/live/live';
 export * from './subEntry/room/room';
 export * from './i18n';
 export * from './types';
+
+// utils export
+export * from './utils';
+
+// hooks export
+export * from './hooks';

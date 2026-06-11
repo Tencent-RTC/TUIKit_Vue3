@@ -2,7 +2,6 @@ import TUICore, { TUIConstants } from '@tencentcloud/tui-core-lite';
 import { LoginStore, ContactStore } from '@atomicxcore/core';
 import { reportStoreUsageData, StoreName } from '@atomicxcore/core';
 import { safeJSONParse } from './json';
-import { showChatErrorModalById, ChatErrorModalId } from '../components/UIKitModal/chatErrorModal';
 import { useOfflinePushInfo } from '../hooks/useOfflinePushInfo';
 import type { StartCallParams, CallMessagePayload } from '../types/call';
 import type { CustomMessageInfo, MessageInfo } from '@atomicxcore/core';
@@ -32,8 +31,14 @@ function startCall(params: StartCallParams) {
   const result = TUICore.getService(TUIConstants.TUICalling.SERVICE.NAME);
 
   if (!result) {
-    showChatErrorModalById(ChatErrorModalId.CALL_KIT_NOT_INTEGRATED);
-    return;
+    // TUICalling service is not integrated; the UI layer is responsible
+    // for displaying the appropriate modal (e.g. ChatErrorModal with
+    // CALL_KIT_NOT_INTEGRATED). This avoids an inverted dependency
+    // from utils → component.
+    console.warn('startCall::TUICalling service not found — call kit not integrated');
+    const error = new Error('CALL_KIT_NOT_INTEGRATED') as Error & { code: number };
+    error.code = 6001;
+    throw error;
   }
 
   // Inject offlinePushInfo for CALL scene if configured
