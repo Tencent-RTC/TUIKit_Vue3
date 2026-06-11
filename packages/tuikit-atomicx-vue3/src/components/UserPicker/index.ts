@@ -6,6 +6,7 @@ import type {
   UserPickerNode,
   UserPickerDataSource,
   UserPickerResult,
+  UserPickerResultItem,
 } from './type';
 import { addI18n } from '../../i18n';
 import { resources } from './i18n';
@@ -23,4 +24,5 @@ export type {
   UserPickerNode,
   UserPickerDataSource,
   UserPickerResult,
+  UserPickerResultItem,
 };

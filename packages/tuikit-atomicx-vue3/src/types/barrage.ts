@@ -12,24 +12,40 @@ import { TUIRole } from './types';
  * 弹幕消息类型枚举
  * @enum {number}
  * @description 定义弹幕消息的类型，包括文本消息和自定义消息。
- * @example
- * import { BarrageType } from 'tuikit-atomicx-vue3';
  *
- * // 判断消息类型
- * if (message.messageType === BarrageType.text) {
- *   console.log('这是文本消息:', message.textContent);
- * } else if (message.messageType === BarrageType.custom) {
- *   console.log('这是自定义消息:', message.data);
+ * **注意**：`BarrageType.custom` 仅会在 {@link BarrageEvent.onCustomMessageReceived}
+ * 事件回调里出现。`messageList` 中实际只会包含 {@link BarrageType.text}（包含
+ * SDK 透传的文本弹幕和通过 `appendLocalTip` 本地注入的本地消息）。
+ * 在遍历 `messageList` 时不需要处理 `custom` 分支。
+ * @example
+ * import { BarrageEvent, BarrageType, useBarrageState } from 'tuikit-atomicx-vue3';
+ *
+ * // 1) 处理 messageList 中的消息：只会出现 text 类型
+ * const { messageList } = useBarrageState();
+ * for (const message of messageList.value) {
+ *   // message.messageType === BarrageType.text
+ *   console.log('文本弹幕:', message.textContent);
  * }
+ *
+ * // 2) 处理自定义消息：通过事件回调拿到 BarrageType.custom 类型的 payload
+ * const { subscribeEvent } = useBarrageState();
+ * subscribeEvent(BarrageEvent.onCustomMessageReceived, (barrage) => {
+ *   if (barrage.messageType === BarrageType.custom) {
+ *     console.log('自定义消息:', barrage.businessId, barrage.data);
+ *   }
+ * });
  */
 export enum BarrageType {
   /**
    * 文本消息
+   * @description 是 `messageList` 中实际出现的唯一类型。
    * @default 0
    */
   text = 0,
   /**
    * 自定义消息
+   * @description 不会进入 `messageList`，仅作为 {@link BarrageEvent.onCustomMessageReceived}
+   * 事件回调的 payload `messageType` 字段值出现。
    * @default 1
    */
   custom = 1,
@@ -58,18 +74,18 @@ export enum BarrageType {
  */
 export enum BarrageEvent {
   /**
-   * 当收到弹幕消息时触发。
+   * 当收到文本弹幕消息时触发。
    * @event
+   * @description 仅当收到 {@link BarrageType.text} 类型的弹幕消息时触发；
+   * 自定义消息请订阅 {@link BarrageEvent.onCustomMessageReceived} 事件。
    * @param {Barrage} barrage - 弹幕消息对象
    * @param {string} barrage.liveId - 直播间 ID
    * @param {TUIUserInfo} barrage.sender - 发送者用户信息
    * @param {number} barrage.sequence - 消息序列号
    * @param {number} barrage.timestampInSecond - 消息时间戳（秒）
-   * @param {BarrageType} barrage.messageType - 消息类型（文本消息或自定义消息）
-   * @param {string} [barrage.textContent] - 文本内容（文本消息时使用）
-   * @param {Record<string, string>} [barrage.extensionInfo] - 扩展信息（文本消息时使用）
-   * @param {string} [barrage.businessId] - 业务 ID（自定义消息时使用）
-   * @param {string} [barrage.data] - 自定义数据（自定义消息时使用，JSON 字符串格式）
+   * @param {BarrageType} barrage.messageType - 消息类型（文本消息）
+   * @param {string} [barrage.textContent] - 文本内容
+   * @param {Record<string, string>} [barrage.extensionInfo] - 扩展信息
    * @example
    * import { BarrageEvent, useBarrageState } from 'tuikit-atomicx-vue3';
    * const { subscribeEvent, unsubscribeEvent } = useBarrageState();
@@ -81,6 +97,30 @@ export enum BarrageEvent {
    * unsubscribeEvent(BarrageEvent.onBarrageReceived, onBarrageReceived);
    */
   onBarrageReceived = 'onBarrageReceived',
+  /**
+   * 当收到自定义弹幕消息时触发。
+   * @event
+   * @description 自定义消息不会被加入 `messageList`，仅通过该事件透传给业务层。
+   * 适用于礼物、福袋、入场通知、服务端审核提示等业务自定义消息场景。
+   * @param {Barrage} barrage - 自定义弹幕消息对象
+   * @param {string} barrage.liveId - 直播间 ID
+   * @param {TUIUserInfo} barrage.sender - 发送者用户信息
+   * @param {number} barrage.sequence - 消息序列号
+   * @param {number} barrage.timestampInSecond - 消息时间戳（秒）
+   * @param {BarrageType} barrage.messageType - 消息类型（自定义消息）
+   * @param {string} barrage.businessId - 业务 ID
+   * @param {string} barrage.data - 自定义数据（JSON 字符串格式）
+   * @example
+   * import { BarrageEvent, useBarrageState } from 'tuikit-atomicx-vue3';
+   * const { subscribeEvent, unsubscribeEvent } = useBarrageState();
+   *
+   * const onCustomMessageReceived = (barrage: Barrage) => {
+   *   console.log('收到自定义消息:', barrage.businessId, barrage.data);
+   * };
+   * subscribeEvent(BarrageEvent.onCustomMessageReceived, onCustomMessageReceived);
+   * unsubscribeEvent(BarrageEvent.onCustomMessageReceived, onCustomMessageReceived);
+   */
+  onCustomMessageReceived = 'onCustomMessageReceived',
 }
 
 /**
@@ -122,6 +162,7 @@ export type OnDidSendBarrage = (message: Barrage) => void;
  */
 type BarrageEventMap = {
   [BarrageEvent.onBarrageReceived]: Barrage;
+  [BarrageEvent.onCustomMessageReceived]: Barrage;
 };
 
 /**
@@ -163,8 +204,15 @@ interface BaseMessageInfo {
  * 弹幕消息接口
  * @interface Barrage
  * @description 定义完整的弹幕消息结构，继承基础消息信息并扩展消息类型、文本内容、扩展信息和自定义数据等属性。
+ *
+ * **注意**：`Barrage` 同时被 `messageList` 和 {@link BarrageEvent.onCustomMessageReceived}
+ * 事件 payload 复用，但两者实际出现的 `messageType` 子集是互斥的：
+ * - `messageList` 中的元素 `messageType` 实际只会是 {@link BarrageType.text}
+ *   （SDK 透传的文本弹幕或通过 `appendLocalTip` 本地注入的本地消息）。
+ * - {@link BarrageEvent.onCustomMessageReceived} 事件回调里的 `Barrage` 实际只会是
+ *   {@link BarrageType.custom}（SDK 透传的业务自定义消息）。
  * @example
- * // 文本消息示例
+ * // 文本消息示例（出现在 messageList 中）
  * const textBarrage: Barrage = {
  *   liveId: 'live_123456',
  *   sender: userInfo,
@@ -175,7 +223,7 @@ interface BaseMessageInfo {
  *   extensionInfo: { color: 'red' },
  * };
  *
- * // 自定义消息示例
+ * // 自定义消息示例（出现在 onCustomMessageReceived 事件回调里）
  * const customBarrage: Barrage = {
  *   liveId: 'live_123456',
  *   sender: userInfo,
@@ -187,7 +235,14 @@ interface BaseMessageInfo {
  * };
  */
 export interface Barrage extends BaseMessageInfo {
-  /** 消息类型（文本消息或自定义消息） */
+  /**
+   * 消息类型（文本消息或自定义消息）
+   * @description 类型定义为联合，但出现位置互斥：
+   * - 出现在 `messageList` 中的消息 `messageType` 实际只会是 {@link BarrageType.text}
+   *   （SDK 透传的文本弹幕或通过 `appendLocalTip` 本地注入的本地消息）。
+   * - SDK 透传的 {@link BarrageType.custom} 仅出现在 {@link BarrageEvent.onCustomMessageReceived}
+   *   事件回调的 payload 中，**不会**进入 `messageList`。
+   */
   messageType: BarrageType;
   /** 文本内容（文本消息时使用） */
   textContent?: string;

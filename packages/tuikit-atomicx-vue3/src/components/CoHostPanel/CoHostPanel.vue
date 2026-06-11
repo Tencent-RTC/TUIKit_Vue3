@@ -68,7 +68,7 @@ const props = defineProps<{
   visible: boolean;
 }>();
 const { loginUserInfo } = useLoginState();
-const { coHostStatus } = useCoHostState();
+const { coHostStatus, connected, getCoHostCandidates } = useCoHostState();
 const { battleUsers } = useBattleState();
 const emit = defineEmits(['update:visible']);
 const close = () => {
@@ -118,6 +118,48 @@ watch(inPk, (newVal, oldVal) => {
   }
 }, {
   immediate: true,
+});
+
+// Refresh the candidate host list whenever the panel transitions to visible.
+// Without this, reopening the panel keeps a stale snapshot — for example, a
+// host whose connection was just ended would not reappear in "Recommend
+// hosts" until the user manually pulled to refresh. We swallow errors here
+// because RecommendHostList already surfaces a toast when the user explicitly
+// refreshes; this best-effort sync on open should never block the dialog.
+//
+// Side-effect note: passing '' resets the candidates pagination cursor in
+// the kit store. If the user had paged past the first screen before closing
+// the panel, that scroll position is discarded on reopen — we trade scroll
+// retention for "just-disconnected host shows up at the top", which is the
+// higher-priority UX here.
+watch(() => props.visible, (newVisible) => {
+  if (!newVisible) return;
+  getCoHostCandidates('').catch((error) => {
+    console.warn('[CoHostPanel] refresh candidates on open failed', error);
+  });
+});
+
+// Refresh candidates whenever the connected list shrinks (i.e. someone just
+// disconnected). The kit's `handleConnectionUserListChanged` only removes
+// joiners from candidates; it does NOT add disconnected hosts back. Pulling
+// a fresh page here makes the host who just left reappear so they can be
+// re-invited, without the user having to close/reopen the panel or hit the
+// refresh icon. Gated on `props.visible` so we don't burn rate-limit budget
+// while the panel is closed.
+//
+// Edge case: this only fires on a net length decrease. A same-tick join+leave
+// (e.g. SDK batches `connectionUserListChanged` with both add and remove in
+// one event) leaves `connected.length` unchanged and the watcher is silent.
+// Acceptable trade-off — RecommendHostList's manual refresh button is the
+// fallback for this rare case. If misses become noticeable in production,
+// switch to `watch(connected, …, { deep: true })` with a Set diff against
+// previous user ids to detect leavers regardless of net length.
+watch(() => connected.value.length, (newCount, oldCount) => {
+  if (!props.visible) return;
+  if (newCount >= oldCount) return;
+  getCoHostCandidates('').catch((error) => {
+    console.warn('[CoHostPanel] refresh candidates after disconnect failed', error);
+  });
 });
 </script>
 

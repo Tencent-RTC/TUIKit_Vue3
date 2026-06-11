@@ -5,6 +5,7 @@ import { IconCall1Filled, IconVideoDefaultFilled, useUIKit } from '@tencentcloud
 import { View } from '../../../../../baseComp/View';
 import { useChatContext } from '../../../../../chat-store';
 import { parseCallMessage, startCall, parseCallMessageText } from '../../../../../utils/call';
+import { handleChatErrorWithModal } from '../../../../../components/UIKitModal/chatErrorModal';
 import type { MessageInfo } from '@atomicxcore/core';
 
 interface Props {
@@ -26,10 +27,14 @@ const callAgain = () => {
     return;
   }
 
-  startCall({
-    type: payload.value.data.data.call_type,
-    userIDList: [activeConversation.value.conversationID.replace(/^C2C/, '')],
-  });
+  try {
+    startCall({
+      type: payload.value.data.data.call_type,
+      userIDList: [activeConversation.value.conversationID.replace(/^C2C/, '')],
+    });
+  } catch (error) {
+    handleChatErrorWithModal(error as unknown as any);
+  }
 };
 </script>
 

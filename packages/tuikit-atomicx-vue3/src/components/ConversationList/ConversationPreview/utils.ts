@@ -2,7 +2,7 @@ import { MessageType, MessageStatus, ConversationType } from '@atomicxcore/core'
 import { safeJSONParse } from '../../../utils';
 import { transformTextWithEmojiKeyToName } from '../../../utils/emoji';
 import { isCallMessage, isCreateGroupMessage, parseCallMessageText } from '../../../utils/call';
-import { resolveGroupTipMessage } from '../../MessageList/Message/GroupTipMessage/resolveGroupTipMessage';
+import { resolveGroupTipMessage } from '../../../utils/resolveGroupTipMessage';
 import type { ConversationInfo, MessageInfo, TextMessageInfo, TipsMessageInfo, CustomMessageInfo } from '@atomicxcore/core';
 
 export const generateHighlightTitle = (

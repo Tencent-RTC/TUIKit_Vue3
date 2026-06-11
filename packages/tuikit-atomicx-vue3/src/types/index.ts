@@ -1,5 +1,17 @@
-// common
-export * from './login';
+// common - login types from uikit-core
+export {
+  LoginStatus,
+  LoginEvent,
+} from '@uikit-core/types/login';
+export type {
+  LoginUserInfo,
+  LoginParams,
+  LoginOptions,
+  SetSelfInfoParams,
+  EventCallback,
+  ILoginStateReturn,
+} from '@uikit-core/types/login';
+
 export * from './device';
 // chat
 export * from './message';
@@ -9,6 +21,7 @@ export * from './conversation';
 export * from './contact';
 export * from './call';
 export * from './chatSetting';
+export * from './groupSetting';
 // live
 export * from './types';
 export * from './live';
@@ -29,5 +42,5 @@ export * from './participant';
 export * from './beauty';
 export * from './virtualBackground';
 export * from './asr';
-// @deprecated 请使用最新 participant.ts 文件
+// @deprecated Use participant.ts instead
 export * from './user';

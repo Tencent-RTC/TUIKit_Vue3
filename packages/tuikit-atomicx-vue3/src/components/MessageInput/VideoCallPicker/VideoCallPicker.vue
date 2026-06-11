@@ -51,6 +51,7 @@ import {
 import cs from 'classnames';
 import { View } from '../../../baseComp/View';
 import { startCall } from '../../../utils/call';
+import { handleChatErrorWithModal } from '../../UIKitModal/chatErrorModal';
 import { UserPicker } from '../../UserPicker';
 
 interface VideoCallPickerProps {
@@ -123,7 +124,7 @@ function initiatePrivateCall(): void {
       type: VIDEO_CALL_TYPE,
     });
   } catch (error) {
-    console.error('Failed to start private video call:', error);
+    handleChatErrorWithModal(error as unknown as any);
   }
 }
 
@@ -168,7 +169,7 @@ function initiateGroupCall(): void {
 
     handleCloseGroupCallDialog();
   } catch (error) {
-    console.error('Failed to start group video call:', error);
+    handleChatErrorWithModal(error as unknown as any);
   }
 }
 

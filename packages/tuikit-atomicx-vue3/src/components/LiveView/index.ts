@@ -2,6 +2,7 @@ import { addI18n } from '../../i18n';
 import DefaultStreamViewUIComp from './DefaultStreamViewUI.vue';
 import { enUSResource, zhCNResource } from './i18n';
 import LiveViewComponent from './index.vue';
+import { LIVE_STREAM_CONTENT_VIEW } from './constants';
 
 addI18n('en-US', { translation: enUSResource });
 addI18n('zh-CN', { translation: zhCNResource });
@@ -40,7 +41,5 @@ addI18n('zh-CN', { translation: zhCNResource });
 const LiveCoreView = LiveViewComponent;
 const LiveView = LiveViewComponent;
 const DefaultStreamViewUI = DefaultStreamViewUIComp;
-
-const LIVE_STREAM_CONTENT_VIEW = 'atomicx-live-stream-content';
 
 export { LiveCoreView, LiveView, DefaultStreamViewUI, LIVE_STREAM_CONTENT_VIEW };

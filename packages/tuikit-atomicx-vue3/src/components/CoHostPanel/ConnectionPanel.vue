@@ -124,7 +124,7 @@ import { CoHostLayoutTemplate, CoHostStatus, CoHostEvent, BattleEvent, LiveOrien
 import { Avatar } from '../Avatar';
 import RecommendHostList from './RecommendHostList.vue';
 import type { SeatUserInfo } from '../../types';
-import { ERROR_MESSAGE } from './constants';
+import { ERROR_MESSAGE, COHOST_REQUEST_TIMEOUT_SECONDS, BATTLE_REQUEST_TIMEOUT_SECONDS } from './constants';
 
 const props = defineProps<{
   battleDuration: number;
@@ -213,9 +213,9 @@ const handleSendCoHostRequest = async (user: SeatUserInfo) => {
     const result = await requestHostConnection({
       liveId: user.liveId,
       layoutTemplate: effectiveCoHostLayoutTemplate.value,
-      timeout: 10,
+      timeout: COHOST_REQUEST_TIMEOUT_SECONDS,
       extensionInfo: JSON.stringify({
-        timeout: 10,
+        timeout: COHOST_REQUEST_TIMEOUT_SECONDS,
         withBattle: false,
       }),
     });
@@ -306,7 +306,7 @@ const handleBattleRequest = async () => {
         extensionInfo: '',
       },
       userIdList,
-      timeout: 10,
+      timeout: BATTLE_REQUEST_TIMEOUT_SECONDS,
     });
     requestBattleId.value = battleRes.battleId;
     userIdList.forEach(userId => battleRequestList.value.add(userId))
@@ -411,7 +411,9 @@ onUnmounted(() => {
   border-radius: 16px;
   border: 1px solid var(--stroke-color-module, #48494F);
   background: var(--bg-color-operate, #1F2024);
-  box-shadow: 0 1px 8px 0 var(---Black-5, rgba(0, 0, 0, 0.40)), 0 4px 12px 0 var(---Black-5, rgba(0, 0, 0, 0.40)), 0 10px 30px 0 var(---Black-5, rgba(0, 0, 0, 0.40));
+  box-shadow: 0 1px 8px 0 rgba(0, 0, 0, 0.40),
+              0 4px 12px 0 rgba(0, 0, 0, 0.40),
+              0 10px 30px 0 rgba(0, 0, 0, 0.40);
 }
 </style>
 

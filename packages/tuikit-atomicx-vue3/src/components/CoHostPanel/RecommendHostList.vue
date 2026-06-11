@@ -54,7 +54,7 @@
 import { IconRefresh, useUIKit, TUIToast, TOAST_TYPE } from '@tencentcloud/uikit-base-component-vue3';
 import { TUIErrorCode } from '@tencentcloud/tuiroom-engine-js';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { useCoHostState } from '../../states/CoHostState';
+import { useCoHostState, SeatUserInfo } from '../../states/CoHostState';
 import { Avatar } from '../Avatar';
 import { CoHostStatus } from '../../types';
 
@@ -71,14 +71,14 @@ const { coHostStatus, connected, invitees, candidates, candidatesCursor, getCoHo
 const displayUserList = computed(() => {
   const connectedKeys = new Set(connected.value.map(u => `${u.userId}-${u.liveId}`));
   const seen = new Set<string>();
-  const result: typeof invitees.value = [];
+  const result: SeatUserInfo[] = [];
   for (const user of [...invitees.value, ...candidates.value]) {
     const key = `${user.userId}-${user.liveId}`;
     if (connectedKeys.has(key) || seen.has(key)) {
       continue;
     }
     seen.add(key);
-    result.push(user);
+    result.push(user as SeatUserInfo);
   }
   return result;
 });

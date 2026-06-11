@@ -1,9 +1,8 @@
 <script lang="ts" setup>
-import { toRefs, computed } from 'vue';
+import { toRefs, computed, type Component } from 'vue';
 import cs from 'classnames';
 import { useLoginState } from '../../../../states/LoginState';
 import { BarrageType } from '../../../../types/barrage';
-import { CustomMessage } from '../CustomMessage';
 import { TextMessage } from '../TextMessage';
 import { MessageBubble } from './MessageBubble';
 import type { Barrage } from '../../../../types/barrage';
@@ -30,9 +29,8 @@ const {
   style,
 } = toRefs(props);
 
-const MessageComponentsFactory = {
+const MessageComponentsFactory: Partial<Record<BarrageType, Component>> = {
   [BarrageType.text]: TextMessage,
-  [BarrageType.custom]: CustomMessage,
 };
 
 const MessageComponent = computed(() => MessageComponentsFactory[message.value.messageType]);

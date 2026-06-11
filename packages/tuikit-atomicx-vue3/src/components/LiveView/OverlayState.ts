@@ -9,6 +9,16 @@ import { usePlayerControlState } from './PlayerControl/PlayerControlState';
 
 /** Default loading timeout in milliseconds. */
 const DEFAULT_LOADING_TIMEOUT_MS = 5000;
+/**
+ * Debounce window (ms) before treating an empty seatList (after the list had
+ * once been populated) as "anchor away". This guards against transient empty
+ * seatLayout snapshots emitted by some SDK builds / mobile browsers during
+ * stream switching, reconnecting, or layout updates — situations where the
+ * <video> element keeps playing audio/video but the layout briefly reports
+ * zero regions, which previously caused a false "anchor away" overlay even
+ * though the stream was perfectly fine.
+ */
+const ANCHOR_AWAY_DEBOUNCE_MS = 2000;
 
 interface OverlayStateOptions {
   /** The view container ID for video ready detection. */
@@ -20,6 +30,13 @@ interface OverlayStateOptions {
    * @default 5000
    */
   loadingTimeoutMs?: number;
+  /**
+   * Debounce window (ms) for confirming the anchor is away after the
+   * seatList becomes empty. Must be long enough to absorb transient empty
+   * seatLayout snapshots from the SDK on flaky mobile networks.
+   * @default 2000
+   */
+  anchorAwayDebounceMs?: number;
 }
 
 interface OverlayState {
@@ -65,7 +82,11 @@ interface OverlayState {
  * @param options - Configuration options including the view container ID.
  */
 function useOverlayState(options: OverlayStateOptions): OverlayState {
-  const { viewId, loadingTimeoutMs = DEFAULT_LOADING_TIMEOUT_MS } = options;
+  const {
+    viewId,
+    loadingTimeoutMs = DEFAULT_LOADING_TIMEOUT_MS,
+    anchorAwayDebounceMs = ANCHOR_AWAY_DEBOUNCE_MS,
+  } = options;
   const { seatList } = useLiveSeatState();
   const { currentLive } = useLiveListState();
   const { loginUserInfo } = useLoginState();
@@ -82,6 +103,15 @@ function useOverlayState(options: OverlayStateOptions): OverlayState {
   const isLoadingTimedOut = ref(false);
   let loadingTimer: ReturnType<typeof setTimeout> | null = null;
 
+  // Debounced "anchor confirmed away" flag. We only set it after the
+  // seatList has stayed empty for `anchorAwayDebounceMs` following a prior
+  // populated state. Using a debounced flag (instead of reading
+  // `seatList.length` directly inside `isAnchorAway`) is what protects us
+  // from transient empty seatLayout snapshots that some H5 builds emit
+  // mid-stream while audio/video keeps flowing.
+  const isAnchorConfirmedAway = ref(false);
+  let anchorAwayTimer: ReturnType<typeof setTimeout> | null = null;
+
   const isAnchor = computed(
     () => loginUserInfo.value?.userId === currentLive.value?.liveOwner.userId,
   );
@@ -92,16 +122,20 @@ function useOverlayState(options: OverlayStateOptions): OverlayState {
   );
 
   // Show anchor-away overlay when:
-  // Case A (classic): seatList was populated then became empty → anchor left.
+  // Case A (classic): seatList was populated, then stayed empty long enough
+  //   to be confirmed away (debounced via `isAnchorConfirmedAway`).
   // Case B (timeout): seatList was never populated and loading timed out
   //   → the room had no anchor from the start.
-  // Both cases require: viewer is not the anchor, and it's a live room.
+  // Both cases require: viewer is not the anchor, it's a live room, and the
+  // current seatList is empty at this moment. We additionally suppress the
+  // overlay while the first frame is still rendering for the very first
+  // time (Case B handles the never-populated path explicitly via timeout).
   const isAnchorAway = computed(
     () =>
       !isAnchor.value
       && seatList.value.length === 0
       && (currentLive.value?.liveId?.startsWith('live_') ?? false)
-      && (hasSeatListBeenPopulated.value || isLoadingTimedOut.value),
+      && (isAnchorConfirmedAway.value || isLoadingTimedOut.value),
   );
 
   // Pure loading state: true when the stream is still loading, regardless of
@@ -112,12 +146,14 @@ function useOverlayState(options: OverlayStateOptions): OverlayState {
       !isFirstFrameRendered.value
       && !isAnchor.value
       && !isLoadingTimedOut.value
-      && currentLive.value?.liveId,
+      && !!currentLive.value?.liveId,
   );
 
-  // Once seatList has data for the first time, mark it as "has been populated".
-  // This is a one-way latch: once true, it stays true for the component lifetime.
-  // Also cancel the loading timeout since the anchor is clearly present.
+  // Track seatList transitions so we can:
+  //   - latch `hasSeatListBeenPopulated` (one-way) on the first non-empty list
+  //   - cancel the loading timeout once the anchor has clearly arrived
+  //   - debounce the "anchor away" confirmation so transient empty layouts
+  //     do not flash the overlay while the stream is still playing
   watch(
     () => seatList.value.length,
     (len) => {
@@ -127,7 +163,33 @@ function useOverlayState(options: OverlayStateOptions): OverlayState {
           clearTimeout(loadingTimer);
           loadingTimer = null;
         }
+        // SeatList came back: cancel any pending away confirmation and
+        // clear the confirmed flag so we leave the overlay state.
+        if (anchorAwayTimer !== null) {
+          clearTimeout(anchorAwayTimer);
+          anchorAwayTimer = null;
+        }
+        isAnchorConfirmedAway.value = false;
+        return;
       }
+      // SeatList dropped to empty. Only schedule the away confirmation if
+      // it had been populated before (i.e. an anchor really was here).
+      // Otherwise the loadingTimer / isLoadingTimedOut path handles
+      // "never had an anchor" rooms.
+      if (!hasSeatListBeenPopulated.value) {
+        return;
+      }
+      if (anchorAwayTimer !== null) {
+        return;
+      }
+      anchorAwayTimer = setTimeout(() => {
+        anchorAwayTimer = null;
+        // Re-check at the moment the timer fires: if seatList has come
+        // back in the meantime, do nothing.
+        if (seatList.value.length === 0) {
+          isAnchorConfirmedAway.value = true;
+        }
+      }, anchorAwayDebounceMs);
     },
   );
 
@@ -193,6 +255,10 @@ function useOverlayState(options: OverlayStateOptions): OverlayState {
       clearTimeout(loadingTimer);
       loadingTimer = null;
     }
+    if (anchorAwayTimer !== null) {
+      clearTimeout(anchorAwayTimer);
+      anchorAwayTimer = null;
+    }
     isFirstFrameRendered.value = false;
   }
 
@@ -207,5 +273,5 @@ function useOverlayState(options: OverlayStateOptions): OverlayState {
   };
 }
 
-export { useOverlayState, DEFAULT_LOADING_TIMEOUT_MS };
+export { useOverlayState, DEFAULT_LOADING_TIMEOUT_MS, ANCHOR_AWAY_DEBOUNCE_MS };
 export type { OverlayState, OverlayStateOptions };

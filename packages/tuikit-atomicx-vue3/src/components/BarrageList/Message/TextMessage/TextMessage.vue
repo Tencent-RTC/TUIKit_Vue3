@@ -194,6 +194,7 @@ const handleNickClick = (event: MouseEvent) => {
     letter-spacing: 0.1em;
 
     .user-badge {
+      color: var(--text-color-button);
       background-color: var(--uikit-color-theme-6);
       border-radius: 12px;
       padding: 0px 8px;

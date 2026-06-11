@@ -1,5 +1,4 @@
 import { inject, onMounted, onUnmounted, watch } from 'vue';
-import { handleChatErrorWithModal } from '../../components/UIKitModal/chatErrorModal';
 import { throttle } from '../../utils/lodash';
 import type { MessageInfo } from '@atomicxcore/core';
 import { useChatContext } from '../../chat-store';
@@ -77,7 +76,10 @@ export function useReadReceipt({
         // Successfully sent read receipts
       })
       .catch((error) => {
-        handleChatErrorWithModal(error as unknown as any);
+        // Log read receipt error; the UI layer is responsible for
+        // displaying the appropriate modal. This avoids an inverted
+        // dependency from hooks → component.
+        console.error('useReadReceipt::sendBatchReadReceipts failed', error);
       });
     pendingReadReceiptMessages.clear();
   }, delay, { leading: false, trailing: true });
