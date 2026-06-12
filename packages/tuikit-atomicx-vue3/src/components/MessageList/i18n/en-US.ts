@@ -56,6 +56,7 @@ const MessageList = {
   no_more: 'No More',
   no_unread_members: 'No Unread Members',
   yesterday: 'Yesterday',
+  peer_is_typing: 'Peer is typing',
 
   copy_success: 'Copied',
   copy_failed: 'Copy Failed',

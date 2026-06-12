@@ -5,10 +5,10 @@ import { MessageType, ConversationType, MessageStatus } from '@atomicxcore/core'
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
+import { useChatUIState } from '../../../../context/useChatUIState';
 import { isCallMessage, isCreateGroupMessage } from '../../../../utils/call';
 import { getTimeStampAuto } from '../../../../utils/time';
 import { Avatar } from '../../../Avatar';
-import { useChatUIState } from '../../../../context/useChatUIState';
 import { useMessageListContext } from '../../MessageListContext';
 import { ReadReceiptInfo } from '../../ReadReceiptInfo';
 import { AudioMessage } from '../AudioMessage';
@@ -40,6 +40,7 @@ interface MessageLayoutProps {
   isLastInChunk?: boolean;
   alignment?: 'left' | 'right' | 'two-sided';
   messageActionList?: MessageAction[];
+  messageAvatar?: Component;
   className?: string;
   style?: Record<string, any>;
 }
@@ -55,6 +56,7 @@ const props = withDefaults(defineProps<MessageLayoutProps>(), {
   isFirstInChunk: undefined,
   isLastInChunk: undefined,
   messageActionList: undefined,
+  messageAvatar: undefined,
   className: '',
   style: undefined,
 });
@@ -210,12 +212,22 @@ const avatarVisibility = computed(() => {
     @mouseleave="isHovered = false"
   >
     <Avatar
-      v-if="shouldRenderAvatar"
+      v-if="shouldRenderAvatar && !messageAvatar"
       :class="cs(avatarClasses)"
       :style="{ visibility: avatarVisibility }"
       :src="message.from.avatarURL"
       size="sm"
     />
+    <View
+      v-else-if="shouldRenderAvatar"
+      :class="cs(avatarClasses)"
+      :style="{ visibility: avatarVisibility }"
+    >
+      <component
+        :is="messageAvatar"
+        :message-info="message"
+      />
+    </View>
     <View :class="cs(contentClasses)">
       <View v-if="!isAggregated" :class="cs(headerClasses)">
         <View v-if="!isHiddenMessageNick" :class="cs('message-layout__nick')">

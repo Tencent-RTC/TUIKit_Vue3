@@ -55,6 +55,7 @@ const MessageList = {
   no_more: '已加载全部',
   no_unread_members: '暂无未读成员',
   yesterday: '昨天',
+  peer_is_typing: '对方正在输入',
 
   copy_success: '已复制',
   copy_failed: '复制失败',

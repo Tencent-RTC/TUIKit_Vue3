@@ -24,7 +24,7 @@ interface EmojiContent {
 
 type ContentTypeMap = {
   [MessageContentType.TEXT]: string;
-  [MessageContentType.IMAGE]: File;
+  [MessageContentType.IMAGE]: File | string;
   [MessageContentType.VIDEO]: File;
   [MessageContentType.FILE]: File;
   [MessageContentType.MENTION]: MentionContent;
@@ -33,7 +33,7 @@ type ContentTypeMap = {
 
 type InputContent =
   | { type: MessageContentType.TEXT; content: string }
-  | { type: MessageContentType.IMAGE; content: File }
+  | { type: MessageContentType.IMAGE; content: File | string }
   | { type: MessageContentType.VIDEO; content: File }
   | { type: MessageContentType.FILE; content: File }
   | { type: MessageContentType.MENTION; content: MentionContent }

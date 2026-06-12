@@ -11,6 +11,7 @@ import {
 } from 'vue';
 import type { Component } from 'vue';
 import { MessageStatus } from '@atomicxcore/core';
+import { TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { ObserverView } from '../../baseComp/ObserverView';
 import { View } from '../../baseComp/View';
@@ -19,6 +20,7 @@ import { useChatUIState } from '../../context/useChatUIState';
 import { useReadReceipt } from '../../hooks/useReadReceipt/useReadReceipt';
 import { useScroll } from '../../hooks/useScroll';
 import { isCallMessage, isCreateGroupMessage } from '../../utils/call';
+import { isTypingEndMessage, isTypingMessage, isTypingStartMessage } from '../../utils/chatTypingStatus';
 import { throttle } from '../../utils/lodash';
 import { Message as DefaultMessage } from './Message';
 import { MessageForward } from './MessageForward';
@@ -27,7 +29,6 @@ import { MessageTimeDivider as DefaultMessageTimeDivider } from './MessageTimeDi
 import { ScrollToBottom } from './ScrollToBottom';
 import type { MessageAction } from '../../hooks/useMessageActions';
 import type { MessageInfo, MessageType } from '@atomicxcore/core';
-import { TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 
 // Define message chunk interface
 interface MessageChunk {
@@ -52,6 +53,8 @@ interface MessageListProps {
   Message?: Component | undefined;
   /** custom message timeline component */
   MessageTimeDivider?: Component | undefined;
+  /** custom message avatar component */
+  messageAvatar?: Component | undefined;
   /** custom renderers to override built-in message bubble content by MessageType */
   messageRenderers?: Record<MessageType, Component> | undefined;
 }
@@ -67,6 +70,7 @@ const props = withDefaults(defineProps<MessageListProps>(), {
   /** custom components */
   Message: undefined,
   MessageTimeDivider: undefined,
+  messageAvatar: undefined,
   messageRenderers: undefined,
 });
 
@@ -96,10 +100,13 @@ const {
   loadMessages,
   loadOlderMessages,
   messageListOnEvent,
-  setActiveConversation,
 } = useChatContext(props.channel);
 const {
-  enableReadReceipt, highlightMessage, recalledMessageIDSet,
+  enableReadReceipt,
+  highlightMessage,
+  isPeerTyping,
+  recalledMessageIDSet,
+  setIsPeerTyping,
   listMode,
   pendingLocateMessage, setPendingLocateMessage,
 } = chatUIState;
@@ -180,7 +187,9 @@ const messageChunks = computed(() => {
 // Monitor scroll events
 const handleScroll = throttle(() => {
   const el = scrollContainer.value;
-  if (!el) return;
+  if (!el) {
+    return;
+  }
   const wasNearBottom = isNearBottom.value;
   isNearBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_THRESHOLD;
   if (isNearBottom.value && listMode.value === 'latest') {
@@ -212,28 +221,28 @@ const initializeMessageList = async () => {
       } as any,
       direction: 'both',
     })
-    .then(() => {
-      listMode.value = 'fragment';
-      nextTick(() => {
-        scrollToMessage(scrollContainer.value, locateInfo.messageID, {
-          block: 'center',
-          behavior: 'instant',
-        }).catch(() => {});
-        highlightMessage({ messageID: locateInfo.messageID, duration: 3000 });
+      .then(() => {
+        listMode.value = 'fragment';
+        nextTick(() => {
+          scrollToMessage(scrollContainer.value, locateInfo.messageID, {
+            block: 'center',
+            behavior: 'instant',
+          }).catch(() => {});
+          highlightMessage({ messageID: locateInfo.messageID, duration: 3000 });
+          setPendingLocateMessage(null);
+          didInitialScroll.value = true;
+          observeMessageList();
+        });
+      })
+      .catch(() => {
         setPendingLocateMessage(null);
-        didInitialScroll.value = true;
-        observeMessageList();
+        TUIToast.error({
+          message: t('MessageList.origin_message_has_been_recalled'),
+        });
+        if (!didInitialScroll.value) {
+          loadMessages();
+        }
       });
-    })
-    .catch(() => {
-      setPendingLocateMessage(null);
-      TUIToast.error({
-        message: t('MessageList.origin_message_has_been_recalled'),
-      });
-      if (!didInitialScroll.value) {
-        loadMessages();
-      }
-    });
   } else {
     listMode.value = 'latest';
     await loadMessages();
@@ -247,9 +256,13 @@ const initializeMessageList = async () => {
 
 // Load more older messages
 const handleLoadOlder = async () => {
-  if (loadingOlder.value || listMode.value === 'fragment') return;
+  if (loadingOlder.value || listMode.value === 'fragment') {
+    return;
+  }
   const el = scrollContainer.value;
-  if (!el || !messageList.value?.length) return;
+  if (!el || !messageList.value?.length) {
+    return;
+  }
   const oldScrollHeight = el.scrollHeight;
   loadingOlder.value = true;
   try {
@@ -264,7 +277,9 @@ const handleLoadOlder = async () => {
 };
 
 const handleBackToLatest = async () => {
-  if (!activeConversationID.value) return;
+  if (!activeConversationID.value) {
+    return;
+  }
   listMode.value = 'latest';
   newMessageCount.value = 0;
   await loadMessages();
@@ -276,6 +291,17 @@ const handleBackToLatest = async () => {
 let unsubscribeEvent: (() => void) | null = null;
 
 function handleNewMessage(message: MessageInfo) {
+  if (isTypingMessage(message)) {
+    if (!message.isSentBySelf) {
+      if (isTypingStartMessage(message)) {
+        setIsPeerTyping(true);
+      } else if (isTypingEndMessage(message)) {
+        setIsPeerTyping(false);
+      }
+    }
+    return;
+  }
+
   // 自己发的消息：fragment 模式先切回 latest，latest 模式直接滚底
   if (message.isSentBySelf) {
     if (listMode.value === 'fragment') {
@@ -291,17 +317,18 @@ function handleNewMessage(message: MessageInfo) {
     clearConversationUnreadCount(activeConversationID.value).catch(() => {});
   }
   if (listMode.value === 'fragment') {
-    newMessageCount.value++;
+    newMessageCount.value += 1;
     return;
   }
   if (isNearBottom.value) {
     nextTick(() => scrollToBottom(scrollContainer.value, 'smooth'));
   } else {
-    newMessageCount.value++;
+    newMessageCount.value += 1;
   }
 }
 
 watch(activeConversationID, () => {
+  setIsPeerTyping(false);
   recalledMessageIDSet.value = new Set();
   if (unsubscribeEvent) {
     unsubscribeEvent();
@@ -316,7 +343,9 @@ watch(activeConversationID, () => {
 
 // Same-conversation search locate
 watch(pendingLocateMessage, (locateInfo) => {
-  if (!locateInfo) return;
+  if (!locateInfo) {
+    return;
+  }
   if (locateInfo.conversationID === activeConversationID.value) {
     initializeMessageList();
   }
@@ -430,6 +459,7 @@ defineExpose({
               :message="message"
               :alignment="props.alignment"
               :messageActionList="props.messageActionList"
+              :message-avatar="props.messageAvatar"
               :isAggregated="Boolean(enableMessageAggregation && messageIndex !== 0)"
               :is-first-in-chunk="Boolean(messageIndex === 0)"
               :is-last-in-chunk="Boolean(messageIndex === chunk.messages.length - 1)"
@@ -453,6 +483,12 @@ defineExpose({
       <div style="height: 10px;" />
     </div>
     <MessageForward />
+    <div
+      v-if="isPeerTyping"
+      class="message-list__typing-indicator"
+    >
+      {{ t('MessageList.peer_is_typing') }}
+    </div>
     <ScrollToBottom
       v-if="listMode === 'fragment' || (!isNearBottom && listMode === 'latest')"
       :class="cs('scroll-to-bottom')"
@@ -472,11 +508,13 @@ defineExpose({
   overflow: hidden;
   background-color: var(--bg-color-operate);
 }
+
 .message-list-container {
   flex: 1;
   height: 100%;
   padding: 0 10px;
   overflow: auto;
+  padding-bottom: 12px;
   @include scrollbar.scrollbar-hidden();
 }
 .message-chunk--container {
@@ -527,6 +565,26 @@ defineExpose({
 
   &:hover {
     background-color: var(--primary-color-hover, #0057cc);
+  }
+}
+
+.message-list__typing-indicator {
+  position: absolute;
+  left: 12px;
+  bottom: 2px;
+  z-index: 10;
+  font-size: 12px;
+  animation: fade-in 0.2s ease-out forwards, breathing 2s ease-in-out 0.2s infinite;
+  color: var(--text-color-secondary, #8f959e);
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes breathing {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
   }
 }
 

@@ -98,7 +98,6 @@ const ChatSetting = {
   quit_group_success: 'Successfully left the group',
   quit_group_failed: 'Failed to leave the group',
   dismiss_group_failed: 'Failed to dismiss the group',
-  dismiss_group_failed: 'Failed to dismiss the group',
 
   // GroupManagement
   group_management: 'Group Management',

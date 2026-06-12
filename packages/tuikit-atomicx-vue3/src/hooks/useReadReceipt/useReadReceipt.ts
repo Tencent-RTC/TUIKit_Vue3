@@ -67,10 +67,11 @@ export function useReadReceipt({
 
   // Throttled function to batch send read receipts
   const sendBatchReadReceipts = throttle(() => {
-    if (pendingReadReceiptMessages.size === 0) {
+    const messagesToSend = Array.from(pendingReadReceiptMessages.values())
+      .filter(message => message.needReadReceipt);
+    if (messagesToSend.length === 0) {
       return;
     }
-    const messagesToSend = Array.from(pendingReadReceiptMessages.values());
     sendMessageReadReceipts(messagesToSend)
       .then(() => {
         // Successfully sent read receipts

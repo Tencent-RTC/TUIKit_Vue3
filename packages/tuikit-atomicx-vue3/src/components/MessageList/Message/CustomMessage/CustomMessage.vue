@@ -6,7 +6,7 @@ import { isCallMessage as _isCallMessage } from '../../../../utils/call';
 import { isRoomMessage } from '../../../../utils/room';
 import { CallMessage } from './CallMessage';
 import { QuickConferenceMessage } from './QuickConferenceMessage';
-import type { MessageInfo } from '@atomicxcore/core';
+import type { CustomMessagePayload, MessageInfo } from '@atomicxcore/core';
 
 interface Props {
   message: MessageInfo;
@@ -29,20 +29,14 @@ interface CustomMessageData {
   [key: string]: any;
 }
 
-interface CustomMessagePayload {
-  data: string;
-  description: string;
-  extension: string;
-}
-
 const isCallMessage = computed(() => _isCallMessage(props.message));
 const _isRoomMsg = computed(() => isRoomMessage(props.message));
 
 const textLinkData = computed<{ text?: string; link?: string } | null>(() => {
   try {
-    const payload = props.message.messagePayload as unknown as CustomMessagePayload;
-    const parsed = JSON.parse(payload?.data || '{}') as CustomMessageData;
-    if (parsed?.businessID === 'text_link') {
+    const payload = props.message.messagePayload as CustomMessagePayload;
+    const parsed = JSON.parse(payload.customData || '{}') as CustomMessageData;
+    if (parsed.businessID === 'text_link') {
       const { text, link } = parsed;
       return { text, link };
     }

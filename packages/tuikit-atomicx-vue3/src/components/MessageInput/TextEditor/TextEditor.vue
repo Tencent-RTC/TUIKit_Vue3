@@ -15,14 +15,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, watch, onBeforeUnmount } from 'vue';
+import { computed, inject, ref, watch, onBeforeUnmount } from 'vue';
 import { TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import { useChatContext } from '../../../chat-store';
 import { useChatUIState } from '../../../context/useChatUIState';
-import { convertEditorContent, trimInputContent } from '../../../states/MessageInputState/utils';
 import { MessageContentType } from '../../../types/messageInput';
 import { transformTextWithEmojiKeyToName, transformTextWithEmojiNameToKey } from '../../../utils';
+import { parseConversationDraftContent, serializeConversationDraftContent } from '../../../utils/conversationDraft';
+import { deleteLocalConversationDraft, getLocalConversationDraft, setLocalConversationDraft } from '../../../utils/conversationDraftStorage';
+import { blobUrlToFile, convertEditorContent, convertInputContentToEditorNode, trimInputContent } from '../../../utils/messageInput';
 import { createExtensions } from './EditorCore';
 import styles from './TextEditor.module.scss';
 import type { InputContent } from '../../../types/messageInput';
@@ -43,10 +45,25 @@ const props = withDefaults(defineProps<TextEditorProps>(), {
 
 const { t, language } = useUIKit();
 const channel = inject('channel', 'default') as string;
-const { activeConversation, sendMessage } = useChatContext(channel);
-const { setEditorInstance, setInputContent, quotedMessage, clearQuotedMessage } = useChatUIState(channel);
+const {
+  activeConversation,
+  activeConversationID,
+  sendMessage,
+  setConversationDraft,
+} = useChatContext(channel);
 
-let typingTimer: ReturnType<typeof setTimeout> | null = null;
+const {
+  setEditorInstance,
+  setInputContent,
+  quotedMessage,
+  clearQuotedMessage,
+  enterTyping,
+  leaveTyping,
+} = useChatUIState(channel);
+
+const isProgrammaticUpdate = ref(false);
+const activeConversationDraft = ref<string | undefined>(undefined);
+const activeConversationIDSnapshot = ref<string | undefined>(undefined);
 
 const computedPlaceholder = computed(() => props.placeholder ?? t('MessageInput.enter_a_message'));
 
@@ -56,7 +73,8 @@ const handleEnter = async () => {
   try {
     await onEnterCallback();
   } catch (error) {
-    switch (error.code) {
+    const errorCode = (error as { code?: number })?.code;
+    switch (errorCode) {
       case 10007:
         TUIToast.error({
           message: '你不在群里',
@@ -83,13 +101,13 @@ const editor = useEditor({
     channel,
   }),
   onUpdate: () => {
-    // TODO: replace with new MessageInputStore typing API when available
-    if (typingTimer) {
-      clearTimeout(typingTimer);
+    if (isProgrammaticUpdate.value) {
+      return;
     }
-    typingTimer = setTimeout(() => {
-      typingTimer = null;
-    }, 3000);
+    enterTyping().catch(() => {});
+  },
+  onBlur: () => {
+    leaveTyping().catch(() => {});
   },
 });
 
@@ -109,13 +127,8 @@ onEnterCallback = async () => {
     return;
   }
 
-  // Snapshot state before clearing for instant UX feedback
   const savedQuotedMessage = quotedMessage.value;
-
-  setInputContent('');
-  if (savedQuotedMessage) {
-    clearQuotedMessage();
-  }
+  const sendingConversationID = activeConversation.value?.conversationID;
 
   const textBuffer: string[] = [];
   const atUserList: string[] = [];
@@ -154,7 +167,11 @@ onEnterCallback = async () => {
       textBuffer.push(mention.mentionSuggestionChar + mention.label);
     } else if (item.type === MessageContentType.IMAGE) {
       await flushText();
-      await sendMessage({ type: 'imageMessage', file: (item as Extract<InputContent, { type: typeof MessageContentType.IMAGE }>).content });
+      const imageContent = (item as Extract<InputContent, { type: typeof MessageContentType.IMAGE }>).content;
+      const imageFile = imageContent instanceof File ? imageContent : await blobUrlToFile(imageContent);
+      if (imageFile) {
+        await sendMessage({ type: 'imageMessage', file: imageFile });
+      }
     } else if (item.type === MessageContentType.VIDEO) {
       await flushText();
       await sendMessage({ type: 'videoMessage', file: (item as Extract<InputContent, { type: typeof MessageContentType.VIDEO }>).content, duration: 0 });
@@ -165,13 +182,32 @@ onEnterCallback = async () => {
     idx += 1;
   }
   await flushText();
+  await leaveTyping().catch(() => {});
+  isProgrammaticUpdate.value = true;
+  try {
+    setInputContent('');
+  } finally {
+    isProgrammaticUpdate.value = false;
+  }
+  if (savedQuotedMessage) {
+    clearQuotedMessage();
+  }
+  if (sendingConversationID) {
+    deleteLocalConversationDraft(sendingConversationID).catch(() => {});
+    setConversationDraft(sendingConversationID, '').catch(() => {});
+  }
 };
 
 // Reactive: disabled prop
 watch(() => props.disabled, (newDisabled) => {
   editor.value?.setEditable(!newDisabled);
   if (newDisabled) {
-    setInputContent('');
+    isProgrammaticUpdate.value = true;
+    try {
+      setInputContent('');
+    } finally {
+      isProgrammaticUpdate.value = false;
+    }
   }
 });
 
@@ -204,15 +240,75 @@ watch(() => props.maxLength, (newMaxLength) => {
   }
 });
 
-// Clear content when conversation changes
-watch(activeConversation, (newConversation, oldConversation) => {
-  if (newConversation?.conversationID !== oldConversation?.conversationID) {
-    setInputContent('');
+watch(() => activeConversation.value?.draft, (draft) => {
+  activeConversationDraft.value = draft;
+}, { immediate: true });
+
+watch(activeConversationID, (conversationID) => {
+  activeConversationIDSnapshot.value = conversationID;
+}, { immediate: true });
+
+const saveCurrentDraft = (conversationID: string) => {
+  const editorInstance = editor.value;
+  if (!editorInstance) {
+    return;
   }
-});
+
+  const content = convertEditorContent(editorInstance.getJSON());
+  const draft = serializeConversationDraftContent(content, {
+    imageText: `[${t('MessageInput.image')}]`,
+    emojiText: emojiContent => emojiContent.text || emojiContent.key,
+  });
+  setLocalConversationDraft(conversationID, draft).catch(() => {});
+  setConversationDraft(conversationID, draft).catch(() => {});
+};
+
+const setEditorDraftContent = (content: string | InputContent[] | undefined) => {
+  const editorInstance = editor.value;
+  if (!editorInstance) {
+    return;
+  }
+
+  isProgrammaticUpdate.value = true;
+  try {
+    if (typeof content === 'string' || content === undefined) {
+      editorInstance.commands.setContent(content ?? '', true);
+    } else {
+      editorInstance.commands.setContent(content.map(convertInputContentToEditorNode), true);
+    }
+  } finally {
+    isProgrammaticUpdate.value = false;
+  }
+
+  if (props.autoFocus) {
+    editorInstance.commands.focus();
+  }
+};
+
+const restoreDraft = (draft: string | undefined, conversationID: string | undefined) => {
+  if (!conversationID) {
+    setEditorDraftContent('');
+    return;
+  }
+
+  getLocalConversationDraft(conversationID).then((localDraft) => {
+    if (activeConversationIDSnapshot.value !== conversationID) {
+      return;
+    }
+    setEditorDraftContent(parseConversationDraftContent(localDraft ?? draft));
+  });
+};
+
+watch(activeConversationID, (newConversationID, oldConversationID) => {
+  if (oldConversationID) {
+    saveCurrentDraft(oldConversationID);
+  }
+  restoreDraft(activeConversationDraft.value, newConversationID);
+}, { immediate: true });
 
 // Cleanup on unmount
 onBeforeUnmount(() => {
+  leaveTyping().catch(() => {});
   setEditorInstance(null);
 });
 </script>

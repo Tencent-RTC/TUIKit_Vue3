@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import cs from 'classnames';
-import type { ImageMessageInfo } from '@atomicxcore/core';
 import ImagePreview from './ImagePreview.vue';
+import type { ImageMessageInfo } from '@atomicxcore/core';
 
 interface ImageMessageProps {
   message: ImageMessageInfo;
@@ -30,7 +30,7 @@ const props = withDefaults(defineProps<ImageMessageProps>(), {
 const messageContent = computed((): ImageMessageContent => {
   const p = props.message.messagePayload;
   return {
-    url: p.originalImageUrl || p.largeImageUrl || p.thumbImageUrl || '',
+    url: p.originalImageURL || p.largeImageURL || p.thumbImageURL || '',
     width: p.originalImageWidth,
     height: p.originalImageHeight,
   };

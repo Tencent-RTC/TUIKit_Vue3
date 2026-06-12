@@ -61,7 +61,7 @@ const {
   pause,
   setProgress,
 } = useAudioControl({
-  url: messageContent.value.audioUrl ?? '',
+  url: messageContent.value.audioURL ?? '',
   audioId: audioId.value,
 });
 

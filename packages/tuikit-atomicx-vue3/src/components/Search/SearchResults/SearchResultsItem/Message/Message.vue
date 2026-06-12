@@ -27,14 +27,14 @@
 import { computed, h, inject, useCssModule } from 'vue';
 import { MessageType } from '@atomicxcore/core';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { SearchType } from '../../../../../types/search';
 import { useChatContext } from '../../../../../chat-store';
 import { useChatUIState } from '../../../../../context/useChatUIState';
+import { SearchType } from '../../../../../types/search';
+import { transformTextWithEmojiKeyToName } from '../../../../../utils';
 import { Avatar } from '../../../../Avatar';
 import { highlightText } from '../utils';
 import type { ResultItemProps } from '../../../../../types/search';
 import type { MessageInfo } from '@atomicxcore/core';
-import { transformTextWithEmojiKeyToName } from '../../../../../utils';
 
 const $style = useCssModule();
 
@@ -101,7 +101,7 @@ const renderMessageContent = (msg: MessageInfo, searchKeyword: string) => {
 
     case MessageType.Image:
       return h('img', {
-        src: payload?.originalImageUrl || payload?.thumbImageUrl || payload?.url,
+        src: payload?.originalImageURL || payload?.thumbImageURL || payload?.url,
         class: $style['SearchMessage__image-thumb'],
         alt: t('Search.messageType.image'),
       });
@@ -112,7 +112,7 @@ const renderMessageContent = (msg: MessageInfo, searchKeyword: string) => {
         { class: $style['SearchMessage__video-thumb'] },
         [
           h('img', {
-            src: payload?.videoSnapshotUrl || payload?.snapshotUrl,
+            src: payload?.videoSnapshotURL || payload?.snapshotURL,
             alt: t('Search.messageType.videoCover'),
           }),
           h(
