@@ -112,8 +112,8 @@ watch(() => props.message.msgID, () => {
     />
     <video
       class="video-message__video"
-      :src="messageContent.videoUrl"
-      :poster="messageContent.videoSnapshotUrl"
+      :src="messageContent.videoURL"
+      :poster="messageContent.videoSnapshotURL"
       controls
       muted
       :autoplay="false"

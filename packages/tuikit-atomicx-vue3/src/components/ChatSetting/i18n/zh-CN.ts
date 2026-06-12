@@ -98,7 +98,6 @@ const ChatSetting = {
   quit_group_success: '已退出群聊',
   quit_group_failed: '退出群聊失败',
   dismiss_group_failed: '解散群聊失败',
-  dismiss_group_failed: '解散群聊失败',
 
   // GroupManagement
   group_management: '群管理',

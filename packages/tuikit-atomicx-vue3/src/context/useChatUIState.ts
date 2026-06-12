@@ -1,9 +1,12 @@
 import { ref } from 'vue';
 import type { Ref } from 'vue';
+import { ConversationType, getChannel } from '@atomicxcore/core';
 import type { Editor } from '@tiptap/vue-3';
 import type { MessageInfo } from '@atomicxcore/core';
 import type { InputContent } from '../types/messageInput';
-import { convertInputContentToEditorNode } from '../states/MessageInputState/utils';
+import { createTypingCustomData } from '../utils/chatTypingStatus';
+import { debounce, throttle } from '../utils/lodash';
+import { convertInputContentToEditorNode } from '../utils/messageInput';
 
 export interface LocateMessageInfo {
   conversationID: string;
@@ -19,6 +22,9 @@ export interface ChatUIStateAPI {
    * prop-drilling.
    */
   enableReadReceipt: Ref<boolean | undefined>;
+
+  /** Whether the peer of current active conversation is typing. */
+  isPeerTyping: Ref<boolean>;
 
   /**
    * Set of message IDs currently being highlighted, for jump-to-message
@@ -56,6 +62,15 @@ export interface ChatUIStateAPI {
   /** Blur the message input editor. */
   blurInput: () => void;
 
+  /** Update peer typing state for current active conversation. */
+  setIsPeerTyping: (value: boolean) => void;
+
+  /** Send typing start message for current active C2C conversation. */
+  enterTyping: () => Promise<void>;
+
+  /** Send typing end message for current active C2C conversation. */
+  leaveTyping: () => Promise<void>;
+
   /** Current display mode of the MessageList. */
   listMode: Ref<'latest' | 'fragment'>;
 
@@ -79,11 +94,35 @@ export interface ChatUIStateAPI {
 }
 
 const chatUIStateMap = new Map<string, ChatUIStateAPI>();
+const TYPING_AUTO_CLEAR_DURATION = 5 * 1000;
+const TYPING_ENTER_THROTTLE_DURATION = 5 * 1000;
+const TYPING_RECENT_RECEIVED_MESSAGE_DURATION = 30 * 1000;
 
-function createChatUIState(): ChatUIStateAPI {
+function hasRecentPeerMessage(messageList: MessageInfo[]): boolean {
+  const latestPeerMessage = [...messageList].reverse().find(message => !message.isSentBySelf);
+  const latestPeerMessageTime = latestPeerMessage?.timestamp?.getTime();
+  return typeof latestPeerMessageTime === 'number'
+    && Date.now() - latestPeerMessageTime <= TYPING_RECENT_RECEIVED_MESSAGE_DURATION;
+}
+
+function createChatUIState(channel: string): ChatUIStateAPI {
   const enableReadReceipt = ref<boolean | undefined>(undefined);
+  const isPeerTyping = ref(false);
   const highlightMessageIDSet = ref<Set<string>>(new Set());
   const recalledMessageIDSet = ref<Set<string>>(new Set());
+  let hasEnteredTyping = false;
+
+  const clearPeerTyping = debounce(() => {
+    isPeerTyping.value = false;
+  }, TYPING_AUTO_CLEAR_DURATION);
+
+  const setIsPeerTyping = (value: boolean): void => {
+    clearPeerTyping.cancel();
+    isPeerTyping.value = value;
+    if (value) {
+      clearPeerTyping();
+    }
+  };
 
   const highlightMessage = ({ messageID, duration }: { messageID: string; duration: number }): void => {
     const next = new Set(highlightMessageIDSet.value);
@@ -136,6 +175,51 @@ function createChatUIState(): ChatUIStateAPI {
   const focusInput = (): void => { editor.value?.commands.focus(); };
   const blurInput = (): void => { editor.value?.commands.blur(); };
 
+  const sendTypingStart = throttle(async (): Promise<void> => {
+    const snapshot = getChannel(channel).getSnapshot();
+    const conversationID = snapshot.activeConversationID;
+    if (!conversationID || snapshot.activeConversation?.type !== ConversationType.C2C) {
+      return;
+    }
+    if (!hasRecentPeerMessage(snapshot.messageList)) {
+      return;
+    }
+
+    await snapshot.sendMessage(
+      {
+        type: 'customMessage',
+        customData: createTypingCustomData(true),
+      },
+      { onlineUserOnly: true },
+    );
+    hasEnteredTyping = true;
+  }, TYPING_ENTER_THROTTLE_DURATION, {
+    leading: true,
+    trailing: false,
+  });
+
+  const enterTyping = async (): Promise<void> => {
+    await sendTypingStart();
+  };
+
+  const leaveTyping = async (): Promise<void> => {
+    sendTypingStart.cancel();
+    const snapshot = getChannel(channel).getSnapshot();
+    const conversationID = snapshot.activeConversationID;
+    if (!conversationID || !hasEnteredTyping) {
+      return;
+    }
+
+    await snapshot.sendMessage(
+      {
+        type: 'customMessage',
+        customData: createTypingCustomData(false),
+      },
+      { onlineUserOnly: true },
+    );
+    hasEnteredTyping = false;
+  };
+
   const listMode = ref<'latest' | 'fragment'>('latest');
 
   const pendingLocateMessage = ref<LocateMessageInfo | null>(null);
@@ -156,6 +240,7 @@ function createChatUIState(): ChatUIStateAPI {
 
   return {
     enableReadReceipt,
+    isPeerTyping,
     highlightMessageIDSet,
     highlightMessage,
     recalledMessageIDSet,
@@ -167,6 +252,9 @@ function createChatUIState(): ChatUIStateAPI {
     insertInputContent,
     focusInput,
     blurInput,
+    setIsPeerTyping,
+    enterTyping,
+    leaveTyping,
     listMode,
     pendingLocateMessage,
     setPendingLocateMessage,
@@ -179,7 +267,7 @@ function createChatUIState(): ChatUIStateAPI {
 
 function useChatUIState(channel = 'default'): ChatUIStateAPI {
   if (!chatUIStateMap.has(channel)) {
-    chatUIStateMap.set(channel, createChatUIState());
+    chatUIStateMap.set(channel, createChatUIState(channel));
   }
   return chatUIStateMap.get(channel)!;
 }

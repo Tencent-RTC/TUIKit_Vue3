@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import type { Component } from 'vue';
 import { MessageLayout } from './MessageLayout';
 import type { MessageAction } from '../../../hooks/useMessageActions';
 import type { MessageInfo } from '@atomicxcore/core';
@@ -8,6 +9,7 @@ interface MessageProps {
   nick?: string;
   alignment?: 'left' | 'right' | 'two-sided';
   messageActionList?: MessageAction[] | undefined;
+  messageAvatar?: Component | undefined;
   isAggregated?: boolean;
   isFirstInChunk?: boolean;
   isLastInChunk?: boolean;
@@ -21,6 +23,7 @@ withDefaults(defineProps<MessageProps>(), {
   alignment: 'two-sided',
   nick: undefined,
   messageActionList: undefined,
+  messageAvatar: undefined,
   isAggregated: false,
   isFirstInChunk: undefined,
   isLastInChunk: undefined,
@@ -36,6 +39,7 @@ withDefaults(defineProps<MessageProps>(), {
     :nick="nick"
     :message="message"
     :messageActionList="messageActionList"
+    :message-avatar="messageAvatar"
     :alignment="alignment"
     :is-aggregated="isAggregated"
     :is-first-in-chunk="isFirstInChunk"

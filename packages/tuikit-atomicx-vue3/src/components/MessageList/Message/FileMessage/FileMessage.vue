@@ -36,12 +36,12 @@ function formatFileSize(bytes: number | undefined): string {
 const handleFileClick = async (event: MouseEvent) => {
   // If ctrl key (Windows) or command key (Mac) is pressed, open in new tab
   if (event.metaKey || event.ctrlKey) {
-    window.open(messageContent.value.fileUrl, '_blank');
+    window.open(messageContent.value.fileURL, '_blank');
   } else {
     try {
       event.preventDefault();
 
-      const response = await fetch(messageContent.value.fileUrl ?? '');
+      const response = await fetch(messageContent.value.fileURL ?? '');
       if (!response.ok) {
         throw new Error('Download failed');
       }
