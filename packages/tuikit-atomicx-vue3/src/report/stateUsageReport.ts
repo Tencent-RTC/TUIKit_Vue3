@@ -13,6 +13,13 @@ enum StateUsageType {
   ContactState = 1007,
   ChatEvokeCall = 1020,
   ChatEvokeRoom = 1021,
+
+  RoomState = 1201,
+  RoomParticipantState = 1202,
+  VirtualBackgroundState = 1203,
+  FreeBeautyState = 1204,
+
+  AITranscriberState = 1401,
 }
 
 interface StateUsageReportOptions {
