@@ -5,6 +5,7 @@ import { MessageType, ConversationType, MessageStatus } from '@atomicxcore/core'
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../../baseComp/View';
+import { useChatContext } from '../../../../chat-store/context/useChatContext';
 import { useChatUIState } from '../../../../context/useChatUIState';
 import { isCallMessage, isCreateGroupMessage } from '../../../../utils/call';
 import { getTimeStampAuto } from '../../../../utils/time';
@@ -64,6 +65,7 @@ const props = withDefaults(defineProps<MessageLayoutProps>(), {
 const { t } = useUIKit();
 const isHovered = ref(false);
 const isReadReceiptInfoOpen = ref(false);
+const { activeConversation } = useChatContext();
 
 const shouldRenderAsGroupTip = computed(() => {
   if (props.message.messageType === MessageType.Custom && isCreateGroupMessage(props.message)) {
@@ -77,6 +79,13 @@ const shouldRenderAsGroupTip = computed(() => {
     return true;
   }
   return false;
+});
+
+const showName = computed(() => {
+  if (props.message.conversationType === ConversationType.C2C) {
+    return props.nick || activeConversation.value?.title || props.message.from.nickname || props.message.from.userID;
+  }
+  return props.nick || props.message.from.nameCard || props.message.from.nickname || props.message.from.userID;
 });
 
 const MessageComponentsFactory: Record<MessageType, Component | null> = {
@@ -231,7 +240,7 @@ const avatarVisibility = computed(() => {
     <View :class="cs(contentClasses)">
       <View v-if="!isAggregated" :class="cs(headerClasses)">
         <View v-if="!isHiddenMessageNick" :class="cs('message-layout__nick')">
-          {{ props.nick || message.from.nameCard || message.from.nickname || message.from.userID }}
+          {{ showName }}
         </View>
         <span class="message-layout__time" :style="{ visibility: isHovered ? 'visible' : 'hidden' }">{{ displayTime }}</span>
       </View>

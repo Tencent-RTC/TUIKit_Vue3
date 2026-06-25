@@ -9,7 +9,7 @@ import { AudioCallPicker as AudioCallPickerComponent } from './AudioCallPicker';
 import { EmojiPicker as EmojiPickerComponent } from './EmojiPicker';
 import { resources } from './i18n';
 import MessageInputComponent from './MessageInput.vue';
-import MessageInputH5Component from './MessageInputH5.vue';
+import MessageInputH5ComponentLegacy from './MessageInputH5.vue';
 import { QuickConferencePicker as QuickConferencePickerComponent } from './QuickConferencePicker';
 import { TextEditor as TextEditorComponent } from './TextEditor';
 import { VideoCallPicker as VideoCallPickerComponent } from './VideoCallPicker';
@@ -26,7 +26,7 @@ addI18n('zh-CN', { translation: {
 } });
 
 const MessageInput = MessageInputComponent;
-const MessageInputH5 = MessageInputH5Component;
+const MessageInputH5Legacy = MessageInputH5ComponentLegacy;
 const EmojiPicker = EmojiPickerComponent;
 const FilePicker = FilePickerComponent;
 const ImagePicker = ImagePickerComponent;
@@ -45,7 +45,7 @@ export {
   EmojiPicker,
   TextEditor,
   MessageInput,
-  MessageInputH5,
+  MessageInputH5Legacy,
   AudioCallPicker,
   VideoCallPicker,
   QuickConferencePicker,

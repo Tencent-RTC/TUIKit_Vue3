@@ -1,0 +1,23 @@
+// Layer 1: Base bubble appearance (background color + overflow).
+@mixin bubble-base() {
+  overflow: hidden;
+  border-radius: 8px;
+
+  &--flow-in {
+    background-color: var(--bg-color-bubble-reciprocal);
+    border-top-left-radius: 0;
+  }
+
+  &--flow-out {
+    background-color: var(--bg-color-bubble-own);
+    border-top-right-radius: 0;
+  }
+}
+
+// Layer 2: Media message style (Image / Video).
+@mixin bubble-media() {
+  background: none;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1.5px solid var(--bg-color-bubble-own);
+}
