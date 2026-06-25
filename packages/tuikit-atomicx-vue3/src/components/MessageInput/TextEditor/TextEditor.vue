@@ -67,25 +67,27 @@ const activeConversationIDSnapshot = ref<string | undefined>(undefined);
 
 const computedPlaceholder = computed(() => props.placeholder ?? t('MessageInput.enter_a_message'));
 
+function getSendErrorMessage(error: unknown): string {
+  const errorCode = (error as { code?: number })?.code;
+  switch (errorCode) {
+    case 10007:
+      return t('MessageInput.you_are_not_in_group');
+    case 20009:
+      return t('MessageInput.you_are_not_friend');
+    default:
+      return t('MessageInput.send_failed');
+  }
+}
+
 // onEnterCallback is assigned after editor creation to avoid TDZ issues with const editor
 let onEnterCallback: () => Promise<void> = async () => {};
 const handleEnter = async () => {
   try {
     await onEnterCallback();
   } catch (error) {
-    const errorCode = (error as { code?: number })?.code;
-    switch (errorCode) {
-      case 10007:
-        TUIToast.error({
-          message: '你不在群里',
-        });
-        break;
-      default:
-        TUIToast.error({
-          message: '发送失败',
-        });
-        break;
-    }
+    TUIToast.error({
+      message: getSendErrorMessage(error),
+    });
   }
 };
 
@@ -129,6 +131,13 @@ onEnterCallback = async () => {
 
   const savedQuotedMessage = quotedMessage.value;
   const sendingConversationID = activeConversation.value?.conversationID;
+
+  isProgrammaticUpdate.value = true;
+  try {
+    setInputContent('');
+  } finally {
+    isProgrammaticUpdate.value = false;
+  }
 
   const textBuffer: string[] = [];
   const atUserList: string[] = [];
@@ -183,12 +192,6 @@ onEnterCallback = async () => {
   }
   await flushText();
   await leaveTyping().catch(() => {});
-  isProgrammaticUpdate.value = true;
-  try {
-    setInputContent('');
-  } finally {
-    isProgrammaticUpdate.value = false;
-  }
   if (savedQuotedMessage) {
     clearQuotedMessage();
   }

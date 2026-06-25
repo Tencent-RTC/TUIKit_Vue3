@@ -15,6 +15,13 @@ export interface LocateMessageInfo {
   time?: number;
 }
 
+interface PendingInputCommand {
+  id: number;
+  type: 'set' | 'insert' | 'focus' | 'blur';
+  content?: string | InputContent[];
+  focus?: boolean;
+}
+
 export interface ChatUIStateAPI {
   /**
    * Whether read receipts are enabled. Mirrors the MessageList `enableReadReceipt`
@@ -41,6 +48,9 @@ export interface ChatUIStateAPI {
   /** The message currently staged for quoting. */
   quotedMessage: Ref<MessageInfo | undefined>;
 
+  /** Pending input command for non-TipTap inputs such as MessageInputH5. */
+  pendingInputCommand: Ref<PendingInputCommand | null>;
+
   /** Stage a message for quoting. */
   setQuotedMessage: (message: MessageInfo | undefined) => void;
 
@@ -61,6 +71,9 @@ export interface ChatUIStateAPI {
 
   /** Blur the message input editor. */
   blurInput: () => void;
+
+  /** Clear a consumed pending input command. */
+  clearPendingInputCommand: (id: number) => void;
 
   /** Update peer typing state for current active conversation. */
   setIsPeerTyping: (value: boolean) => void;
@@ -97,6 +110,12 @@ const chatUIStateMap = new Map<string, ChatUIStateAPI>();
 const TYPING_AUTO_CLEAR_DURATION = 5 * 1000;
 const TYPING_ENTER_THROTTLE_DURATION = 5 * 1000;
 const TYPING_RECENT_RECEIVED_MESSAGE_DURATION = 30 * 1000;
+let inputCommandID = 0;
+
+function getNextInputCommandID(): number {
+  inputCommandID += 1;
+  return inputCommandID;
+}
 
 function hasRecentPeerMessage(messageList: MessageInfo[]): boolean {
   const latestPeerMessage = [...messageList].reverse().find(message => !message.isSentBySelf);
@@ -137,6 +156,7 @@ function createChatUIState(channel: string): ChatUIStateAPI {
   };
 
   const quotedMessage = ref<MessageInfo | undefined>(undefined);
+  const pendingInputCommand = ref<PendingInputCommand | null>(null);
   const setQuotedMessage = (message: MessageInfo | undefined): void => {
     quotedMessage.value = message;
   };
@@ -153,7 +173,15 @@ function createChatUIState(channel: string): ChatUIStateAPI {
   };
 
   const setInputContent = (content: string | InputContent[]): void => {
-    if (!editor.value) { return; }
+    if (!editor.value) {
+      pendingInputCommand.value = {
+        id: getNextInputCommandID(),
+        type: 'set',
+        content,
+        focus: true,
+      };
+      return;
+    }
     if (typeof content === 'string') {
       editor.value.commands.setContent(content, true);
     } else {
@@ -163,7 +191,15 @@ function createChatUIState(channel: string): ChatUIStateAPI {
   };
 
   const insertInputContent = (content: string | InputContent[], focus = true): void => {
-    if (!editor.value) { return; }
+    if (!editor.value) {
+      pendingInputCommand.value = {
+        id: getNextInputCommandID(),
+        type: 'insert',
+        content,
+        focus,
+      };
+      return;
+    }
     if (typeof content === 'string') {
       editor.value.commands.insertContent(content);
     } else {
@@ -172,8 +208,38 @@ function createChatUIState(channel: string): ChatUIStateAPI {
     if (focus) { editor.value.commands.focus(); }
   };
 
-  const focusInput = (): void => { editor.value?.commands.focus(); };
-  const blurInput = (): void => { editor.value?.commands.blur(); };
+  const focusInput = (): void => {
+    if (editor.value) {
+      editor.value.commands.focus();
+      return;
+    }
+    if (pendingInputCommand.value?.type === 'set' || pendingInputCommand.value?.type === 'insert') {
+      pendingInputCommand.value = {
+        ...pendingInputCommand.value,
+        focus: true,
+      };
+      return;
+    }
+    pendingInputCommand.value = {
+      id: getNextInputCommandID(),
+      type: 'focus',
+    };
+  };
+  const blurInput = (): void => {
+    if (editor.value) {
+      editor.value.commands.blur();
+      return;
+    }
+    pendingInputCommand.value = {
+      id: getNextInputCommandID(),
+      type: 'blur',
+    };
+  };
+  const clearPendingInputCommand = (id: number): void => {
+    if (pendingInputCommand.value?.id === id) {
+      pendingInputCommand.value = null;
+    }
+  };
 
   const sendTypingStart = throttle(async (): Promise<void> => {
     const snapshot = getChannel(channel).getSnapshot();
@@ -245,6 +311,7 @@ function createChatUIState(channel: string): ChatUIStateAPI {
     highlightMessage,
     recalledMessageIDSet,
     quotedMessage,
+    pendingInputCommand,
     setQuotedMessage,
     clearQuotedMessage,
     setEditorInstance,
@@ -252,6 +319,7 @@ function createChatUIState(channel: string): ChatUIStateAPI {
     insertInputContent,
     focusInput,
     blurInput,
+    clearPendingInputCommand,
     setIsPeerTyping,
     enterTyping,
     leaveTyping,

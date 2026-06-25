@@ -266,6 +266,11 @@ onUnmounted(() => {
     border-radius: 50%;
     background: var(--gift-more-button-color);
     cursor: pointer;
+    // The "More gifts" round button always uses a colored fill, so its inner
+    // icon (IconGift) must stay white regardless of light/dark theme to keep
+    // sufficient contrast. The icon renders with `fill: currentColor`, so we
+    // pin `color` on the wrapper instead of touching the icon component.
+    color: #fff;
   }
 
   span {

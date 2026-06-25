@@ -17,7 +17,6 @@ export { View } from '../../baseComp/View';
 // } from '../../components/ConversationList';
 export {
   MessageInput,
-  MessageInputH5,
   EmojiPicker,
   AttachmentPicker,
   FilePicker,
@@ -26,12 +25,19 @@ export {
   AudioCallPicker,
   VideoCallPicker,
   QuickConferencePicker,
+  MessageInputH5Legacy,
 } from '../../components/MessageInput';
+export {
+  MessageInputH5,
+} from '../../components/MessageInputH5';
 export {
   MessageList,
   Message,
   CustomMessage,
 } from '../../components/MessageList';
+export {
+  MessageListH5,
+} from '../../components/MessageListH5';
 // export {
 //   Search,
 //   SearchAdvanced,

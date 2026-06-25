@@ -14,7 +14,11 @@
           :src="userInfo?.avatarUrl"
         />
       </div>
-      <div v-if="seatListWithUser.length > 1" class="user-details">
+      <div
+        v-if="seatListWithUser.length > 1"
+        class="user-details"
+        :style="{ '--widget-scale': widgetScale }"
+      >
         <AudioIcon
           v-if="!isAudioAvailable"
           class="audio-icon"
@@ -31,7 +35,7 @@
       class="empty-position"
       :class="{ 'clickable': !isAnchor }"
     >
-      <div class="seat-display">
+      <div class="seat-display" :style="{ '--widget-scale': widgetScale }">
         <IconPlus v-if="!isAnchor" />
         <span v-else class="seat-index">{{ props.seatIndex }}</span>
         <span class="text">{{ isAnchor ? t('LiveView.WaitingForConnection') : t('LiveView.ApplyForConnection') }}</span>
@@ -49,6 +53,7 @@ import { useLiveSeatState } from '../../states/LiveSeatState';
 import { useLoginState } from '../../states/LoginState';
 import { DeviceStatus } from '../../types';
 import { Avatar } from '../Avatar';
+import { useWidgetScale } from './useWidgetScale';
 import type { SeatUserInfo } from '../../types';
 
 interface Props {
@@ -82,7 +87,10 @@ const isAnchor = computed(() => {
 const seatListWithUser = computed(() => seatList.value.filter(item => item.userInfo && item.userInfo.userId !== ''));
 
 const currentStreamViewSize = computed(() => {
-  const currentStreamViewInfo = props.streamViewInfoList.find(item => item.userInfo?.userId === props.userInfo?.userId);
+  // Match by userId when occupied; fall back to the positional region
+  // (seatIndex - 1) so empty seats can still derive their size for scaling.
+  const currentStreamViewInfo = props.streamViewInfoList.find(item => item.userInfo?.userId === props.userInfo?.userId)
+    ?? props.streamViewInfoList[props.seatIndex - 1];
   if (!currentStreamViewInfo) {
     return { width: 0, height: 0 };
   }
@@ -100,6 +108,15 @@ const avatarSize = computed(() => {
   }
   return defaultAvatarSize;
 });
+
+// Lower bound for the text-overlay scale. Smaller than the badge floor (0.6)
+// because wrapped captions stay readable even when shrunk further.
+const TEXT_WIDGET_MIN_SCALE = 0.5;
+
+// Uniform scale for overlay widgets so they shrink proportionally on small
+// seats. Text always stays visible (wrapping instead of being clipped),
+// honoring the goal of keeping captions fully readable.
+const widgetScale = useWidgetScale(currentStreamViewSize, { min: TEXT_WIDGET_MIN_SCALE });
 
 const needCanvasMaskList = computed(() => {
   const currentStreamViewInfo = props.streamViewInfoList.find(item => item.userInfo?.userId === props.userInfo?.userId);
@@ -232,6 +249,8 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
     border-radius: 100px;
     max-width: 80%;
     box-sizing: border-box;
+    transform: scale(var(--widget-scale, 1));
+    transform-origin: bottom left;
 
     .audio-icon {
       zoom: 0.6;
@@ -241,9 +260,13 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
       font-size: 12px;
       font-weight: 500;
       margin-left: 2px;
-      white-space: nowrap;
+      // Allow up to two lines so longer names stay mostly readable, while
+      // still capping growth to avoid an ever-taller pill covering the video.
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
       overflow: hidden;
-      text-overflow: ellipsis;
+      word-break: break-word;
     }
   }
 
@@ -270,9 +293,11 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
     .text {
       font-size: 14px;
       max-width: 80%;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
+      // Wrap freely instead of clipping: the empty seat lays out vertically
+      // and has spare height, so the full prompt stays readable on small seats.
+      white-space: normal;
+      word-break: break-word;
+      text-align: center;
       color: var(--text-color-primary);
       font-weight: 400;
     }
@@ -284,6 +309,8 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
       color: var(--text-color-primary);
       align-items: center;
       gap: 12px;
+      transform: scale(var(--widget-scale, 1));
+      transform-origin: center center;
     }
 
     .seat-index {

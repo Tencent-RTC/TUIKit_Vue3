@@ -8,7 +8,11 @@
       :key="`seat-${index}`"
       :style="item.region"
     >
-      <div class="battle-decorate" v-if="getBattleLevel(item.userInfo.userId) > 0">
+      <div
+        class="battle-decorate"
+        v-if="getBattleLevel(item.userInfo.userId) > 0"
+        :style="{ '--widget-scale': getSeatScale(item.region) }"
+      >
         <span class="battle-score-value" v-if="!battleScore?.has(item.userInfo.userId)">{{ t('LiveView.Connecting') }}</span>
         <template v-else>
           <div class="battle-badge-container" :class="getBattleLevel(item.userInfo.userId) === 1 ? 'top-badge' : 'ordinary-badge'">
@@ -31,6 +35,7 @@ import { ref, computed, watch } from 'vue';
 import BattleTopBadge from '../assets/svg/BattleTopBadge.svg';
 import BattleOrdinaryBadge from '../assets/svg/BattleOrdinaryBadge.svg';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { getWidgetScale } from '../useWidgetScale';
 
 const { t } = useUIKit();
 
@@ -65,17 +70,18 @@ function getBattleLevel(userId: string) {
   return currentBattleScoreList.value.indexOf(battleScore.value.get(userId) || 0) + 1;
 };
 
-let battleTimer: NodeJS.Timeout | null = null;
-watch(() => currentBattleInfo.value?.battleId, (newVal) => {
-  if(newVal !== null && newVal !== undefined) {
-    isInBattle.value = true;
-  } else {
-    if(battleTimer) return;
-    battleTimer = setTimeout(() => {
-      isInBattle.value = false;
-    }, 5000);
-  }
-}, { immediate: true });
+// Lower bound for the PK badge scale. Higher than the text floor (0.5) so the
+// badge graphics / score stay clear instead of collapsing on tiny seats.
+const BADGE_WIDGET_MIN_SCALE = 0.6;
+
+// Per-seat scale derived from the region size provided by the parent layout,
+// so the PK badge shrinks proportionally on small seats.
+function getSeatScale(region: { width: string; height: string }) {
+  return getWidgetScale(
+    { width: parseInt(region.width), height: parseInt(region.height) },
+    { min: BADGE_WIDGET_MIN_SCALE },
+  );
+}
 
 </script>
 
@@ -103,6 +109,8 @@ watch(() => currentBattleInfo.value?.battleId, (newVal) => {
     background-color: rgba(15, 16, 20, 0.4);
     border-radius: 24px;
     color: var(--text-color-primary);
+    transform: scale(var(--widget-scale, 1));
+    transform-origin: top left;
     .battle-badge-container {
       display: flex;
       align-items: center;

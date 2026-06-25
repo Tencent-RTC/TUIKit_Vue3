@@ -39,13 +39,7 @@ withDefaults(defineProps<MessageBubbleProps>(), {
 
 <style lang="scss" scoped>
 .message-bubble {
-  // Only disable text selection on touch devices (H5), allow copy on PC
-  @media (pointer: coarse) {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
+  min-width: 0;
 }
 
 .has-risk-content {
