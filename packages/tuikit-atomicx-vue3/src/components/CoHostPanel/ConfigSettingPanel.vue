@@ -66,7 +66,7 @@
 <script setup lang="ts">
 import { defineProps, defineEmits, ref, watch, computed } from 'vue';
 import { useUIKit, TUIDialog, IconDynamic1v6Layout, IconDynamicGridLayout } from '@tencentcloud/uikit-base-component-vue3';
-import { CoHostLayoutTemplate } from '../../types';
+import { CoHostLayoutTemplate, LiveOrientation } from '../../types';
 
 const { t } = useUIKit();
 const props = defineProps<{
@@ -75,6 +75,7 @@ const props = defineProps<{
     coHostLayoutTemplate: CoHostLayoutTemplate;
     battleDuration: number;
   };
+  currentLiveOrientation: LiveOrientation;
 }>();
 const emit = defineEmits(['update:visible', 'cancel', 'confirm']);
 
@@ -116,14 +117,37 @@ watch(dialogVisible, (newVal) => {
   emit('update:visible', newVal);
 });
 
-const layoutOptions = computed(() => [
-  {
-    id: 'PortraitDynamic_Grid9',
-    icon: IconDynamicGridLayout,
-    templateId: CoHostLayoutTemplate.HostDynamicGrid,
-    label: t('Dynamic Grid9 Layout'),
-  },
-]);
+// Branch the available co-host layout templates by current live orientation.
+// Mirrors `uikit-component-vue3-electron/.../ConfigSettingPanel.vue` so the
+// settings dialog offers the same options across Web kit / Mac kit / Win demo:
+//   - Landscape: only `HostVideoLandscapeFixed2Seats` (fixed 2-seat landscape).
+//   - Portrait:  `HostDynamicGrid` (9-grid) and `HostDynamic1v6` (1-vs-6 dynamic).
+// Previously the Web kit only offered the 9-grid option, leaving 1v6 invisible
+// to web users and breaking PK template parity with the desktop kits.
+const layoutOptions = computed(() => {
+  if (props.currentLiveOrientation === LiveOrientation.Landscape) {
+    return [{
+      id: 'HostVideoLandscapeFixed2Seats',
+      icon: IconDynamicGridLayout,
+      templateId: CoHostLayoutTemplate.HostVideoLandscapeFixed2Seats,
+      label: t('Landscape Fixed 2 Seats Layout'),
+    }];
+  }
+  return [
+    {
+      id: 'PortraitDynamic_Grid9',
+      icon: IconDynamicGridLayout,
+      templateId: CoHostLayoutTemplate.HostDynamicGrid,
+      label: t('Dynamic Grid9 Layout'),
+    },
+    // {
+    //   id: 'PortraitDynamic_1v6',
+    //   icon: IconDynamic1v6Layout,
+    //   templateId: CoHostLayoutTemplate.HostDynamic1v6,
+    //   label: t('Dynamic 1v6 Layout'),
+    // },
+  ];
+});
 </script>
 
 <style lang="scss" scoped>

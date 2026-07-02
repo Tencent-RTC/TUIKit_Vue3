@@ -47,6 +47,7 @@
     <ConfigSettingPanel
       v-model:visible="settingVisible"
       :form="configForm"
+      :currentLiveOrientation="currentLiveOrientation"
       @confirm="handleSettingConfirm"
     />
   </TUIDialog>
@@ -57,8 +58,9 @@ import { computed, ref, watch } from 'vue';
 import { useUIKit, TUIDialog, IconClose, IconLiveSetting } from '@tencentcloud/uikit-base-component-vue3';
 import { useBattleState } from '../../states/BattleState';
 import { useCoHostState } from '../../states/CoHostState';
+import { useLiveListState } from '../../states/LiveListState';
 import { useLoginState } from '../../states/LoginState';
-import { CoHostStatus, CoHostLayoutTemplate } from '../../types';
+import { CoHostStatus, CoHostLayoutTemplate, LiveOrientation } from '../../types';
 import BattlePanel from './BattlePanel.vue';
 import ConfigSettingPanel from './ConfigSettingPanel.vue';
 import ConnectionPanel from './ConnectionPanel.vue';
@@ -70,6 +72,7 @@ const props = defineProps<{
 const { loginUserInfo } = useLoginState();
 const { coHostStatus, connected, getCoHostCandidates } = useCoHostState();
 const { battleUsers } = useBattleState();
+const { currentLive } = useLiveListState();
 const emit = defineEmits(['update:visible']);
 const close = () => {
   emit('update:visible', false);
@@ -94,6 +97,41 @@ const configForm = ref({
   battleDuration: 5 * 60,
   coHostLayoutTemplate: CoHostLayoutTemplate.HostDynamicGrid,
 });
+
+// Determine the current live orientation based on layoutTemplate range.
+// Landscape templates fall within [200, 599]; portrait otherwise.
+// Mirrors `uikit-component-vue3-electron/.../CoHostPanel.vue` so the three
+// kits compute orientation identically.
+const currentLiveOrientation = computed(() => {
+  const layout = currentLive.value?.layoutTemplate;
+  if (typeof layout === 'number' && layout >= 200 && layout <= 599) {
+    return LiveOrientation.Landscape;
+  }
+  return LiveOrientation.Portrait;
+});
+
+// Keep `configForm.coHostLayoutTemplate` in sync with the current live
+// orientation so that:
+//   1) Opening the settings dialog always shows a default option highlighted
+//      (otherwise the form would be stuck on `HostDynamicGrid` while a
+//      landscape live only offers `HostVideoLandscapeFixed2Seats`, leaving
+//      nothing selected).
+//   2) The actual `requestHostConnection` / battle requests use a template
+//      that is valid for the running live's orientation.
+// We only override the template when the current value is not legal for the
+// new orientation; in portrait this preserves the user's choice between the
+// 9-grid and 1v6 layouts across re-opens of the dialog.
+watch(currentLiveOrientation, (orientation) => {
+  if (orientation === LiveOrientation.Landscape) {
+    if (configForm.value.coHostLayoutTemplate !== CoHostLayoutTemplate.HostVideoLandscapeFixed2Seats) {
+      configForm.value.coHostLayoutTemplate = CoHostLayoutTemplate.HostVideoLandscapeFixed2Seats;
+    }
+  } else if (configForm.value.coHostLayoutTemplate === CoHostLayoutTemplate.HostVideoLandscapeFixed2Seats) {
+    // Coming back to a portrait live after using the landscape-only template:
+    // fall back to the portrait default so the dialog has a valid selection.
+    configForm.value.coHostLayoutTemplate = CoHostLayoutTemplate.HostDynamicGrid;
+  }
+}, { immediate: true });
 
 const handleSettingConfirm = (form: {
   battleDuration: number;

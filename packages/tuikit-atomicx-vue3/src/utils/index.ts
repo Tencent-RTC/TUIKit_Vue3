@@ -1,3 +1,4 @@
+export * from './experimentalAPI';
 export * from './type-check';
 export * from './lodash';
 export * from './env';

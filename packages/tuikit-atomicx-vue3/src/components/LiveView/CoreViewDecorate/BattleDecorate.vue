@@ -63,6 +63,12 @@ const showPkBar = computed(() => {
 });
 const showBattleStart = ref(false);
 const showBattleStartDisappearAnimation = ref(false);
+// Declared up here (before the battleId watch) on purpose: the watch below runs
+// with `{ immediate: true }`, whose synchronous first run hits the `else`
+// branch and reads `showBattleResult`. Keeping the declaration after the watch
+// would put it in the temporal dead zone and throw during setup.
+const showBattleResult = ref(false);
+const battleResultImg = ref(drawResult);
 
 watch(() => currentBattleInfo.value?.battleId, (newVal) => {
   if (newVal) {
@@ -75,7 +81,14 @@ watch(() => currentBattleInfo.value?.battleId, (newVal) => {
         showBattleStartDisappearAnimation.value = false;
       }, 300);
     }, 2000);
-  } else {
+  } else if (!showBattleResult.value) {
+    // When a battle ends, the SDK clears `currentBattleInfo` synchronously, so
+    // `battleId` falls to undefined here. If the result animation is about to
+    // play (driven by `handleBattleEnded`), tearing the decorate down now would
+    // unmount the result container via `v-if` and the animation would never be
+    // seen. So only force-hide on the abnormal path (e.g. co-host disconnect)
+    // where no result is showing; a normal end hides itself after the result
+    // display finishes.
     showBattleDecorate.value = false;
     showBattleStart.value = false;
   }
@@ -110,7 +123,19 @@ const currentTime = ref(0);
 const leftBattleTime = computed(() => {
   if (!currentBattleInfo.value) return 0;
   currentTime.value = Date.now();
-  return currentBattleInfo.value?.config.duration - ((Math.floor(currentTime.value / 1000) - currentBattleInfo.value?.startTime));
+  // `startTime` is a unix-second timestamp from the SDK (server clock),
+  // while `currentTime.value` is `Date.now()` (this device's wall clock).
+  // If the local clock drifts behind the server, the raw elapsed below can
+  // go negative, which would make `duration - elapsed` exceed `duration`
+  // and the UI would briefly show e.g. "2:03" for a 2-minute battle.
+  // Symmetrically, if the local clock runs ahead, elapsed could be larger
+  // than `duration`, producing a negative remaining time. Clamping
+  // `elapsed` into `[0, duration]` keeps the displayed countdown inside
+  // `[0, duration]` regardless of clock skew between server and client.
+  const duration = currentBattleInfo.value.config.duration;
+  const elapsedRaw = Math.floor(currentTime.value / 1000) - currentBattleInfo.value.startTime;
+  const elapsed = Math.max(0, Math.min(duration, elapsedRaw));
+  return duration - elapsed;
 });
 
 watch(() => currentBattleInfo.value?.battleId, (newVal) => {
@@ -146,9 +171,6 @@ const time = computed(() => {
   }
   return `${convertToTwoDigits(minutes)}:${convertToTwoDigits(seconds)}`;
 });
-
-const showBattleResult = ref(false);
-const battleResultImg = ref(drawResult);
 
 function handleBattleEnded(eventInfo: { battleInfo: BattleInfo; reason: BattleEndedReason }) {
   stopTimer();

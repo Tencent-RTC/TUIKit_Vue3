@@ -29,6 +29,7 @@ import { TRTCVideoMirrorType, TRTCVideoRotation } from '@tencentcloud/tuiroom-en
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { useVideoMixerState } from '../../../states/VideoMixerState';
 import CameraMirror from '../icons/CameraMirror.vue';
+import CameraUnMirror from '../icons/CameraUnmirror.vue';
 import Delete from '../icons/Delete.vue';
 import Down from '../icons/Down.vue';
 import Rotation from '../icons/Rotation.vue';
@@ -51,7 +52,10 @@ const controlList = computed(() => [
   {
     name: 'mirror',
     text: t('Mirror'),
-    icon: CameraMirror,
+    icon:
+      activeMediaSource.value?.layout.mirror === TRTCVideoMirrorType.TRTCVideoMirrorType_Enable
+        ? CameraMirror
+        : CameraUnMirror,
     onClick: () => {
       const currentMirror = activeMediaSource.value.layout.mirror;
       updateMediaSource(activeMediaSource.value, {

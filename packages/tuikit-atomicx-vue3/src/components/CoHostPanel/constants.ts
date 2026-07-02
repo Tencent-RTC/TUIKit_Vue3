@@ -3,6 +3,17 @@ export const ERROR_MESSAGE = {
 };
 
 /**
+ * Maps co-host connection error codes (rejected by the SDK as a `TUIError`)
+ * to i18n keys, so failures surface a meaningful toast instead of only logs.
+ *
+ * - 100402: the sponsor room is still in pending status, i.e. the local host
+ *   already has an unhandled connection request and cannot initiate a new one.
+ */
+export const CONNECTION_ERROR_MESSAGE = {
+  100402: 'Send co-host request failed, you have a pending invitation to handle',
+};
+
+/**
  * Default timeout (in seconds) for outbound co-host connection invitations
  * dispatched via `requestHostConnection`. The same value is mirrored into
  * `extensionInfo` so the invitee can render a matching countdown.

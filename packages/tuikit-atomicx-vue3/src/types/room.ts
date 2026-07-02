@@ -82,13 +82,13 @@ export interface RoomInfo {
   readonly participantCount?: number;
   /** 房间观众数量 */
   readonly audienceCount?: number;
-  /** 房间创建时间戳 */
+  /** 房间创建时间戳（毫秒时间戳） */
   readonly createTime?: number;
   /** 房间当前状态 */
   readonly roomStatus?: RoomStatus;
-  /** 预约开始时间（毫秒时间戳） */
+  /** 预约开始时间（秒时间戳） */
   scheduledStartTime?: number;
-  /** 预约结束时间（毫秒时间戳） */
+  /** 预约结束时间（秒时间戳） */
   scheduledEndTime?: number;
   /** 开始前多少秒发送提醒通知 */
   startReminderInSeconds?: number;

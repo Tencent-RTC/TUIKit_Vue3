@@ -29,7 +29,8 @@
           v-for="(item, index) in needPlayStreamViewInfo"
           :key="`seat-${index}`"
           :style="item.region"
-          @click="handleEmptySeatClick(index, item)"
+          :class="{ 'self-seat-clickable': isSelfSeat(item) }"
+          @click="handleSeatClick(index, item, $event)"
         >
           <slot
             name="streamViewUI"
@@ -50,6 +51,24 @@
       />
       <LiveCoreDecorate v-if="!isPictureInPicture" :seatListWithRealSize="seatListWithRealSize" />
     </div>
+    <!--
+      Self device control: floating menu anchored to the local user's
+      seat. Mounted at the container level (outside the transformed
+      `.live-core-view`) so the menu can use the full container area
+      including the letterbox region around the video, giving small
+      seats more breathing room. Visibility is gated by
+      `showSelfDeviceMenu`; open state is driven by clicks on the seat
+      <div> above (see `handleSeatClick` -> `isSelfDeviceMenuOpen`).
+    -->
+    <SelfDeviceControlLayer
+      v-if="!isPictureInPicture"
+      :visible="showSelfDeviceMenu"
+      :open="isSelfDeviceMenuOpen"
+      :seatTrigger="seatTriggerToken"
+      :cameraLockedByAdmin="localSeatLockedState.cameraLockedByAdmin"
+      :microphoneLockedByAdmin="localSeatLockedState.microphoneLockedByAdmin"
+      @update:open="isSelfDeviceMenuOpen = $event"
+    />
     <!-- Loading overlay: shown when entering room, placed at container level to avoid 0-size stream view -->
     <div
       v-if="isLoading && !$slots['center-overlay']"
@@ -148,6 +167,7 @@ import { useOverlayState } from './OverlayState';
 import { usePlayerControlState } from './PlayerControl';
 import { LIVE_STREAM_CONTENT_VIEW } from './constants';
 import PlayerControl from './PlayerControl/PlayerControl.vue';
+import { SelfDeviceControlLayer, type SeatInfoWithLocks } from './SelfDeviceControl';
 import type { SeatInfo, SeatUserInfo } from '../../types';
 
 const emit = defineEmits(['empty-seat-click']);
@@ -353,8 +373,8 @@ function handleLandscapeVideoLayoutForAudioConnect(layoutList: any[]) {
     audioLayoutTemplate.push({ x: 20, y: 140, w: 150, h: 150 });
   } else {
     audioLayoutTemplate.push({ x: 20, y: 510, w: 120, h: 120 });
-    audioLayoutTemplate.push({ x: 20, y: 380, w: 120, h: 120 });
-    audioLayoutTemplate.push({ x: 20, y: 250, w: 120, h: 120 });
+    audioLayoutTemplate.push({ x: 20, y: 385, w: 120, h: 120 });
+    audioLayoutTemplate.push({ x: 20, y: 260, w: 120, h: 120 });
   }
 
   for (let i = 1; i < layoutList.length && (i - 1) < audioLayoutTemplate.length; ++i) {
@@ -430,6 +450,53 @@ watch(() => [seatList.value, streamViewSize.value, liveCoreViewContainerSize.val
 });
 
 const localStreamViewInfo = computed(() => seatListWithRealSize.value.find(item => item?.userInfo?.userId === loginUserInfo.value?.userId));
+
+// Self device control menu is shown only for an audience member who is
+// currently on a seat, in non-mixer mode, and not picture-in-picture.
+// The anchor uses host-side controls; mixer mode delegates the local
+// preview to the hosting page via the `localVideo` slot.
+const showSelfDeviceMenu = computed(() =>
+  isLocalUserOnSeat.value
+  && !isAnchor.value
+  && !isInStreamMixerComp.value
+  && !!localStreamViewInfo.value,
+);
+
+// Opaque trigger token watched by `SelfDeviceControlLayer` to know when
+// to re-measure the local seat element via DOM. The layer reads the
+// authoritative rect with `getBoundingClientRect`, so we only need to
+// signal "something that affects the seat geometry has changed" — the
+// concrete values of left/top/width/height inside the JSON string are
+// what makes this string change.
+const seatTriggerToken = computed(() => {
+  const r = localStreamViewInfo.value?.region;
+  if (!r) return '';
+  return `${r.left}|${r.top}|${r.width}|${r.height}`;
+});
+
+// Host-driven lock flags for the local user's seat. When the host calls
+// `closeRemoteDeviceByAdmin` / `lockSeatByAdmin`, the SDK marks the
+// affected seat with `isVideoLocked` / `isAudioLocked` and rejects any
+// subsequent `openLocalCamera` / `unmuteLocalAudio` from this client.
+// Forwarding these flags to the menu lets us proactively disable the
+// matching row with a clear "disabled by host" reason instead of
+// firing an SDK call that is guaranteed to fail.
+//
+// We translate the SDK's `is{Video,Audio}Locked` vocabulary into the
+// menu's user-facing `{camera,microphone}LockedByAdmin` naming at the
+// boundary so downstream code stays in one consistent vocabulary. The
+// `SeatInfoWithLocks` cast bridges the (currently incomplete) public
+// `SeatInfo` contract to the runtime fields populated by
+// `seatEventManager.getNewSeatInfo` — see that helper's TODO.
+const localSeatLockedState = computed(() => {
+  const localSeat = seatList.value.find(
+    seat => seat.userInfo?.userId === loginUserInfo.value?.userId,
+  ) as SeatInfoWithLocks | undefined;
+  return {
+    cameraLockedByAdmin: !!localSeat?.isVideoLocked,
+    microphoneLockedByAdmin: !!localSeat?.isAudioLocked,
+  };
+});
 
 const needPlayStreamViewInfo = computed(() => {
   if (isInStreamMixerComp.value) {
@@ -642,7 +709,47 @@ const getContainerOrientation = () => {
   };
 };
 
+// Self device menu open state. Toggled by clicking the local user's own
+// seat <div>; closed by clicking outside (handled by SelfDeviceControlLayer).
+const isSelfDeviceMenuOpen = ref(false);
+
+// Whether the given seat item belongs to the local audience member who is
+// eligible for the self-device control menu.
+const isSelfSeat = (item: { userInfo?: SeatUserInfo }) =>
+  showSelfDeviceMenu.value
+  && !!item.userInfo?.userId
+  && item.userInfo.userId === loginUserInfo.value?.userId;
+
+// Close the menu whenever the layer becomes ineligible (e.g. local user
+// leaves the seat, enters PiP, or switches to mixer mode).
+watch(showSelfDeviceMenu, (eligible) => {
+  if (!eligible) {
+    isSelfDeviceMenuOpen.value = false;
+  }
+});
+
+// Unified click handler for seat <div>s inside `.live-core-ui`. Dispatches
+// to either:
+//   - empty-seat apply-to-link flow (existing behavior), or
+//   - self-device menu toggle for the local user's own seat.
 // The `region` property in the item uses SCSS styling and does not have a fixed format.
+const handleSeatClick = (
+  seatIndex: number,
+  item: { userInfo: SeatUserInfo; region: object },
+  event: MouseEvent,
+) => {
+  // Local user's own seat: toggle the self-device menu and stop here so
+  // the document-level "click outside" listener does not immediately
+  // close the menu we just opened.
+  if (isSelfSeat(item)) {
+    event.stopPropagation();
+    isSelfDeviceMenuOpen.value = !isSelfDeviceMenuOpen.value;
+    return;
+  }
+  // Empty seat: existing apply-to-link flow.
+  handleEmptySeatClick(seatIndex, item);
+};
+
 const handleEmptySeatClick = (seatIndex: number, item: { userInfo: SeatUserInfo; region: object }) => {
   if (item.userInfo && item.userInfo.userId) {
     return;
@@ -762,6 +869,12 @@ onBeforeUnmount(() => {
       pointer-events: none;
       top: 0;
       left: 0;
+
+      // Visual feedback for the local user's own seat: it is clickable to
+      // open the self-device control menu.
+      .self-seat-clickable {
+        cursor: pointer;
+      }
     }
   }
   #svga-player-view {

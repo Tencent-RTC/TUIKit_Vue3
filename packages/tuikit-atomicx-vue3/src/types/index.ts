@@ -42,5 +42,7 @@ export * from './participant';
 export * from './beauty';
 export * from './virtualBackground';
 export * from './asr';
+// experimental API
+export * from './experimentalAPI';
 // @deprecated Use participant.ts instead
 export * from './user';
