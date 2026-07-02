@@ -66,5 +66,7 @@ const maxWidth = computed(() => {
   top: 0;
   left: 0;
   pointer-events: none;
+  // Keep PK animations above .live-core-ui (z-index: 1) so they render on top of stream-cover.
+  z-index: 2;
 }
 </style>
