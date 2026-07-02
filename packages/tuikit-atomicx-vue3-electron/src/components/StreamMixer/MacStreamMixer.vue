@@ -1,4 +1,3 @@
-
 <template>
   <live-core-view :ignore-local-video="true">
     <template #localVideo="{ style }">

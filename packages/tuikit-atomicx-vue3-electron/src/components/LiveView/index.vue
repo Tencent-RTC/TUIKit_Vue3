@@ -206,8 +206,8 @@ function handleLandscapeVideoLayoutForAudioConnect(layoutList: any[]) {
     audioLayoutTemplate.push({ x: 20, y: 140, w: 150, h: 150 });
   } else {
     audioLayoutTemplate.push({ x: 20, y: 510, w: 120, h: 120 });
-    audioLayoutTemplate.push({ x: 20, y: 380, w: 120, h: 120 });
-    audioLayoutTemplate.push({ x: 20, y: 250, w: 120, h: 120 });
+    audioLayoutTemplate.push({ x: 20, y: 385, w: 120, h: 120 });
+    audioLayoutTemplate.push({ x: 20, y: 260, w: 120, h: 120 });
   }
 
   for (let i = 1; i < layoutList.length && (i - 1) < audioLayoutTemplate.length; ++i) {

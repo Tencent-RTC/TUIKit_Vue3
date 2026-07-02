@@ -3,8 +3,8 @@ import LiveAudienceListH5 from './LiveAudienceListH5.vue';
 import { addI18n } from '../../i18n';
 import { enResource, zhResource } from './i18n';
 import { isMobile } from '../../utils/environment';
+import { MAX_AUDIENCE_COUNT } from './constants';
 
-const MAX_AUDIENCE_COUNT = 200;
 const LiveAudienceList = isMobile ? LiveAudienceListH5 : LiveAudienceListPC;
 
 addI18n('en-US', { translation: enResource });

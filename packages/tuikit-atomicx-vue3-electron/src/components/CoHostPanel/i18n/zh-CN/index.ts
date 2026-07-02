@@ -1,7 +1,6 @@
 export const resource = {
   'Host Battle': '主播 PK',
   'Host Connection': '主播连线',
-  'CoHost': '连主播',
   'No application for co-host': '暂无连主播申请',
   'Current seat': '当前麦位',
   'Seat is empty': '麦位为空',
@@ -17,6 +16,10 @@ export const resource = {
   'Start battle': '发起 PK',
   'Exit connection': '退出连线',
   'Disconnect': '断开连接',
+  // Co-host audio mute toggle. Dedicated keys so they never collide with the
+  // global 'Mute'/'Unmute' used by the audience chat-ban menu.
+  'Mute Audio': '静音',
+  'Unmute Audio': '取消静音',
   'Cancel': '取消',
   'Invite': '邀请',
   'Inviting': '邀请中',
@@ -31,8 +34,9 @@ export const resource = {
   'Are you sure you want to exit the connection': '确定要退出连线吗？',
   'Layout Template': '布局模板',
   'Dynamic Grid Layout': '动态网格布局',
-  'Dynamic Grid9 Layout': '动态宫格布局',
+  'Dynamic Grid9 Layout': '动态九宫格布局',
   'Dynamic 1v6 Layout': '动态1v6布局',
+  'Landscape Fixed 2 Seats Layout': '横屏 2 人固定布局',
   // Toast messages with specific error codes
   'Send co-host request failed, Room not exist': '发起连线失败，对方主播房间不存在',
   'Send co-host request failed, Room is connecting': '发起连线失败，对方主播正在建立连线中',
@@ -41,8 +45,6 @@ export const resource = {
   // Success messages with parameters - using simple strings for now
   'Co-host invitation sent to user': '已向{{ userName }}发送连线邀请',
   'Co-host request cancelled by user': '{{ userName }}取消了连线请求',
-  'Co-host request rejected by user': '{{ userName }}已拒绝连线',
-  'Co-host request timeout for user': '发给{{ userName }}的连线请求无应答',
   'Co-host user joined event': '{{ userName }}已加入连线',
   'Co-host user left event': '{{ userName }}已离开连线',
   // Battle Panel content
@@ -72,9 +74,7 @@ export const resource = {
   'Send battle request failed': '发起PK失败',
   'Battle invitation sent to user': '已向{{ userName }}发送PK邀请',
   'Battle request cancelled by user': '{{ userName }}取消了PK请求',
-  'Battle request rejected by user': '{{ userName }}已拒绝PK',
-  'Battle request timeout for user': '发给{{ userName }}的PK请求无应答',
-  'Anchor battle settings': '主播PK设置',
+  'Anchor battle settings': '主播 PK 设置',
   'Battle duration': '发起 PK 时长',
   'Number minutes': '{{number}} 分钟',
   'Connection Layout': '连线布局',

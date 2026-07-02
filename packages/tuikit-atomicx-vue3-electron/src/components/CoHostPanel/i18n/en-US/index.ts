@@ -1,7 +1,5 @@
 export const resource = {
   'Host Battle': 'Host Battle',
-  'Host Connection': 'Host Connection',
-  'CoHost': 'Co-host',
   'Current seat': 'Current seat',
   'Seat is empty': 'Seat is empty',
   'Invite more': 'Invite more',
@@ -16,6 +14,10 @@ export const resource = {
   'Exit connection': 'Exit connection',
   'No hosts available to invite': 'No hosts available to invite',
   'Disconnect': 'Disconnect',
+  // Co-host audio mute toggle. Dedicated keys so they never collide with the
+  // global 'Mute'/'Unmute' used by the audience chat-ban menu.
+  'Mute Audio': 'Mute Audio',
+  'Unmute Audio': 'Unmute Audio',
   'Cancel': 'Cancel',
   'Invite': 'Invite',
   'Inviting': 'Inviting',
@@ -30,8 +32,9 @@ export const resource = {
   'Are you sure you want to exit the connection': 'Are you sure you want to exit the connection?',
   'Layout Template': 'Layout Template',
   'Dynamic Grid Layout': 'Dynamic Grid Layout',
-  'Dynamic Grid9 Layout': 'Dynamic Grid9 Layout',
+  'Dynamic Grid9 Layout': 'Dynamic Grid Layout',
   'Dynamic 1v6 Layout': 'Dynamic 1v6 Layout',
+  'Landscape Fixed 2 Seats Layout': 'Landscape Fixed 2 Seats Layout',
   // Toast messages with specific error codes
   'Send co-host request failed, Room not exist': 'Send co-host request failed, Room does not exist',
   'Send co-host request failed, Room is connecting': 'Send co-host request failed, Room is connecting',
@@ -41,8 +44,6 @@ export const resource = {
   'Co-host invitation sent to user': 'Co-host invitation sent',
   'Co-host invitation cancelled for user': 'Co-host invitation cancelled',
   'Co-host request cancelled by user': 'Co-host request cancelled',
-  'Co-host request rejected by user': 'Co-host request rejected',
-  'Co-host request timeout for user': 'Co-host request timeout',
   'Co-host user joined event': 'Co-host user joined',
   'Co-host user left event': '{{ userName }} Co-host user left',
   // Battle Panel content
@@ -72,8 +73,6 @@ export const resource = {
   'Send battle request failed': 'Send battle request failed',
   'Battle invitation sent to user': 'PK invitation has been sent to {{ userName }}',
   'Battle request cancelled by user': '{{ userName }} canceled the PK request',
-  'Battle request rejected by user': '{{ userName }} rejected the PK request',
-  'Battle request timeout for user': 'PK request timeout for {{ userName }}',
   'Anchor battle settings': 'Anchor battle settings',
   'Battle duration': 'Battle duration',
   'Number minutes': '{{number}} minutes',

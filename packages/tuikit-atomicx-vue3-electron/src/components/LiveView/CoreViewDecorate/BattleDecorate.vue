@@ -1,417 +1,475 @@
 <template>
-  <div />
+  <div class="battle-decorate" v-if="showBattleDecorate">
+    <div class="battle-score-container" v-if="showPkBar">
+      <div class="battle-score-item" :style="battleStyle[user.userId]" v-for="user, key in battleUsers" :key="user.userId">
+        <span class="battle-score-value">{{ battleScore?.get(user.userId) || 0 }}</span>
+        <div class="battle-score-icon" v-if="key === 1">
+          <IconPK size="18" />
+        </div>
+      </div>
+    </div>
+    <div :class="['battle-time-container', { 'more-top': showPkBar }]">
+      <div class="battle-time-background"></div>
+      <div class="battle-time-content">
+        <IconTime size="16" />
+        <span class="battle-time">{{ time }}</span>
+      </div>
+    </div>
+    <div :class="['battle-start-container', { 'disappearing': showBattleStartDisappearAnimation }]" v-if="showBattleStart">
+      <img :src="redBkgSvg" alt="red-bkg" class="red-bkg" />
+      <img :src="blueBkgSvg" alt="blue-bkg" class="blue-bkg" />
+      <img :src="vSvg" alt="v" class="letter-v" />
+      <img :src="sSvg" alt="s" class="letter-s" />
+    </div>
+    <div :class="['battle-result-container', showBattleResult ? 'show' : '']">
+      <img :src="battleResultImg" alt="battle-result" />
+    </div>
+  </div>
 </template>
-<!--<template>-->
-<!--  <div class="battle-decorate" v-if="showBattleDecorate">-->
-<!--    <div class="battle-score-container" v-if="showPkBar">-->
-<!--      <div class="battle-score-item" :style="battleStyle[user.userId]" v-for="user, key in battleUsers" :key="user.userId">-->
-<!--        <span class="battle-score-value">{{ battleScore?.get(user.userId) || 0 }}</span>-->
-<!--        <div class="battle-score-icon" v-if="key === 1">-->
-<!--          <IconPK size="18" />-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
-<!--    <div :class="['battle-time-container', { 'more-top': showPkBar }]">-->
-<!--      <div class="battle-time-background"></div>-->
-<!--      <div class="battle-time-content">-->
-<!--        <IconTime size="16" />-->
-<!--        <span class="battle-time">{{ time }}</span>-->
-<!--      </div>-->
-<!--    </div>-->
-<!--    <div :class="['battle-start-container', { 'disappearing': showBattleStartDisappearAnimation }]" v-if="showBattleStart">-->
-<!--      <img :src="redBkgSvg" alt="red-bkg" class="red-bkg" />-->
-<!--      <img :src="blueBkgSvg" alt="blue-bkg" class="blue-bkg" />-->
-<!--      <img :src="vSvg" alt="v" class="letter-v" />-->
-<!--      <img :src="sSvg" alt="s" class="letter-s" />-->
-<!--    </div>-->
-<!--    <div :class="['battle-result-container', showBattleResult ? 'show' : '']">-->
-<!--      <img :src="battleResultImg" alt="battle-result" />-->
-<!--    </div>-->
-<!--  </div>-->
-<!--</template>-->
 
-<!--<script setup lang="ts">-->
-<!--import { IconPK, IconTime, useUIKit } from '@tencentcloud/uikit-base-component-vue3';-->
-<!--import { ref, computed, watch, Ref, onMounted, onUnmounted } from 'vue';-->
-<!--import { BattleEndedReason, BattleEvent, BattleInfo, CoHostLayoutTemplate } from '../../../types';-->
-<!--import { useBattleState } from '../../../states/BattleState';-->
-<!--import { useLiveSeatState } from '../../../states/LiveSeatState';-->
-<!--import { useLiveListState } from '../../../states/LiveListState';-->
-<!--import { convertSecondsToHMS } from '../../../utils/utils';-->
-<!--import defeatResult from '../assets/img/defeat.png';-->
-<!--import victoryResult from '../assets/img/victory.png';-->
-<!--import drawResult from '../assets/img/draw.png';-->
-<!--import redBkgSvg from '../assets/svg/redBkg.svg';-->
-<!--import blueBkgSvg from '../assets/svg/blueBkg.svg';-->
-<!--import vSvg from '../assets/svg/v.svg';-->
-<!--import sSvg from '../assets/svg/s.svg';-->
+<script setup lang="ts">
+import { IconPK, IconTime, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { ref, computed, watch, Ref, onMounted, onUnmounted } from 'vue';
+import { BattleEndedReason, BattleEvent, BattleInfo, CoHostLayoutTemplate } from '../../../types';
+import { useBattleState } from '../../../states/BattleState';
+import { useLiveSeatState } from '../../../states/LiveSeatState';
+import { useLiveListState } from '../../../states/LiveListState';
+import { convertSecondsToHMS } from '../../../utils/utils';
+import defeatResult from '../assets/img/defeat.png';
+import victoryResult from '../assets/img/victory.png';
+import drawResult from '../assets/img/draw.png';
+import redBkgSvg from '../assets/svg/redBkg.svg';
+import blueBkgSvg from '../assets/svg/blueBkg.svg';
+import vSvg from '../assets/svg/v.svg';
+import sSvg from '../assets/svg/s.svg';
 
-<!--const { currentLive } = useLiveListState();-->
-<!--const { currentBattleInfo, battleUsers, battleScore, subscribeEvent, unsubscribeEvent} = useBattleState();-->
-<!--const { seatList } = useLiveSeatState();-->
-<!--const { t } = useUIKit();-->
+const { currentLive } = useLiveListState();
+const { currentBattleInfo, battleUsers, battleScore, subscribeEvent, unsubscribeEvent} = useBattleState();
+const { seatList } = useLiveSeatState();
+const { t } = useUIKit();
 
-<!--const showBattleDecorate = ref(false);-->
-<!--const showPkBar = computed(() => {-->
-<!--  return currentLive.value?.layoutTemplate === CoHostLayoutTemplate.HostDynamicGrid-->
-<!--    && battleUsers.value.length === 2-->
-<!--    && seatList.value?.filter(seat => seat.userInfo).length === 2;-->
-<!--});-->
-<!--const showBattleStart = ref(false);-->
-<!--const showBattleStartDisappearAnimation = ref(false);-->
+const showBattleDecorate = ref(false);
+// Show PK bar only when exactly 2 hosts are battling on a layout that renders them side-by-side.
+// - HostDynamicGrid (600): portrait grid, 2 of 9 seats occupied -> classic 1v1 PK
+// - HostVideoLandscapeFixed2Seats (400): landscape 1v1, 2 fixed seats -> landscape PK
+const showPkBar = computed(() => {
+  const layoutTemplate = currentLive.value?.layoutTemplate;
+  const isSupportedLayout = layoutTemplate === CoHostLayoutTemplate.HostDynamicGrid
+    || layoutTemplate === CoHostLayoutTemplate.HostVideoLandscapeFixed2Seats;
+  return isSupportedLayout
+    && battleUsers.value.length === 2
+    && seatList.value?.filter(seat => seat.userInfo).length === 2;
+});
+const showBattleStart = ref(false);
+const showBattleStartDisappearAnimation = ref(false);
+const showBattleResult = ref(false);
+const battleResultImg = ref(drawResult);
 
-<!--watch(() => currentBattleInfo.value?.battleId, (newVal) => {-->
-<!--  if (newVal) {-->
-<!--    showBattleDecorate.value = true;-->
-<!--    showBattleStart.value = true;-->
-<!--    setTimeout(() => {-->
-<!--      showBattleStartDisappearAnimation.value = true;-->
-<!--      setTimeout(() => {-->
-<!--        showBattleStart.value = false;-->
-<!--        showBattleStartDisappearAnimation.value = false;-->
-<!--      }, 300);-->
-<!--    }, 2000);-->
-<!--  }-->
-<!--}, { immediate: true });-->
+// Timer handles for the PK intro ("VS") animation and the post-battle result
+// animation. They MUST be tracked so a rapid battle end -> start cycle can
+// cancel timers left over from the previous battle. Otherwise a stale 5s
+// "hide result" timer registered by the previous battle's handleBattleEnded
+// fires while the NEW battle is already running and wrongly hides its
+// decorate, leaving the PK animation/decorate invisible even though the
+// battle state (battleUsers / currentBattleInfo) is still correct.
+let battleStartHideTimer: ReturnType<typeof setTimeout> | null = null;
+let battleStartFinishTimer: ReturnType<typeof setTimeout> | null = null;
+let battleResultHideTimer: ReturnType<typeof setTimeout> | null = null;
 
-<!--watch(() => currentLive.value?.liveId, (val, oldVal) => {-->
-<!--  if (oldVal && !val) {-->
-<!--    stopTimer();-->
-<!--    showBattleDecorate.value = false;-->
-<!--    showBattleStart.value = false;-->
-<!--    showBattleStartDisappearAnimation.value = false;-->
-<!--    showBattleResult.value = false;-->
-<!--  }-->
-<!--}, { immediate: true });-->
+function clearBattleStartTimers() {
+  if (battleStartHideTimer) {
+    clearTimeout(battleStartHideTimer);
+    battleStartHideTimer = null;
+  }
+  if (battleStartFinishTimer) {
+    clearTimeout(battleStartFinishTimer);
+    battleStartFinishTimer = null;
+  }
+}
 
-<!--const battleStyle: Ref<Record<string, { width: string }>> = ref({});-->
+function clearBattleResultTimer() {
+  if (battleResultHideTimer) {
+    clearTimeout(battleResultHideTimer);
+    battleResultHideTimer = null;
+  }
+}
 
-<!--watch(battleScore, (newVal) => {-->
-<!--  if (!newVal) return;-->
-<!--  const totalScore = [...newVal?.values()].reduce((acc, curr) => acc + curr, 0);-->
-<!--  [...newVal?.keys()].forEach(key => {-->
-<!--    battleStyle.value[key] = {-->
-<!--      width: (newVal.get(key) || 0) / totalScore * 100 + '%',-->
-<!--    };-->
-<!--  });-->
-<!--}, { immediate: true });-->
+watch(() => currentBattleInfo.value?.battleId, (newVal) => {
+  if (newVal) {
+    // A new battle is starting. Cancel any timers left over from a previous
+    // battle (the 5s result-hide timer in particular); otherwise that stale
+    // timer would fire mid-battle and hide this battle's decorate. Also reset
+    // the intro-animation flags so a fresh "VS" intro always plays cleanly.
+    clearBattleResultTimer();
+    clearBattleStartTimers();
+    showBattleResult.value = false;
+    showBattleDecorate.value = true;
+    showBattleStart.value = true;
+    showBattleStartDisappearAnimation.value = false;
+    battleStartHideTimer = setTimeout(() => {
+      showBattleStartDisappearAnimation.value = true;
+      battleStartFinishTimer = setTimeout(() => {
+        showBattleStart.value = false;
+        showBattleStartDisappearAnimation.value = false;
+      }, 300);
+    }, 2000);
+  }
+}, { immediate: true });
 
-<!--let timer: ReturnType<typeof setInterval> | null = null;-->
+watch(() => currentLive.value?.liveId, (val, oldVal) => {
+  if (oldVal && !val) {
+    stopTimer();
+    clearBattleStartTimers();
+    clearBattleResultTimer();
+    showBattleDecorate.value = false;
+    showBattleStart.value = false;
+    showBattleStartDisappearAnimation.value = false;
+    showBattleResult.value = false;
+  }
+}, { immediate: true });
 
-<!--const currentTime = ref(0);-->
+const battleStyle: Ref<Record<string, { width: string }>> = ref({});
 
-<!--const leftBattleTime = computed(() => {-->
-<!--  if (!currentBattleInfo.value) return 0;-->
-<!--  currentTime.value = Date.now();-->
-<!--  return currentBattleInfo.value?.config.duration - ((Math.floor(currentTime.value / 1000) - currentBattleInfo.value?.startTime));-->
-<!--});-->
+watch(battleScore, (newVal) => {
+  if (!newVal) return;
+  const totalScore = [...newVal?.values()].reduce((acc, curr) => acc + curr, 0);
+  [...newVal?.keys()].forEach(key => {
+    battleStyle.value[key] = {
+      width: (newVal.get(key) || 0) / totalScore * 100 + '%',
+    };
+  });
+}, { immediate: true });
 
-<!--watch(() => currentBattleInfo.value?.battleId, (newVal) => {-->
-<!--  if (newVal) {-->
-<!--    startTimer();-->
-<!--  } else {-->
-<!--    stopTimer();-->
-<!--  }-->
-<!--}, { immediate: true });-->
+let timer: ReturnType<typeof setInterval> | null = null;
 
-<!--function startTimer() {-->
-<!--  stopTimer();-->
-<!--  timer = setInterval(() => {-->
-<!--    currentTime.value = Date.now();-->
-<!--  }, 1000);-->
-<!--}-->
+const currentTime = ref(0);
 
-<!--function stopTimer() {-->
-<!--  if (timer) {-->
-<!--    clearInterval(timer);-->
-<!--    timer = null;-->
-<!--  }-->
-<!--}-->
+const leftBattleTime = computed(() => {
+  if (!currentBattleInfo.value) return 0;
+  currentTime.value = Date.now();
+  // `startTime` is a unix-second timestamp from the SDK (server clock),
+  // while `currentTime.value` is `Date.now()` (this device's wall clock).
+  // If the local clock drifts behind the server, the raw elapsed below can
+  // go negative, which would make `duration - elapsed` exceed `duration`
+  // and the UI would briefly show e.g. "2:03" for a 2-minute battle.
+  // Symmetrically, if the local clock runs ahead, elapsed could be larger
+  // than `duration`, producing a negative remaining time. Clamping
+  // `elapsed` into `[0, duration]` keeps the displayed countdown inside
+  // `[0, duration]` regardless of clock skew between server and client.
+  const duration = currentBattleInfo.value.config.duration;
+  const elapsedRaw = Math.floor(currentTime.value / 1000) - currentBattleInfo.value.startTime;
+  const elapsed = Math.max(0, Math.min(duration, elapsedRaw));
+  return duration - elapsed;
+});
 
-<!--function convertToTwoDigits(value: number) {-->
-<!--  return value.toString().padStart(2, '0');-->
-<!--}-->
+watch(() => currentBattleInfo.value?.battleId, (newVal) => {
+  if (newVal) {
+    startTimer();
+  } else {
+    stopTimer();
+  }
+}, { immediate: true });
 
-<!--const time = computed(() => {-->
-<!--  const { minutes, seconds } = convertSecondsToHMS(leftBattleTime.value);-->
-<!--  if (minutes <= 0 && seconds <= 0) {-->
-<!--    return t('LiveView.BattleEnded');-->
-<!--  }-->
-<!--  return `${convertToTwoDigits(minutes)}:${convertToTwoDigits(seconds)}`;-->
-<!--});-->
+function startTimer() {
+  stopTimer();
+  timer = setInterval(() => {
+    currentTime.value = Date.now();
+  }, 1000);
+}
 
-<!--const showBattleResult = ref(false);-->
-<!--const battleResultImg = ref(drawResult);-->
+function stopTimer() {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+}
 
-<!--function handleBattleEnded(eventInfo: { battleInfo: BattleInfo; reason: BattleEndedReason }) {-->
-<!--  stopTimer();-->
-<!--  showBattleResult.value = true;-->
-<!--  const maxScore = Math.max(...[...battleScore.value.values()]);-->
-<!--  const minScore = Math.min(...[...battleScore.value.values()]);-->
-<!--  const selfScore = battleScore.value.get(currentLive.value?.liveOwner.userId || '') || 0;-->
-<!--  if (maxScore === minScore) {-->
-<!--    battleResultImg.value = drawResult;-->
-<!--  } else {-->
-<!--    if (selfScore === maxScore) {-->
-<!--      battleResultImg.value = victoryResult;-->
-<!--    } else if (selfScore === minScore) {-->
-<!--      battleResultImg.value = defeatResult;-->
-<!--    }-->
-<!--  }-->
-<!--  setTimeout(() => {-->
-<!--    showBattleResult.value = false;-->
-<!--    showBattleDecorate.value = false;-->
-<!--  }, 5000);-->
-<!--}-->
+function convertToTwoDigits(value: number) {
+  return value.toString().padStart(2, '0');
+}
 
-<!--onMounted(() => {-->
-<!--  subscribeEvent(BattleEvent.onBattleEnded, handleBattleEnded);-->
-<!--});-->
+const time = computed(() => {
+  const { minutes, seconds } = convertSecondsToHMS(leftBattleTime.value);
+  if (minutes <= 0 && seconds <= 0) {
+    return t('LiveView.BattleEnded');
+  }
+  return `${convertToTwoDigits(minutes)}:${convertToTwoDigits(seconds)}`;
+});
 
-<!--onUnmounted(() => {-->
-<!--  unsubscribeEvent(BattleEvent.onBattleEnded, handleBattleEnded);-->
-<!--});-->
-<!--</script>-->
+function handleBattleEnded(eventInfo: { battleInfo: BattleInfo; reason: BattleEndedReason }) {
+  stopTimer();
+  showBattleResult.value = true;
+  const maxScore = Math.max(...[...battleScore.value.values()]);
+  const minScore = Math.min(...[...battleScore.value.values()]);
+  const selfScore = battleScore.value.get(currentLive.value?.liveOwner.userId || '') || 0;
+  if (maxScore === minScore) {
+    battleResultImg.value = drawResult;
+  } else {
+    if (selfScore === maxScore) {
+      battleResultImg.value = victoryResult;
+    } else if (selfScore === minScore) {
+      battleResultImg.value = defeatResult;
+    }
+  }
+  clearBattleResultTimer();
+  battleResultHideTimer = setTimeout(() => {
+    showBattleResult.value = false;
+    showBattleDecorate.value = false;
+    battleResultHideTimer = null;
+  }, 5000);
+}
 
-<!--<style scoped lang="scss">-->
+onMounted(() => {
+  subscribeEvent(BattleEvent.onBattleEnded, handleBattleEnded);
+});
 
-<!--.battle-score-container {-->
-<!--  display: flex;-->
-<!--  align-items: center;-->
-<!--  width: 100%;-->
-<!--  height: 14px;-->
-<!--  .battle-score-item {-->
-<!--    position: relative;-->
-<!--    display: flex;-->
-<!--    align-items: center;-->
-<!--    justify-content: center;-->
-<!--    width: 100%;-->
-<!--    height: 100%;-->
-<!--    box-sizing: border-box;-->
-<!--    transition: width 0.3s ease;-->
-<!--    &:nth-child(1) {-->
-<!--      background-color: #1C66E5;-->
-<!--      justify-content: flex-start;-->
-<!--      padding: 0 18px 0 8px;-->
-<!--    }-->
-<!--    &:nth-child(2) {-->
-<!--      background-color: #F15065;-->
-<!--      justify-content: flex-end;-->
-<!--      padding: 0 8px 0 18px;-->
-<!--    }-->
-<!--    .battle-score-value {-->
-<!--      color: #fff;-->
-<!--      font-size: 12px;-->
-<!--      font-style: normal;-->
-<!--      font-weight: 500;-->
-<!--      line-height: 20px;-->
-<!--    }-->
-<!--  }-->
-<!--  .battle-score-icon {-->
-<!--    position: absolute;-->
-<!--    top: -2px;-->
-<!--    left: 0;-->
-<!--    transform: translateX(-50%);-->
-<!--  }-->
-<!--}-->
+onUnmounted(() => {
+  unsubscribeEvent(BattleEvent.onBattleEnded, handleBattleEnded);
+  stopTimer();
+  clearBattleStartTimers();
+  clearBattleResultTimer();
+});
+</script>
 
-<!--.battle-time-container {-->
-<!--  position: absolute;-->
-<!--  top: 0px;-->
-<!--  left: 50%;-->
-<!--  transform: translateX(-50%);-->
-<!--  width: 110px;-->
-<!--  height: 24px;-->
-<!--  &.more-top {-->
-<!--    top: 14px;-->
-<!--  }-->
-<!--  .battle-time-background {-->
-<!--    width: 100%;-->
-<!--    height: 100%;-->
-<!--    border-bottom-left-radius: 10px;-->
-<!--    border-bottom-right-radius: 10px;-->
-<!--    background-color: var(&#45;&#45;bg-color-mask, rgba(0, 0, 0, 0.55));-->
-<!--    transform: perspective(50px) rotateX(-20deg) rotateY(0deg) translateZ(0);-->
-<!--  }-->
+<style scoped lang="scss">
 
-<!--  .battle-time-content {-->
-<!--    pointer-events: auto;-->
-<!--    cursor: pointer;-->
-<!--    position: absolute;-->
-<!--    display: flex;-->
-<!--    align-items: center;-->
-<!--    justify-content: center;-->
-<!--    top: 0;-->
-<!--    left: 0;-->
-<!--    width: 100%;-->
-<!--    height: 100%;-->
-<!--    text-align: center;-->
-<!--    color: var(&#45;&#45;text-color-primary, rgba(255, 255, 255, 0.90));-->
-<!--    font-size: 12px;-->
-<!--    font-style: normal;-->
-<!--    font-weight: 500;-->
-<!--    line-height: 20px;-->
-<!--    gap: 4px;-->
-<!--    transform: translateY(-2px);-->
-<!--  }-->
-<!--}-->
+.battle-score-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 14px;
+  .battle-score-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    transition: width 0.3s ease;
+    &:nth-child(1) {
+      background-color: #1C66E5;
+      justify-content: flex-start;
+      padding: 0 18px 0 8px;
+    }
+    &:nth-child(2) {
+      background-color: #F15065;
+      justify-content: flex-end;
+      padding: 0 8px 0 18px;
+    }
+    .battle-score-value {
+      color: #fff;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: 20px;
+    }
+  }
+  .battle-score-icon {
+    position: absolute;
+    top: -2px;
+    left: 0;
+    transform: translateX(-50%);
+  }
+}
 
-<!--.battle-result-container {-->
-<!--  position: absolute;-->
-<!--  top: 50%;-->
-<!--  left: 50%;-->
-<!--  opacity: 0;-->
-<!--  transform: translate(-50%, -50%) scale(0);-->
-<!--  transform-origin: center center;-->
-<!--  transition:-->
-<!--    transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275),-->
-<!--    opacity 0.3s ease-out;-->
+.battle-time-container {
+  position: absolute;
+  top: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 24px;
+  &.more-top {
+    top: 14px;
+  }
+  .battle-time-background {
+    width: 100%;
+    height: 100%;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    background-color: var(--bg-color-mask, rgba(0, 0, 0, 0.55));
+    transform: perspective(50px) rotateX(-20deg) rotateY(0deg) translateZ(0);
+  }
 
-<!--  &.show {-->
-<!--    opacity: 1;-->
-<!--    transform: translate(-50%, -50%) scale(1.5);-->
-<!--    animation: battleResultBouncePC 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;-->
-<!--    @media screen and (max-width: 768px) {-->
-<!--      animation: battleResultBounceMobile 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;-->
-<!--    }-->
-<!--  }-->
-<!--}-->
+  .battle-time-content {
+    pointer-events: auto;
+    cursor: pointer;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    color: var(--text-color-primary, rgba(255, 255, 255, 0.90));
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 20px;
+    gap: 4px;
+    transform: translateY(-2px);
+  }
+}
 
-<!--.battle-start-container {-->
-<!--  position: absolute;-->
-<!--  top: 50%;-->
-<!--  left: 50%;-->
-<!--  transform: translate(-50%, -50%) scale(1.5);-->
-<!--  width: 218px;-->
-<!--  height: 64px;-->
-<!--  display: flex;-->
-<!--  align-items: center;-->
-<!--  justify-content: center;-->
-<!--  pointer-events: none;-->
-<!--  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);-->
+.battle-result-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0);
+  transform-origin: center center;
+  transition:
+    transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    opacity 0.3s ease-out;
 
-<!--  &.disappearing {-->
-<!--    transform: translate(-50%, -50%) scale(0);-->
-<!--    opacity: 0;-->
-<!--  }-->
+  &.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.5);
+    animation: battleResultBouncePC 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    @media screen and (max-width: 768px) {
+      animation: battleResultBounceMobile 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+  }
+}
 
-<!--  .red-bkg {-->
-<!--    position: absolute;-->
-<!--    width: 118px;-->
-<!--    height: 50px;-->
-<!--    left: 0;-->
-<!--    top: 0px;-->
-<!--    animation: slideInFromLeft 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;-->
-<!--  }-->
+.battle-start-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1.5);
+  width: 218px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
-<!--  .blue-bkg {-->
-<!--    position: absolute;-->
-<!--    width: 118px;-->
-<!--    height: 50px;-->
-<!--    right: 0;-->
-<!--    bottom: 0px;-->
-<!--    animation: slideInFromRight 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;-->
-<!--  }-->
+  &.disappearing {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
 
-<!--  .letter-v {-->
-<!--    position: absolute;-->
-<!--    width: 40px;-->
-<!--    height: 40px;-->
-<!--    left: calc(50% - 30px);-->
-<!--    top: 50%;-->
-<!--    transform: translateX(-50%) translateY(-50%) scale(0);-->
-<!--    animation: scaleInFromCenter 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.5s forwards;-->
-<!--  }-->
+  .red-bkg {
+    position: absolute;
+    width: 118px;
+    height: 50px;
+    left: 0;
+    top: 0px;
+    animation: slideInFromLeft 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
 
-<!--  .letter-s {-->
-<!--    position: absolute;-->
-<!--    width: 40px;-->
-<!--    height: 40px;-->
-<!--    left: calc(50% - 10px);-->
-<!--    top: 50%;-->
-<!--    transform: translateX(-50%) translateY(-50%) scale(0);-->
-<!--    animation: scaleInFromCenter 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.5s forwards;-->
-<!--  }-->
-<!--}-->
+  .blue-bkg {
+    position: absolute;
+    width: 118px;
+    height: 50px;
+    right: 0;
+    bottom: 0px;
+    animation: slideInFromRight 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
 
-<!--@keyframes slideInFromLeft {-->
-<!--  0% {-->
-<!--    transform: translateX(-100%);-->
-<!--    opacity: 0;-->
-<!--  }-->
-<!--  100% {-->
-<!--    transform: translateX(0);-->
-<!--    opacity: 1;-->
-<!--  }-->
-<!--}-->
+  .letter-v {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    left: calc(50% - 30px);
+    top: 50%;
+    transform: translateX(-50%) translateY(-50%) scale(0);
+    animation: scaleInFromCenter 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.5s forwards;
+  }
 
-<!--@keyframes slideInFromRight {-->
-<!--  0% {-->
-<!--    transform: translateX(100%);-->
-<!--    opacity: 0;-->
-<!--  }-->
-<!--  100% {-->
-<!--    transform: translateX(0);-->
-<!--    opacity: 1;-->
-<!--  }-->
-<!--}-->
+  .letter-s {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    left: calc(50% - 10px);
+    top: 50%;
+    transform: translateX(-50%) translateY(-50%) scale(0);
+    animation: scaleInFromCenter 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.5s forwards;
+  }
+}
 
-<!--@keyframes scaleInFromCenter {-->
-<!--  0% {-->
-<!--    transform: translateY(-50%) scale(0);-->
-<!--    opacity: 0;-->
-<!--  }-->
-<!--  50% {-->
-<!--    transform: translateY(-50%) scale(1.2);-->
-<!--    opacity: 0.8;-->
-<!--  }-->
-<!--  100% {-->
-<!--    transform: translateY(-50%) scale(1);-->
-<!--    opacity: 1;-->
-<!--  }-->
-<!--}-->
+@keyframes slideInFromLeft {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
 
-<!--@keyframes battleResultBouncePC {-->
-<!--  0% {-->
-<!--    transform: translate(-50%, -50%) scale(0);-->
-<!--    opacity: 0;-->
-<!--  }-->
+@keyframes slideInFromRight {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
 
-<!--  50% {-->
-<!--    transform: translate(-50%, -50%) scale(1.5);-->
-<!--    opacity: 0.8;-->
-<!--  }-->
+@keyframes scaleInFromCenter {
+  0% {
+    transform: translateY(-50%) scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(-50%) scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-50%) scale(1);
+    opacity: 1;
+  }
+}
 
-<!--  70% {-->
-<!--    transform: translate(-50%, -50%) scale(1.8);-->
-<!--    opacity: 1;-->
-<!--  }-->
+@keyframes battleResultBouncePC {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
 
-<!--  100% {-->
-<!--    transform: translate(-50%, -50%) scale(1.5);-->
-<!--    opacity: 1;-->
-<!--  }-->
-<!--}-->
+  50% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0.8;
+  }
 
-<!--@keyframes battleResultBounceMobile {-->
-<!--  0% {-->
-<!--    transform: translate(-50%, -50%) scale(0);-->
-<!--    opacity: 0;-->
-<!--  }-->
+  70% {
+    transform: translate(-50%, -50%) scale(1.8);
+    opacity: 1;
+  }
 
-<!--  50% {-->
-<!--    transform: translate(-50%, -50%) scale(0.9);-->
-<!--    opacity: 0.8;-->
-<!--  }-->
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 1;
+  }
+}
 
-<!--  70% {-->
-<!--    transform: translate(-50%, -50%) scale(1.15);-->
-<!--    opacity: 1;-->
-<!--  }-->
+@keyframes battleResultBounceMobile {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
 
-<!--  100% {-->
-<!--    transform: translate(-50%, -50%) scale(1);-->
-<!--    opacity: 1;-->
-<!--  }-->
-<!--}-->
-<!--</style>-->
+  50% {
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0.8;
+  }
+
+  70% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+</style>

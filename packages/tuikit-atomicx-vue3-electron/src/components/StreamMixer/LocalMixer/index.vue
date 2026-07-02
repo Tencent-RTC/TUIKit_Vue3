@@ -34,7 +34,9 @@ import TUIRoomEngine, {
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { TRTCStreamLayoutMode } from 'trtc-electron-sdk';
 import { useRoomEngine } from '../../../hooks/useRoomEngine';
+import { useCoHostState } from '../../../states/CoHostState';
 import { useLiveListState } from '../../../states/LiveListState';
+import { useSeatStore } from '../../../states/SeatStore';
 import { useVideoMixerState } from '../../../states/VideoMixerState';
 import { LiveOrientation } from '../../../types';
 import { debounce } from '../../../utils/utils';
@@ -43,6 +45,19 @@ import MixerControl from './MixerControl.vue';
 const { t } = useUIKit();
 
 const { currentLive } = useLiveListState();
+const { seatList } = useSeatStore();
+const { connected: coHostConnectedList } = useCoHostState();
+
+// CoGuest (audience mic-link) participants, counted by occupied seats.
+const coGuestSeatCount = computed(() => seatList.value.filter(seat => !!seat.userInfo).length);
+// CoHost (cross-room PK / connection) participants. The list includes the local
+// host once connected, so it is empty / 1 while broadcasting alone.
+const coHostConnectedCount = computed(() => coHostConnectedList.value.length);
+// Whether the local video shares the canvas with others. Mirrors the Windows
+// behavior: Fit when the host broadcasts alone, Fill once others join.
+const isMultiPersonLayout = computed(
+  () => coGuestSeatCount.value > 1 || coHostConnectedCount.value > 1,
+);
 
 const mixControlRef = ref<InstanceType<typeof MixerControl> | null>(null);
 const {
@@ -248,41 +263,50 @@ onMounted(() => {
     }
   });
 
-  watch(() => currentLive.value?.layoutTemplate, (newVal) => {
-    if (newVal !== null && newVal !== undefined) {
-      let fillMode;
-      if (newVal < 200 || newVal >= 600) {
-        // Portrait template
-        fillMode = TRTCVideoFillMode.TRTCVideoFillMode_Fill;
-      } else {
-        // Landscape template
-        fillMode = TRTCVideoFillMode.TRTCVideoFillMode_Fit;
-      }
-
-      const mixerView = document.getElementById('local-video-mixer');
-      if (!mixerView) {
-        return;
-      }
-      const width = mixerView.offsetWidth;
-      const height = mixerView.offsetHeight;
-
-      const mediaSourceManager = roomEngine.instance?.getTRTCCloud().getMediaMixingManager();
-      mediaSourceManager?.setStreamLayout({
-        layoutMode: TRTCStreamLayoutMode.Custom,
-        userList: [{
-          userId: '',
-          fillMode,
-          rect: {
-            left: 0,
-            top: 0,
-            right: width,
-            bottom: height,
-          },
-          zOrder: 1,
-        }],
-      });
+  // Apply the local-mixer stream layout, aligning the fill mode with Windows:
+  // Fit when broadcasting alone (whole frame, letterboxed) and Fill once others
+  // join via CoHost (cross-room PK / connection) or CoGuest (audience mic-link),
+  // so the host tile fills its cell without black bars.
+  const applyStreamLayout = () => {
+    const layoutTemplate = currentLive.value?.layoutTemplate;
+    if (layoutTemplate === null || layoutTemplate === undefined) {
+      return;
     }
-  });
+
+    const fillMode = isMultiPersonLayout.value
+      ? TRTCVideoFillMode.TRTCVideoFillMode_Fill
+      : TRTCVideoFillMode.TRTCVideoFillMode_Fit;
+
+    const mixerView = document.getElementById('local-video-mixer');
+    if (!mixerView) {
+      return;
+    }
+    const width = mixerView.offsetWidth;
+    const height = mixerView.offsetHeight;
+
+    const mediaSourceManager = roomEngine.instance?.getTRTCCloud().getMediaMixingManager();
+    mediaSourceManager?.setStreamLayout({
+      layoutMode: TRTCStreamLayoutMode.Custom,
+      userList: [{
+        userId: '',
+        fillMode,
+        rect: {
+          left: 0,
+          top: 0,
+          right: width,
+          bottom: height,
+        },
+        zOrder: 1,
+      }],
+    });
+  };
+
+  watch(
+    () => [currentLive.value?.layoutTemplate, isMultiPersonLayout.value],
+    () => {
+      applyStreamLayout();
+    },
+  );
 });
 
 onBeforeUnmount(async () => {

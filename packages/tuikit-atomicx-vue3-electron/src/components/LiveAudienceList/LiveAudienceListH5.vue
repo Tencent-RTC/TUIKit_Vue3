@@ -30,7 +30,7 @@ import { useLiveAudienceState } from '../../states/LiveAudienceState';
 import { type AudienceInfo } from '../../types';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import { Avatar } from '../Avatar';
-import { MAX_AUDIENCE_COUNT } from './index';
+import { MAX_AUDIENCE_COUNT } from './constants';
 
 const { t } = useUIKit();
 const currentViewerTarget = ref<HTMLElement | null>(null);
