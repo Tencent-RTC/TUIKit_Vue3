@@ -2,9 +2,9 @@
   <TUIDialog
     v-model:visible="dialogVisible"
     :title="t('Anchor battle settings')"
-    :confirmText="t('Confirm')"
-    :cancelText="t('Cancel')"
     :custom-classes="['co-host-dialog']"
+    :confirm-text="t('Confirm')"
+    :cancel-text="t('Cancel')"
     @cancel="cancel"
     @confirm="confirm"
   >
@@ -68,7 +68,7 @@
 <script setup lang="ts">
 import { defineProps, defineEmits, ref, watch, computed } from 'vue';
 import { useUIKit, TUIDialog, IconDynamic1v6Layout, IconDynamicGridLayout } from '@tencentcloud/uikit-base-component-vue3';
-import { CoHostLayoutTemplate } from '../../types';
+import { CoHostLayoutTemplate, LiveOrientation } from '../../types';
 
 const { t } = useUIKit();
 const props = defineProps<{
@@ -77,6 +77,7 @@ const props = defineProps<{
     coHostLayoutTemplate: CoHostLayoutTemplate;
     battleDuration: number;
   };
+  currentLiveOrientation: LiveOrientation;
 }>();
 const emit = defineEmits(['update:visible', 'cancel', 'confirm']);
 
@@ -118,14 +119,30 @@ watch(dialogVisible, (newVal) => {
   emit('update:visible', newVal);
 });
 
-const layoutOptions = computed(() => [
-  {
-    id: 'PortraitDynamic_Grid9',
-    icon: IconDynamicGridLayout,
-    templateId: CoHostLayoutTemplate.HostDynamicGrid,
-    label: t('Dynamic Grid9 Layout'),
-  },
-]);
+const layoutOptions = computed(() => {
+  if (props.currentLiveOrientation === LiveOrientation.Landscape) {
+    return [{
+      id: 'HostVideoLandscapeFixed2Seats',
+      icon: IconDynamicGridLayout,
+      templateId: CoHostLayoutTemplate.HostVideoLandscapeFixed2Seats,
+      label: t('Landscape Fixed 2 Seats Layout'),
+    }]
+  } else {
+    return [{
+      id: 'PortraitDynamic_Grid9',
+      icon: IconDynamicGridLayout,
+      templateId: CoHostLayoutTemplate.HostDynamicGrid,
+      label: t('Dynamic Grid9 Layout'),
+    },
+    // {
+    //   id: 'PortraitDynamic_1v6',
+    //   icon: IconDynamic1v6Layout,
+    //   templateId: CoHostLayoutTemplate.HostDynamic1v6,
+    //   label: t('Dynamic 1v6 Layout'),
+    // }
+  ];
+  }
+});
 </script>
 
 <style lang="scss" scoped>

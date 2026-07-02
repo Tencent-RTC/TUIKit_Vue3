@@ -23,6 +23,7 @@ export * from './battle';
 export * from './barrage';
 export * from './gift';
 export * from './music';
+export * from './liveSummary';
 // room
 export * from './room';
 export * from './participant';

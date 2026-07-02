@@ -80,7 +80,7 @@ import { useLoginState } from '../../states/LoginState';
 import { Avatar } from '../Avatar';
 import UserActionMenu from './UserActionMenu.vue';
 import type { AudienceInfo } from '../../types';
-import { MAX_AUDIENCE_COUNT } from './index';
+import { MAX_AUDIENCE_COUNT } from './constants';
 
 const { t } = useUIKit();
 const currentViewerTarget = ref<HTMLElement | null>(null);

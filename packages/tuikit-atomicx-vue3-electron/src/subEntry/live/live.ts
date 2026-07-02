@@ -8,6 +8,7 @@ export { useLiveGiftState } from '../../states/LiveGiftState';
 export { useLiveListState } from '../../states/LiveListState';
 export { useLiveMonitorState } from '../../states/LiveMonitorState';
 export { useLiveSeatState } from '../../states/LiveSeatState';
+export { useLiveSummaryState } from '../../states/LiveSummaryState';
 export { useMusicState } from '../../states/MusicState';
 export { useVideoMixerState } from '../../states/VideoMixerState';
 
@@ -15,7 +16,7 @@ export { BarrageInput } from '../../components/BarrageInput';
 export { BarrageList } from '../../components/BarrageList';
 export { CameraButton } from '../../components/CameraButton';
 export { CoGuestPanel } from '../../components/CoGuestPanel';
-// export { CoHostPanel } from '../../components/CoHostPanel';
+export { CoHostPanel } from '../../components/CoHostPanel';
 export { LiveAudienceList } from '../../components/LiveAudienceList';
 export { LiveGift } from '../../components/LiveGift';
 export { LiveList } from '../../components/LiveList';

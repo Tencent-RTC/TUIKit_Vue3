@@ -7,7 +7,7 @@
       <div class="recommend-host-list-content" ref="recommendHostListContentRef">
         <div class="recommend-host-list">
           <div
-            v-for="user in [...invitees, ...candidates]"
+            v-for="user in displayUserList"
             :key="`${user.userId}-${user.liveId}`"
             class="user-item"
           >
@@ -55,13 +55,33 @@ import { IconRefresh, useUIKit, TUIToast, TOAST_TYPE } from '@tencentcloud/uikit
 import { TUIErrorCode } from '@tencentcloud/tuiroom-engine-electron';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useCoHostState } from '../../states/CoHostState';
-import { useLiveListState } from '../../states/LiveListState';
 import { Avatar } from '../Avatar';
 import { CoHostStatus } from '../../types';
 
 const { t } = useUIKit();
-const { liveListCursor, fetchLiveList } = useLiveListState();
-const { coHostStatus, invitees, candidates } = useCoHostState();
+const { coHostStatus, connected, invitees, candidates, candidatesCursor, getCoHostCandidates } = useCoHostState();
+
+/**
+ * Merge invitees and candidates into a unified list for rendering.
+ * - Exclude users that are already connected (they should not appear in "Invite more").
+ * - De-duplicate by `${userId}-${liveId}` so the same user never appears twice
+ *   when they exist in both `invitees` and `candidates`.
+ * Invitees come first to preserve the "already invited" visual order.
+ */
+const displayUserList = computed(() => {
+  const connectedKeys = new Set(connected.value.map(u => `${u.userId}-${u.liveId}`));
+  const seen = new Set<string>();
+  const result: typeof invitees.value = [];
+  for (const user of [...invitees.value, ...candidates.value]) {
+    const key = `${user.userId}-${user.liveId}`;
+    if (connectedKeys.has(key) || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    result.push(user);
+  }
+  return result;
+});
 
 const recommendHostListContentRef = ref<HTMLElement | null>(null);
 const loadMoreRef = ref<HTMLElement | null>(null);
@@ -69,7 +89,7 @@ let intersectionObserver: IntersectionObserver | null = null;
 
 const refreshInviteesLoading = ref(false);
 const loadMoreLoading = ref(false);
-const hasMoreLive = computed(() => liveListCursor.value !== '');
+const hasMoreLive = computed(() => candidatesCursor.value !== '');
 async function handleRefreshInvitees() {
   refreshInviteesLoading.value = true;
   if (recommendHostListContentRef.value) {
@@ -77,10 +97,7 @@ async function handleRefreshInvitees() {
   }
   Promise.all([
     new Promise((resolve) => setTimeout(resolve, 500)),
-    fetchLiveList({
-      cursor: '',
-      count: 20,
-    }),
+    getCoHostCandidates(''),
   ])
   .catch(error => {
     if (error.code === TUIErrorCode.ERR_FREQ_LIMIT) {
@@ -101,10 +118,7 @@ onMounted(() => {
       if (item.isIntersecting && !loadMoreLoading.value && hasMoreLive.value) {
         loadMoreLoading.value = true;
         try {
-          await fetchLiveList({
-            cursor: liveListCursor.value,
-            count: 20,
-          });
+          await getCoHostCandidates(candidatesCursor.value);
         } catch (error) {
           console.error('Load more users failed:', error);
         } finally {

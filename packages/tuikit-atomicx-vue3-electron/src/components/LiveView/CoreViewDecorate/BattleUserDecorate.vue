@@ -27,7 +27,7 @@ import { SeatUserInfo, CoHostLayoutTemplate } from '../../../types';
 import { useBattleState } from '../../../states/BattleState';
 import { useLiveListState } from '../../../states/LiveListState';
 import { useCoHostState } from '../../../states/CoHostState';
-import { ref, computed, watch } from 'vue';
+import { computed } from 'vue';
 import BattleTopBadge from '../assets/svg/BattleTopBadge.svg';
 import BattleOrdinaryBadge from '../assets/svg/BattleOrdinaryBadge.svg';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
@@ -48,7 +48,15 @@ const { currentLive } = useLiveListState();
 const { connected } = useCoHostState();
 const { currentBattleInfo, battleScore } = useBattleState();
 
-const isInBattle = ref(false);
+// The PK badge overlay is gated strictly on an active battle: it appears only
+// after `onBattleStarted` populates `currentBattleInfo.battleId`, and hides the
+// moment the battle ends (battleId cleared). Driving this directly off
+// `battleId` avoids showing the overlay on a mere invitee-accept (which fills
+// `battleScore` via `onUserJoinBattle` before the battle officially starts) and
+// prevents stale state from a previous battle leaking into the next one.
+const isInBattle = computed(
+  () => currentBattleInfo.value?.battleId !== null && currentBattleInfo.value?.battleId !== undefined
+);
 
 const showBattleUserDecorate = computed(() => {
   const showUserDecorateInGrid = currentLive.value?.layoutTemplate === CoHostLayoutTemplate.HostDynamicGrid;
@@ -64,18 +72,6 @@ const currentBattleScoreList = computed(() => {
 function getBattleLevel(userId: string) {
   return currentBattleScoreList.value.indexOf(battleScore.value.get(userId) || 0) + 1;
 };
-
-let battleTimer: NodeJS.Timeout | null = null;
-watch(() => currentBattleInfo.value?.battleId, (newVal) => {
-  if(newVal !== null && newVal !== undefined) {
-    isInBattle.value = true;
-  } else {
-    if(battleTimer) return;
-    battleTimer = setTimeout(() => {
-      isInBattle.value = false;
-    }, 5000);
-  }
-}, { immediate: true });
 
 </script>
 
