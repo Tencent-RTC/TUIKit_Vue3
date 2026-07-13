@@ -3,6 +3,7 @@ export { useFreeBeautyState } from '../../states/FreeBeautyState';
 export { useRoomParticipantState } from '../../states/RoomParticipantState';
 export { useRoomState } from '../../states/RoomState';
 export { useVirtualBackgroundState } from '../../states/VirtualBackgroundState';
+export { useWhiteboardState } from '../../states/WhiteboardState';
 
 // export { RoomParticipantList, RoomParticipantListH5 } from '../../components/RoomParticipantList';
 export { RoomParticipantView } from '../../components/RoomParticipantView';

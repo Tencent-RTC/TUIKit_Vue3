@@ -1,13 +1,12 @@
 <template>
-  <View>
+  <View @click="handleQuickConferenceClick">
+    <slot>
     <div
       :class="[
         styles['quick-conference-picker__button'],
         (props.disabled || isLoading) && styles['disabled'],
       ]"
-      @click="handleQuickConferenceClick"
     >
-      <slot>
         <IconLoading
           v-if="isLoading"
           :size="props.iconSize"
@@ -18,8 +17,8 @@
           :size="props.iconSize"
           :class="styles['quick-conference-picker__icon']"
         />
-      </slot>
-    </div>
+      </div>
+    </slot>
   </View>
 </template>
 

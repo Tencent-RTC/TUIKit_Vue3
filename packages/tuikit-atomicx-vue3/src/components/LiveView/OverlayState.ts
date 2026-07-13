@@ -65,12 +65,12 @@ interface OverlayState {
  * Manage overlay display states for the LiveView component.
  *
  * This composable is **purely for state management** — it does NOT handle
- * stream playback lifecycle (startPlayStream/stopPlayStream). The caller is
- * responsible for:
- * 1. Starting the stream (e.g., in onMounted)
- * 2. Calling `startObserving()` after the stream has started
- * 3. Calling `stopObserving()` in onBeforeUnmount before stopping the stream
- * 4. Stopping the stream (e.g., in onBeforeUnmount)
+ * stream playback lifecycle (startPlayStream/stopPlayStream). The caller
+ * pairs each `startPlayStream` with one `startObserving()` and each
+ * `stopPlayStream` with one `stopObserving()`; the caller is expected to
+ * gate those calls on the live-room lifecycle (LiveView itself does this
+ * by watching `currentLive.liveId`, so callers of <LiveView /> do NOT
+ * need to defer mounting until joining).
  *
  * Handles:
  * - Loading state: true until the first video frame is rendered.
@@ -78,6 +78,12 @@ interface OverlayState {
  *   online (seatList was populated then became empty).
  * - Voice-chat room overlay: visible for voice-only rooms that web does not
  *   support.
+ *
+ * Assumes the **single-instance LiveView contract** (PRD §7): at most one
+ * `useOverlayState()` is alive at any time. The `stopObserving` latch
+ * reset relies on this — it touches the composable-local refs created by
+ * the current `setup()` call only. If multi-instance LiveView is ever
+ * allowed, the reset will need to scope per-instance lifecycle.
  *
  * @param options - Configuration options including the view container ID.
  */
@@ -247,6 +253,15 @@ function useOverlayState(options: OverlayStateOptions): OverlayState {
   /**
    * Stop observing and clean up resources.
    * Call this before stopping the stream (e.g., in onBeforeUnmount before stopPlayStream).
+   *
+   * Latched flags (`isLoadingTimedOut`, `isAnchorConfirmedAway`,
+   * `hasSeatListBeenPopulated`) are also reset here so the next
+   * `startObserving` cycle (e.g. after switching to a new live room while
+   * the component remains mounted) begins from a clean slate. The
+   * `refresh()` path inside this composable handles its own state without
+   * routing through `stopObserving`, so this reset is safe — it only fires
+   * on real "stream session ended" boundaries (component unmount or room
+   * switch).
    */
   function stopObserving() {
     videoReadyHandle?.stop();
@@ -260,6 +275,9 @@ function useOverlayState(options: OverlayStateOptions): OverlayState {
       anchorAwayTimer = null;
     }
     isFirstFrameRendered.value = false;
+    isLoadingTimedOut.value = false;
+    isAnchorConfirmedAway.value = false;
+    hasSeatListBeenPopulated.value = false;
   }
 
   return {

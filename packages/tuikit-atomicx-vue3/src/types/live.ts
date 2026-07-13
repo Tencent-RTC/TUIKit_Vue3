@@ -113,6 +113,8 @@ export interface JoinLiveParams {
 
 export interface UpdateLiveInfoParams {
   liveId?: string;
+  /** Live room title */
+  liveName?: string;
   activityStatus?: number;
   categoryList?: Array<number>;
   coverUrl?: string;

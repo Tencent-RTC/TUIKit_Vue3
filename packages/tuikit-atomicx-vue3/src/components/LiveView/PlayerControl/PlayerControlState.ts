@@ -92,6 +92,19 @@ export interface PlayerControlState {
   // Control bar visibility methods
   setAutoHideDelay: (delay: number) => void;
   setControlBarVisible: (visible: boolean) => void;
+  /**
+   * Caller-intent gate for the control bar.
+   *
+   * Decouples "consumer explicitly asked us to be off" from the moment-to-
+   * moment visible flag that hover / touch / auto-hide all churn. While
+   * `controlBarEnabled` is `false`, every automatic path that would have
+   * opened the bar (mouseenter, tap-on-video, etc.) becomes a no-op; only
+   * `showControlBar()` can re-enable it. See `setControlBarVisible` for
+   * the exact enforcement boundary.
+   */
+  controlBarEnabled: Ref<boolean>;
+  /** Update the caller-intent gate without touching the visible flag. */
+  setControlBarEnabled: (enabled: boolean) => void;
   startAutoHide: () => void;
   stopAutoHide: () => void;
   upsertCustomButtons: (buttons: CustomButton[]) => void;
@@ -130,6 +143,10 @@ const currentVolume = ref(VOLUME_CONSTANTS.DEFAULT_VOLUME);
 const isMuted = ref(false); // Mute state - synced across all rooms
 const isSafari = ref(isSafariBrowser());
 const controlBarVisible = ref(false);
+// Caller-intent gate. `true` (default) = automatic show paths (hover / tap)
+// behave as before. `false` = the consumer has called `hideControlBar()` and
+// the bar must stay hidden until `showControlBar()` is called again.
+const controlBarEnabled = ref(true);
 const isRefreshing = ref(false); // Refresh state - used by OverlayState to reset loading
 
 // User overrides: tracks properties explicitly set by external consumers.
@@ -271,6 +288,32 @@ const isLocalUserOnSeat = computed(() => seatList.value.some(seat => seat.userIn
 
 // Guard flag to prevent duplicate side effect registration across multiple calls
 let isListenersRegistered = false;
+
+/**
+ * Module-level shared state for control bar auto-hide.
+ *
+ * Why module-level (not per-closure): `usePlayerControlState()` is NOT a
+ * singleton — each call creates a new closure with its own refs. But
+ * `LivePlayerState/index.ts` calls it once at module load (for the
+ * public API surface), and `PlayerControl.vue` calls it again (for the
+ * actual UI rendering). If `AUTO_HIDE_DELAY` lived inside the closure,
+ * `setAutoHideDelay` called from the demo would update the
+ * `LivePlayerState` copy but the `PlayerControl.vue` copy would keep
+ * the old default — so the delay change would appear to "not take
+ * effect". By hoisting these to module scope, all callers share the
+ * same delay value and timer.
+ *
+ * Single-instance premise: this sharing assumes at most ONE LiveView
+ * is mounted at any time (the demo enforces this via a global single
+ * LiveView stage). If multiple LiveView instances were mounted
+ * simultaneously (e.g. multi-stream PiP), their PlayerControl
+ * instances would share a single `hideTimeout` and clobber each
+ * other's timers. The current single-instance design makes this safe;
+ * a future multi-instance scenario would need to move these back to
+ * per-instance state (e.g. a WeakMap keyed on the video element).
+ */
+let AUTO_HIDE_DELAY = 1500;
+let hideTimeout: number | null = null;
 
 /**
  * Player control state management hook
@@ -701,16 +744,44 @@ export function usePlayerControlState(): PlayerControlState {
 
   /**
    * Control bar visibility management
+   * `AUTO_HIDE_DELAY` and `hideTimeout` are module-level (see above).
    */
-  let AUTO_HIDE_DELAY = 1500;
-  let hideTimeout: number | null = null;
 
   const setAutoHideDelay = (delay: number): void => {
     AUTO_HIDE_DELAY = delay;
+    // Re-arm the timer so the new delay takes effect immediately.
+    // Without this, the current timer keeps the OLD delay and the
+    // new value only applies on the next `startAutoHide()` call —
+    // which may not happen until the user moves the mouse again.
+    if (hideTimeout) {
+      startAutoHide();
+    }
   };
 
+  /**
+   * Set the moment-to-moment visible flag.
+   *
+   * Honors the caller-intent gate (`controlBarEnabled`): once the consumer
+   * has called `hideControlBar()` (which flips the gate off), no automatic
+   * path — hover, tap-on-video, programmatic startAutoHide tick — is
+   * allowed to open the bar back up. Only `showControlBar()` (which flips
+   * the gate on first) can re-show it. Hide attempts are always honored
+   * regardless of the gate so the bar can collapse normally.
+   *
+   * This is the single enforcement point for the gate: by routing every
+   * "open the bar" call through here, we cover both internal paths
+   * (PlayerControl.vue's `onMouseOver`, touch handlers, etc.) and any
+   * external consumers that import the state directly.
+   */
   const setControlBarVisible = (visible: boolean): void => {
+    if (visible && !controlBarEnabled.value) {
+      return;
+    }
     controlBarVisible.value = visible;
+  };
+
+  const setControlBarEnabled = (enabled: boolean): void => {
+    controlBarEnabled.value = enabled;
   };
 
   const setRefreshing = (refreshing: boolean): void => {
@@ -726,6 +797,12 @@ export function usePlayerControlState(): PlayerControlState {
 
   const startAutoHide = (): void => {
     stopAutoHide();
+    // If the bar is gated off, there's nothing to hide automatically — and
+    // arming a timer would be wasted work that fires after the consumer has
+    // explicitly disabled the bar.
+    if (!controlBarEnabled.value) {
+      return;
+    }
     hideTimeout = window.setTimeout(() => {
       controlBarVisible.value = false;
       hideTimeout = null;
@@ -815,6 +892,7 @@ export function usePlayerControlState(): PlayerControlState {
     currentResolution,
     isSafari,
     controlBarVisible,
+    controlBarEnabled,
     isRefreshing,
     buttons,
     customButtons,
@@ -832,6 +910,7 @@ export function usePlayerControlState(): PlayerControlState {
     changeFillMode,
     setAutoHideDelay,
     setControlBarVisible,
+    setControlBarEnabled,
     startAutoHide,
     stopAutoHide,
     upsertCustomButtons,

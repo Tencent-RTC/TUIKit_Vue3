@@ -22,6 +22,7 @@ const MessageInput = {
   send_failed: '发送失败',
   you_are_not_in_group: '你不在群里',
   you_are_not_friend: '对方不是你的好友',
+  conference: '快速会议',
 };
 
 const OfflinePush = {

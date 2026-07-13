@@ -44,5 +44,16 @@ export * from './virtualBackground';
 export * from './asr';
 // experimental API
 export * from './experimentalAPI';
+export {
+  WhiteboardStatus,
+  WhiteboardEvent,
+  WhiteboardTool,
+  DEFAULT_WHITEBOARD_TOOL_CONFIG,
+} from '@uikit-core/types/whiteboard';
+export type {
+  WhiteboardCanvasColor,
+  WhiteboardOptions,
+  WhiteboardToolConfig,
+} from '@uikit-core/types/whiteboard';
 // @deprecated Use participant.ts instead
 export * from './user';

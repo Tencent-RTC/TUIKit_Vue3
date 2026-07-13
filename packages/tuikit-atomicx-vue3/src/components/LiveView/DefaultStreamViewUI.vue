@@ -260,13 +260,13 @@ const isVideoAvailable = computed(() => props.userInfo?.cameraStatus === DeviceS
       font-size: 12px;
       font-weight: 500;
       margin-left: 2px;
-      // Allow up to two lines so longer names stay mostly readable, while
-      // still capping growth to avoid an ever-taller pill covering the video.
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
+      // Single-line with ellipsis — the pill is meant to be a compact
+      // identifier, not a multi-line block. Capping at one line keeps
+      // the video tile clear and the pill height predictable.
+      max-width: 120px;
       overflow: hidden;
-      word-break: break-word;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 

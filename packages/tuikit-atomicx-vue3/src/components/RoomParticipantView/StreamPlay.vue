@@ -3,6 +3,7 @@
     :id="playRegionDomId"
     ref="playRegionDomRef"
     class="stream-play-container"
+    :class="{ 'screen-overscan': isScreenStream }"
   />
 </template>
 
@@ -17,10 +18,10 @@ import {
   nextTick,
   onMounted,
 } from 'vue';
-import { FillMode } from '../../types';
+import { FillMode, VideoStreamType } from '../../types';
 import { getNanoId } from '../../utils/utils';
 import { useStreamPlayManager } from './StreamPlayManager';
-import type { RoomParticipant, VideoStreamType } from '../../types';
+import type { RoomParticipant } from '../../types';
 
 const { bindView, unbindView, updateView, setStreamConfig } = useStreamPlayManager();
 
@@ -56,6 +57,8 @@ const nanoId = getNanoId(5);
 const playRegionDomId = computed(
   () => `${props.participant.userId}_${props.streamType}_${nanoId}`,
 );
+
+const isScreenStream = computed(() => props.streamType === VideoStreamType.Screen);
 
 /**
  * 监听参与者或流类型变化，自动重新绑定
@@ -139,5 +142,12 @@ onBeforeUnmount(async () => {
   height: 100%;
   overflow: hidden;
   background-color: #000;
+  &.screen-overscan {
+    :deep(video) {
+      width: calc(100% + 2px) !important;
+      height: calc(100% + 2px) !important;
+      margin: -1px !important;
+    }
+  }
 }
 </style>
