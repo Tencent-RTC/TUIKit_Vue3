@@ -74,7 +74,7 @@ export function useTransferOwnerAction(
           stopScreenShare();
         }
         if (options?.shouldStopAsr && hasStartedAsr.value) {
-          await stopRealtimeTranscriber();
+          await stopRealtimeTranscriber().catch(() => {});
         }
         await transferOwner({
           userId: targetParticipant.userId,

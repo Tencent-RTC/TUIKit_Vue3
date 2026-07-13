@@ -22,6 +22,7 @@ const MessageInput = {
   send_failed: 'Failed to send',
   you_are_not_in_group: 'You are not in the group',
   you_are_not_friend: 'You are not friends',
+  conference: 'Quick Conference',
 };
 
 const OfflinePush = {

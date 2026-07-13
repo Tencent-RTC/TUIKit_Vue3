@@ -104,6 +104,46 @@ export interface RoomInfo {
   isAllScreenShareDisabled?: boolean;
   /** 是否禁用消息发送 */
   isAllMessageDisabled?: boolean;
+  /** 云端录制信息 */
+  recordingInfo?: RecordingInfo;
+}
+
+/**
+ * 云端录制状态枚举
+ * @enum {number}
+ * @description 表示云端录制的当前状态。
+ */
+export enum RecordingStatus {
+  /** 未开始录制 */
+  None = 0,
+  /** 录制中 */
+  Recording = 1,
+}
+
+/**
+ * 云端录制停止原因枚举
+ * @enum {number}
+ * @description 表示云端录制停止的原因。
+ */
+export enum RecordingStopReason {
+  /** 用户停止录制 */
+  StoppedByUser = 0,
+  /** 录制机器人退出了房间, 录制异常中断 */
+  RecorderLeftRoom = 1,
+}
+
+/**
+ * 云端录制信息
+ * @interface RecordingInfo
+ * @description 表示云端录制的当前状态。
+ */
+export interface RecordingInfo {
+  /** 云端录制状态 */
+  readonly status: RecordingStatus;
+  /** 开始录制的用户 */
+  readonly operator: RoomUser;
+  /** 开始录制的时间戳 */
+  readonly startTime: number;
 }
 
 /**
@@ -432,6 +472,23 @@ export interface IRoomState {
   rejectCall(options: { roomId: string; extensionInfo?: string }): Promise<void>;
 
   /**
+   * 开始云端录制, 仅房主和管理员可调用
+   *
+   * 接口错误码：
+   * - 100001: 后端系统错误
+   * - 100002: 参数错误
+   * - 100004: 房间不存在
+   * - 100006: 没有权限，必须是房主或管理员
+   * - 101072: 录制配置不存在或未启用
+   */
+  startRecording(): Promise<void>;
+
+  /**
+   * 停止云端录制, 仅房主和管理员可调用
+   */
+  stopRecording(): Promise<void>;
+
+  /**
    * 订阅房间事件
    * @template T - 事件类型
    * @param event - 要订阅的事件名称
@@ -667,6 +724,24 @@ export enum RoomEvent {
    * });
    */
   onCallRevokedByAdmin = 'onCallRevokedByAdmin',
+
+  /**
+   * 云端录制开始时触发
+   * @event
+   * @param {object} options - 事件参数对象
+   * @param {RoomInfo} options.roomInfo - 房间信息
+   * @param {RoomUser} options.operator - 开始录制的用户
+   */
+  onRecordingStarted = 'onRecordingStarted',
+  /**
+   * 云端录制停止时触发
+   * @event
+   * @param {object} options - 事件参数对象
+   * @param {RoomInfo} options.roomInfo - 房间信息
+   * @param {RoomUser} options.operator - 停止录制的用户
+   * @param {RecordingStopReason} options.reason - 停止录制的原因
+   */
+  onRecordingStopped = 'onRecordingStopped',
 }
 
 /**
@@ -770,4 +845,6 @@ export interface RoomEventHandlers {
    * @param options.operator - 撤销呼叫的管理员
    */
   onCallRevokedByAdmin: (options: { roomInfo: RoomInfo; call: RoomCall; operator: RoomUser }) => void;
+  onRecordingStarted: (options: { roomInfo: RoomInfo; operator: RoomUser }) => void;
+  onRecordingStopped: (options: { roomInfo: RoomInfo; operator: RoomUser; reason: RecordingStopReason }) => void;
 }

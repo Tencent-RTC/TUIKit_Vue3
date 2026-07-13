@@ -6,16 +6,15 @@ const deviceManager: { instance: TUIRoomDeviceManager | null | undefined } = {
   instance: null,
 };
 
+TRTCCloud.callExperimentalAPI(
+  JSON.stringify({
+    api: 'enableSEI',
+    params: {
+      enable: true,
+    },
+  }),
+);
 TUIRoomEngine.once('ready', () => {
-  // todo: 这里的 enableSEI 确认有没有优化方式
-  TRTCCloud.callExperimentalAPI(
-    JSON.stringify({
-      api: 'enableSEI',
-      params: {
-        enable: true,
-      },
-    }),
-  );
   roomEngine.instance = TUIRoomEngine.getInstance();
   deviceManager.instance = roomEngine.instance?.getMediaDeviceManager();
 });

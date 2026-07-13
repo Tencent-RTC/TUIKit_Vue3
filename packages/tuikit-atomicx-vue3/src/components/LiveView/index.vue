@@ -296,19 +296,90 @@ const isShowPlayerControl = computed(() =>
   && !seatList.value.some(item => item.userInfo?.userId === loginUserInfo.value?.userId),
 );
 
-onMounted(async () => {
-  isMounted.value = true;
-  // Listen for browser autoplay policy restriction
-  roomEngine.instance?.on(TUIRoomEvents.onAutoPlayFailed, handleAutoPlayFailed);
-  // Start playing the stream first
+// ---- Playback lifecycle (idempotent, room-aware) ----
+//
+// Historical behaviour: `onMounted` unconditionally called
+// `startPlayStream` + `startObserving`. That coupled the mount lifecycle
+// to "the user has already joined a live room", forcing every host page
+// to guard the LiveView with `v-if="hasJoinedLive"` or postpone mounting
+// — and silently misbehaving when that contract was violated:
+//   - `startObserving` armed `loadingTimer` (default 5s) immediately;
+//     before joining, neither a video frame nor any seat data arrives
+//     within the window, so `isLoadingTimedOut` latched true. After the
+//     user finally joined a room the latch was never cleared (see
+//     `OverlayState.stopObserving` which intentionally keeps it sticky),
+//     so `isAnchorAway` could mis-fire and the "anchor away" overlay
+//     would obscure a perfectly healthy stream.
+//
+// New behaviour: drive playback by `currentLive.liveId`.
+//   - mount   : if already in a room, start immediately (preserves the
+//               legacy code path so existing apps see no regression);
+//               otherwise wait.
+//   - join    : when liveId transitions from empty → non-empty, start.
+//   - leave   : when liveId transitions to empty, stop (so the
+//               `isLoadingTimedOut` latch and observer state reset
+//               cleanly before the next room).
+//   - switch  : when liveId changes from one room to another, stop the
+//               previous playback and start the new one.
+//   - unmount : always stop.
+//
+// `ensureStart` / `ensureStop` are idempotent so re-entries from rapid
+// liveId flips never double-start / double-stop the stream.
+let playbackStarted = false;
+
+async function ensureStart() {
+  if (playbackStarted) {
+    return;
+  }
+  playbackStarted = true;
   await startPlayStream({ view: LIVE_STREAM_CONTENT_VIEW });
-  // Set volume for audience
   if (!isAnchor.value) {
     setCaptureVolume(100);
     setOutputVolume(100);
   }
-  // Then start observing for video ready state
   startObserving();
+}
+
+async function ensureStop() {
+  if (!playbackStarted) {
+    return;
+  }
+  playbackStarted = false;
+  // Clean up observer first, then stop the stream — the observer reads
+  // the same container the player writes into, so flipping the order
+  // would race a teardown DOM-detach into an active observation.
+  stopObserving();
+  await stopPlayStream();
+}
+
+watch(
+  () => currentLive.value?.liveId,
+  async (newId, oldId) => {
+    if (oldId && oldId !== newId) {
+      // Either left the room (`newId` falsy) or switched rooms.
+      // Stop the previous playback before any new one starts, so the
+      // observer / loading-timeout state for the next room begins from
+      // a clean slate.
+      await ensureStop();
+    }
+    if (newId) {
+      await ensureStart();
+    }
+  },
+);
+
+onMounted(async () => {
+  isMounted.value = true;
+  // Listen for browser autoplay policy restriction
+  roomEngine.instance?.on(TUIRoomEvents.onAutoPlayFailed, handleAutoPlayFailed);
+  // If the user is already in a room at mount time, start immediately so
+  // the legacy "join-then-mount" code path keeps working without waiting
+  // for a watch tick. The room-aware watch above handles the inverse
+  // "mount-then-join" path that used to require the caller to gate the
+  // component with `v-if="hasJoinedLive"`.
+  if (currentLive.value?.liveId) {
+    await ensureStart();
+  }
 });
 
 onBeforeUnmount(async () => {
@@ -319,9 +390,7 @@ onBeforeUnmount(async () => {
   roomEngine.instance?.off(TUIRoomEvents.onAutoPlayFailed, handleAutoPlayFailed);
   isAutoPlayFailed.value = false;
   cachedAutoPlayResume = null;
-  // Clean up observer first, then stop the stream
-  stopObserving();
-  await stopPlayStream();
+  await ensureStop();
 });
 
 const isPortraitContainer = ref(true);
