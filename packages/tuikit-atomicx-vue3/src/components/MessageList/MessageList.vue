@@ -115,7 +115,6 @@ provide('channel', props.channel);
 
 const { scrollToBottom, scrollToMessage } = useScroll();
 const {
-  observeMessageList,
   resetProcessedMessages,
 } = useReadReceipt({
   enabled: props.enableReadReceipt ?? false,
@@ -231,7 +230,6 @@ const initializeMessageList = async () => {
           highlightMessage({ messageID: locateInfo.messageID, duration: 3000 });
           setPendingLocateMessage(null);
           didInitialScroll.value = true;
-          observeMessageList();
         });
       })
       .catch(() => {
@@ -250,7 +248,6 @@ const initializeMessageList = async () => {
     await nextTick();
     scrollToBottom(scrollContainer.value, 'auto');
     didInitialScroll.value = true;
-    observeMessageList();
   }
 };
 
@@ -285,7 +282,6 @@ const handleBackToLatest = async () => {
   await loadMessages();
   await nextTick();
   scrollToBottom(scrollContainer.value, 'instant');
-  observeMessageList();
 };
 
 let unsubscribeEvent: (() => void) | null = null;
@@ -302,7 +298,7 @@ function handleNewMessage(message: MessageInfo) {
     return;
   }
 
-  // 自己发的消息：fragment 模式先切回 latest，latest 模式直接滚底
+  // Self message: in fragment mode jump back to latest, otherwise scroll to bottom
   if (message.isSentBySelf) {
     if (listMode.value === 'fragment') {
       handleBackToLatest();
@@ -323,6 +319,7 @@ function handleNewMessage(message: MessageInfo) {
   if (isNearBottom.value) {
     nextTick(() => scrollToBottom(scrollContainer.value, 'smooth'));
   } else {
+    // Not at bottom: show scroll-to-bottom button with unread count
     newMessageCount.value += 1;
   }
 }
@@ -490,9 +487,10 @@ defineExpose({
       {{ t('MessageList.peer_is_typing') }}
     </div>
     <ScrollToBottom
-      v-if="listMode === 'fragment' || (!isNearBottom && listMode === 'latest')"
+      v-if="listMode === 'fragment' || (newMessageCount > 0 && !isNearBottom && listMode === 'latest')"
+      :unreadCount="newMessageCount"
       :class="cs('scroll-to-bottom')"
-      @click="listMode === 'fragment' ? handleBackToLatest() : scrollToBottom(scrollContainer, 'smooth')"
+      @click="listMode === 'fragment' ? handleBackToLatest() : (() => { newMessageCount = 0; scrollToBottom(scrollContainer, 'smooth'); })()"
     />
   </div>
 </template>
@@ -518,7 +516,9 @@ defineExpose({
   @include scrollbar.scrollbar-hidden();
 }
 .message-chunk--container {
-  margin-top: 25px;
+  & + & {
+    margin-top: 25px;
+  }
 }
 .message-chunk {
   display: flex;

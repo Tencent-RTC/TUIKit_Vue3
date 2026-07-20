@@ -21,7 +21,8 @@ const MessageInput = {
   invalid_image_type: '无效的图片类型',
   send_failed: '发送失败',
   you_are_not_in_group: '你不在群里',
-  you_are_not_friend: '对方不是你的好友',
+  you_are_not_friend: '你们还不是好友',
+  video_size_exceeded: '视频大小超出了限制，最大支持 100MB。',
   conference: '快速会议',
 };
 

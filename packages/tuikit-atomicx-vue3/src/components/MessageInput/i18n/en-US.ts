@@ -21,7 +21,8 @@ const MessageInput = {
   invalid_image_type: 'Invalid image type',
   send_failed: 'Failed to send',
   you_are_not_in_group: 'You are not in the group',
-  you_are_not_friend: 'You are not friends',
+  you_are_not_friend: 'You are not friends yet',
+  video_size_exceeded: 'The video size exceeds the limit. The maximum supported size is 100MB.',
 };
 
 const OfflinePush = {

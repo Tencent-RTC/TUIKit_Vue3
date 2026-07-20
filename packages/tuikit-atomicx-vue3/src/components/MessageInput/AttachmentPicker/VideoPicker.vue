@@ -26,10 +26,11 @@
 
 <script setup lang="ts">
 import { ref, useCssModule, inject } from 'vue';
-import { IconVideo } from '@tencentcloud/uikit-base-component-vue3';
+import { IconVideo, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { useChatContext } from '../../../chat-store';
 import { View } from '../../../baseComp/View';
+import { getSendErrorMessage } from '../utils/getSendErrorMessage';
 
 const PICKER_CONSTANTS = {
   ACCEPT_TYPE: '.mp4,.mov,.qt',
@@ -46,6 +47,8 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   iconSize: 20,
 });
+
+const { t } = useUIKit();
 
 const styles = useCssModule();
 const channel = inject('channel', 'default') as string;
@@ -67,7 +70,12 @@ function handleFileInput(e: Event) {
     return;
   }
 
-  sendMessage({ type: 'videoMessage', file, duration: 0 });
+  sendMessage({ type: 'videoMessage', file, duration: 0 })
+    .catch((error) => {
+      TUIToast.error({
+        message: getSendErrorMessage(t, error),
+      });
+    });
   target.value = '';
 }
 </script>

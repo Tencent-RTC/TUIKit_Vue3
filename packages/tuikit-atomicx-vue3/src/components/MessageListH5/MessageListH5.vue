@@ -121,7 +121,6 @@ provide('channel', props.channel);
 
 const { scrollToBottom, scrollToMessage } = useScroll();
 const {
-  observeMessageList,
   resetProcessedMessages,
 } = useReadReceipt({
   enabled: props.enableReadReceipt ?? false,
@@ -135,7 +134,6 @@ async function completeInitialScrollForEmptyList() {
   await nextTick();
   isNearBottom.value = true;
   didInitialScroll.value = true;
-  observeMessageList();
 }
 
 const enableMessageAggregation = computed(() => props.messageAggregationTime && props.messageAggregationTime > 0);
@@ -289,7 +287,6 @@ const handleBackToLatest = async () => {
   await loadMessages();
   await nextTick();
   scrollToBottom(scrollContainer.value, 'instant');
-  observeMessageList();
 };
 
 let unsubscribeEvent: (() => void) | null = null;
@@ -306,7 +303,7 @@ function handleNewMessage(message: MessageInfo) {
     return;
   }
 
-  // 自己发的消息：fragment 模式先切回 latest，latest 模式直接滚底
+  // Self message: in fragment mode jump back to latest, otherwise scroll to bottom
   if (message.isSentBySelf) {
     if (listMode.value === 'fragment') {
       handleBackToLatest();
@@ -522,9 +519,10 @@ defineExpose({
       {{ t('MessageList.peer_is_typing') }}
     </div>
     <ScrollToBottom
-      v-if="listMode === 'fragment' || (!isNearBottom && listMode === 'latest')"
+      v-if="listMode === 'fragment' || (newMessageCount > 0 && !isNearBottom && listMode === 'latest')"
+      :unreadCount="newMessageCount"
       :class="cs('scroll-to-bottom')"
-      @click="listMode === 'fragment' ? handleBackToLatest() : scrollToBottom(scrollContainer, 'smooth')"
+      @click="listMode === 'fragment' ? handleBackToLatest() : (() => { newMessageCount = 0; scrollToBottom(scrollContainer, 'smooth'); })()"
     />
   </div>
 </template>
