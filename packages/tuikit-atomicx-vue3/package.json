@@ -1,6 +1,6 @@
 {
   "name": "tuikit-atomicx-vue3",
-  "version": "6.4.0",
+  "version": "6.4.1",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -41,7 +41,7 @@
     "@tencentcloud/chat-uikit-engine-lite": "^1.0.7",
     "@tencentcloud/tui-core-lite": "^1.0.1",
     "@tencentcloud/tuiroom-engine-js": "~4.2.1",
-    "@tencentcloud/uikit-base-component-vue3": "~1.4.6",
+    "@tencentcloud/uikit-base-component-vue3": "~1.4.7",
     "vue": "^3.4.0"
   },
   "dependencies": {

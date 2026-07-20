@@ -25,7 +25,7 @@ interface UseReadReceiptOptions {
   intersectionThreshold?: number;
 
   /**
-   * Throttle delay for batch sending, default is 300ms
+   * Throttle delay for batch sending, default is 1000ms
    */
   delay?: number;
 
@@ -55,11 +55,13 @@ export function useReadReceipt({
   delay = 1000,
   channel,
 }: UseReadReceiptOptions) {
-  // IntersectionObserver instance - 使用普通变量，不需要响应式
+  // IntersectionObserver instance
   let observer: IntersectionObserver | null = null;
-  // Message objects pending to send read receipt - 使用普通变量，不需要响应式
+  // MutationObserver instance — watches for new message elements added to the container subtree
+  let mutationObserver: MutationObserver | null = null;
+  // Message objects pending to send read receipt
   const pendingReadReceiptMessages = new Map<string, MessageInfo>();
-  // Message IDs that have already been processed - 使用普通变量，不需要响应式
+  // Message IDs that have already been processed
   const processedMessageIds = new Set<string>();
 
   const resolvedChannel = channel ?? (inject('channel', 'default') as string);
@@ -73,13 +75,7 @@ export function useReadReceipt({
       return;
     }
     sendMessageReadReceipts(messagesToSend)
-      .then(() => {
-        // Successfully sent read receipts
-      })
       .catch((error) => {
-        // Log read receipt error; the UI layer is responsible for
-        // displaying the appropriate modal. This avoids an inverted
-        // dependency from hooks → component.
         console.error('useReadReceipt::sendBatchReadReceipts failed', error);
       });
     pendingReadReceiptMessages.clear();
@@ -90,7 +86,7 @@ export function useReadReceipt({
     if (processedMessageIds.has(messageID)) {
       return false;
     }
-    const message = messageList.value.find(message => message.msgID === messageID);
+    const message = messageList.value.find(m => m.msgID === messageID);
     if (!message) {
       return false;
     }
@@ -103,51 +99,24 @@ export function useReadReceipt({
     return false;
   };
 
-  // Initialize IntersectionObserver
-  const initializeObserver = () => {
-    if (!enabled) {
+  // Try to register a single DOM element with the IntersectionObserver.
+  // Skips elements that are already processed or do not need a read receipt.
+  const tryObserveElement = (element: Element) => {
+    if (!observer) {
       return;
     }
-    observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio >= intersectionThreshold) {
-            const messageID = getMessageIDFromDom(entry.target as HTMLElement);
-            if (messageID) {
-              checkMessageAndSendReadReceipt(messageID);
-            }
-            observer?.unobserve(entry.target);
-          }
-        });
-      },
-      {
-        threshold: intersectionThreshold,
-        root: typeof containerSelector === 'string'
-          ? document.querySelector(containerSelector)
-          : containerSelector,
-      },
-    );
+    const messageID = getMessageIDFromDom(element);
+    if (!messageID || processedMessageIds.has(messageID)) {
+      return;
+    }
+    const message = messageList.value.find(m => m.msgID === messageID);
+    if (message && shouldSendReadReceipt(message)) {
+      observer.observe(element);
+    }
   };
 
-  // Cleanup observer
-  const cleanupObserver = () => {
-    observer?.disconnect();
-    // ensure all pending read receipts are sent
-    sendBatchReadReceipts.flush();
-  };
-
-  // Watch for changes in dependencies and reinitialize observer
-  watch(
-    [() => enabled, () => containerSelector, () => intersectionThreshold],
-    () => {
-      cleanupObserver();
-      initializeObserver();
-    },
-    { immediate: true },
-  );
-
-  // Observe new messages in the container
-  const observeMessageList = () => {
+  // Scan the container and register all currently eligible message elements.
+  const observeAllExistingElements = () => {
     if (!observer || !enabled) {
       return;
     }
@@ -157,77 +126,103 @@ export function useReadReceipt({
     if (!container) {
       return;
     }
-    const messageElements = container.querySelectorAll(messageSelector) as unknown as HTMLElement[];
-    messageElements.forEach((element) => {
-      const messageID = getMessageIDFromDom(element);
-      if (!messageID) {
-        return;
-      }
-      if (processedMessageIds.has(messageID)) {
-        return;
-      }
-      const message = messageList.value.find(message => message.msgID === messageID);
-      if (message && shouldSendReadReceipt(message)) {
-        observer?.observe(element);
-      }
-    });
+    container.querySelectorAll(messageSelector).forEach(tryObserveElement);
   };
 
-  // Manually mark visible messages as read (for initial load, etc.)
-  const manuallyMarkVisibleMessagesAsRead = () => {
+  // Initialize IntersectionObserver + MutationObserver
+  const initializeObservers = () => {
     if (!enabled) {
       return;
     }
+
     const container = typeof containerSelector === 'string'
       ? document.querySelector(containerSelector)
       : containerSelector;
     if (!container) {
       return;
     }
-    const containerRect = container.getBoundingClientRect();
-    const messageElements = container.querySelectorAll(messageSelector);
-    messageElements.forEach((element) => {
-      const messageID = getMessageIDFromDom(element);
-      if (!messageID) {
-        return;
-      }
-      if (processedMessageIds.has(messageID)) {
-        return;
-      }
-      const elementRect = element.getBoundingClientRect();
-      const isVisible
-        = elementRect.top < containerRect.bottom
-          && elementRect.bottom > containerRect.top
-          && elementRect.height > 0;
-      if (isVisible) {
-        checkMessageAndSendReadReceipt(messageID);
+
+    // IntersectionObserver: fires when a registered message element enters the viewport
+    observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio >= intersectionThreshold) {
+            const messageID = getMessageIDFromDom(entry.target as HTMLElement);
+            if (messageID) {
+              checkMessageAndSendReadReceipt(messageID);
+            }
+            // Unobserve immediately — each message only needs to be seen once
+            observer?.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: intersectionThreshold,
+        root: container,
+      },
+    );
+
+    // MutationObserver: fires whenever child nodes are added to the container subtree.
+    // This is the single source of truth for "a new message element appeared in the DOM".
+    // It covers every scenario — initial load, new messages arriving, back-to-latest — without
+    // requiring callers to manually invoke observeMessageList at each of those sites.
+    mutationObserver = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type !== 'childList') {
+          continue;
+        }
+        mutation.addedNodes.forEach((node) => {
+          if (!(node instanceof Element)) {
+            return;
+          }
+          // The added node itself might be a message element
+          if (node.matches(messageSelector)) {
+            tryObserveElement(node);
+          }
+          // Or it might be a wrapper that contains message elements
+          node.querySelectorAll(messageSelector).forEach(tryObserveElement);
+        });
       }
     });
+
+    mutationObserver.observe(container, { childList: true, subtree: true });
+
+    // Also scan whatever is already in the DOM at setup time
+    observeAllExistingElements();
   };
 
-  // Initialize observer on mount
+  // Cleanup both observers
+  const cleanupObservers = () => {
+    observer?.disconnect();
+    observer = null;
+    mutationObserver?.disconnect();
+    mutationObserver = null;
+    sendBatchReadReceipts.flush();
+  };
+
+  // Re-initialize when key options change (e.g. enabled toggled, container changed)
+  watch(
+    [() => enabled, () => containerSelector, () => intersectionThreshold],
+    () => {
+      cleanupObservers();
+      initializeObservers();
+    },
+    { immediate: true },
+  );
+
   onMounted(() => {
-    initializeObserver();
+    // Re-initialize after mount to ensure the container DOM is available.
+    // The watch above may run before the container element is rendered.
+    cleanupObservers();
+    initializeObservers();
   });
 
-  // Cleanup on unmount
   onUnmounted(() => {
-    cleanupObserver();
+    cleanupObservers();
   });
 
-  // Public API
+  // Public API — callers only need to call resetProcessedMessages when switching conversations
   return {
-    /**
-     * Observe new messages, should be called when message list updates
-     */
-    observeMessageList,
-    /**
-     * Manually mark visible messages as read, e.g. after initial load
-     */
-    manuallyMarkVisibleMessagesAsRead,
-    /**
-     * Reset processed message records, e.g. when switching conversation
-     */
     resetProcessedMessages: () => {
       processedMessageIds.clear();
       pendingReadReceiptMessages.clear();

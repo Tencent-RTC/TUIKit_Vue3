@@ -26,6 +26,7 @@ import { parseConversationDraftContent, serializeConversationDraftContent } from
 import { deleteLocalConversationDraft, getLocalConversationDraft, setLocalConversationDraft } from '../../../utils/conversationDraftStorage';
 import { blobUrlToFile, convertEditorContent, convertInputContentToEditorNode, trimInputContent } from '../../../utils/messageInput';
 import { createExtensions } from './EditorCore';
+import { getSendErrorMessage } from '../utils/getSendErrorMessage';
 import styles from './TextEditor.module.scss';
 import type { InputContent } from '../../../types/messageInput';
 
@@ -67,18 +68,6 @@ const activeConversationIDSnapshot = ref<string | undefined>(undefined);
 
 const computedPlaceholder = computed(() => props.placeholder ?? t('MessageInput.enter_a_message'));
 
-function getSendErrorMessage(error: unknown): string {
-  const errorCode = (error as { code?: number })?.code;
-  switch (errorCode) {
-    case 10007:
-      return t('MessageInput.you_are_not_in_group');
-    case 20009:
-      return t('MessageInput.you_are_not_friend');
-    default:
-      return t('MessageInput.send_failed');
-  }
-}
-
 // onEnterCallback is assigned after editor creation to avoid TDZ issues with const editor
 let onEnterCallback: () => Promise<void> = async () => {};
 const handleEnter = async () => {
@@ -86,7 +75,7 @@ const handleEnter = async () => {
     await onEnterCallback();
   } catch (error) {
     TUIToast.error({
-      message: getSendErrorMessage(error),
+      message: getSendErrorMessage(t, error),
     });
   }
 };

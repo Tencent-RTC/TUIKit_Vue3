@@ -205,6 +205,7 @@ import { VideoCallPicker } from './VideoCallPicker';
 import type { CustomAction, MessageInputActions } from './types';
 import type { InputContent } from '../../types/messageInput';
 import type { SendMessageInputOption } from '@atomicxcore/core';
+import { getSendErrorMessage } from './utils/getSendErrorMessage';
 
 const { t } = useUIKit();
 const slots = useSlots();
@@ -379,18 +380,6 @@ const actionPanelItems = computed<H5PanelItem[]>(() =>
 const computedPlaceholder = computed(() =>
   props.placeholder ?? (props.disabled ? '' : t('MessageInput.enter_a_message')),
 );
-
-function getSendErrorMessage(error: unknown): string {
-  const errorCode = (error as { code?: number })?.code;
-  switch (errorCode) {
-    case 10007:
-      return t('MessageInput.you_are_not_in_group');
-    case 20009:
-      return t('MessageInput.you_are_not_friend');
-    default:
-      return t('MessageInput.send_failed');
-  }
-}
 
 function getTextFromInputContent(content: string | InputContent[]): string {
   if (typeof content === 'string') {
@@ -657,7 +646,7 @@ async function handleSend(): Promise<void> {
     leaveTyping().catch(() => {});
   } catch (error) {
     TUIToast.error({
-      message: getSendErrorMessage(error),
+      message: getSendErrorMessage(t, error),
     });
   }
 }

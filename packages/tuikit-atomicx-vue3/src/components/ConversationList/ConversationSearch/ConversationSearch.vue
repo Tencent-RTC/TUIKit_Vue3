@@ -6,67 +6,63 @@
     }]"
     :style="style"
   >
+    <component
+      :is="SearchBar"
+      v-if="isShowStandard"
+      :class="$style.conversationSearch__bar"
+    />
+
     <div
-      :class="[$style.conversationSearch]"
+      v-if="!isShowStandard"
+      :class="$style.conversationSearch__box"
     >
       <component
-        :is="SearchBar"
-        v-if="isShowStandard"
-        :class="$style.conversationSearch__bar"
+        :is="Search"
+        ref="miniSearchRef"
+        :class="[$style.conversationSearch__content, {
+          [$style['searchContainer--h5']]: !isPC
+        }]"
+        :variant="VariantType.MINI"
+        :SearchBar="SearchBar"
+        :SearchResultsPresearch="SearchResultsPresearch || (() => h('div'))"
+        :SearchResultsLoading="SearchResultsLoading"
+        :SearchResultsEmpty="SearchResultsEmpty"
+        :SearchResultItem="SearchResultItem"
+        :on-keyword-change="handleSearchChange"
+        @result-item-click="handleOnSelectResult"
+        @search-complete="onSearchComplete"
+        @error="onError"
       />
-
-      <div
-        v-if="!isShowStandard"
-        :class="$style.conversationSearch__box"
-      >
-        <component
-          :is="Search"
-          ref="miniSearchRef"
-          :class="[$style.conversationSearch__content, {
-            [$style['searchContainer--h5']]: !isPC
-          }]"
-          :variant="VariantType.MINI"
-          :SearchBar="SearchBar"
-          :SearchResultsPresearch="SearchResultsPresearch || (() => h('div'))"
-          :SearchResultsLoading="SearchResultsLoading"
-          :SearchResultsEmpty="SearchResultsEmpty"
-          :SearchResultItem="SearchResultItem"
-          :on-keyword-change="handleSearchChange"
-          @result-item-click="handleOnSelectResult"
-          @search-complete="onSearchComplete"
-          @error="onError"
-        />
-      </div>
-
-      <TUIDialog
-        appendTo="body"
-        :customClasses="[$style.conversationSearch__advanced]"
-        :visible="isShowStandard"
-        :show-close="false"
-        @close="handleCloseStandard"
-      >
-        <component
-          :is="Search"
-          ref="standardSearchRef"
-          :class="[$style.conversationSearch__content, {
-            [$style['searchContainer--h5']]: !isPC
-          }]"
-          :variant="VariantType.STANDARD"
-          :SearchBar="SearchBar"
-          :SearchResultsPresearch="SearchResultsPresearch"
-          :SearchResultsLoading="SearchResultsLoading"
-          :SearchResultsEmpty="SearchResultsEmpty"
-          :SearchResultItem="SearchResultItem"
-          :on-keyword-change="handleSearchChange"
-          @result-item-click="handleOnSelectResult"
-          @search-complete="onSearchComplete"
-          @error="onError"
-        />
-        <template #footer>
-          <div />
-        </template>
-      </TUIDialog>
     </div>
+
+    <TUIDialog
+      appendTo="body"
+      :customClasses="[$style.conversationSearch__advanced]"
+      :visible="isShowStandard"
+      :show-close="false"
+      @close="handleCloseStandard"
+    >
+      <component
+        :is="Search"
+        ref="standardSearchRef"
+        :class="[$style.conversationSearch__content, {
+          [$style['searchContainer--h5']]: !isPC
+        }]"
+        :variant="VariantType.STANDARD"
+        :SearchBar="SearchBar"
+        :SearchResultsPresearch="SearchResultsPresearch"
+        :SearchResultsLoading="SearchResultsLoading"
+        :SearchResultsEmpty="SearchResultsEmpty"
+        :SearchResultItem="SearchResultItem"
+        :on-keyword-change="handleSearchChange"
+        @result-item-click="handleOnSelectResult"
+        @search-complete="onSearchComplete"
+        @error="onError"
+      />
+      <template #footer>
+        <div />
+      </template>
+    </TUIDialog>
   </div>
 </template>
 

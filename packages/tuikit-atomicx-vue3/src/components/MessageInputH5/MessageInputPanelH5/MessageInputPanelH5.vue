@@ -8,30 +8,28 @@
       v-if="virtualAnchor"
       :reference="virtualAnchor"
     />
-    <PopoverPortal>
-      <PopoverContent
-        :class="[
-          $style['message-input-panel-h5'],
-          $style[`message-input-panel-h5--${size}`],
-        ]"
-        side="top"
-        align="center"
-        :side-offset="offset"
-        :collision-padding="8"
-        :avoid-collisions="false"
-        @open-auto-focus.prevent
-        @interact-outside="handleInteractOutside"
-        @pointer-down-outside="handleInteractOutside"
-      >
-        <slot />
-      </PopoverContent>
-    </PopoverPortal>
+    <PopoverContent
+      :class="[
+        $style['message-input-panel-h5'],
+        $style[`message-input-panel-h5--${size}`],
+      ]"
+      side="top"
+      align="center"
+      :side-offset="offset"
+      :collision-padding="8"
+      :avoid-collisions="false"
+      @open-auto-focus.prevent
+      @interact-outside="handleInteractOutside"
+      @pointer-down-outside="handleInteractOutside"
+    >
+      <slot />
+    </PopoverContent>
   </PopoverRoot>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { PopoverAnchor, PopoverContent, PopoverPortal, PopoverRoot } from 'reka-ui';
+import { PopoverAnchor, PopoverContent, PopoverRoot } from 'reka-ui';
 
 type PanelSize = 'full' | 'inset';
 

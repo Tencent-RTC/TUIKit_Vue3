@@ -23,30 +23,28 @@
           </slot>
         </div>
       </PopoverTrigger>
-      <PopoverPortal>
-        <PopoverContent
-          side="top"
-          align="start"
-          :side-offset="5"
-        >
-          <div>
-            <div :class="styles['emoji-picker__list']">
-              <div
-                v-for="emojiKey in Object.keys(emojiUrlMap)"
-                :key="emojiKey"
+      <PopoverContent
+        side="top"
+        align="start"
+        :side-offset="5"
+      >
+        <div>
+          <div :class="styles['emoji-picker__list']">
+            <div
+              v-for="emojiKey in Object.keys(emojiUrlMap)"
+              :key="emojiKey"
+              :class="styles['emoji-picker__list-item']"
+              @click="insertEmojiToInput(emojiKey)"
+            >
+              <img
                 :class="styles['emoji-picker__list-item']"
-                @click="insertEmojiToInput(emojiKey)"
+                :src="emojiBaseUrl + emojiUrlMap[emojiKey]"
+                :alt="t(`Emoji.${emojiKey}`)"
               >
-                <img
-                  :class="styles['emoji-picker__list-item']"
-                  :src="emojiBaseUrl + emojiUrlMap[emojiKey]"
-                  :alt="t(`Emoji.${emojiKey}`)"
-                >
-              </div>
             </div>
           </div>
-        </PopoverContent>
-      </PopoverPortal>
+        </div>
+      </PopoverContent>
     </PopoverRoot>
   </View>
 </template>

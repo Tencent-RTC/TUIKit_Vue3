@@ -30,6 +30,7 @@ import { IconImage, TUIToast, useUIKit } from '@tencentcloud/uikit-base-componen
 import cs from 'classnames';
 import { View } from '../../../baseComp/View';
 import { useChatContext } from '../../../chat-store';
+import { getSendErrorMessage } from '../utils/getSendErrorMessage';
 
 const { t } = useUIKit();
 
@@ -67,7 +68,6 @@ function handleButtonClick() {
   if (props.disabled) {
     return;
   }
-  console.log('>>> handleButtonClick');
 
   // Reset before click so iOS Safari reopens the picker even after a cancel
   if (fileInputRef.value) {
@@ -91,7 +91,12 @@ function handleFileInput(e: Event) {
     return;
   }
 
-  sendMessage({ type: 'imageMessage', file });
+  sendMessage({ type: 'imageMessage', file })
+    .catch((error) => {
+      TUIToast.error({
+        message: getSendErrorMessage(t, error),
+      });
+    });
   target.value = '';
 }
 </script>

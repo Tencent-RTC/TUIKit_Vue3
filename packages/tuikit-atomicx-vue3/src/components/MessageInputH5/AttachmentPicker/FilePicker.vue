@@ -26,10 +26,11 @@
 
 <script setup lang="ts">
 import { ref, useCssModule, inject } from 'vue';
-import { IconFile } from '@tencentcloud/uikit-base-component-vue3';
+import { IconFile, TUIToast, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import { View } from '../../../baseComp/View';
 import { useChatContext } from '../../../chat-store';
+import { getSendErrorMessage } from '../utils/getSendErrorMessage';
 
 const PICKER_CONSTANTS = {
   ACCEPT_TYPE: '*/*',
@@ -47,6 +48,7 @@ const props = withDefaults(defineProps<Props>(), {
   iconSize: 20,
 });
 
+const { t } = useUIKit();
 const styles = useCssModule();
 const channel = inject('channel', 'default') as string;
 const { sendMessage } = useChatContext(channel);
@@ -70,7 +72,12 @@ function handleFileInput(e: Event) {
   if (!file) {
     return;
   }
-  sendMessage({ type: 'fileMessage', file });
+  sendMessage({ type: 'fileMessage', file })
+    .catch((error) => {
+      TUIToast.error({
+        message: getSendErrorMessage(t, error),
+      });
+    });
   target.value = '';
 }
 </script>
