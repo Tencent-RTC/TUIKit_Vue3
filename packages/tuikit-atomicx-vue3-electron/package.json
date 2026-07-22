@@ -1,6 +1,6 @@
 {
   "name": "tuikit-atomicx-vue3-electron",
-  "version": "6.3.0",
+  "version": "6.5.0",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -40,9 +40,9 @@
     "@tencentcloud/lite-chat": "^1.6.4",
     "@tencentcloud/chat-uikit-engine-lite": "~1.0.7",
     "@tencentcloud/tui-core-lite": "~1.0.1",
-    "@tencentcloud/tuiroom-engine-electron": "~4.2.0",
-    "@tencentcloud/uikit-base-component-vue3": "~1.4.5",
-    "trtc-electron-sdk": "13.3.802-beta.1",
+    "@tencentcloud/tuiroom-engine-electron": "~4.2.1",
+    "@tencentcloud/uikit-base-component-vue3": "~1.4.8",
+    "trtc-electron-sdk": "13.4.802-beta.1",
     "vue": "^3.4.0"
   },
   "dependencies": {
