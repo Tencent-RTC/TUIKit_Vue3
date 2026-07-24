@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="https://qcloudimg.tencent-cloud.cn/raw/f7f05bb4fd230ebc847e8412681dd587.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LiveKit Vue3 · API Example</title>
+    <!--
+      Boot-time loading overlay.
+
+      Why this lives in raw HTML (not inside Vue / inside main.ts):
+        After the SDK picker calls `location.reload()`, the page goes
+        through a fresh load cycle:
+          1. HTML/CSS download → render (this overlay is visible here)
+          2. main bundle download (vite-emitted /assets/index-*.js)
+          3. main.ts top-level imports parse (vue, vue-router, …)
+          4. main.ts async IIFE — dynamic-imports the SDK from esm.sh
+             (THIS IS THE LONG STEP, especially on first hit of a
+              given version: esm.sh has to build the package server-
+              side, which takes 2-5s; cached hits return in ~200ms)
+          5. main.ts dynamic-imports App.vue and mounts the Vue app
+
+        Steps 1-4 cannot run any framework code (Vue hasn't been
+        evaluated yet), so a Vue-component spinner would only appear
+        in step 5 — far too late, well after the user has had ~3s of
+        white screen and concluded the site is broken.
+
+        By writing the overlay directly into index.html we guarantee
+        it appears at step 1 and stays visible across the entire
+        SDK-fetch path. `main.ts` removes it programmatically once
+        the Vue app has mounted to #app.
+
+      Why we don't use a CSS-only `:has` selector to fade out:
+        Older Safari needs `:has()` polyfilled and removing a real
+        DOM node is cheaper than maintaining a global `body[data-
+        booted]` flag. Plain JS removal in main.ts is unambiguous.
+    -->
+    <style>
+      /* Center the spinner over a full-viewport backdrop. We use a
+         high z-index so it survives any layout the demo's own CSS
+         might emit later — the demo's UI lives under z-index ~50,
+         we sit at 99999 so we are unambiguously on top. */
+      #atomicx-boot-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        background: #f7f8fa;
+        color: #475569;
+        font: 14px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        /* Fade-out is driven by adding `.is-hidden` from main.ts.
+           Without the transition the overlay disappears in a single
+           frame which feels jarring once the app under it pops in. */
+        transition: opacity 0.24s ease;
+      }
+      #atomicx-boot-overlay.is-hidden {
+        opacity: 0;
+        /* `pointer-events: none` lets the user click through the
+           overlay during the brief fade-out window. */
+        pointer-events: none;
+      }
+
+      /* Spinner: 36px ring with a coloured arc, rotating at 0.9s. */
+      #atomicx-boot-overlay .atomicx-boot-overlay__spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid #d8dce4;
+        border-top-color: #1c66e5;
+        border-radius: 50%;
+        animation: atomicx-boot-spin 0.9s linear infinite;
+      }
+      @keyframes atomicx-boot-spin {
+        to { transform: rotate(360deg); }
+      }
+
+      /* Two-line status: a primary label (e.g. "Loading SDK 6.2.6…")
+         and a secondary hint (the long-running esm.sh-build case
+         can take a few seconds — we surface that to set
+         expectations). */
+      #atomicx-boot-overlay .atomicx-boot-overlay__label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1f2937;
+      }
+      #atomicx-boot-overlay .atomicx-boot-overlay__hint {
+        font-size: 12px;
+        color: #9aa1ad;
+        max-width: 360px;
+        text-align: center;
+      }
+      /* Optional "the wait is long" reveal — populated by main.ts
+         after a 3s grace period if the SDK still hasn't loaded. */
+      #atomicx-boot-overlay .atomicx-boot-overlay__slow-hint {
+        display: none;
+        font-size: 12px;
+        color: #b45309;
+        max-width: 380px;
+        text-align: center;
+        padding: 8px 12px;
+        background: #fef3c7;
+        border-radius: 6px;
+      }
+      #atomicx-boot-overlay.is-slow .atomicx-boot-overlay__slow-hint {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Boot overlay. Removed by main.ts after Vue mounts. -->
+    <div id="atomicx-boot-overlay" role="status" aria-live="polite">
+      <div class="atomicx-boot-overlay__spinner" aria-hidden="true"></div>
+      <div class="atomicx-boot-overlay__label" id="atomicx-boot-overlay-label">
+        加载中…
+      </div>
+      <div class="atomicx-boot-overlay__hint" id="atomicx-boot-overlay-hint">
+        正在拉取所选版本的 SDK 模块
+      </div>
+      <div class="atomicx-boot-overlay__slow-hint" id="atomicx-boot-overlay-slow-hint">
+        首次加载该版本可能较慢（esm.sh 正在后台构建该 npm 包），稍候几秒即可。
+      </div>
+    </div>
+
+    <!--
+      Localize the boot overlay BEFORE main.ts runs. The overlay is raw
+      HTML shown on the very first paint, so its text must be swapped here
+      (synchronously, during parse) using the persisted locale — the i18n
+      system isn't available yet. Mirrors the zh/en pairs used by
+      `setBootOverlayLabel` in main.ts.
+    -->
+    <script>
+      (function () {
+        try {
+          var KEY = 'api-example.locale';
+          var en = window.localStorage.getItem(KEY) === 'en-US';
+          var label = en ? 'Loading…' : '加载中…';
+          var hint = en
+            ? 'Fetching the selected SDK version'
+            : '正在拉取所选版本的 SDK 模块';
+          var slow = en
+            ? 'First load of this version can be slow (esm.sh is building the npm package in the background). Please wait a few seconds.'
+            : '首次加载该版本可能较慢（esm.sh 正在后台构建该 npm 包），稍候几秒即可。';
+          var l = document.getElementById('atomicx-boot-overlay-label');
+          var h = document.getElementById('atomicx-boot-overlay-hint');
+          var s = document.getElementById('atomicx-boot-overlay-slow-hint');
+          if (l) l.textContent = label;
+          if (h) h.textContent = hint;
+          if (s) s.textContent = slow;
+          document.documentElement.lang = en ? 'en-US' : 'zh-CN';
+        } catch (e) { /* storage denied — keep default Chinese */ }
+      })();
+    </script>
+
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

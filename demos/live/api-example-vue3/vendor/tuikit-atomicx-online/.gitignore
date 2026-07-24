@@ -1,0 +1,17 @@
+# `vendor/tuikit-atomicx-online` is a mini-npm root used to pull a real
+# published `tuikit-atomicx-vue3` from the registry (bypassing this
+# monorepo's workspace symlink). Only the marker files are tracked; the
+# installed `node_modules` / lockfile move with each `vendor:install`
+# run and shouldn't be reviewed/committed.
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Per-developer / per-machine state — the picker reads/writes these via
+# `/__sdk/state` and `/__sdk/switch`, but committing them would force the
+# choice on every reviewer.
+.current.json
+.installed.json
+.versions.json
+.deps.json

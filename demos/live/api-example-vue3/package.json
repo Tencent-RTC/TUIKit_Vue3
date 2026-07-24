@@ -1,0 +1,41 @@
+{
+  "name": "@tencentcloud/live-api-example-vue3",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Runnable API Example site for LiveKit Vue3 (tuikit-atomicx-vue3) live state hooks.",
+  "scripts": {
+    "dev": "vite",
+    "dev:local": "vite",
+    "dev:online": "cross-env VITE_ATOMICX_SOURCE=online vite",
+    "build": "vite build",
+    "build:online": "cross-env VITE_ATOMICX_SOURCE=online vite build",
+    "preview": "vite preview",
+    "lint": "eslint ./src --ext .ts,.tsx,.vue --no-error-on-unmatched-pattern"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.6.0",
+    "@codemirror/lang-javascript": "^6.2.2",
+    "@codemirror/language": "^6.10.2",
+    "@codemirror/state": "^6.4.1",
+    "@codemirror/view": "^6.28.0",
+    "@lezer/highlight": "^1.2.0",
+    "@tencentcloud/tuiroom-engine-js": "latest",
+    "@tencentcloud/uikit-base-component-vue3": "latest",
+    "@tencentcloud/universal-api": "^2.4.0",
+    "json5": "^2.2.3",
+    "strip-json-comments": "^5.0.3",
+    "tuikit-atomicx-vue3": "latest",
+    "vue": "^3.4.0",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.31",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "cross-env": "^7.0.3",
+    "sass": "^1.72.0",
+    "typescript": "^5.5.4",
+    "vite": "^5.2.8",
+    "vitest": "^1.6.0",
+    "vue-tsc": "^2.0.6"
+  }
+}
