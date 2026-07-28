@@ -173,6 +173,7 @@ export const useBattleState = (...args: any[]): any => readSdk().useBattleState(
 export const useLiveGiftState = (...args: any[]): any => readSdk().useLiveGiftState(...args);
 export const useBarrageState = (...args: any[]): any => readSdk().useBarrageState(...args);
 export const useDeviceState = (...args: any[]): any => readSdk().useDeviceState(...args);
+export const useUIKitModalState = (...args: any[]): any => readSdk().useUIKitModalState(...args);
 // `useRoomEngine` returns the shared `{ instance }` object holding the
 // underlying TUIRoomEngine singleton. Used by `derivedRole.ts` to
 // subscribe to `TUIRoomEvents.onUserInfoChanged` for self-role

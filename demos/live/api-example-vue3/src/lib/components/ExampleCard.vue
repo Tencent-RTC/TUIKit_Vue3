@@ -402,6 +402,7 @@ import {
 import { session } from '../../services/session/session';
 import { pushLog } from '../../services/event-log/store';
 import { pushToast } from '../../services/toast/store';
+import { extractError, reportApiRun, reportApiRunError, reportApiRunSuccess } from '../../services/analytics/store';
 import { getLatestEvent, onBridgeEvent, readPath, type BridgeEvent } from '../../services/event-log/bridge';
 
 const props = defineProps<{
@@ -863,7 +864,10 @@ async function onRun(): Promise<void> {
   running.value = true;
   output.value = null;
   outputIsError.value = false;
+  const apiId = `${props.groupSlug}.${props.example.api}`;
+  const startedAt = Date.now();
   pushLog(props.groupSlug, `call ${props.example.api}()`, { ...inputs }, session.role, 'call');
+  reportApiRun({ apiId, group: props.groupSlug, api: props.example.api, role: session.role });
   try {
     const result = await props.example.run({
       inputs: { ...inputs },
@@ -871,12 +875,14 @@ async function onRun(): Promise<void> {
       t,
     });
     output.value = serialize(result);
+    reportApiRunSuccess({ apiId, group: props.groupSlug, api: props.example.api, role: session.role, durationMs: Date.now() - startedAt });
     emitSuccessToast();
   } catch (e) {
     outputIsError.value = true;
     const message = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
     output.value = message;
     pushLog(props.groupSlug, `error ${props.example.api}()`, message, session.role, 'error');
+    reportApiRunError({ apiId, group: props.groupSlug, api: props.example.api, role: session.role, ...extractError(e) });
   } finally {
     running.value = false;
   }
