@@ -24,6 +24,7 @@
         :data-source="searchManager.filteredData.value as UserPickerRow<any>[]"
         :selected-keys="selectionManager.selectedKeys.value"
         :locked-keys="selectionManager.lockedKeys.value"
+        :locked-selected-keys="lockedSelectedKeys"
         :on-item-click="selectionManager.toggle"
         :on-reach-end="onReachEnd || (() => {})"
         :render-item="renderItem as any"
@@ -70,8 +71,10 @@ const props = withDefaults(defineProps<UserPickerProps>(), {
   dataSource: () => [],
   defaultSelectedItems: () => [],
   lockedItems: () => [],
+  lockedSelectedItems: () => [],
   maxCount: Number.POSITIVE_INFINITY,
   minCount: 0,
+  replaceOnSingleSelection: false,
   enableSearch: true,
 });
 
@@ -85,6 +88,7 @@ const internalDataSource = ref(props.dataSource);
 // Extract keys from selected items
 const defaultSelectedKeys = computed(() => props.defaultSelectedItems.map(item => item.key));
 const lockedKeys = computed(() => props.lockedItems.map(item => item.key));
+const lockedSelectedKeys = computed(() => new Set(props.lockedSelectedItems.map(item => item.key)));
 
 // Use custom hook to manage selection state
 const selectionManager = useSelection<any>({
@@ -92,6 +96,7 @@ const selectionManager = useSelection<any>({
   lockedKeys: lockedKeys.value,
   maxCount: props.maxCount,
   minCount: props.minCount,
+  replaceOnSingleSelection: props.replaceOnSingleSelection,
   isTreeMode: isTreeMode.value,
   dataSource: internalDataSource,
   onSelectedChange: props.onSelectedChange || (() => {}),
@@ -208,6 +213,7 @@ defineExpose(refMethods);
   overflow: hidden;
   flex: 1;
   width: 100%;
+  height: 100%;
 
   &__panel {
     flex: 1;

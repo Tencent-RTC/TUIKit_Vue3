@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
+import { defineProps, withDefaults } from 'vue';
 import { useUIKit, IconCheckSm } from '@tencentcloud/uikit-base-component-vue3';
 import { Avatar } from '../../../Avatar';
 import type { UserPickerRow } from '../../type';
@@ -64,17 +64,22 @@ interface ListModeProps<T = unknown> {
   dataSource: UserPickerRow<T>[];
   selectedKeys: Set<string>;
   lockedKeys: Set<string>;
+  lockedSelectedKeys?: Set<string>;
   onItemClick: (key: string) => void;
   onReachEnd?: () => void;
   renderItem?: any; // Vue component or render function
 }
 
-const props = defineProps<ListModeProps>();
+const props = withDefaults(defineProps<ListModeProps>(), {
+  lockedSelectedKeys: () => new Set<string>(),
+});
 
 const { t } = useUIKit();
 
-const isSelected = (key: string): boolean => props.selectedKeys.has(key);
-const isLocked = (key: string): boolean => props.lockedKeys.has(key);
+const isSelected = (key: string): boolean =>
+  props.selectedKeys.has(key) || props.lockedSelectedKeys.has(key);
+const isLocked = (key: string): boolean =>
+  props.lockedKeys.has(key) || props.lockedSelectedKeys.has(key);
 
 const handleItemClick = (key: string) => {
   if (!isLocked(key)) {

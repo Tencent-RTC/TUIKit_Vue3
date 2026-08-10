@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, inject } from 'vue';
+import { computed, inject, ref, watch } from 'vue';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import cs from 'classnames';
 import {
@@ -10,6 +10,7 @@ import {
   ContextMenuPortal,
 } from 'reka-ui';
 import { useMessageActions } from '../../../../../hooks/useMessageActions';
+import { useMessageListContext } from '../../../MessageListContext';
 import classes from './MessageActionDropdown.module.scss';
 import type { MessageAction } from '../../../../../hooks/useMessageActions';
 import type { MessageInfo } from '@atomicxcore/core';
@@ -26,7 +27,9 @@ const props = withDefaults(defineProps<MessageActionDropdownProps>(), {
 
 const { t } = useUIKit();
 const channel = inject('channel', 'default') as string;
+const { activeMessageActionMenuID } = useMessageListContext('MessageActionDropdown');
 const defaultActionList = useMessageActions(undefined, channel);
+const menuInstanceKey = ref(0);
 
 // Get visible action list
 const visibleActions = computed(() => {
@@ -48,6 +51,22 @@ const handleActionClick = (action: MessageAction) => {
   action.onClick?.(props.message);
 };
 
+function handleOpenChange(open: boolean): void {
+  if (open) {
+    activeMessageActionMenuID.value = props.message.msgID;
+    return;
+  }
+  if (activeMessageActionMenuID.value === props.message.msgID) {
+    activeMessageActionMenuID.value = null;
+  }
+}
+
+watch(activeMessageActionMenuID, (activeMessageID) => {
+  if (activeMessageID && activeMessageID !== props.message.msgID) {
+    menuInstanceKey.value += 1;
+  }
+});
+
 const bodyElement = document.body;
 </script>
 
@@ -55,7 +74,11 @@ const bodyElement = document.body;
   <template v-if="visibleActions.length <= 0">
     <slot />
   </template>
-  <ContextMenuRoot v-else>
+  <ContextMenuRoot
+    v-else
+    :key="menuInstanceKey"
+    @update:open="handleOpenChange"
+  >
     <ContextMenuTrigger as-child>
       <slot />
     </ContextMenuTrigger>

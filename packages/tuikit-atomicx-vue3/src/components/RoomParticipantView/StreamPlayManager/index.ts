@@ -366,6 +366,18 @@ export class StreamPlayManager {
         streamType,
         updates: { isPlaying: true },
       });
+
+      // setRemoteVideoView already ran inside streamPlayer.startPlayVideo, so TRTC
+      // holds a live view and setRenderParams can safely trigger updateRemoteVideo.
+      try {
+        await this.streamPlayer.setRenderParams({
+          userId,
+          streamType,
+          renderParams: { fillMode: streamInfo.fillMode },
+        });
+      } catch (renderError) {
+        console.error('[StreamPlayManager] startPlayVideo setRenderParams error:', renderError);
+      }
     } catch (error) {
       console.error('[StreamPlayManager] startPlayVideo error:', error);
       throw error;
@@ -449,13 +461,32 @@ export class StreamPlayManager {
     };
   }): Promise<void> {
     const { userId, streamType, renderParams } = options;
+    const fillMode = renderParams?.fillMode || FillMode.Fit;
+
+    const streamInfo = this.streamInfoManager.getStreamInfo(userId, streamType);
+    const isFillModeChanged = streamInfo?.fillMode !== fillMode;
+
+    // Always persist fillMode so startPlayVideo can apply it once TRTC has a valid view.
+    this.streamInfoManager.updateStreamInfo({
+      userId,
+      streamType,
+      updates: { fillMode },
+    });
+
+    // startPlayVideo pushes the recorded fillMode as soon as TRTC holds a live
+    // view, so only a genuine change on an already playing stream needs a push
+    // here. Pushing on every mount would let setRemoteRenderParams run
+    // updateRemoteVideo while a view is migrating between layout slots, where
+    // TRTC still references the element Vue is detaching.
+    if (!streamInfo?.isPlaying || !isFillModeChanged) {
+      return;
+    }
+
     try {
       await this.streamPlayer.setRenderParams({
         userId,
         streamType,
-        renderParams: {
-          fillMode: renderParams?.fillMode || FillMode.Fit,
-        },
+        renderParams: { fillMode },
       });
     } catch (error) {
       console.error('[StreamPlayManager] setStreamConfig error:', error);

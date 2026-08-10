@@ -60,7 +60,7 @@ export class StreamInfoManager {
       return null;
     }
     this.streamInfoMap.set(streamKey, streamInfo);
-    console.log(`[StreamPlay][StreamInfoManager] ${streamKey} remove view: ${view}, remaining view count: ${streamInfo.views.length}`);
+    console.log(`[StreamPlay][StreamInfoManager] ${streamKey} remove view: ${view}, remaining view count: ${streamInfo.views.size}`);
     return streamInfo;
   }
 

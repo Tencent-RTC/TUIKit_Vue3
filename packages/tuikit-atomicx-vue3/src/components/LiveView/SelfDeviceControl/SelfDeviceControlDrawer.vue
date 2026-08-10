@@ -65,6 +65,7 @@
           <span class="caption">{{ microphoneLabel }}</span>
         </button>
         <button
+          v-if="!hideCamera"
           type="button"
           class="action-button"
           :class="{ 'is-disabled': cameraDisabled }"
@@ -111,6 +112,8 @@ interface Props {
   microphoneDisabled: boolean;
   cameraLockedByAdmin?: boolean;
   microphoneLockedByAdmin?: boolean;
+  // Hide the camera action when only voice co-guest is supported.
+  hideCamera?: boolean;
   // Identity for the profile header. Optional so tests / consumers can
   // omit them and the component still renders without identity chrome.
   userId?: string;
@@ -121,6 +124,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   cameraLockedByAdmin: false,
   microphoneLockedByAdmin: false,
+  hideCamera: false,
   userId: '',
   userName: '',
   avatarUrl: '',

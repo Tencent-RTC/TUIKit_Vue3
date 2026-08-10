@@ -57,6 +57,11 @@ interface MessageListProps {
   messageAvatar?: Component | undefined;
   /** custom renderers to override built-in message bubble content by MessageType */
   messageRenderers?: Record<MessageType, Component> | undefined;
+  /**
+   * When alignment is 'two-sided', whether to show the avatar for self-sent messages.
+   * Defaults to false (self-sent messages have no avatar in two-sided mode).
+   */
+  showSelfAvatar?: boolean | undefined;
 }
 
 const props = withDefaults(defineProps<MessageListProps>(), {
@@ -72,6 +77,7 @@ const props = withDefaults(defineProps<MessageListProps>(), {
   MessageTimeDivider: undefined,
   messageAvatar: undefined,
   messageRenderers: undefined,
+  showSelfAvatar: false,
 });
 
 const slots = useSlots();
@@ -464,12 +470,12 @@ defineExpose({
                 Boolean(enableMessageAggregation && messageIndex !== 0)
               "
               :removeAvatar="
-                Boolean(alignment === 'two-sided' && message.isSentBySelf)
+                Boolean(alignment === 'two-sided' && message.isSentBySelf && !props.showSelfAvatar)
               "
               :is-hidden-message-nick="
                 Boolean(
                   (alignment === 'two-sided'
-                    ? enableMessageAggregation && messageIndex !== 0 || message.isSentBySelf
+                    ? enableMessageAggregation && messageIndex !== 0 || (message.isSentBySelf && !props.showSelfAvatar)
                     : enableMessageAggregation && messageIndex !== 0)
                 )
               "

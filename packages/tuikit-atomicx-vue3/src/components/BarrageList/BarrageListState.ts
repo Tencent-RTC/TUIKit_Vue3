@@ -1,10 +1,21 @@
-import { ref, watch, onUnmounted } from 'vue';
+import { ref, watch } from 'vue';
 import { TUIRoomEvents } from '@tencentcloud/tuiroom-engine-js';
 import { useRoomEngine } from '../../hooks/useRoomEngine';
 import { useBarrageState } from '../../states/BarrageState';
 import { useLiveListState } from '../../states/LiveListState';
 import { useRoomState } from '../../states/RoomState';
 import type { Barrage } from '../../types/barrage';
+
+// NOTE: This module MUST NOT call any Vue lifecycle API (`onMounted`,
+// `onUnmounted`, ...) at top level. Doing so runs at module-evaluation
+// time, i.e. after `setup()` for any consumer that imports this
+// module — Vue then emits the runtime warning:
+//   "onUnmounted is called when there is no active component instance
+//    to be associated with."
+// The previous `onUnmounted(clearEventListeners)` served no purpose
+// (there is no active instance) and has been removed. Cleanup is now
+// driven by the `currentLive` / `currentRoom` reset watchers below,
+// which mirror the state that originally owned the listener anyway.
 
 interface IMessageGroupTip {
   avatarUrl: string;
@@ -217,10 +228,6 @@ watch(() => currentRoom.value?.roomId, (newVal, oldVal) => {
   } else {
     initWatchers();
   }
-});
-
-onUnmounted(() => {
-  clearEventListeners();
 });
 
 function useBarrageListState() {
