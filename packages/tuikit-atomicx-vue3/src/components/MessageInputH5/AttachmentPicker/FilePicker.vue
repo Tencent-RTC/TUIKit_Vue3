@@ -31,6 +31,7 @@ import cs from 'classnames';
 import { View } from '../../../baseComp/View';
 import { useChatContext } from '../../../chat-store';
 import { getSendErrorMessage } from '../utils/getSendErrorMessage';
+import type { OfflinePushInfo, SendMessagePayload } from '@atomicxcore/core';
 
 const PICKER_CONSTANTS = {
   ACCEPT_TYPE: '*/*',
@@ -51,6 +52,7 @@ const props = withDefaults(defineProps<Props>(), {
 const { t } = useUIKit();
 const styles = useCssModule();
 const channel = inject('channel', 'default') as string;
+const setOfflinePushInfo = inject<((payload: SendMessagePayload) => OfflinePushInfo | undefined) | undefined>('setOfflinePushInfo', undefined);
 const { sendMessage } = useChatContext(channel);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
@@ -72,7 +74,9 @@ function handleFileInput(e: Event) {
   if (!file) {
     return;
   }
-  sendMessage({ type: 'fileMessage', file })
+  const payload: SendMessagePayload = { type: 'fileMessage', file };
+  const offlinePushInfo = setOfflinePushInfo?.(payload);
+  sendMessage(payload, offlinePushInfo ? { offlinePushInfo } : undefined)
     .catch((error) => {
       TUIToast.error({
         message: getSendErrorMessage(t, error),

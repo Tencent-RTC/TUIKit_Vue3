@@ -24,7 +24,7 @@
       :confirmText="t('MessageInput.initiate_call')"
       :confirm="handleConfirmGroupCall"
       :confirmDisabled="groupCallSelectedCount === 0"
-      :customClasses="['group-call-dialog']"
+      :customClasses="['group-call-dialog-h5']"
       appendTo="body"
     >
       <div
@@ -252,12 +252,15 @@ const handleConfirmGroupCall = () => initiateGroupCall();
 </style>
 
 <style>
-.group-call-dialog {
-  width: calc(100vw - 32px);
+.group-call-dialog-h5 {
+  max-height: 90vh;
+  max-height: 90dvh;
+  min-height: 60vh;
+  min-height: 60dvh;
+  width: calc(100vw - 64px);
   max-width: 500px;
   background: var(--bg-color-operate);
   border-radius: 8px;
-  max-height: 70vh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -265,17 +268,17 @@ const handleConfirmGroupCall = () => initiateGroupCall();
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
-.group-call-dialog,
-.group-call-dialog * {
+.group-call-dialog-h5,
+.group-call-dialog-h5 * {
   box-sizing: border-box;
 }
 
-.group-call-dialog .group-member-picker {
+.group-call-dialog-h5 .group-member-picker {
   width: 100%;
   min-width: 0;
 }
 
-.group-call-dialog .group-call-dialog-body {
+.group-call-dialog-h5 .group-call-dialog-body {
   display: flex;
   min-width: 0;
   min-height: 0;

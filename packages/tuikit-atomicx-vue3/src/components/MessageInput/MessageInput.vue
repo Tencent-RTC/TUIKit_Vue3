@@ -77,9 +77,11 @@ const props = withDefaults(defineProps<MessageInputProps>(), {
   attachmentPickerMode: 'collapsed',
   actions: () => ['EmojiPicker', 'ImagePicker', 'FilePicker', 'VideoPicker', 'QuickConferencePicker'],
   channel: 'default',
+  setOfflinePushInfo: undefined,
 });
 
 provide('channel', props.channel);
+provide('setOfflinePushInfo', props.setOfflinePushInfo);
 
 const pickProps = <T extends object, K extends keyof T>(
   sourceObject: T,

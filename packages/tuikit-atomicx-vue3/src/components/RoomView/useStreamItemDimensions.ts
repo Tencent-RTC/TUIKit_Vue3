@@ -65,7 +65,9 @@ export function useStreamItemDimensions(options: StreamItemDimensionsOptions) {
 
     // Early return if no items or invalid columns
     if (count <= 0 || colNumber <= 0 || rowNumber <= 0) {
-      itemStyle.value = {};
+      if (itemStyle.value.width !== undefined || itemStyle.value.height !== undefined) {
+        itemStyle.value = {};
+      }
       return;
     }
 
@@ -115,10 +117,14 @@ export function useStreamItemDimensions(options: StreamItemDimensionsOptions) {
       finalHeight = itemHeightByHeight;
     }
 
-    itemStyle.value = {
-      width: `${Math.floor(finalWidth)}px`,
-      height: `${Math.floor(finalHeight)}px`,
-    };
+    const width = `${Math.floor(finalWidth)}px`;
+    const height = `${Math.floor(finalHeight)}px`;
+    // Assigning a fresh object on every ResizeObserver tick would re-render each
+    // consumer even when the dimensions are unchanged, so bail out if equal.
+    if (itemStyle.value.width === width && itemStyle.value.height === height) {
+      return;
+    }
+    itemStyle.value = { width, height };
   }
 
   // Resize observer and window resize handler

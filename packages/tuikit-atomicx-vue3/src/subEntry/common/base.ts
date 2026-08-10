@@ -20,3 +20,5 @@ export { useUIKitModalState } from '../../states/UIKitModalState';
 export * from '../../components/Avatar';
 export * from '../../components/UserPicker';
 export * from '../../components/UIKitModal';
+
+export { callExperimentalAPI } from '../../utils/experimentalAPI';

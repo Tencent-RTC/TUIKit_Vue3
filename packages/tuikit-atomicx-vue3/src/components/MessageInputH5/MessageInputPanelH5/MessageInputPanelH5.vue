@@ -16,6 +16,7 @@
       side="top"
       align="center"
       :side-offset="offset"
+      :force-mount="keepMounted"
       :collision-padding="8"
       :avoid-collisions="false"
       @open-auto-focus.prevent
@@ -38,6 +39,7 @@ interface MessageInputPanelH5Props {
   anchorElement?: HTMLElement | null;
   offset?: number;
   size?: PanelSize;
+  keepMounted?: boolean;
 }
 
 const props = withDefaults(defineProps<MessageInputPanelH5Props>(), {
@@ -45,6 +47,7 @@ const props = withDefaults(defineProps<MessageInputPanelH5Props>(), {
   anchorElement: null,
   offset: 8,
   size: 'full',
+  keepMounted: false,
 });
 
 const emit = defineEmits<{
@@ -72,6 +75,11 @@ function getOutsideEventTarget(event: Event): EventTarget | null {
 }
 
 function handleInteractOutside(event: Event): void {
+  if (props.keepMounted && !props.open) {
+    event.preventDefault();
+    return;
+  }
+
   const target = getOutsideEventTarget(event);
   if (!(target instanceof Element)) {
     return;
@@ -100,7 +108,7 @@ function handleInteractOutside(event: Event): void {
   }
 
   &[data-state='closed'] {
-    animation: message-input-panel-h5-exit 120ms ease-in;
+    display: none;
   }
 }
 

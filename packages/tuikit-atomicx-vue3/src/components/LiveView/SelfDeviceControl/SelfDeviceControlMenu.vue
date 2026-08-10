@@ -9,6 +9,7 @@
     :class="`placement-${placement}`"
   >
     <div
+      v-if="!hideCamera"
       class="menu-row"
       :class="{ 'is-disabled': cameraDisabled }"
       :title="cameraTitle"
@@ -83,6 +84,10 @@ interface Props {
   // host" label/title to make the cause unambiguous to the user.
   cameraLockedByAdmin?: boolean;
   microphoneLockedByAdmin?: boolean;
+  // When only voice co-guest is supported (e.g. landscape live rooms where
+  // taking a seat is audio-only), the camera row is hidden entirely so the
+  // menu never offers a camera control the room can't honor.
+  hideCamera?: boolean;
   // Which side of the seat the menu is rendered on. Drives arrow direction.
   placement?: 'top' | 'bottom';
   // Arrow offset in px from the menu's left edge.
@@ -92,6 +97,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   cameraLockedByAdmin: false,
   microphoneLockedByAdmin: false,
+  hideCamera: false,
   placement: 'top',
   arrowOffset: 24,
 });

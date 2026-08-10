@@ -7,6 +7,7 @@ interface UseSelectionOptions<T = unknown> {
   lockedKeys?: string[];
   maxCount?: number;
   minCount?: number;
+  replaceOnSingleSelection?: boolean;
   isTreeMode?: boolean;
   dataSource: Ref<UserPickerDataSource<T>>;
   onSelectedChange?: (selectedItems: UserPickerResult<T>) => void;
@@ -114,6 +115,7 @@ export function useSelection<T = unknown>({
   lockedKeys = [],
   maxCount = Infinity,
   minCount = 0,
+  replaceOnSingleSelection = false,
   isTreeMode = false,
   dataSource,
   onSelectedChange,
@@ -418,6 +420,14 @@ export function useSelection<T = unknown>({
         newSelectedKeys.delete(key);
       } else if (newSelectedKeys.size < maxCount) {
         newSelectedKeys.add(key);
+      } else if (replaceOnSingleSelection && maxCount === 1 && newSelectedKeys.size === 1) {
+        const selectedKey = newSelectedKeys.values().next().value;
+        if (selectedKey && !lockedKeysSet.value.has(selectedKey)) {
+          newSelectedKeys.clear();
+          newSelectedKeys.add(key);
+        } else {
+          onMaxCountExceed?.(getSelectedItems());
+        }
       } else {
         onMaxCountExceed?.(getSelectedItems());
       }

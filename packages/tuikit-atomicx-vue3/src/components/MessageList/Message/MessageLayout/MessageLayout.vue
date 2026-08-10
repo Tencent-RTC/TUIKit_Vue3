@@ -82,10 +82,17 @@ const shouldRenderAsGroupTip = computed(() => {
 });
 
 const showName = computed(() => {
-  if (props.message.conversationType === ConversationType.C2C) {
-    return props.nick || activeConversation.value?.title || props.message.from.nickname || props.message.from.userID;
+  if (props.nick) {
+    return props.nick;
   }
-  return props.nick || props.message.from.nameCard || props.message.from.nickname || props.message.from.userID;
+  if (props.message.conversationType === ConversationType.C2C) {
+    if (!props.message.isSentBySelf) {
+      return activeConversation.value?.title || props.message.from.nickname || props.message.from.userID;
+    } else {
+      return props.message.from.nickname || props.message.from.userID;
+    }
+  }
+  return props.message.from.nameCard || props.message.from.nickname || props.message.from.userID;
 });
 
 const MessageComponentsFactory: Record<MessageType, Component | null> = {

@@ -2,11 +2,19 @@ import { ref } from 'vue';
 import type { Ref } from 'vue';
 import { ConversationType, getChannel } from '@atomicxcore/core';
 import type { Editor } from '@tiptap/vue-3';
-import type { MessageInfo } from '@atomicxcore/core';
+import type { MessageInfo, SendMessageInputOption, SendMessagePayload, OfflinePushInfo } from '@atomicxcore/core';
 import type { InputContent } from '../types/messageInput';
+import { MessageContentType } from '../types/messageInput';
 import { createTypingCustomData } from '../utils/chatTypingStatus';
 import { debounce, throttle } from '../utils/lodash';
-import { convertInputContentToEditorNode } from '../utils/messageInput';
+import {
+  blobUrlToFile,
+  convertEditorContent,
+  convertInputContentToEditorNode,
+  trimInputContent,
+} from '../utils/messageInput';
+import { transformTextWithEmojiKeyToName, transformTextWithEmojiNameToKey } from '../utils';
+import { deleteLocalConversationDraft } from '../utils/conversationDraftStorage';
 
 export interface LocateMessageInfo {
   conversationID: string;
@@ -83,6 +91,15 @@ export interface ChatUIStateAPI {
 
   /** Send typing end message for current active C2C conversation. */
   leaveTyping: () => Promise<void>;
+
+  /**
+   * Serialize the current editor content and send it as one or more messages.
+   * Mirrors the Enter-key send flow in TextEditor so users can trigger it
+   * from custom UI (e.g. a send button placed in the footerToolbar slot).
+   * @param setOfflinePushInfo - Optional callback invoked before each message is sent.
+   * Receives the message payload and returns the offlinePushInfo to attach, or undefined to skip.
+   */
+  sendInputMessage: (setOfflinePushInfo?: (payload: SendMessagePayload) => OfflinePushInfo | undefined) => Promise<void>;
 
   /** Current display mode of the MessageList. */
   listMode: Ref<'latest' | 'fragment'>;
@@ -286,6 +303,112 @@ function createChatUIState(channel: string): ChatUIStateAPI {
     hasEnteredTyping = false;
   };
 
+  /**
+   * Serialize the current editor content and send it as one or more messages.
+   * This is the same logic as the Enter-key handler in TextEditor, exposed here
+   * so external UI (e.g. a custom send button in the footerToolbar slot) can
+   * trigger the send flow without coupling to the editor internals.
+   */
+  const sendInputMessage = async (setOfflinePushInfo?: (payload: SendMessagePayload) => OfflinePushInfo | undefined): Promise<void> => {
+    const editorInstance = editor.value;
+    if (!editorInstance) {
+      return;
+    }
+
+    const raw = trimInputContent(convertEditorContent(editorInstance.getJSON()));
+    if (raw.length === 0) {
+      return;
+    }
+
+    const snapshot = getChannel(channel).getSnapshot();
+    const { sendMessage, setConversationDraft, activeConversation } = snapshot;
+
+    const savedQuotedMessage = quotedMessage.value;
+    const sendingConversationID = activeConversation?.conversationID;
+
+    // Clear editor content before async sends to avoid double-send
+    editorInstance.commands.setContent('', true);
+
+    const textBuffer: string[] = [];
+    const atUserList: string[] = [];
+
+    /** Build SendMessageInputOption for a given payload, injecting offlinePushInfo if resolver provided */
+    const buildOption = (payload: SendMessagePayload, extra?: Partial<SendMessageInputOption>): SendMessageInputOption | undefined => {
+      const offlinePushInfo = setOfflinePushInfo?.(payload);
+      const option: SendMessageInputOption = { ...extra };
+      if (offlinePushInfo) {
+        option.offlinePushInfo = offlinePushInfo;
+      }
+      return Object.keys(option).length > 0 ? option : undefined;
+    };
+
+    const flushText = async (): Promise<void> => {
+      if (textBuffer.length === 0) {
+        return;
+      }
+      const textWithName = transformTextWithEmojiKeyToName(textBuffer.join(''));
+      const text = transformTextWithEmojiNameToKey(textWithName);
+      textBuffer.length = 0;
+      const payload: SendMessagePayload = { type: 'textMessage', text };
+      const extra: Partial<SendMessageInputOption> = {};
+      if (atUserList.length > 0) {
+        extra.atUserList = [...atUserList];
+      }
+      if (savedQuotedMessage) {
+        extra.quotedMessage = savedQuotedMessage;
+      }
+      await sendMessage(payload, buildOption(payload, extra));
+      atUserList.length = 0;
+    };
+
+    let idx = 0;
+    while (idx < raw.length) {
+      const item = raw[idx];
+      if (item.type === MessageContentType.TEXT) {
+        textBuffer.push((item as Extract<InputContent, { type: typeof MessageContentType.TEXT }>).content);
+      } else if (item.type === MessageContentType.EMOJI) {
+        textBuffer.push((item as Extract<InputContent, { type: typeof MessageContentType.EMOJI }>).content.key);
+      } else if (item.type === MessageContentType.MENTION) {
+        const mention = (item as Extract<InputContent, { type: typeof MessageContentType.MENTION }>).content;
+        atUserList.push(mention.id);
+        textBuffer.push(mention.mentionSuggestionChar + mention.label);
+      } else if (item.type === MessageContentType.IMAGE) {
+        await flushText();
+        const imageContent = (item as Extract<InputContent, { type: typeof MessageContentType.IMAGE }>).content;
+        const imageFile = imageContent instanceof File ? imageContent : await blobUrlToFile(imageContent);
+        if (imageFile) {
+          const payload: SendMessagePayload = { type: 'imageMessage', file: imageFile };
+          await sendMessage(payload, buildOption(payload));
+        }
+      } else if (item.type === MessageContentType.VIDEO) {
+        await flushText();
+        const payload: SendMessagePayload = {
+          type: 'videoMessage',
+          file: (item as Extract<InputContent, { type: typeof MessageContentType.VIDEO }>).content,
+          duration: 0,
+        };
+        await sendMessage(payload, buildOption(payload));
+      } else if (item.type === MessageContentType.FILE) {
+        await flushText();
+        const payload: SendMessagePayload = {
+          type: 'fileMessage',
+          file: (item as Extract<InputContent, { type: typeof MessageContentType.FILE }>).content,
+        };
+        await sendMessage(payload, buildOption(payload));
+      }
+      idx += 1;
+    }
+    await flushText();
+    await leaveTyping().catch(() => {});
+    if (savedQuotedMessage) {
+      clearQuotedMessage();
+    }
+    if (sendingConversationID) {
+      deleteLocalConversationDraft(sendingConversationID).catch(() => {});
+      setConversationDraft(sendingConversationID, '').catch(() => {});
+    }
+  };
+
   const listMode = ref<'latest' | 'fragment'>('latest');
 
   const pendingLocateMessage = ref<LocateMessageInfo | null>(null);
@@ -323,6 +446,7 @@ function createChatUIState(channel: string): ChatUIStateAPI {
     setIsPeerTyping,
     enterTyping,
     leaveTyping,
+    sendInputMessage,
     listMode,
     pendingLocateMessage,
     setPendingLocateMessage,

@@ -1,6 +1,6 @@
 import { inject } from 'vue';
 import { MessageType } from '@atomicxcore/core';
-import type { Component, Slots } from 'vue';
+import type { Component, Ref, Slots } from 'vue';
 
 
 const MessageListContextSymbol = Symbol('MessageListContext');
@@ -9,6 +9,7 @@ interface MessageListContext {
   slots: Slots;
   /** Custom renderers to override built-in message bubble content by MessageType */
   messageRenderers?: Record<MessageType, Component>;
+  activeMessageActionMenuID: Ref<string | null>;
 }
 
 function useMessageListContext(componentName: string): MessageListContext {

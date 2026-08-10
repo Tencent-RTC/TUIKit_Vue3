@@ -1,5 +1,5 @@
 <template>
-  <div v-if="loginUserInfo" class="live-list-panel">
+  <div v-if="isLoggedIn" class="live-list-panel">
     <div
       v-if="liveList.length > 0"
       ref="scrollContainerRef"
@@ -57,13 +57,12 @@
 import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import { useUIKit, IconLiveCoverHeader, IconNoLiveRoom } from '@tencentcloud/uikit-base-component-vue3';
 import { useLiveListState } from '../../states/LiveListState';
-import { useLoginState } from '../../states/LoginState';
 import { Avatar } from '../Avatar';
 import type { LiveInfo } from '../../types';
 import RTCLoginServer from '../../subEntry/live/server';
 
-const { liveList, liveListCursor, fetchLiveList } = useLiveListState();
-const { loginUserInfo } = useLoginState();
+const { liveList, liveListCursor, fetchLiveList, reset } = useLiveListState();
+const isLoggedIn = RTCLoginServer.getInstance().isLogin;
 const { t } = useUIKit();
 const props = defineProps({
   columnCount: {
@@ -113,34 +112,41 @@ watch(
   async (isLogin) => {
     if (isLogin) {
       isLoadingMore.value = true;
-      liveListCursor.value = '';
-      liveList.value.length = 0;
-      // Retry with backoff to handle the race where TUIRoomEngine.login()
-      // resolves at the JS layer before the C++ liveListExtension finishes
-      // initializing (error_code:1, not inited). This typically occurs when
-      // the user is kicked offline and re-logs in without a page navigation.
+      reset();
       const MAX_RETRIES = 3;
       const RETRY_DELAY_MS = 500;
-      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-        try {
-          await fetchLiveList({});
-          break;
-        } catch (error: any) {
-          const isNotInited = error?.code === 1 || error?.error_code === 1 || error?.message?.includes('not inited');
-          if (isNotInited && attempt < MAX_RETRIES - 1) {
-            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (attempt + 1)));
-          } else {
-            throw error;
+      try {
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+          try {
+            await fetchLiveList({});
+            break;
+          } catch (error: any) {
+            const isNotInited =
+              error?.code === 1
+              || error?.error_code === 1
+              || error?.message?.includes('not inited');
+            if (isNotInited && attempt < MAX_RETRIES - 1) {
+              await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (attempt + 1)));
+            } else {
+              throw error;
+            }
           }
         }
+      } finally {
+        isLoadingMore.value = false;
       }
-      isLoadingMore.value = false;
     }
   },
   { immediate: true },
 );
 
-watch([liveListItemsRef, props.columnCount], () => {
+// NOTE: The second watch source must be a getter (or ref), not the raw
+// `props.columnCount` value. Passing the raw number produces the runtime
+// warning: "Invalid watch source: 5 A watch source can only be a
+// getter/effect function, a ref, a reactive object, or an array of these
+// types." Wrapping it in `() => props.columnCount` also preserves prop
+// reactivity so column changes re-run the resize logic.
+watch([liveListItemsRef, () => props.columnCount], () => {
   resizeLiveListItems();
   if (liveListItemsRef.value && !resizeObserver) {
     resizeObserver = new ResizeObserver(() => {

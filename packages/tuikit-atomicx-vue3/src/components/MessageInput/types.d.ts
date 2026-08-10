@@ -1,4 +1,5 @@
-import type { Component, CSSProperties } from 'vue';
+import type { Component, CSSProperties, VNode } from 'vue';
+import type { OfflinePushInfo, SendMessagePayload } from '@atomicxcore/core';
 
 type BuiltInAction =
   | 'EmojiPicker'
@@ -34,6 +35,11 @@ export interface MessageInputProps {
   slots?: MessageInputSlots;
   /** Channel key for UIContext isolation, defaults to 'default' */
   channel?: string;
+  /**
+   * Called before each message is sent. Receives the outgoing message payload
+   * and should return the offlinePushInfo to attach, or undefined to skip.
+   */
+  setOfflinePushInfo?: (payload: SendMessagePayload) => OfflinePushInfo | undefined;
 }
 
 export interface MessageInputSlots {

@@ -160,7 +160,7 @@ export class StreamPlayer {
         });
       }
     } catch (error) {
-      console.error('[StreamPlayer] setRenderParams error:', error);
+      console.error('[StreamPlayer] setRenderParams error:', userId, streamType, error);
       throw error;
     }
   }

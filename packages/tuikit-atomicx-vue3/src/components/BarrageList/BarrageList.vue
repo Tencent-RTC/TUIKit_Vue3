@@ -57,7 +57,12 @@ const pendingScroll = ref<ScrollBehavior | false>(false);
 
 const { messageList, messageGroupTip } = useBarrageListState();
 const { subscribeEvent: subscribeGiftEvent, unsubscribeEvent: unsubscribeGiftEvent } = useLiveGiftState();
-const { appendLocalTip, subscribeEvent: subscribeBarrageEvent, unsubscribeEvent: unsubscribeBarrageEvent } = useBarrageState();
+const {
+  appendLocalTip,
+  messageList: sourceMessageList,
+  subscribeEvent: subscribeBarrageEvent,
+  unsubscribeEvent: unsubscribeBarrageEvent,
+} = useBarrageState();
 const { scrollToBottom } = useScroll();
 
 // Local adapter: bind the generic `scrollToBottom(container, behavior)` API
@@ -73,10 +78,83 @@ defineExpose({
   scrollToBottom: scrollListToBottom,
 });
 
+// Merge window (seconds): consecutive gifts from the same sender with the same
+// gift, arriving within this window, are folded into a single barrage whose
+// `count` is incremented — i.e. a live "combo ×N" that grows as the sender keeps
+// tapping the gift, instead of one giant burst shown only after the combo ends.
+const GIFT_COMBO_MERGE_WINDOW_SECONDS = 2;
+
+interface GiftMessagePayload {
+  type: string;
+  giftInfo: { giftID?: string; name?: string; iconUrl?: string };
+  count: number;
+}
+
+// Whether an incoming gift should be folded into `last` (same sender, same
+// gift, recent enough to belong to the same combo burst).
+const isMergeableGiftCombo = (
+  last: Barrage,
+  gift: LiveGiftEventMap[LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE],
+  nowInSeconds: number,
+): boolean => {
+  if (last.businessId !== 'gift' || !last.data) {
+    return false;
+  }
+  let data: GiftMessagePayload;
+  try {
+    data = JSON.parse(last.data) as GiftMessagePayload;
+  } catch {
+    return false;
+  }
+  if (data.type !== 'gift' || !data.giftInfo) {
+    return false;
+  }
+  if (last.sender?.userId !== gift.sender?.userId) {
+    return false;
+  }
+  if (data.giftInfo.giftID !== gift.giftInfo?.giftID) {
+    return false;
+  }
+  const lastTs = last.timestampInSecond ?? 0;
+  return nowInSeconds - lastTs <= GIFT_COMBO_MERGE_WINDOW_SECONDS;
+};
+
 // Handle gift message received event
 const handleGiftMessage = (gift: LiveGiftEventMap[LiveGiftEvents.ON_RECEIVE_GIFT_MESSAGE]) => {
-  const lastBarrage = messageList.value.at(-1);
+  const nowInSeconds = Date.now() / 1000;
+  const list = sourceMessageList.value;
+
+  // Fold the incoming gift into the most recent matching combo barrage if one
+  // exists. We scan backwards (bounded) so a stray non-gift message in between
+  // taps does not split the sender's combo into separate bubbles.
+  let mergeTarget: Barrage | null = null;
+  const scanLimit = Math.min(list.length, 30);
+  for (let i = list.length - 1; i >= list.length - scanLimit; i -= 1) {
+    if (isMergeableGiftCombo(list[i], gift, nowInSeconds)) {
+      mergeTarget = list[i];
+      break;
+    }
+  }
+
+  if (mergeTarget) {
+    let data: GiftMessagePayload;
+    try {
+      data = JSON.parse(mergeTarget.data) as GiftMessagePayload;
+    } catch {
+      data = { type: 'gift', giftInfo: {}, count: 0 };
+    }
+    data.count = (data.count ?? 0) + (gift.giftCount ?? 1);
+    // Mutating the shared Barrage object reference updates both the source list
+    // and the rendered list, so the gift bubble's "×N" grows live.
+    mergeTarget.data = JSON.stringify(data);
+    mergeTarget.timestampInSecond = nowInSeconds;
+    // Re-trigger auto-scroll so an active combo stays pinned to the bottom.
+    handleBarrageReceived(mergeTarget);
+    return;
+  }
+
   let sequence = 0;
+  const lastBarrage = list.at(-1);
   if (lastBarrage) {
     sequence = lastBarrage.sequence + 1;
   }
@@ -93,7 +171,7 @@ const handleGiftMessage = (gift: LiveGiftEventMap[LiveGiftEvents.ON_RECEIVE_GIFT
     liveId: gift.liveId,
     sender: gift.sender,
     sequence,
-    timestampInSecond: Date.now() / 1000,
+    timestampInSecond: nowInSeconds,
     messageType: BarrageType.text,
     textContent: '',
     extensionInfo: null,

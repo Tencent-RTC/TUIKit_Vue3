@@ -49,6 +49,7 @@ export {
 // } from '../../components/Search';
 
 // Hooks
+// useMessageActions — migrated to chat-uikit-vue3 local
 export { useMessageActions } from '../../hooks/useMessageActions';
 
 // States
@@ -63,8 +64,9 @@ export { useSearchState } from '../../states/SearchState';
 
 // Context
 export * from '../../chat-store';
-export { useChatUIState } from '../../context/useChatUIState';
-export type { ChatUIStateAPI, LocateMessageInfo } from '../../context/useChatUIState';
+// useChatUIState — migrated to chat-uikit-vue3 local
+// export { useChatUIState } from '../../context/useChatUIState';
+// export type { ChatUIStateAPI, LocateMessageInfo } from '../../context/useChatUIState';
 
 // Core runtime enums/constants. Keep this explicit to avoid re-exporting Store classes
 // that share names with the local chat-store wrappers.
@@ -89,6 +91,11 @@ export {
   SearchType,
   KeywordListMatchMode,
   StoreName,
+  getChannel,
+  reportStoreUsageData,
+  ContactStore as ContactStoreRaw,
+  LoginStore as LoginStoreRaw,
+  GroupStore as GroupStoreRaw,
 } from '@atomicxcore/core';
 export type {
   Unsubscribe,

@@ -45,6 +45,7 @@
       :microphoneDisabled="microphoneDisabled"
       :cameraLockedByAdmin="cameraLockedByAdmin"
       :microphoneLockedByAdmin="microphoneLockedByAdmin"
+      :hideCamera="hideCamera"
       @toggle-camera="onToggleCamera"
       @toggle-microphone="onToggleMicrophone"
       @leave-seat="onLeaveSeat"
@@ -64,6 +65,7 @@
     :microphoneDisabled="microphoneDisabled"
     :cameraLockedByAdmin="cameraLockedByAdmin"
     :microphoneLockedByAdmin="microphoneLockedByAdmin"
+    :hideCamera="hideCamera"
     :userId="localUserId"
     :userName="localUserName"
     :avatarUrl="localAvatarUrl"
@@ -106,12 +108,17 @@ interface Props {
   // own props and reduce mental translation at the prop boundary.
   cameraLockedByAdmin?: boolean;
   microphoneLockedByAdmin?: boolean;
+  // When true, the camera control is hidden entirely (e.g. landscape live
+  // rooms where taking a seat is voice-only). The layer also guards the
+  // camera toggle so a stale call can never open the camera in this mode.
+  hideCamera?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   seatTrigger: '',
   cameraLockedByAdmin: false,
   microphoneLockedByAdmin: false,
+  hideCamera: false,
 });
 const emit = defineEmits<{
   (event: 'update:open', value: boolean): void;
@@ -168,7 +175,11 @@ const cameraDisabled = computed(() => cameraLockedByAdmin.value || cameraLastErr
 const microphoneDisabled = computed(() => microphoneLockedByAdmin.value || microphoneLastError.value !== DeviceError.NoError);
 
 const layerRef = ref<HTMLDivElement | null>(null);
-const menuRef = ref<InstanceType<typeof SelfDeviceControlMenu> | null>(null);
+// We only ever read `$el` off the menu instance (for geometry measurement),
+// so type the ref by that minimal shape. Using `InstanceType<typeof
+// SelfDeviceControlMenu>` here makes vue-tsc deeply instantiate the whole
+// public-instance type, which is unnecessary and brittle.
+const menuRef = ref<{ $el: HTMLElement } | null>(null);
 
 // Menu placement state. `placement` controls which side of the seat the
 // menu is rendered on (and thus the arrow direction).
@@ -197,10 +208,15 @@ const ARROW_EDGE_INSET = 14;  // Keep arrow off the menu's rounded corners.
 // phase 1 and phase 2 on space-constrained viewports:
 //   width  = menu min-width
 //   height = menu padding × 2 + row count × (row padding × 2 + line-height)
-// Current menu has 3 rows (camera, microphone, leave-seat), each
-// 8px*2 padding + 20px line-height = 36px → 12 + 3*36 = 120px.
+// Each row is 8px*2 padding + 20px line-height = 36px; padding is 6px*2.
+// The camera row is dropped in voice-only mode, so the menu is 2 or 3 rows.
 const FALLBACK_MENU_W = 168;
-const FALLBACK_MENU_H = 120;
+const MENU_PADDING_Y = 12;
+const MENU_ROW_H = 36;
+const fallbackMenuHeight = computed(() => {
+  const rowCount = props.hideCamera ? 2 : 3;
+  return MENU_PADDING_Y + rowCount * MENU_ROW_H;
+});
 
 // Locate the local user's seat element. We scope the search to the
 // current layer's parent (the LiveView container) so that having
@@ -244,7 +260,7 @@ function computePlacement(useMeasuredMenu: boolean): {
   // ballpark (avoids the "menu flashes at 0,0 then jumps" artifact).
   const menuEl = useMeasuredMenu ? ((menuRef.value?.$el as HTMLElement | undefined) ?? null) : null;
   const menuW = menuEl?.offsetWidth || FALLBACK_MENU_W;
-  const menuH = menuEl?.offsetHeight || FALLBACK_MENU_H;
+  const menuH = menuEl?.offsetHeight || fallbackMenuHeight.value;
 
   const seatCenterX = seatLeft + seatW / 2;
   const seatBottom = seatTop + seatH;
@@ -302,6 +318,11 @@ async function recomputePlacement() {
 }
 
 async function onToggleCamera() {
+  // In voice-only mode the camera row is not rendered, but guard here too so
+  // no code path (e.g. a stale event) can open the camera the room won't use.
+  if (props.hideCamera) {
+    return;
+  }
   // `cameraDisabled` already covers `cameraLockedByAdmin` and the
   // device-error path. Bailing out here matches the menu's visual
   // disabled state and prevents fire-and-forget SDK calls that would

@@ -54,7 +54,7 @@ const isLoading = ref(false);
 const { sendMessage } = useChatContext(channel);
 const { currentRoom } = useRoomState();
 const { localParticipant } = useRoomParticipantState();
-const generateRoomId = () => String(Date.now()) + String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+const generateRoomId = () => String(Math.floor(100000 + Math.random() * 900000));
 
 const getQuickConferenceRoomName = () => t('ConferencePicker.Quick_Conference', {
   name: loginUserInfo.value?.userName || loginUserInfo.value?.userId,
@@ -120,6 +120,7 @@ const handleQuickConferenceClick = async () => {
 
     const sentMessage = await sendMessage({
       type: 'customMessage',
+      description: roomName,
       customData: JSON.stringify({
         businessID: 'group_room_message',
         owner: loginUserInfo.value?.userId,
@@ -130,19 +131,6 @@ const handleQuickConferenceClick = async () => {
         ownerName: getConferenceOwnerProfile().nickName,
       }),
     });
-    // const sentMessage = await sendCustomMessage({
-    //   payload: {
-    //     data: JSON.stringify({
-    //       businessID: 'group_room_message',
-    //       owner: loginUserInfo.value?.userId,
-    //       roomId,
-    //       roomState: 'created',
-    //       roomName,
-    //       userList: createCurrentUserPayload(),
-    //       ownerName: getConferenceOwnerProfile().nickName,
-    //     }),
-    //   },
-    // });
 
     TUICore.notifyEvent(
       TUIConstants.TUIRoom.SERVICE.NAME,

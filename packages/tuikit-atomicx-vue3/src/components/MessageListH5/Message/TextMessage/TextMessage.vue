@@ -161,6 +161,7 @@ const handleReferenceClick = () => {
   line-height: 1.3125;
   font-weight: 500;
   color: var(--text-color-primary);
+  text-align: start;
 
   &__reference {
     margin-bottom: 8px;

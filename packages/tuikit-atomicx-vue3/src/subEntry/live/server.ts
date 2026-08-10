@@ -43,7 +43,9 @@ export default class RTCLoginServer {
   }
 
   /**
-   * @param { TUIInitParam } params
+   * Handle TUILogin login-state change events.
+   * @param eventName the event group name
+   * @param subKey the specific sub-event (login success / logout success)
    */
   public onNotifyEvent(eventName: string, subKey: string) {
     if (eventName === TUIConstants.TUILogin.EVENT.LOGIN_STATE_CHANGED) {
@@ -91,12 +93,37 @@ export default class RTCLoginServer {
         }
         throw error;
       });
-      const res = await TUIRoomEngine.login({
+      // TUIRoomEngine must be logged in explicitly here. Do NOT infer that it
+      // is "already logged in" from $loginUserInfo: that store reflects the
+      // chat / TUICore login state, not the room engine's. With the
+      // tui-core-lite + standalone tuiroom-engine-js combo, TUILogin.login()
+      // does NOT log the room engine in — RTCLoginServer is the only place that
+      // does. Skipping this call whenever chat had already populated
+      // $loginUserInfo (e.g. on a hard refresh, where chat logs in first) left
+      // the room engine's sso channel "not inited", so fetchLiveList() failed
+      // with "not inited".
+      //
+      // TUIRoomEngine.login() is idempotent for a duplicate real login, but the
+      // wasm layer has been observed to hang on a genuinely redundant call, so
+      // we keep a timeout guard: race the login against a 5s fallback and
+      // proceed regardless. If the engine was in fact already logged in, the
+      // login resolves quickly; if it hangs, the timeout unblocks us.
+      const ROOM_ENGINE_LOGIN_TIMEOUT_MS = 5000;
+      const roomEngineLoginPromise = TUIRoomEngine.login({
         sdkAppId: SDKAppID,
         userId: userID,
         userSig,
         tim: chat,
       });
+      const res: unknown = await Promise.race([
+        roomEngineLoginPromise,
+        new Promise<void>((resolve) => {
+          setTimeout(() => {
+            console.warn('[RTCLoginServer] TUIRoomEngine.login() timed out after 5s, proceeding anyway');
+            resolve();
+          }, ROOM_ENGINE_LOGIN_TIMEOUT_MS);
+        }),
+      ]);
       this.isLogin.value = true;
       this.resolveList.forEach((resolve) => {
         resolve();
