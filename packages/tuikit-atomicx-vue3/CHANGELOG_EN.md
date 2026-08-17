@@ -1,3 +1,13 @@
+## [6.5.5] (2026-08-17)
+
+### feat
+* Roomkit: Optimize real-time subtitle interaction
+
+
+## [6.5.4] (2026-08-11)
+### fix
+* Chat: Fixed the issue where the reference message does not exist due to the read acknowledgment in the single chat scenario
+
 ## [6.5.3] (2026-08-09)
 
 ### feat
