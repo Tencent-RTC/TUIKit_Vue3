@@ -100,7 +100,7 @@ $prefixCls: getPrefixCls(banner);
 .#{$prefixCls} {
   width: 100%;
   height: 100%;
-  background-image: url(https://cloudcache.tencent-cloud.com/qcloud/ui/static/static_source_business/e5740a9e-0a77-4bca-b17d-b66ca64fc129.png);
+  background-image: url(@/assets/images/banner.png);
   height: 460px;
   background-size: 100% 100%;
   background-repeat: no-repeat;
@@ -187,10 +187,6 @@ $prefixCls: getPrefixCls(banner);
   }
 
   &-renew {
-    width: 100%;
-    height: 308px;
-    background: linear-gradient(180deg, #e8effc 0%, #dae5fa 100%);
-
     .#{$prefixCls}__content {
       width: 1200px;
       margin: 0 auto;

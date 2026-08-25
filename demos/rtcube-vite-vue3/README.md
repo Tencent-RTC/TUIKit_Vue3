@@ -10,6 +10,16 @@ We provide a brand-new AI integration approach. If you don't need the complete D
 
 [Click here to experience AI Integration](https://trtc.io/document/72277?product=chat&menulabel=uikit&platform=react)
 
+## 🚀 Recommended: Only view Chat UIKit
+
+RTCube project is a comprehensive demonstration of multi-product capabilities in RTC scenarios, including sample code for products like Chat, Call, and Room.
+
+If you only want to view the Chat product capabilities, you can clone the [rtc-chat-web](https://gitee.com/tencent-cloud-uikit/rtc-chat-web) project:
+
+```bash
+git clone https://gitee.com/tencent-cloud-uikit/rtc-chat-web.git
+```
+
 ## Directory Structure
 
 RTCube currently includes the following pages and scenarios:

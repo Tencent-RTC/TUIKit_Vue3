@@ -6,7 +6,7 @@
       type="renew"
     >
       <img
-        src="https://cloudcache.tencent-cloud.com/qcloud/ui/static/static_source_business/97991446-f2ba-4ebd-925f-f9ccba214a0e.png"
+        :src="bannerImage"
         alt="Banner图片"
         loading="lazy"
       />
@@ -20,53 +20,39 @@
       </template>
     </Banner>
     <section class="pg-tiyan-home__content">
+      <!-- Scene Experience Section -->
       <Section :title="t('home.sceneExperience')" type="renew">
         <Row :gutter="[20, 20]">
-          <Col class="scene-item" :span="Math.max(4, 12 / expericenceScene.length)" v-for="(item, index) in expericenceScene" @click="toContent(item.scene)" :key="index">
+          <Col class="scene-item" :span="Math.max(4, 12 / experienceScene.length)" v-for="(item, index) in experienceScene" :key="index">
             <CardItem
               :url="item.url"
               :label="item.label"
               :title="item.title"
               :desc="item.desc"
               :alt="item.label"
+              :sub-scenes="item.subScenes"
               type="renew"
+              @click="toContent(item.scene)"
+              @sub-scene-click="(subId: string) => toContent(item.scene, subId)"
             >
             </CardItem>
           </Col>
         </Row>
       </Section>
-      <div class="footer">
-        <div class="footer-contaienr">
-          <div class="footer-slogan-item">
-            <div class="slogan-item-left-separator"></div>
-            <div class="slogan-item-content">
-              <div class="slogan-item-title">90%</div>
-              <div class="slogan-item-desc">{{ t('stats.marketShare') }}</div>
-            </div>
-          </div>
-          <div class="footer-slogan-item">
-            <div class="slogan-item-left-separator"></div>
-            <div class="slogan-item-content">
-              <div class="slogan-item-title">{{ t('language.current') === '当前语言' ? '30 亿' : '3B' }}</div>
-              <div class="slogan-item-desc">{{ t('stats.dailyMinutes') }}</div>
-            </div>
-          </div>
-          <div class="footer-slogan-item">
-            <div class="slogan-item-left-separator"></div>
-            <div class="slogan-item-content">
-              <div class="slogan-item-title">2800 +</div>
-              <div class="slogan-item-desc">{{ t('stats.globalNodes') }}</div>
-            </div>
-          </div>
-          <div class="footer-slogan-item">
-            <div class="slogan-item-left-separator"></div>
-            <div class="slogan-item-content">
-              <div class="slogan-item-title">{{ t('language.current') === '当前语言' ? '10亿+' : '1B+' }}</div>
-              <div class="slogan-item-desc">{{ t('stats.monthlyUsers') }}</div>
-            </div>
-          </div>
 
-        </div> 
+            <!-- Quick Access Section -->
+      <Section :title="t('quickAccess.sectionTitle')" type="renew">
+        <QuickAccess />
+      </Section>
+
+      <!-- Platform Experience Section -->
+      <Section :title="t('platform.sectionTitle')" type="renew">
+        <PlatformExperience />
+      </Section>
+
+      <!-- Footer Disclaimer -->
+      <div class="footer">
+        <div class="footer-disclaimer">{{ t('login.copyright') }}</div>
       </div>
     </section>
   </div>
@@ -77,14 +63,23 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from "vue";
 import { Row, Col } from "tdesign-vue-next";
-import { useLoginState } from '@tencentcloud/chat-uikit-vue3';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import headerLogo from '@/assets/images/logo-icon.png';
 import headerTitle from '@/assets/images/logo-title.png';
 import headerTitleEn from "@/assets/images/logo-title-en.png";
+import bannerImage from '@/assets/images/main.png';
 import {useRouter} from "vue-router";
-import { Banner, Section, CardItem } from '@/components';
+import { Banner, Section, CardItem, PlatformExperience, QuickAccess } from '@/components';
 import '@/components/pages/TiyanHomePage.scss';
+// Aegis data reporting (remove for GitHub demo)
+import { reportSceneSelect } from '@/utils/aegis';
+import { SCENE_ID_TO_AEGIS_SCENE, AEGIS_PAGES } from '@/constants/aegis';
+// Unified scene configuration
+import { getEnabledScenes, type SceneConfig } from '@/constants';
+// Use session login state to check if user has logged in during current session
+// This avoids importing tuikit-atomicx-vue3 on the home page, reducing initial bundle size
+import { isUserSessionLoggedIn } from '@/utils';
+import { getFromQuery } from '@/utils/from';
 
 import imageIndexCall from '../../assets/images/image-index-call.png';
 import imageIndexMeeting from '../../assets/images/image-index-meeting.png';
@@ -110,45 +105,45 @@ onMounted(() => {
 const prefixCls = "pg-tiyan-home";
 const classes = computed(() => [prefixCls]);
 
+// Scene image mapping
+const sceneImageMap: Record<string, string> = {
+  chatkit: imageIndexChat,
+  callkit: imageIndexCall,
+  roomkit: imageIndexMeeting,
+  live: imageIndexLive,
+};
 
-const expericenceScene = computed(() => [
-  {
-    url: imageIndexChat,
-    label: t('scenes.chat.label'),
-    title: t('scenes.chat.title'),
-    desc: t('scenes.chat.desc'),
-    scene: "chatkit",
-  }, 
-  {
-    url: imageIndexCall,
-    label: t('scenes.call.label'),
-    title: t('scenes.call.title'),
-    desc: t('scenes.call.desc'),
-    scene: "callkit",
-  }, 
-  // {
-  //   url: imageIndexMeeting,
-  //   label: t('scenes.meeting.label'),
-  //   title: t('scenes.meeting.title'),
-  //   desc: t('scenes.meeting.desc'),
-  //   scene: "roomkit",
-  // },
-  // {
-  //   url: imageIndexLive,
-  //   label: t('scenes.live.label'),
-  //   title: t('scenes.live.title'),
-  //   desc: t('scenes.live.desc'),
-  //   scene: "live",
-  // }
-]);
+// Get enabled scenes from unified configuration
+const experienceScene = computed(() => 
+  getEnabledScenes().map((config: SceneConfig) => ({
+    url: sceneImageMap[config.scene] || '',
+    label: t(config.labelKey),
+    title: t(config.titleKey),
+    desc: t(config.descKey),
+    scene: config.scene,
+    subScenes: config.subScenes?.map(sub => ({
+      id: sub.id,
+      label: t(sub.labelKey),
+      desc: t(sub.descKey),
+      isDefault: sub.isDefault,
+    })),
+  }))
+);
 
-const { loginUserInfo } = useLoginState();
+const toContent = (scene: string, subScene?: string) => {
+  // Report scene selection event (remove for GitHub demo)
+  // ext1 format: "home | scene | subScene" (e.g., "home | chat | medical")
+  const aegisScene = SCENE_ID_TO_AEGIS_SCENE[scene] || scene;
+  reportSceneSelect(AEGIS_PAGES.HOME, aegisScene, subScene);
 
-const toContent = (scene: string, active?: string) => {
-  if (loginUserInfo.value?.userId) {
-    router.push({ path: "/detail", query: { scene, active } });
+  const query: Record<string, string> = { scene, ...getFromQuery() };
+  if (subScene) {
+    query.subScene = subScene;
+  }
+  if (isUserSessionLoggedIn()) {
+    router.push({ path: '/detail', query });
   } else {
-    router.push({ path: '/login', query: { scene, active } });
+    router.push({ path: '/login', query });
   }
 }
 

@@ -10,7 +10,11 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/home',
     name: 'home',
-    component: Home
+    component: Home,
+    meta: {
+      // ✅ 标记预获取 Detail 页面
+      prefetch: ['/detail'],
+    },
   },
   {
     path: '/detail',
@@ -32,6 +36,23 @@ const router = createRouter({
       return savedPosition;
     } else {
       return { top: 0 };
+    }
+  }
+});
+
+router.afterEach((to) => {
+  const prefetchPaths = to.meta?.prefetch;
+  if (prefetchPaths && Array.isArray(prefetchPaths)) {
+    // Use requestIdleCallback to prefetch during idle time
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => {
+        (prefetchPaths as string[]).forEach((path: string) => {
+          const route = routes.find(r => r.path === path);
+          if (route?.component && typeof route.component === 'function') {
+            (route.component as () => Promise<any>)();
+          }
+        });
+      });
     }
   }
 });

@@ -26,6 +26,31 @@ export function getUserLoginInfo() {
   return info;
 }
 
+/**
+ * Global session login state (independent of tuikit-atomicx-vue3)
+ * This is used to track whether the SDK has successfully logged in during the current session.
+ * Unlike localStorage.getItem("userInfo"), this variable is reset on page refresh,
+ * ensuring that stale login data does not incorrectly indicate a successful login state
+ * when the SDK has not actually completed initialization and login.
+ */
+let isSessionLoggedIn = false;
+
+/**
+ * Set the session login state after SDK login succeeds
+ */
+export function setSessionLoggedIn(value: boolean) {
+  isSessionLoggedIn = value;
+}
+
+/**
+ * Check if the user has logged in during the current session
+ * This should be used on the home page to determine navigation logic
+ * without importing tuikit-atomicx-vue3, reducing initial bundle size.
+ */
+export function isUserSessionLoggedIn(): boolean {
+  return isSessionLoggedIn;
+}
+
 export function getQueryVariable(variable: string) {
   let query = window.location.search.substring(1);
   let vars = query.split("&");
@@ -132,21 +157,47 @@ export function getCustomSceneUrl(scene: string, type: string) {
 
 export const pageHost = window.location.host;
 
+/**
+ * Pad number with leading zeros
+ */
+function padZero(num: number, length = 2): string {
+  return String(num).length >= length
+    ? String(num)
+    : ('0'.repeat(length) + num).slice(-length);
+}
+
 export function getCurrentFormattedTime(date?: Date) {
   const now = date ?? new Date();
   const year = now.getFullYear();
-  // 月份从0开始，需要加1，并补零
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  const hour = String(now.getHours().toString().padStart(2, "0"));
-  const minute = String(now.getMinutes().toString().padStart(2, "0"));
-  const second = String(now.getSeconds().toString().padStart(2, "0"));
+  // Month starts from 0, need to add 1 and pad with zero
+  const month = padZero(now.getMonth() + 1);
+  const day = padZero(now.getDate());
+  const hour = padZero(now.getHours());
+  const minute = padZero(now.getMinutes());
+  const second = padZero(now.getSeconds());
   return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 }
 
 export const formatterTimeToHour = (date?: Date) => {
-  const hour = String(date.getHours()).padStart(2, "0");
-  const minute = String(date.getMinutes()).padStart(2, "0");
-  const second = String(date.getSeconds()).padStart(2, "0");
+  const now = date ?? new Date();
+  const hour = padZero(now.getHours());
+  const minute = padZero(now.getMinutes());
+  const second = padZero(now.getSeconds());
   return `${hour}:${minute}:${second}`;
 };
+
+// Aegis data reporting (remove for GitHub demo)
+export {
+  initAegis,
+  getAegis,
+  setAegisUin,
+  reportEvent,
+  reportSceneSelect,
+  reportIndustrySwitcherClick,
+  reportLinkClick,
+  reportQrcodeView,
+  reportMedicalPickerClick,
+  reportMedicalShowroomClick,
+  createSceneDurationTracker,
+  destroyAegis,
+} from './aegis';

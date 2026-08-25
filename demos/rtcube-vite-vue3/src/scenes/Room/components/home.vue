@@ -52,8 +52,7 @@ const handleJoinRoom = async (roomId: string, roomType: number) => {
 
 <style lang="scss" scoped>
 .home-pre {
-    min-height: 100% !important;
-    padding: 0 50px;
-    margin: 0;
+  min-height: 100% !important;
+  min-width: 1330px;
 }
 </style>

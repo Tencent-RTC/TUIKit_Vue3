@@ -1,5 +1,5 @@
 <template>
-  <div class="call-container">
+  <div class="C2C-call-container">
     <CreateUserTip> {{ t('Create more userIDs to enable one-on-one calls') }} </CreateUserTip>
     <Input
       class="call-input"
@@ -45,7 +45,7 @@ const handleCallUserID = () => {
 </script>
 
 <style lang="scss" scoped>
-.call-container {
+.C2C-call-container {
   width: 520px;
   margin-top: 85px;
 

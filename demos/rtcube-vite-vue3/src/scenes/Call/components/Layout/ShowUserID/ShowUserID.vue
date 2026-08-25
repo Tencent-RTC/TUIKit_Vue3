@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useLoginState } from '@tencentcloud/chat-uikit-vue3';
+import { useLoginState } from 'tuikit-atomicx-vue3';
 import Icon from '../../common/Icon/Icon.vue';
 import Text from '../../common/Text/Text.vue';
 import CopySrc from '../../../assets/Container/copy.svg';

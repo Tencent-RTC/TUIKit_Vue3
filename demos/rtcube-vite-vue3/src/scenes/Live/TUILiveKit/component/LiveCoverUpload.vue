@@ -69,6 +69,7 @@
 
     <template v-if="!uploadEnabled">
       <TUIInput
+        maxLength="200"
         v-model="coverUrlModel"
         :placeholder="t('Cover URL')"
         :spellcheck="false"
