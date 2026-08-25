@@ -6,11 +6,6 @@ import "./locales"; // Initialize UIKit i18n
 import App from "@/App.vue";
 import "./styles/normalize.css";
 import router from "./router";
-// Aegis data reporting (remove for GitHub demo)
-import { initAegis } from "./utils/aegis";
-
-// Initialize Aegis SDK for data reporting
-initAegis();
 
 const app = createApp(App);
 
