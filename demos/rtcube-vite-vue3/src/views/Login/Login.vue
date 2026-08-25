@@ -2,7 +2,7 @@
   <div class="login-page">
     <!-- Header Navigation -->
     <header class="login-header">
-      <div class="header-left" @click="router.replace({ path: '/home', query: getFromQuery() })">
+      <div class="header-left" @click="router.replace('/')">
         <img :src="headerLogo" alt="logo" class="header-logo" />
         <img :src="language === 'en-US' ? headerTitleEn : headerTitle" alt="title" class="header-title" />
         <span class="header-divider">|</span>
@@ -34,7 +34,7 @@
       <div class="illustration-area">
         <img
           :src="bannerImage"
-          alt="Banner图片"
+          alt="Banner"
           loading="lazy"
         />
       </div>
@@ -43,21 +43,59 @@
       <div class="login-form-area">
         <div class="login-card">
           <h1 class="login-title">{{ t('header.subtitle') }}</h1>
-          <div class="login-suspense">
-            <Suspense>
-              <template #default>
-                <Login
-                  :SDKAppID="currentSDKAppID"
-                  @login-callback="handleLoginCallback"
-                />
-              </template>
-              <template #fallback>
-                <div class="login-loading">
-                  <t-loading size="large" />
+            <form class="login-form" @submit.prevent="submitForm">
+              <div class="form-group">
+                <div class="form-row">
+                  <label for="sdkappid">{{ t('login.sdkAppIdLabel') }}</label>
+                  <div class="input-container">
+                    <input 
+                      type="text" 
+                      id="sdkappid"
+                      v-model="ruleForm.SDKAppID" 
+                      class="input-field"
+                      :class="{ 'input-error': error.SDKAppID }"
+                      :placeholder="t('login.sdkAppIdPlaceholder')"
+                      autocomplete="off"
+                    />
+                    <span class="error-text" v-if="error.SDKAppID">{{ error.SDKAppID }}</span>
+                  </div>
                 </div>
-              </template>
-          </Suspense>
-          </div>
+                <div class="form-row">
+                  <label for="secretkey">{{ t('login.secretKeyLabel') }}</label>
+                  <div class="input-container">
+                    <input 
+                      type="text" 
+                      id="secretkey"
+                      v-model="ruleForm.secretKey" 
+                      class="input-field"
+                      :class="{ 'input-error': error.secretKey }"
+                      :placeholder="t('login.secretKeyPlaceholder')"
+                      autocomplete="off"
+                    />
+                    <span class="error-text" v-if="error.secretKey">{{ error.secretKey }}</span>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <label for="userid">{{ t('login.userIdLabel') }}</label>
+                  <div class="input-container">
+                    <input 
+                      type="text" 
+                      id="userid"
+                      v-model="ruleForm.userID" 
+                      class="input-field"
+                      :class="{ 'input-error': error.userID }"
+                      :placeholder="t('login.userIdPlaceholder')"
+                      autocomplete="off"
+                    />
+                    <span class="error-text" v-if="error.userID">{{ error.userID }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <TUIButton type="primary" class="submit-button">
+                {{ t('login.submit') }}
+              </TUIButton>
+            </form>
         </div>
       </div>
     </main>
@@ -70,15 +108,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
-import { useUIKit, IconArrowStrokeSelectDown } from '@tencentcloud/uikit-base-component-vue3';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useLoginState } from 'tuikit-atomicx-vue3';
+import { useUIKit, IconArrowStrokeSelectDown, TUIButton } from '@tencentcloud/uikit-base-component-vue3';
+import { genTestUserSig } from '../../debug';
 import { useRoute, useRouter } from 'vue-router';
-
-// Async load Login component to avoid blocking render
-// The uikit-base-widget-vue3 package will be loaded in background
-const Login = defineAsyncComponent(() =>
-  import('@tencentcloud/uikit-base-widget-vue3').then((m) => m.Login) 
-);
 import headerLogo from '@/assets/images/logo-icon.png';
 import headerTitle from '@/assets/images/logo-title.png';
 import headerTitleEn from "@/assets/images/logo-title-en.png";
@@ -86,39 +120,22 @@ import bannerImage from '@/assets/images/main.png';
 import iconLanguage from '@/assets/icons/svg/icon-language.svg';
 import TUIChatEngine from '@tencentcloud/chat-uikit-engine-lite';
 import { setSessionLoggedIn } from '@/utils';
-import { getFromQuery } from '@/utils/from';
 
-// Preloaded tuikit-atomicx-vue3 module reference
-// The module is preloaded in background after login page renders
-let atomicxModule: typeof import('tuikit-atomicx-vue3') | null = null;
-let atomicxLoadPromise: Promise<typeof import('tuikit-atomicx-vue3')> | null = null;
-
-/**
- * Preload tuikit-atomicx-vue3 module in the background.
- * This function starts loading immediately after login page renders,
- * so the module is ready when user clicks login button.
- */
-const preloadAtomicxModule = () => {
-  if (atomicxLoadPromise) return atomicxLoadPromise;
-  
-  atomicxLoadPromise = import('tuikit-atomicx-vue3').then((module) => {
-    atomicxModule = module;
-    return module;
-  });
-  
-  return atomicxLoadPromise;
-};
-
+const { login } = useLoginState();
 const { t, setLanguage, language } = useUIKit();
 const route = useRoute();
 const router = useRouter();
+const ruleForm = ref({
+  SDKAppID: 0,
+  userID: '',
+  secretKey: '',
+});
+const error = ref({
+  SDKAppID: '',
+  userID: '',
+  secretKey: '',
+});
 
-const SDK_APP_ID_MAP: Record<string, number> = {
-  im: 1400187352,
-  trtc: 1400704311,
-};
-
-const currentSDKAppID = ref(SDK_APP_ID_MAP[route.query.from as string] ?? SDK_APP_ID_MAP.im);
 const showLanguageMenu = ref(false);
 
 const availableLanguages = [
@@ -148,49 +165,50 @@ const handleClickOutside = () => {
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
   TUIChatEngine.setLogLevel(1);
-  
-  // Preload tuikit-atomicx-vue3 in background after login page renders
-  // This ensures the module is ready when user clicks login button
-  preloadAtomicxModule();
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
 });
 
-interface LoginUserInfo {
-  SDKAppID: number;
-  userID: string;
-  userSig: string;
-}
-
-const handleLoginCallback = async (userInfo: LoginUserInfo) => {
-  const { SDKAppID, userID, userSig } = userInfo;
-  
-  try {
-    // Use preloaded module if available, otherwise wait for it to load
-    // The module should already be loaded since we started preloading on mount
-    const module = atomicxModule || await preloadAtomicxModule();
-    const { login } = module.useLoginState();
-    
-    await login({
-      sdkAppId: SDKAppID,
-      userId: userID,
-      userSig,
-    });
-    
+const submitForm = async () => {
+  const { SDKAppID, userID, secretKey } = ruleForm.value;
+  if (!SDKAppID) {
+    error.value.SDKAppID = t('login.sdkAppIdRequired');
+    return;
+  } else if (!secretKey) {
+    error.value.secretKey = t('login.secretKeyRequired');
+    return;
+  } else if (!userID) {
+    error.value.userID = t('login.userIdRequired');
+    return;
+  }
+  const { userSig } = genTestUserSig({
+    SDKAppID: Number(SDKAppID),
+    userID,
+    secretKey,
+  });
+  login({
+    sdkAppId: Number(SDKAppID),
+    userId: userID,
+    userSig,
+  }).then(() => {
     // Mark session as logged in (independent of tuikit-atomicx-vue3)
     // This allows the home page to check login state without importing the SDK
     setSessionLoggedIn(true);
-    localStorage.setItem('userInfo', JSON.stringify(userInfo));
-    router.push({ path: '/detail', query: { ...route.query, ...getFromQuery() } });
-  } catch (error) {
+    localStorage.setItem('userInfo', JSON.stringify({
+      SDKAppID: Number(SDKAppID),
+      userID,
+      userSig,
+    }));
+    router.push({ path: '/detail', query: route.query });
+  }).catch((error: Error) => {
     console.error('Login failed:', error);
-  }
+  });
 };
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .login-page {
   min-height: 100vh;
   // background: linear-gradient(180deg, #e8f4ff 0%, #f5f9ff 50%, #ffffff 100%);
@@ -309,34 +327,20 @@ const handleLoginCallback = async (userInfo: LoginUserInfo) => {
 }
 
 .login-form-area {
-  min-width: 500px;
+  min-width: 400px;
 }
 
 // Main Content Styles
 .login-main {
-  box-sizing: border-box;
   flex: 1;
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: center;
   padding: 0 80px;
   gap: 80px;
-}
-
-.login-suspense {
-  min-height: 300px;
-  display: flex;
-  flex-direction: column;
-  .login-container {
-    margin: 0;
-  }
-}
-
-.login-loading {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 // Illustration Area Styles
@@ -347,202 +351,13 @@ const handleLoginCallback = async (userInfo: LoginUserInfo) => {
   justify-content: center;
   position: relative;
   min-height: 500px;
-  max-width: 1024px;
-
-  img {
-    flex: 1;
-    width: 100%;
-  }
-}
-
-
-// Floating elements
-.floating-element {
-  position: absolute;
-  transition: all 0.3s ease;
-
-  &.tablet {
-    top: 10%;
-    left: 5%;
-    width: 80px;
-    height: 100px;
-    background: linear-gradient(135deg, #e6f0ff 0%, #c4d8ff 100%);
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(100, 150, 255, 0.25);
-    transform: rotate(-15deg);
-
-    .tablet-screen {
-      position: absolute;
-      top: 10%;
-      left: 10%;
-      width: 80%;
-      height: 70%;
-      background: linear-gradient(135deg, #4da6ff 0%, #66b3ff 100%);
-      border-radius: 4px;
-    }
-  }
-
-  &.phone {
-    top: 5%;
-    left: 25%;
-    width: 50px;
-    height: 80px;
-    background: linear-gradient(135deg, #cce4ff 0%, #99caff 100%);
-    border-radius: 10px;
-    box-shadow: 0 6px 20px rgba(100, 150, 255, 0.2);
-    transform: rotate(10deg);
-
-    .phone-screen {
-      position: absolute;
-      top: 12%;
-      left: 10%;
-      width: 80%;
-      height: 70%;
-      background: linear-gradient(180deg, #66b3ff 0%, #3399ff 100%);
-      border-radius: 4px;
-    }
-  }
-
-  &.play-button {
-    top: 15%;
-    left: 0;
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #4da6ff 0%, #1a8cff 100%);
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(26, 140, 255, 0.3);
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 55%;
-      transform: translate(-50%, -50%);
-      width: 0;
-      height: 0;
-      border-left: 16px solid white;
-      border-top: 10px solid transparent;
-      border-bottom: 10px solid transparent;
-    }
-  }
-
-  &.mic {
-    bottom: 20%;
-    left: 5%;
-    width: 50px;
-    height: 80px;
-    background: linear-gradient(180deg, #66b3ff 0%, #3399ff 100%);
-    border-radius: 25px 25px 10px 10px;
-    box-shadow: 0 8px 24px rgba(51, 153, 255, 0.3);
-
-    &::before {
-      content: '';
-      position: absolute;
-      bottom: -20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 8px;
-      height: 30px;
-      background: #3399ff;
-      border-radius: 4px;
-    }
-
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -25px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 30px;
-      height: 8px;
-      background: #3399ff;
-      border-radius: 4px;
-    }
-  }
-
-  &.music-note {
-    top: 25%;
-    right: 20%;
-    width: 20px;
-    height: 20px;
-    background: #475467;
-    border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: -30px;
-      right: 0;
-      width: 3px;
-      height: 30px;
-      background: #475467;
-    }
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: -30px;
-      right: 0;
-      width: 15px;
-      height: 8px;
-      background: #475467;
-      border-radius: 0 4px 4px 0;
-    }
-  }
-
-  &.small-cube {
-    bottom: 30%;
-    right: 15%;
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #4da6ff 0%, #1a8cff 100%);
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(26, 140, 255, 0.3);
-    transform: rotate(15deg);
-  }
-
-  &.connection-box {
-    bottom: 35%;
-    right: 5%;
-    width: 70px;
-    height: 50px;
-    background: linear-gradient(135deg, #66b3ff 0%, #4da6ff 100%);
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(77, 166, 255, 0.3);
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 15%;
-      transform: translateY(-50%);
-      width: 25%;
-      height: 60%;
-      background: rgba(255, 255, 255, 0.6);
-      border-radius: 4px;
-    }
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      right: 15%;
-      transform: translateY(-50%);
-      width: 25%;
-      height: 60%;
-      background: rgba(255, 255, 255, 0.6);
-      border-radius: 4px;
-    }
-  }
 }
 
 .login-card {
-  box-sizing: border-box;
   background: white;
   border-radius: 16px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  padding: 40px 20px 0;
+  padding: 40px;
   width: 100%;
 
   .login-title {
@@ -550,8 +365,78 @@ const handleLoginCallback = async (userInfo: LoginUserInfo) => {
     font-weight: 600;
     color: #1677ff;
     text-align: center;
+    margin: 0 0 32px 0;
     letter-spacing: 2px;
   }
+}
+
+
+.login-form {
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+}
+
+label {
+  width: 80px;
+  font-weight: 500;
+  color: var(--text-color-primary);
+  font-size: 14px;
+  text-align: right;
+  padding-right: 15px;
+  flex-shrink: 0;
+}
+
+.input-container {
+  flex: 1;
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid var(--stroke-color-primary);
+  border-radius: 8px;
+  font-size: 16px;
+  box-sizing: border-box;
+  height: 46px;
+  transition: all 0.3s ease;
+  color: var(--text-color-primary);
+  background-color: var(--bg-color-input);
+  line-height: 22px;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--button-color-primary-default);
+  background-color: var(--bg-color-input);
+  box-shadow: 0 0 0 2px var(--uikit-color-theme-1);
+}
+
+.input-field::placeholder {
+  color: var(--text-color-tertiary);
+  font-size: 14px;
+}
+
+.input-error {
+  border-color: var(--text-color-error);
+
+  &:focus {
+    box-shadow: 0 0 0 2px var(--uikit-color-red-1);
+  }
+}
+
+.error-text {
+  display: block;
+  color: var(--text-color-error);
+  font-size: 12px;
+  margin-top: 6px;
 }
 
 // Footer Disclaimer Styles

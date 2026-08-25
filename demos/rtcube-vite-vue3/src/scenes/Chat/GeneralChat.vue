@@ -101,7 +101,7 @@ const handleSwitchScene = (scene: string) => {
       v-if="activeTab === 'conversation'"
       class="chat-with-search"
     >
-      <Chat
+      <Chat conversationID="C2Cadministrator"
         :PlaceholderEmpty="() => h(
           CapabilityRecommend,
           { onSwitchScene: handleSwitchScene })

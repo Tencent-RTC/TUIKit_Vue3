@@ -3,15 +3,12 @@
     <UIKitProvider theme="light">
       <router-view />
     </UIKitProvider>
-    <HeatmapOverlay />
   </div>
 </template>
 
 <script setup lang="ts">
 import { onBeforeMount } from 'vue';
 import { UIKitProvider, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { HeatmapOverlay } from '@/components/HeatmapOverlay';
-
 const { setLanguage } = useUIKit();
 
 onBeforeMount(() => {

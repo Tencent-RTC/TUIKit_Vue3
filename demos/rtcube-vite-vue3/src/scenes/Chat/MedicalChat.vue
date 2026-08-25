@@ -135,7 +135,7 @@ onUnmounted(() => {
 
     <!-- Chat Content Panel (conversation tab) -->
     <div v-if="activeTab === 'conversation'" class="medical-chat-content">
-      <Chat class="medical-chat-inner">
+      <Chat conversationID="C2Cadministrator" class="medical-chat-inner">
         <ChatHeader>
           <template #ChatHeaderRight>
             <button
