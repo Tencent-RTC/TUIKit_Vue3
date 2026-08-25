@@ -51,7 +51,7 @@
 
 <script lang="ts" setup>
 import { ref, computed } from 'vue';
-import { useLoginState } from '@tencentcloud/chat-uikit-vue3';
+import { useLoginState } from 'tuikit-atomicx-vue3';
 import { useLanguage } from '../../../hooks';
 import useGroupCall from '../useGroupCall';
 import Text from '../../../components/common/Text/Text.vue';

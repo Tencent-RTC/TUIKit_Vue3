@@ -8,6 +8,16 @@ RTCube 是展现 TencentCloud RTC 场景下多产品能力的示例工程，包�
 我们为您提供了全新的 AI 集成方式，如果您不需要完整的 Demo 工程, 只想快速开始集成，推荐您使用更高效的 AI 集成助手，只需要简单描述您的需求，即可自动生成集成代码，大幅提升开发效率。</br>
 [点击这里，立即体验 AI 集成](https://cloud.tencent.com/document/product/269/124481)
 
+## 🚀 推荐：仅查看 Chat UIKit
+
+RTCube 项目是一个全面展示 RTC 场景下多产品能力的示例工程，包括 Chat、Call、Room 等产品的示例代码。
+
+如果您只想要查看 Chat 产品能力，可以 clone 以下项目：
+
+```bash
+git clone https://gitee.com/tencent-cloud-uikit/rtc-chat-web.git
+```
+
 ## 目录结构
 
 RTCube 目前包含以下页面和场景：

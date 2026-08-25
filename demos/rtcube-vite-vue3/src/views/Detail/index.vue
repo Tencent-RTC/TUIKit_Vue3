@@ -3,16 +3,23 @@
     <HeaderWrapper />
     <Bar :active-scene="activeScene" @change-scene="changeActiveScene" />
     <div class="detail-box">
-      <SideBar class="detail-slider" :active-scene="activeScene" @change-scene="changeActiveScene" />
+      <SideBar
+        class="detail-slider"
+        :active-scene="activeScene"
+        @change-scene="changeActiveScene"
+      />
       <div class="detail-content">
         <div class="detail-content-main" :class="activeScene">
           <WindowContent
-            :key="activeScene"
+            :key="`${activeScene}-${activeSubScene}`"
             class="WindowContent"
             :class="activeScene"
             :active-scene="activeScene"
+            :active-sub-scene="activeSubScene"
             :is-international="false"
-          ></WindowContent>
+            @switch-scene="changeActiveScene"
+            @switch-sub-scene="changeSubScene"
+          />
         </div>
       </div>
     </div>
@@ -25,32 +32,41 @@
       :on-cancel="onCloseBtnClick"
       :on-close-btn-click="onCloseBtnClick"
       :on-confirm="onConfirmAnother"
-    ></t-dialog>
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import HeaderWrapper from '../../components/Header/index.vue';
+
+// Lazy load WindowContent to ensure scene components are truly loaded on demand
+// This prevents scene chunks from being included in the main bundle
+
+import { CALLKIT_CMD } from '../../utils/constants';
+import emitter from '../../utils/emitter';
+import { getFromQuery } from '@/utils/from';
 import Bar from './Bar/index.vue';
 import SideBar from './SideBar/index.vue';
-import WindowContent from './Content/index.vue';
-import emitter from '../../utils/emitter';
-import { CALLKIT_CMD } from '../../utils/constants';
+
+const WindowContent = defineAsyncComponent(() => import('./Content/index.vue'));
 
 const { t } = useUIKit();
 
 const route = useRoute();
 const router = useRouter();
 const activeScene = ref<string | any>(route.query.scene || 'callkit');
+const activeSubScene = ref<string | undefined>(
+  (route.query.subScene as string) || undefined,
+);
 
 const showCallingDialog = ref(false);
 const callingChangeScene = ref('');
 let callingStatus = false;
 
-emitter.on('calling-dialog', val => {
+emitter.on('calling-dialog', (val) => {
   callingStatus = val as boolean;
 });
 
@@ -59,17 +75,26 @@ const changeActiveScene = (scene: string) => {
   emitter.off('player-qrcode');
   if (activeScene.value !== 'callkit' || callingStatus === false) {
     activeScene.value = scene;
-    router.push({ path: '/detail', query: { scene } });
+    activeSubScene.value = undefined;
+    router.push({ path: '/detail', query: { scene, ...getFromQuery() } });
   } else {
     showCallingDialog.value = true;
     callingChangeScene.value = scene;
   }
 };
 
+const changeSubScene = (subScene: string) => {
+  activeSubScene.value = subScene;
+  router.push({
+    path: '/detail',
+    query: { scene: activeScene.value, subScene, ...getFromQuery() },
+  });
+};
+
 const onConfirmAnother = () => {
   showCallingDialog.value = false;
   activeScene.value = callingChangeScene.value;
-  router.push({ path: '/detail', query: { scene: activeScene.value } });
+  router.push({ path: '/detail', query: { scene: activeScene.value, ...getFromQuery() } });
 };
 
 const onCloseBtnClick = () => {
@@ -92,20 +117,7 @@ onMounted(() => {
   position: relative;
   background-size: cover;
 
-  /* Scrollbar styles */
-  ::-webkit-scrollbar {
-    display: block;
-    width: 14px;
-    height: 14px;
-  }
 
-  ::-webkit-scrollbar-thumb {
-    display: block;
-    border-radius: 7px;
-    border: 4px solid rgba(0, 0, 0, 0);
-    background-color: rgba(143, 154, 178, 0);
-    background-clip: padding-box;
-  }
 
   .t-dialog--lock {
     overflow: auto !important;
@@ -173,7 +185,7 @@ onMounted(() => {
       }
 
       &-main {
-        height: calc(100% - 85px);
+        height: calc(100% - 80px);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -186,6 +198,15 @@ onMounted(() => {
           min-height: 650px;
         }
       }
+    }
+  }
+}
+
+@media screen and (max-width: 1670px) {
+  .detail-content {
+    &-main {
+      height: calc(100% - 40px) !important;
+      margin: 20px !important;
     }
   }
 }

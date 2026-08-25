@@ -9,7 +9,7 @@
     "noImplicitAny": false,
     "preserveValueImports": false,
     "importsNotUsedAsValues": "remove",
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
     "strictNullChecks": false,
     "baseUrl": ".",
     "paths": {

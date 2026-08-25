@@ -22,8 +22,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useUIKit } from '@tencentcloud/chat-uikit-vue3';
-import { IconLogo } from '@tencentcloud/uikit-base-component-vue3';
+import { IconLogo, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 
 const { t } = useUIKit();
 </script>
@@ -38,6 +37,8 @@ const { t } = useUIKit();
 
 .welcome {
   flex: 1;
+  width: 100%;
+  height: 100%;
   box-sizing: border-box;
   padding-left: 40px;
   padding-top: 100px;

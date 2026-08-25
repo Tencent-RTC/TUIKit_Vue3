@@ -34,10 +34,14 @@
       </div>
       <div class="user-info-container" @click.stop>
         <div class="user-info" @click="toggleUserMenu">
-          <Avatar :src="loginUserInfo?.avatarUrl" />
+          <!-- Use simple avatar fallback when SDK not loaded -->
+          <component :is="AvatarComponent" v-if="AvatarComponent" :src="userInfo?.avatarUrl" />
+          <div v-else class="simple-avatar">
+            {{ userInfo?.userName?.[0] || userInfo?.userId?.[0] || 'U' }}
+          </div>
           <div class="user-details">
             <div class="user-name">
-              {{ loginUserInfo?.userName || loginUserInfo?.userId || 'Unknown User' }}
+              {{ userInfo?.userName || userInfo?.userId || 'Unknown User' }}
             </div>
           </div>
           <IconArrowStrokeSelectDown :class="{ 'dropdown-icon': true, active: showUserMenu }" />
@@ -60,12 +64,13 @@
 
 <script setup lang="ts">
 import { useRouter, useRoute } from "vue-router";
-import { onMounted, onUnmounted, ref, computed } from "vue";
+import { onMounted, onUnmounted, ref, computed, shallowRef, type Component } from "vue";
 import headerLogo from "@/assets/images/logo-icon.png";
 import headerTitle from "@/assets/images/logo-title.png";
 import headerTitleEn from "@/assets/images/logo-title-en.png";
 import iconLanguage from "@/assets/icons/svg/icon-language.svg";
-import { useLoginState, Avatar } from '@tencentcloud/chat-uikit-vue3';
+import { setSessionLoggedIn } from '@/utils';
+import { getFromQuery } from '@/utils/from';
 import {
   IconLogout,
   IconArrowStrokeSelectDown,
@@ -74,7 +79,19 @@ import {
 
 import "@/styles/web/header.scss";
 
-const { loginUserInfo, logout: _logout, login } = useLoginState();
+// Lazy-loaded SDK state - avoid importing tuikit-atomicx-vue3 synchronously
+// This prevents the large bundle (~11MB) from being loaded on initial page load
+let loginStateFns: {
+  loginUserInfo: { value: { avatarUrl?: string; userName?: string; userId?: string } | null };
+  logout: () => void;
+  login: (options: { sdkAppId: number; userId: string; userSig: string; useUploadPlugin?: boolean }) => Promise<void>;
+} | null = null;
+
+// Component ref for dynamically loaded Avatar
+const AvatarComponent = shallowRef<Component | null>(null);
+
+// Local user info state (synced from SDK after load)
+const userInfo = ref<{ avatarUrl?: string; userName?: string; userId?: string } | null>(null);
 
 const router = useRouter();
 const route = useRoute();
@@ -101,30 +118,48 @@ const changeLanguage = (code: string) => {
 };
 
 const goHome = () => {
-  router.push("/home");
+  router.push({ path: '/home', query: getFromQuery() });
 };
 
+// Load SDK lazily and initialize login state
+async function loadSDK() {
+  if (!loginStateFns) {
+    const { useLoginState, Avatar } = await import('tuikit-atomicx-vue3');
+    loginStateFns = useLoginState();
+    AvatarComponent.value = Avatar;
+  }
+  return loginStateFns;
+}
 
 async function init() {
   try {
-    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-    if (userInfo.userID && !loginUserInfo.value?.userId) {
-      const { SDKAppID, userID, userSig } = userInfo;
+    const storedUserInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    if (!storedUserInfo.userID) {
+      router.replace({ path: "/login", query: { ...route.query, ...getFromQuery() } });
+      return;
+    }
+    
+    // Load SDK and initialize
+    const { loginUserInfo, login } = await loadSDK();
+    
+    if (storedUserInfo.userID && !loginUserInfo.value?.userId) {
+      const { SDKAppID, userID, userSig } = storedUserInfo;
       await login({
         sdkAppId: SDKAppID,
         userId: userID,
         userSig,
         useUploadPlugin: true,
       });
+      // Mark session as logged in after successful SDK login
+      setSessionLoggedIn(true);
     }
-    if (!userInfo.userID && !loginUserInfo.value?.userId) {
-      router.replace({ path: "/login", query: route.query });
-      return;
-    }
+    
+    // Sync user info to local state
+    userInfo.value = loginUserInfo.value;
   } catch (error) {
     console.error('Login failed:', error);
     localStorage.removeItem('userInfo');
-    router.replace({ path: "/login", query: route.query });
+    router.replace({ path: "/login", query: { ...route.query, ...getFromQuery() } });
   }
 }
 
@@ -157,15 +192,33 @@ function closeUserMenu() {
   showUserMenu.value = false;
 }
 
-function logout() {
+async function logout() {
   closeUserMenu();
-  _logout();
+  if (loginStateFns) {
+    loginStateFns.logout();
+  }
+  // Reset session login state on logout
+  setSessionLoggedIn(false);
   localStorage.removeItem('userInfo');
-  router.replace({ name: 'home' });
+  router.replace({ path: '/home', query: getFromQuery() });
 }
 
 </script>
 <style lang="scss" scoped>
+.simple-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
 .user-info-container {
   position: relative;
 }

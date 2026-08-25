@@ -10,7 +10,6 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     TDialog: typeof import('tdesign-vue-next')['Dialog']
-    TStepItem: typeof import('tdesign-vue-next')['StepItem']
-    TSteps: typeof import('tdesign-vue-next')['Steps']
+    TLoading: typeof import('tdesign-vue-next')['Loading']
   }
 }

@@ -9,7 +9,7 @@ import {
 import {
   useLoginState,
   Avatar,
-} from '@tencentcloud/chat-uikit-vue3';
+} from 'tuikit-atomicx-vue3';
 
 type TabKey = 'conversation' | 'contact';
 

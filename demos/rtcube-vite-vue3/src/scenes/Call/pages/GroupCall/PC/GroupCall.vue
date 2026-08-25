@@ -37,7 +37,7 @@
 
 <script lang="ts" setup>
 import { ref, computed } from 'vue';
-import { useLoginState } from '@tencentcloud/chat-uikit-vue3';
+import { useLoginState } from 'tuikit-atomicx-vue3';
 import Button from '../../../components/common/Button/Button.vue';
 import Icon from '../../../components/common/Icon/Icon.vue';
 import Input from '../../../components/common/Input/Input.vue';

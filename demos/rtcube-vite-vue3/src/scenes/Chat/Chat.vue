@@ -1,312 +1,90 @@
 <script lang="ts" setup>
-import { h, ref, watch } from 'vue';
-import {
-  ConversationList,
-  Chat,
-  MessageList,
-  MessageInput,
-  ContactList,
-  ContactInfo,
-  ChatSetting,
-  Search,
-  VariantType,
-  EmojiPicker,
-  ImagePicker,
-  FilePicker,
-  VideoPicker,
-  AudioCallPicker,
-  VideoCallPicker,
-  useUIKit,
-  ChatHeader,
-  useConversationListState,
-} from '@tencentcloud/chat-uikit-vue3';
-import { IconMenu, IconHistory3 } from '@tencentcloud/uikit-base-component-vue3';
-import { TUICallKit } from '@trtc/calls-uikit-vue';
-import { PlaceholderEmpty } from './components/PlaceholderEmpty';
-import { SideTab } from './components/SideTab';
+import { ref, watch } from 'vue';
+import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { IndustrySwitcher } from '../../components/IndustrySwitcher';
+import GeneralChat from './GeneralChat.vue';
+import MedicalChat from './MedicalChat.vue';
 
-const activeContact = ref();
-const activeTab = ref<'conversation' | 'contact'>('conversation');
-const isChatSettingShow = ref(false);
-const isSearchInChatShow = ref(false);
+const MEDICAL_THEME = { themeStyle: 'light', primaryColor: '#2ba471' };
 
-const { t, theme } = useUIKit();
-const { activeConversation } = useConversationListState();
+const { setTheme } = useUIKit();
 
-watch(() => activeConversation.value?.conversationID, (newVal, oldVal) => {
-  if (newVal !== oldVal) {
-    isChatSettingShow.value = false;
-    isSearchInChatShow.value = false;
+const props = defineProps<{
+  activeSubScene?: string;
+}>();
+
+const emit = defineEmits<{
+  (e: 'switchScene', scene: string): void;
+  (e: 'switchSubScene', subScene: string): void;
+}>();
+
+const currentSubScene = ref<string>(props.activeSubScene || 'general');
+
+watch(() => props.activeSubScene, (val) => {
+  if (val) {
+    currentSubScene.value = val;
   }
 });
 
-const handleTabChange = (tab: 'conversation' | 'contact') => {
-  activeTab.value = tab;
+const handleSubSceneChange = (subScene: string) => {
+  currentSubScene.value = subScene;
+  emit('switchSubScene', subScene);
 };
 
-const enterChat = () => {
-  activeTab.value = 'conversation';
+const handleSwitchScene = (scene: string) => {
+  emit('switchScene', scene);
 };
 
+// Switch theme when sub-scene changes
+watch(currentSubScene, (val) => {
+  setTheme(val === 'medical' ? MEDICAL_THEME : 'light');
+}, { immediate: true });
 </script>
 
 <template>
-  <div class="chat-layout">
-    <TUICallKit class="call-kit" />
-
-    <!-- SideTab Navigation -->
-    <SideTab
-      :active-tab="activeTab"
-      @change="handleTabChange"
+  <div class="chat-with-switcher">
+    <IndustrySwitcher
+      :active="currentSubScene"
+      @change="handleSubSceneChange"
     />
-
-    <!-- Conversation/Contact List Panel -->
-    <div class="conversation-list-panel">
-      <ConversationList
-        v-show="activeTab === 'conversation'"
-        enable-create
-      />
-      <ContactList v-show="activeTab === 'contact'" />
-    </div>
-
-    <!-- Chat Content Panel + Search Panel Container -->
-    <div
-      v-if="activeTab === 'conversation'"
-      class="chat-with-search"
-    >
-      <Chat
-        :PlaceholderEmpty="() => h(
-          PlaceholderEmpty,
-          { type: 'chat' })
-        "
-        class="chat-content-panel"
-      >
-        <ChatHeader>
-          <template #ChatHeaderRight>
-            <button
-              class="icon-button"
-              :title="t('chat.Setting')"
-              @click="isChatSettingShow = !isChatSettingShow"
-            >
-              <IconMenu size="20" />
-            </button>
-          </template>
-        </ChatHeader>
-        <MessageList />
-        <MessageInput class="message-input-container">
-          <template #headerToolbar>
-            <div class="message-toolbar">
-              <div class="message-toolbar-actions">
-                <EmojiPicker />
-                <ImagePicker />
-                <FilePicker />
-                <VideoPicker />
-                <AudioCallPicker />
-                <VideoCallPicker />
-              </div>
-              <button
-                class="icon-button"
-                :title="t('chat.Search')"
-                @click="isSearchInChatShow = !isSearchInChatShow"
-              >
-                <IconHistory3 size="20" />
-              </button>
-            </div>
-          </template>
-        </MessageInput>
-      </Chat>
-
-      <!-- Search in Chat Panel (side-by-side with chat, not overlapping) -->
-      <div
-        v-show="isSearchInChatShow"
-        class="search-panel"
-        :class="{ dark: theme === 'dark' }"
-      >
-        <div class="search-panel-header">
-          <span class="search-panel-title">{{ t('chat.Search') }}</span>
-          <button
-            class="icon-button"
-            @click="isSearchInChatShow = false"
-          >
-            ✕
-          </button>
-        </div>
-        <Search :variant="VariantType.EMBEDDED" />
-      </div>
-
-      <!-- Chat Setting Sidebar (overlay on the entire chat-with-search area) -->
-      <div
-        v-show="isChatSettingShow"
-        class="chat-sidebar"
-        :class="{ dark: theme === 'dark' }"
-      >
-        <ChatSetting
-          @close="isChatSettingShow = false"
-        />
-      </div>
-    </div>
-
-    <!-- Contact Detail Panel -->
-    <ContactInfo
+    <GeneralChat
+      v-if="currentSubScene !== 'medical'"
+      class="chat-main"
+      @switch-scene="handleSwitchScene"
+    />
+    <MedicalChat
       v-else
-      :active-contact-item="activeContact"
-      :PlaceholderEmpty="() => h(
-        PlaceholderEmpty,
-        { type: 'contact' })
-      "
-      class="contact-detail-panel"
-      @send-message="enterChat"
-      @enter-group="enterChat"
+      class="chat-main"
+      @switch-scene="handleSwitchScene"
     />
   </div>
 </template>
 
-<style lang="scss" scoped>
-@use '../../styles/mixins' as mixins;
-
-.chat-layout {
-  max-width: 900px;
-  max-height: 640px;
-  margin: auto;
+<style scoped lang="scss">
+.chat-with-switcher {
   flex: 1;
+  min-width: 1145px;
+  max-height: 1080px;
   display: flex;
-  flex-direction: row;
-  overflow: hidden;
-  min-height: 0;
-  background-color: var(--bg-color-operate);
-  color: var(--text-color-primary);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08), inset 0 -1px 0 rgba(255,255,255,0.05);
+  gap: 16px;
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+.chat-main {
+  display: flex;
+  flex: 1;
+  max-width: 1080px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.08),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
   border-radius: 24px;
-}
-
-.conversation-list-panel {
-  width: 255px;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  min-height: 0;
-  border-right: 1px solid var(--stroke-color-primary);
-}
-
-.chat-with-search {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
   overflow: hidden;
-  min-width: 0;
-  position: relative;
 }
 
-.chat-content-panel {
-  flex: 1;
-  min-width: 0;
-}
-
-.contact-detail-panel {
-  height: auto;
-}
-
-.message-input-container {
-  border-top: 1px solid var(--stroke-color-primary);
-}
-
-.call-kit {
-  position: fixed;
-  width: 800px;
-  height: 600px;
-  top: 50%;
-  left: 50%;
-  z-index: 999;
-  transform: translate(-50%, -50%);
-}
-
-.message-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.message-toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.icon-button {
-  padding: 4px 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  border-radius: 4px;
-  font-size: 20px;
-  color: var(--text-color-primary);
-  cursor: pointer;
-  transition: background-color 0.2s;
-  outline: none;
-
-  &:focus {
-    outline: none;
+@media screen and (max-width: 1680px) {
+  .chat-main {
+    max-width: 100% !important;
   }
-
-  &:hover {
-    background-color: var(--button-color-secondary-hover);
-  }
-
-  &:active {
-    background-color: var(--button-color-secondary-active);
-  }
-}
-
-.chat-sidebar {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  min-width: 358px;
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--bg-color-operate);
-  box-shadow: 0 1px 5px var(--shadow-color), 0 8px 12px var(--shadow-color), 0 12px 26px var(--shadow-color);
-  overflow: auto;
-  z-index: 1000;
-
-  &.dark {
-    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.4), -1px 0 0 rgba(255, 255, 255, 0.1);
-  }
-}
-
-.search-panel {
-  width: 358px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--bg-color-operate);
-  border-left: 1px solid var(--stroke-color-primary);
-  overflow: auto;
-
-  &.dark {
-    border-left-color: rgba(255, 255, 255, 0.1);
-  }
-}
-
-.search-panel-header {
-  position: sticky;
-  top: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background-color: var(--bg-color-operate);
-  border-bottom: 1px solid var(--stroke-color-primary);
-  z-index: 10;
-}
-
-.search-panel-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--text-color-primary);
 }
 </style>

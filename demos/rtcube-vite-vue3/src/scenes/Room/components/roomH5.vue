@@ -6,7 +6,7 @@
 import { onMounted, onUnmounted, watch, computed } from 'vue';
 import { ComponentName, conference, ConferenceMainViewH5, RoomEvent as ConferenceRoomEvent } from '@tencentcloud/roomkit-web-vue3';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
-import { useLoginState } from '@tencentcloud/chat-uikit-vue3';
+import { useLoginState } from 'tuikit-atomicx-vue3';
 
 conference.setComponentConfig({ componentName: ComponentName.AIToolsButton, visible: true });
 

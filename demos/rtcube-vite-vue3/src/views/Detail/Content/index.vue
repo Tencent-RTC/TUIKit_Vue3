@@ -1,15 +1,56 @@
 <template>
   <div class="content" :class="activeScene">
-    <!-- Call Scene -->
-    <Call v-if="activeScene === 'callkit'" />
+    <!-- Call Scene - Lazy loaded -->
+    <Suspense v-if="activeScene === 'callkit'">
+      <template #default>
+        <Call />
+      </template>
+      <template #fallback>
+        <div class="scene-loading">
+          <t-loading size="large" />
+        </div>
+      </template>
+    </Suspense>
 
-    <!-- Chat Scene -->
-    <Chat v-else-if="activeScene === 'chatkit'" />
+    <!-- Chat Scene - Lazy loaded -->
+    <Suspense v-else-if="activeScene === 'chatkit'">
+      <template #default>
+        <Chat 
+          :active-sub-scene="activeSubScene"
+          @switch-scene="handleSwitchScene"
+          @switch-sub-scene="handleSwitchSubScene"
+         />
+      </template>
+      <template #fallback>
+        <div class="scene-loading">
+          <t-loading size="large" />
+        </div>
+      </template>
+    </Suspense>
 
-    <!-- RoomKit Scene -->
-    <Room v-else-if="activeScene === 'roomkit'" />
-    <!-- Live Scene -->
-    <Live v-else-if="activeScene === 'live'" />
+    <!-- RoomKit Scene - Lazy loaded -->
+    <Suspense v-else-if="activeScene === 'roomkit'">
+      <template #default>
+        <Room />
+      </template>
+      <template #fallback>
+        <div class="scene-loading">
+          <t-loading size="large" />
+        </div>
+      </template>
+    </Suspense>
+
+    <!-- Live Scene - Lazy loaded -->
+    <Suspense v-else-if="activeScene === 'live'">
+      <template #default>
+        <Live />
+      </template>
+      <template #fallback>
+        <div class="scene-loading">
+          <t-loading size="large" />
+        </div>
+      </template>
+    </Suspense>
 
     <!-- Default Placeholder -->
     <div v-else class="scene-placeholder">
@@ -20,14 +61,30 @@
 </template>
 
 <script setup lang="ts">
-import { toRefs } from 'vue';
-import { Call } from '../../../scenes/Call';
-import Chat from '../../../scenes/Chat/Chat.vue';
-import { Room } from '../../../scenes/Room';
-import { Live } from '../../../scenes/Live';
+import { toRefs, defineAsyncComponent } from 'vue';
 
-const props = defineProps(['activeScene', 'isInternational']);
+// Async components - each scene will be loaded on demand as separate chunks
+// This significantly reduces initial bundle size from ~6.7MB to much smaller
+const Call = defineAsyncComponent(() => import('../../../scenes/Call/Call.vue'));
+const Chat = defineAsyncComponent(() => import('../../../scenes/Chat/Chat.vue'));
+const Room = defineAsyncComponent(() => import('../../../scenes/Room/Room.vue'));
+const Live = defineAsyncComponent(() => import('../../../scenes/Live/Live.vue'));
+
+const props = defineProps(['activeScene', 'activeSubScene', 'isInternational']);
 const { activeScene } = toRefs(props);
+
+const emit = defineEmits<{
+  (e: 'switchScene', scene: string): void;
+  (e: 'switchSubScene', subScene: string): void;
+}>();
+
+const handleSwitchScene = (scene: string) => {
+  emit('switchScene', scene);
+};
+
+const handleSwitchSubScene = (subScene: string) => {
+  emit('switchSubScene', subScene);
+};
 </script>
 
 <style scoped lang="scss">
@@ -35,19 +92,14 @@ const { activeScene } = toRefs(props);
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  min-width: 720px;
-  min-height: 650px;
   position: relative;
   display: flex;
-  justify-content: center;
   align-items: stretch;
   background: #fff;
   border-radius: 20px;
-  overflow: hidden;
+  overflow: auto;
 
   &.chatkit {
-    min-width: 900px;
-    min-height: 700px;
   }
 
   &.live {
@@ -63,15 +115,23 @@ const { activeScene } = toRefs(props);
   align-items: center;
   text-align: center;
   color: #666;
-  
+
   h2 {
     font-size: 24px;
     margin-bottom: 10px;
     text-transform: capitalize;
   }
-  
+
   p {
     font-size: 14px;
   }
+}
+
+.scene-loading {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
 }
 </style>

@@ -3,9 +3,14 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { RtcSlider } from '@/components';
 import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+// Unified scene configuration
+import { getEnabledScenes, type SceneConfig } from '@/constants';
+// Aegis data reporting (remove for GitHub demo)
+import { reportSceneSelect } from '@/utils/aegis';
+import { SCENE_ID_TO_AEGIS_SCENE, AEGIS_PAGES } from '@/constants/aegis';
 
 const { t } = useUIKit();
 
@@ -14,28 +19,22 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['change-scene']);
 
-const tabItems = computed(() => [
-  {
-    value: t('detail.tab.chat'),
-    icon: 'chat',
-    scene: 'chatkit'
-  },
-  {
-    value: t('detail.tab.call'),
-    icon: 'call',
-    scene: 'callkit'
-  },
-  // {
-  //   value: t('detail.tab.meeting'),
-  //   icon: 'audio',
-  //   scene: 'roomkit'
-  // },
-  // {
-  //   value: t('detail.tab.live'),
-  //   icon: 'signal',
-  //   scene: 'live'
-  // }
-]);
+// i18n key mapping for tab labels (different from scene labels)
+const tabLabelKeyMap: Record<string, string> = {
+  chatkit: 'detail.tab.chat',
+  callkit: 'detail.tab.call',
+  roomkit: 'detail.tab.meeting',
+  live: 'detail.tab.live',
+};
+
+// Get enabled scenes from unified configuration
+const tabItems = computed(() => 
+  getEnabledScenes().map((config: SceneConfig) => ({
+    value: t(tabLabelKeyMap[config.scene] || config.labelKey),
+    icon: config.icon,
+    scene: config.scene,
+  }))
+);
 
 const findIndex = computed(() => {
   return tabItems.value.findIndex(item => item.scene === props.activeScene);
@@ -43,8 +42,21 @@ const findIndex = computed(() => {
 
 const selectedValue = ref(findIndex.value >= 0 ? findIndex.value : 0);
 
+// Watch for external activeScene changes and sync selectedValue
+watch(() => props.activeScene, () => {
+  const newIndex = findIndex.value;
+  if (newIndex >= 0 && newIndex !== selectedValue.value) {
+    selectedValue.value = newIndex;
+  }
+});
+
 const onChange = (val: number) => {
   selectedValue.value = val;
-  emit('change-scene', tabItems.value[val].scene);
+  const scene = tabItems.value[val].scene;
+  // Report scene selection event (remove for GitHub demo)
+  // ext1 format: "detail | targetScene" (e.g., "detail | call")
+  const aegisScene = SCENE_ID_TO_AEGIS_SCENE[scene] || scene;
+  reportSceneSelect(AEGIS_PAGES.DETAIL, aegisScene);
+  emit('change-scene', scene);
 };
 </script>

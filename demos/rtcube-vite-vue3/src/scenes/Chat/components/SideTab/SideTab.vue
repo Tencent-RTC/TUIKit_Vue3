@@ -29,12 +29,13 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { useLoginState, useUIKit, Avatar } from '@tencentcloud/chat-uikit-vue3';
+import { useLoginState, Avatar } from 'tuikit-atomicx-vue3';
 import { 
   IconMessage,
   IconMessageSelected,
   IconContacts,
   IconContactsSelected,
+  useUIKit,
 } from '@tencentcloud/uikit-base-component-vue3';
 
 const { theme } = useUIKit();
@@ -62,7 +63,6 @@ const handleTabChange = (tab: 'conversation' | 'contact') => {
 <style scoped>
 .side-tab {
   width: 60px;
-  height: 100vh;
   background: var(--bg-color-function);
   display: flex;
   flex-direction: column;

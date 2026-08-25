@@ -1,5 +1,5 @@
 <template>
-  <div class="home-container">
+  <div class="call-home-container">
     <div class="home-card" @click="goCall">
       <div class="card-title-box">
         <p class="card-title"> {{ t('1v1 Call') }} </p>
@@ -49,7 +49,7 @@ const goGroupCall = () => {
 
 
 <style lang="scss">
-.home-container {
+.call-home-container {
   margin: 36px;
   display: flex;
   gap: 0 20px;
