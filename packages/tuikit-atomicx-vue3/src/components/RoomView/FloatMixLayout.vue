@@ -518,6 +518,7 @@ TUIRoomEngine.once('ready', async () => {
   position: relative;
   border-radius: 12px;
   overflow: hidden;
+  isolation: isolate;
 }
 
 .local-stream-region-content {
