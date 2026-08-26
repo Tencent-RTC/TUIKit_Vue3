@@ -43,7 +43,7 @@ const handleClear = () => {
 <style module lang="scss">
 .search {
   &__bar {
-    padding: 8px 0;
+    padding: 8px;
   }
 
   &__input-wrapper {

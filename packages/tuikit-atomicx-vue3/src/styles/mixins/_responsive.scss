@@ -23,7 +23,7 @@ $breakpoints: (
       }
     }
   } @else {
-    @warn "Unknown breakpoint: #{$breakpoint}. Available breakpoints: #{map-keys($breakpoints)}";
+    @warn "Unknown breakpoint: #{$breakpoint}. Available breakpoints: #{map.keys($breakpoints)}";
   }
 }
 
@@ -54,7 +54,7 @@ $breakpoints: (
 
 // Range breakpoint mixin (for specific ranges)
 @mixin respond-between($min, $max) {
-  @if map-has-key($breakpoints, $min) and map-has-key($breakpoints, $max) {
+  @if map.has-key($breakpoints, $min) and map.has-key($breakpoints, $max) {
     $min-value: map.get($breakpoints, $min);
     $max-value: map.get($breakpoints, $max);
 
@@ -116,7 +116,7 @@ $breakpoints: (
 
 // Utility function: get breakpoint value
 @function breakpoint($name) {
-  @if map-has-key($breakpoints, $name) {
+  @if map.has-key($breakpoints, $name) {
     @return map.get($breakpoints, $name);
   } @else {
     @warn "Unknown breakpoint: #{$name}";

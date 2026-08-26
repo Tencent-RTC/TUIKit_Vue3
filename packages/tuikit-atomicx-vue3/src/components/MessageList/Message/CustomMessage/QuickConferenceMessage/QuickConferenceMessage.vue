@@ -337,7 +337,7 @@ onUnmounted(() => {
   line-height: 20px;
 
   .content {
-    padding: 16px 16px 16px;
+    padding: 10px;
     background: linear-gradient(90deg,
         var(--uikit-color-theme-1) -17.36%,
         var(--bg-color-entrycard) 103.56%);
@@ -352,7 +352,7 @@ onUnmounted(() => {
 
       p {
         margin: 0;
-        font-size: 14px;
+        font-size: 12px;
         line-height: 20px;
       }
 
@@ -412,13 +412,14 @@ onUnmounted(() => {
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding: 12px;
+    padding: 10px;
     color: var(--text-color-tertiary);
     background: var(--bg-color-operate);
 
     .room-info {
-      font-size: 14px;
+      font-size: 12px;
       line-height: 21px;
+      font-weight: 400;
     }
 
     .room-info.center {
@@ -427,9 +428,9 @@ onUnmounted(() => {
     }
 
     .room-status {
-      padding: 10px;
-      font-size: 14px;
-      font-weight: 900;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 500;
       color: var(--text-color-button);
       cursor: pointer;
       background-color: var(--button-color-primary-default);

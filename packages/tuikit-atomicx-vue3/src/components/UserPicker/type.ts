@@ -40,8 +40,10 @@ export interface UserPickerProps<T = unknown> {
   dataSource: UserPickerDataSource<T>; // Data source
   defaultSelectedItems?: Array<{ key: string; [key: string]: any }>;
   lockedItems?: Array<{ key: string; [key: string]: any }>;
+  lockedSelectedItems?: Array<{ key: string; [key: string]: any }>; // Display as selected and locked without adding to selection results
   maxCount?: number | undefined;
   minCount?: number | undefined;
+  replaceOnSingleSelection?: boolean | undefined; // Replace the selected unlocked item when maxCount is 1
   onMaxCountExceed?: (selectedItems: UserPickerResult<T>) => void;
 
   // Search related

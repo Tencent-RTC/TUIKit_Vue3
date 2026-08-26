@@ -31,6 +31,7 @@ import cs from 'classnames';
 import { View } from '../../../baseComp/View';
 import { useChatContext } from '../../../chat-store';
 import { getSendErrorMessage } from '../utils/getSendErrorMessage';
+import type { OfflinePushInfo, SendMessagePayload } from '@atomicxcore/core';
 
 const { t } = useUIKit();
 
@@ -61,6 +62,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const styles = useCssModule();
 const channel = inject('channel', 'default') as string;
+const setOfflinePushInfo = inject<((payload: SendMessagePayload) => OfflinePushInfo | undefined) | undefined>('setOfflinePushInfo', undefined);
 const { sendMessage } = useChatContext(channel);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
@@ -87,7 +89,14 @@ function handleFileInput(e: Event) {
     return;
   }
 
-  sendMessage({ type: 'imageMessage', file });
+  const payload: SendMessagePayload = { type: 'imageMessage', file };
+  const offlinePushInfo = setOfflinePushInfo?.(payload);
+  sendMessage(payload, offlinePushInfo ? { offlinePushInfo } : undefined)
+    .catch((error) => {
+      TUIToast.error({
+        message: getSendErrorMessage(t, error),
+      });
+    });
   target.value = '';
 }
 </script>

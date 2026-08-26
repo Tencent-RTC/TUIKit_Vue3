@@ -66,7 +66,13 @@ const maxWidth = computed(() => {
   top: 0;
   left: 0;
   pointer-events: none;
-  // Keep PK animations above .live-core-ui (z-index: 1) so they render on top of stream-cover.
-  z-index: 2;
+  // Keep PK decorations above both .live-core-ui (z-index: 1) and the local
+  // mixer preview. The local user's own seat carries an inline z-index of
+  // SELF_SEAT_Z_INDEX (100, set in LiveView/index.vue for pointer hit-testing);
+  // in stream-mixer mode that z-index is forwarded onto the .local-mixer-container
+  // via the `localVideo` slot, which is a sibling of this decorate layer under
+  // .live-core-view. A z-index of 2 would let that mixer preview (100) cover the
+  // PK score bars, so we raise the decorate layer above 100.
+  z-index: 101;
 }
 </style>

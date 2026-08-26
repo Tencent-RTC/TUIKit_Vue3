@@ -67,6 +67,7 @@
       :seatTrigger="seatTriggerToken"
       :cameraLockedByAdmin="localSeatLockedState.cameraLockedByAdmin"
       :microphoneLockedByAdmin="localSeatLockedState.microphoneLockedByAdmin"
+      :hideCamera="isVoiceOnlyCoGuest"
       @update:open="isSelfDeviceMenuOpen = $event"
     />
     <!-- Loading overlay: shown when entering room, placed at container level to avoid 0-size stream view -->
@@ -274,11 +275,19 @@ const audioConnectRightPosition = 30;
 const audioConnectGap = 5;
 // The height ratio of the audio connect view in portrait container.
 const audioConnectHeightInPortraitContainerRatio = 156 / 1280;
-const isLocalUserOnSeat = computed(() => seatList.value.some(seat => seat.userInfo?.userId === loginUserInfo.value?.userId));
+// Single source of truth for "does this seat belong to the local user".
+// Used by seat z-index elevation, isSelfSeat, and on-seat detection so the
+// identity check can never drift between call sites.
+const isLocalUserSeat = (userInfo?: { userId?: string }) =>
+  !!userInfo?.userId && userInfo.userId === loginUserInfo.value?.userId;
+const isLocalUserOnSeat = computed(() => seatList.value.some(seat => isLocalUserSeat(seat.userInfo)));
 const isLandscapeVideoAndAudioConnect = computed(() => {
   const layoutTemplate = currentLive.value?.layoutTemplate;
   return layoutTemplate !== undefined && layoutTemplate >= 200 && layoutTemplate <= 399;
 });
+// Landscape rooms (video host + voice-only co-guest) do not support a guest
+// camera, so the self-device control menu must not offer a camera toggle.
+const isVoiceOnlyCoGuest = computed(() => isLandscapeVideoAndAudioConnect.value);
 const isAlignCenter = computed(() => {
   if (isLandscapeVideoAndAudioConnect.value && isMobile) {
     return false;
@@ -460,10 +469,18 @@ const streamViewSize = computed(() => ({
   height: Math.ceil(originStreamViewStyle.value.height * originStreamViewStyle.value.scale),
 }));
 
+// Stacking level for the local user's own seat. Kept well above the SDK's
+// per-seat zOrder (a small ordinal, typically 0..N) so the local seat always
+// wins pointer hit-testing against an overlapping host video seat, while
+// still staying below the surrounding overlays. Only affects click layering,
+// not visual position/size.
+const SELF_SEAT_Z_INDEX = 100;
+
 const handleLandscapeVideoForAudioConnectInPortraitContainer = (index: number): any => {
   const layout = ratioLayoutList.value[index];
   const seat = seatList.value[index];
   const connectVideoHeight = liveCoreViewContainerSize.value.height * audioConnectHeightInPortraitContainerRatio;
+  const isSelf = isLocalUserSeat(seat.userInfo);
 
   seatListWithRealSize.value.push({
     userInfo: seat.userInfo as SeatUserInfo,
@@ -473,7 +490,7 @@ const handleLandscapeVideoForAudioConnectInPortraitContainer = (index: number): 
       top: `${liveCoreViewContainerSize.value.height - topAndBottomMargin * 2 - index * (connectVideoHeight + audioConnectGap)}px`,
       width: `${connectVideoHeight}px`,
       height: `${connectVideoHeight}px`,
-      zIndex: Number(layout.zOrder) || 0,
+      zIndex: isSelf ? SELF_SEAT_Z_INDEX : (Number(layout.zOrder) || 0),
     },
   });
 };
@@ -484,6 +501,14 @@ watch(() => [seatList.value, streamViewSize.value, liveCoreViewContainerSize.val
   seatList.value.forEach((item: SeatInfo, index: number) => {
     const ratioLayout = ratioLayoutList.value[index];
     const isSampleWithCanvas = seatList.value.length === 1 || (item.region?.w === canvas.value.width && item.region?.h === canvas.value.height);
+    // The local user's own seat must sit above all other seats for pointer
+    // hit-testing: in landscape voice-connect the host's full-bleed video
+    // seat overlaps the local user's small thumbnail and would otherwise
+    // intercept the click, so tapping the thumbnail never opens the
+    // self-device menu. Elevating only the local seat's z-index keeps the
+    // visual layout identical while making the thumbnail reliably clickable.
+    const isSelf = isLocalUserSeat(item.userInfo);
+    const seatZIndex = isSelf ? SELF_SEAT_Z_INDEX : (Number(ratioLayout.zOrder) || 0);
     if (!isInStreamMixerComp.value && isPortraitAndFill && isSampleWithCanvas) {
       seatListWithRealSize.value.push({
         userInfo: item.userInfo as SeatUserInfo,
@@ -494,7 +519,7 @@ watch(() => [seatList.value, streamViewSize.value, liveCoreViewContainerSize.val
           width: `${liveCoreViewContainerSize.value.width}px`,
           height: `${liveCoreViewContainerSize.value.height}px`,
           transform: 'translate(-50%, -50%)',
-          zIndex: Number(ratioLayout.zOrder) || 0,
+          zIndex: seatZIndex,
         },
       });
     } else if (isLandscapeVideoAndAudioConnect.value && isPortraitContainer.value && isMobile && item.region?.h === 0 && item.region?.w === 0) {
@@ -511,7 +536,7 @@ watch(() => [seatList.value, streamViewSize.value, liveCoreViewContainerSize.val
             ratioLayout.height === -1
               ? `${Math.ceil(streamViewSize.value.height) + 1}px`
               : `${Math.ceil(streamViewSize.value.width * ratioLayout.height) + 1}px`,
-          zIndex: Number(ratioLayout.zOrder) || 0,
+          zIndex: seatZIndex,
         },
       });
     }
@@ -785,9 +810,7 @@ const isSelfDeviceMenuOpen = ref(false);
 // Whether the given seat item belongs to the local audience member who is
 // eligible for the self-device control menu.
 const isSelfSeat = (item: { userInfo?: SeatUserInfo }) =>
-  showSelfDeviceMenu.value
-  && !!item.userInfo?.userId
-  && item.userInfo.userId === loginUserInfo.value?.userId;
+  showSelfDeviceMenu.value && isLocalUserSeat(item.userInfo);
 
 // Close the menu whenever the layer becomes ineligible (e.g. local user
 // leaves the seat, enters PiP, or switches to mixer mode).

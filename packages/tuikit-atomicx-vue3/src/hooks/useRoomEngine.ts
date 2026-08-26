@@ -27,4 +27,20 @@ export function useRoomEngine() {
   return roomEngine;
 }
 
+export function logInfo(...args: unknown[]) {
+  roomEngine.instance?.logger.info(...args);
+}
+
+export function logDebug(...args: unknown[]) {
+  roomEngine.instance?.logger.debug(...args);
+}
+
+export function logError(...args: unknown[]) {
+  roomEngine.instance?.logger.error(...args);
+}
+
+export function logWarning(...args: unknown[]) {
+  roomEngine.instance?.logger.warn(...args);
+}
+
 export default useRoomEngine;

@@ -111,16 +111,16 @@ const { itemStyle: streamItemStyle } = useStreamItemDimensions({
   ],
 });
 
-const streamListContentStyle = ref({});
-watch(() => streamItemStyle.value, (val) => {
-  if (!val.width || !val.height) {
-    return;
+const streamListContentStyle = computed(() => {
+  const { width, height } = streamItemStyle.value;
+  if (!width || !height) {
+    return {};
   }
-  streamListContentStyle.value = {
-    width: `${Math.ceil((parseInt(val.width, 10) * gridColumns.value) + (gridColumns.value - 1) * 8)}px`,
-    height: `${Math.ceil((parseInt(val.height, 10) * gridRows.value) + (gridRows.value - 1) * 8)}px`,
+  return {
+    width: `${Math.ceil((parseInt(width, 10) * gridColumns.value) + (gridColumns.value - 1) * 8)}px`,
+    height: `${Math.ceil((parseInt(height, 10) * gridRows.value) + (gridRows.value - 1) * 8)}px`,
   };
-}, { immediate: true });
+});
 
 watch(
   () => gridStreamInfoList.value.length,

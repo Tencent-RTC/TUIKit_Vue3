@@ -31,6 +31,7 @@ import cs from 'classnames';
 import { useChatContext } from '../../../chat-store';
 import { View } from '../../../baseComp/View';
 import { getSendErrorMessage } from '../utils/getSendErrorMessage';
+import type { OfflinePushInfo, SendMessagePayload } from '@atomicxcore/core';
 
 const PICKER_CONSTANTS = {
   ACCEPT_TYPE: '.mp4,.mov,.qt',
@@ -51,6 +52,7 @@ const props = withDefaults(defineProps<Props>(), {
 const { t } = useUIKit();
 const styles = useCssModule();
 const channel = inject('channel', 'default') as string;
+const setOfflinePushInfo = inject<((payload: SendMessagePayload) => OfflinePushInfo | undefined) | undefined>('setOfflinePushInfo', undefined);
 const { sendMessage } = useChatContext(channel);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
@@ -73,7 +75,9 @@ function handleFileInput(e: Event) {
     return;
   }
 
-  sendMessage({ type: 'videoMessage', file, duration: 0 })
+  const payload: SendMessagePayload = { type: 'videoMessage', file, duration: 0 };
+  const offlinePushInfo = setOfflinePushInfo?.(payload);
+  sendMessage(payload, offlinePushInfo ? { offlinePushInfo } : undefined)
     .catch((error) => {
       TUIToast.error({
         message: getSendErrorMessage(t, error),

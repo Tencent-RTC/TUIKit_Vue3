@@ -38,8 +38,17 @@ withDefaults(defineProps<MessageBubbleProps>(), {
 </template>
 
 <style lang="scss" scoped>
+@use '../../../../../styles/mixins' as mixin;
+
 .message-bubble {
   min-width: 0;
+
+  @include mixin.mobile-only {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 .has-risk-content {

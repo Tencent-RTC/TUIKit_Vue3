@@ -129,6 +129,9 @@ const remoteParticipantViewList = computed(() =>
 const hasCameraTrack = ref(false);
 const hasScreenTrack = ref(false);
 
+// Guard: startPublish must not be called before bindPreviewArea + addMediaSource finish.
+const isMixerReady = ref(false);
+
 watch(() => hasCameraTrack.value, (value) => {
   cameraStatus.value = value ? DeviceStatus.On : DeviceStatus.Off;
 }, { immediate: true });
@@ -275,7 +278,8 @@ onMounted(async () => {
     }
     const mediaMixingManager = roomEngine.instance?.getTRTCCloud().getMediaMixingManager();
     await mediaMixingManager.bindPreviewArea(mixerView as HTMLElement);
-    mediaMixingManager.addMediaSource({
+    isMixerReady.value = true;
+    await mediaMixingManager.addMediaSource({
       id: 'camera_local',
       type: TRTCMediaSourceType.kCamera,
       useInternalTrack: true,
@@ -296,7 +300,7 @@ onMounted(async () => {
         canExceedCanvas: false,
       },
     });
-    mediaMixingManager.addMediaSource({
+    await mediaMixingManager.addMediaSource({
       id: 'screen_local',
       type: TRTCMediaSourceType.kScreen,
       useInternalTrack: true,
@@ -320,6 +324,10 @@ onMounted(async () => {
     if (publishParams.value) {
       await trtcCloud?.getMediaMixingManager()?.updatePublishParams(publishParams.value);
     }
+    // Camera / screen may have become ready before the mixer was initialized.
+    if (hasCameraTrack.value || hasScreenTrack.value) {
+      await trtcCloud?.getMediaMixingManager()?.startPublish();
+    }
     startPlayStream({ view: 'remote-rtc-stream' });
   });
 });
@@ -331,6 +339,11 @@ onUnmounted(() => {
 });
 
 watch(() => [hasCameraTrack.value, hasScreenTrack.value], async ([newCameraStatus, newScreenStatus], [oldCameraStatus, oldScreenStatus]) => {
+  // Mixer must finish bindPreviewArea + addMediaSource before startPublish is safe to call.
+  if (!isMixerReady.value) {
+    return;
+  }
+
   const oldHasAnyTrack = oldCameraStatus || oldScreenStatus;
   const newHasAnyTrack = newCameraStatus || newScreenStatus;
 
@@ -505,6 +518,7 @@ TUIRoomEngine.once('ready', async () => {
   position: relative;
   border-radius: 12px;
   overflow: hidden;
+  isolation: isolate;
 }
 
 .local-stream-region-content {

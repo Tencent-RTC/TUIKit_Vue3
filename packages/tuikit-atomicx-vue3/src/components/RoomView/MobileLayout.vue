@@ -22,7 +22,9 @@
         <div ref="firstPageContainerRef" class="swiper-page-content">
           <RoomParticipantView
             v-if="enlargeStream?.participant"
-            v-touch-scale="enlargeStream.streamType === VideoStreamType.Screen"
+            v-touch-scale="
+              enlargeStream.streamType === VideoStreamType.Screen
+            "
             class="enlarge-stream"
             :participant="enlargeStream.participant"
             :stream-type="enlargeStream.streamType"
@@ -83,7 +85,11 @@ import { ref, computed, watch } from 'vue';
 import { TUISwiper, TUISwiperItem } from '@tencentcloud/uikit-base-component-vue3';
 import vTouchScale from '../../directives/vTouchScale';
 import { useRoomParticipantState } from '../../states/RoomParticipantState';
-import { VideoStreamType, FillMode, DeviceStatus } from '../../types';
+import {
+  VideoStreamType,
+  FillMode,
+  DeviceStatus,
+} from '../../types';
 import { deepClone, throttle } from '../../utils/utils';
 import { RoomParticipantView } from '../RoomParticipantView';
 import { vFloatDrag } from './directives/floatDrag';
@@ -222,10 +228,10 @@ const { itemStyle: streamItemStyle } = useStreamItemDimensions({
   gap: 8,
   aspectRatio: 1 / 1,
   padding: {
-    left: 16,
-    right: 16,
-    top: 12,
-    bottom: 12,
+    left: 12,
+    right: 12,
+    top: 16,
+    bottom: 16,
   },
   watchDependencies: [
     () => gridColumns.value,
@@ -234,16 +240,18 @@ const { itemStyle: streamItemStyle } = useStreamItemDimensions({
   ],
 });
 
-const streamListContentStyle = ref({});
-watch(() => streamItemStyle.value, (val) => {
-  if (!val.width || !val.height) {
-    return;
+// Must stay a computed: the item size can remain identical while the grid shape
+// changes (columns capped at 2), so the wrapper has to track rows/columns too.
+const streamListContentStyle = computed(() => {
+  const { width, height } = streamItemStyle.value;
+  if (!width || !height) {
+    return {};
   }
-  streamListContentStyle.value = {
-    width: `${Math.ceil((parseInt(val.width, 10) * gridColumns.value) + (gridColumns.value - 1) * 8)}px`,
-    height: `${Math.ceil((parseInt(val.height, 10) * gridRows.value) + (gridRows.value - 1) * 8)}px`,
+  return {
+    width: `${Math.ceil((parseInt(width, 10) * gridColumns.value) + (gridColumns.value - 1) * 8)}px`,
+    height: `${Math.ceil((parseInt(height, 10) * gridRows.value) + (gridRows.value - 1) * 8)}px`,
   };
-}, { immediate: true });
+});
 
 function handlePageChange(newIndex: number) {
   currentPageIndex.value = newIndex;

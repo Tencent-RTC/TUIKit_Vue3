@@ -155,6 +155,7 @@
               :is="item.pickerComponent"
               v-if="item.pickerComponent"
               :disabled="disabled"
+              @click="handleActionPanelItemClick(item.id)"
             >
               <div :class="$style['message-input-h5__action-item']">
                 <div :class="$style['message-input-h5__action-icon-wrapper']">
@@ -204,7 +205,7 @@ import { QuotedMessagePreview } from './QuotedMessagePreview';
 import { VideoCallPicker } from './VideoCallPicker';
 import type { CustomAction, MessageInputActions } from './types';
 import type { InputContent } from '../../types/messageInput';
-import type { SendMessageInputOption } from '@atomicxcore/core';
+import type { OfflinePushInfo, SendMessageInputOption, SendMessagePayload } from '@atomicxcore/core';
 import { getSendErrorMessage } from './utils/getSendErrorMessage';
 
 const { t } = useUIKit();
@@ -246,6 +247,11 @@ interface MessageInputH5Props {
   maxLength?: number;
   channel?: string;
   actions?: MessageInputActions;
+  /**
+   * Called before each message is sent. Receives the outgoing message payload
+   * and should return the offlinePushInfo to attach, or undefined to skip.
+   */
+  setOfflinePushInfo?: (payload: SendMessagePayload) => OfflinePushInfo | undefined;
 }
 
 // ==================== Props ====================
@@ -255,6 +261,7 @@ const props = withDefaults(defineProps<MessageInputH5Props>(), {
   maxLength: 500,
   channel: 'default',
   actions: () => ['EmojiPicker', 'ImagePicker', 'VideoPicker', 'FilePicker', 'AudioCallPicker', 'VideoCallPicker'],
+  setOfflinePushInfo: undefined,
 });
 
 // ==================== Emits ====================
@@ -269,6 +276,7 @@ const emit = defineEmits<{
 // ==================== Store ====================
 const { channel } = props;
 provide('channel', channel);
+provide('setOfflinePushInfo', props.setOfflinePushInfo);
 const {
   activeConversation,
   activeConversationID,
@@ -608,6 +616,20 @@ function handleModePanelOpenChange(panelMode: Extract<InputMode, 'emoji' | 'acti
   }
 }
 
+function handleActionPanelItemClick(actionID: string): void {
+  if (props.disabled || [
+    'ImagePicker',
+    'VideoPicker',
+    'FilePicker',
+    'AttachmentPicker',
+    'AudioCallPicker',
+    'VideoCallPicker',
+  ].includes(actionID)) {
+    return;
+  }
+  mode.value = 'none';
+}
+
 // ==================== Send Handler ====================
 async function handleSend(): Promise<void> {
   const text = inputValue.value.trim();
@@ -616,12 +638,17 @@ async function handleSend(): Promise<void> {
   }
 
   const atUserList = getValidMentionRecords().map(record => record.id);
+  const payload: SendMessagePayload = { type: 'textMessage', text };
   const sendOption: SendMessageInputOption = {};
   if (atUserList.length > 0) {
     sendOption.atUserList = [...new Set(atUserList)];
   }
   if (quotedMessage.value) {
     sendOption.quotedMessage = quotedMessage.value;
+  }
+  const offlinePushInfo = props.setOfflinePushInfo?.(payload);
+  if (offlinePushInfo) {
+    sendOption.offlinePushInfo = offlinePushInfo;
   }
 
   inputValue.value = '';
@@ -632,10 +659,7 @@ async function handleSend(): Promise<void> {
   });
 
   try {
-    await sendMessage(
-      { type: 'textMessage', text },
-      Object.keys(sendOption).length > 0 ? sendOption : undefined,
-    );
+    await sendMessage(payload, Object.keys(sendOption).length > 0 ? sendOption : undefined);
 
     const sendingConversationID = activeConversation.value?.conversationID;
     if (sendingConversationID) {
@@ -806,7 +830,8 @@ function setDraftContent(content: string | InputContent[] | undefined): void {
 }
 
 function saveCurrentDraft(conversationID: string): void {
-  const draft = serializeConversationDraftContent(createInputContentFromState());
+  const content = createInputContentFromState();
+  const draft = serializeConversationDraftContent(content);
   setLocalConversationDraft(conversationID, draft).catch(() => {});
   setConversationDraft(conversationID, draft).catch(() => {});
 }
@@ -844,8 +869,11 @@ watch(activeConversationID, (newConversationID, oldConversationID) => {
 }, { immediate: true });
 
 onBeforeUnmount(() => {
-  if (activeConversationID.value) {
-    saveCurrentDraft(activeConversationID.value);
+  // Use snapshot instead of activeConversationID because the parent Chat component
+  // sets activeConversationID to undefined via v-if BEFORE onBeforeUnmount fires.
+  const conversationID = activeConversationIDSnapshot.value;
+  if (conversationID) {
+    saveCurrentDraft(conversationID);
   }
   leaveTyping().catch(() => {});
 });
@@ -982,6 +1010,7 @@ defineExpose({
     -webkit-overflow-scrolling: touch;
     // Prevent iOS scroll chaining (bounce effect propagating to parent)
     overscroll-behavior-y: contain;
+    touch-action: pan-y;
   }
 
   &__emoji-list {

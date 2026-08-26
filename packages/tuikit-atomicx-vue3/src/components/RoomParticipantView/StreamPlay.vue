@@ -76,32 +76,40 @@ watch(
         streamType: oldStreamType as VideoStreamType,
         view: playRegionDomRef.value,
       });
+      // Configure the new stream before attaching the view, so that startPlayVideo
+      // applies the right fillMode as soon as the view is registered with the SDK.
+      await setStreamConfig({
+        userId: newUserId as string,
+        streamType: newStreamType as VideoStreamType,
+        renderParams: {
+          fillMode: props.fillMode,
+        },
+      });
       await bindView({
         userId: newUserId as string,
         streamType: newStreamType as VideoStreamType,
         view: playRegionDomRef.value,
         lazyLoad: props.lazyLoad,
       });
-      await setStreamConfig({
-        userId: props.participant.userId,
-        streamType: props.streamType,
-        renderParams: {
-          fillMode: props.fillMode,
-        },
-      });
     }
   },
 );
 
-watch(() => props.lazyLoad, async () => {
+// Callers commonly pass an inline object literal, which yields a new reference on
+// every re-render of the parent. An array of getters makes Vue compare each entry
+// individually; a single getter returning an array would compare array identity
+// and therefore fire every time.
+watch([() => props.lazyLoad?.enable, () => props.lazyLoad?.viewport], async () => {
   await updateView({
     userId: props.participant.userId,
     streamType: props.streamType,
     view: playRegionDomRef.value,
     lazyLoad: props.lazyLoad,
   });
-}, { deep: true });
+});
 
+// Runs during setup, i.e. before onMounted binds the view, so the fillMode is
+// already recorded by the time startPlayVideo pushes render params to the SDK.
 watch(() => props.fillMode, async () => {
   await setStreamConfig({
     userId: props.participant.userId,
