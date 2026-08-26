@@ -1,8 +1,15 @@
+## [6.5.7] (2026-08-26)
+### fix
+* Room: Fixed an issue where video streams covered the header after joining a webinar room.
+
+## [6.5.6] (2026-08-19)
+### fix
+* Chat: Fixed the issue with the read acknowledgment parameter for forwarding messages.
+
 ## [6.5.5] (2026-08-17)
 
 ### feat
 * Roomkit: Optimize real-time subtitle interaction
-
 
 ## [6.5.4] (2026-08-11)
 ### fix
