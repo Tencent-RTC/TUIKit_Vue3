@@ -4,20 +4,26 @@
     width="600px"
     :confirmText="confirmText"
     :cancelText="cancelText"
-    :confirmDisabled="cameraList.length === 0 || !isPreviewStarted"
+    :confirmDisabled="isConfirmDisabled"
     :title="title"
     :customClasses="['camera-setting-dialog']"
     @close="handleClose"
     @cancel="handleClose"
     @confirm="handleConfirm"
   >
-    <div
-      ref="videoPreviewRef"
-      class="video-preview"
-    />
+    <div class="video-preview-wrapper">
+      <div
+        ref="videoPreviewRef"
+        class="video-preview"
+      />
+      <div v-if="cameraGuidance" class="camera-guidance">
+        <strong>{{ t(cameraGuidance.titleKey) }}</strong>
+        <span>{{ t(cameraGuidance.descKey) }}</span>
+      </div>
+    </div>
     <div class="basic-setting">
       <div class="item-setting">
-        <span class="title">{{ t('Camera') }}</span>
+        <span class="title">{{ t('LiveScenePanel.Camera') }}</span>
         <TUISelect
           v-model="currentCameraId"
           class="camera-select"
@@ -32,7 +38,7 @@
         </TUISelect>
       </div>
       <div class="item-setting">
-        <span class="title">{{ t('Resolution') }}</span>
+        <span class="title">{{ t('LiveScenePanel.Resolution') }}</span>
         <TUISelect
           v-model="currentResolution"
           class="resolution-select"
@@ -63,11 +69,17 @@ import {
   TRTCVideoRotation,
   TRTCVideoResolutionMode,
 } from '@tencentcloud/tuiroom-engine-js';
-import { TUIDialog, TUISelect, TUIOption, TUIToast, TOAST_TYPE, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import { TUIDialog, TUISelect, TUIOption, useUIKit } from '@tencentcloud/uikit-base-component-vue3';
 import SvgIcon from '../../baseComp/SvgIcon.vue';
 import { useDeviceState } from '../../states/DeviceState';
 import CameraMirror from './icons/CameraMirror.vue';
 import CameraUnMirror from './icons/CameraUnmirror.vue';
+import {
+  CameraGuidanceState,
+  type CameraPermissionState,
+  getCameraGuidanceKeys,
+  resolveCameraGuidanceState,
+} from './cameraGuidance';
 import type { MediaSource } from '../../types';
 
 const previewTRTCCloud = new TRTCCloud();
@@ -82,10 +94,10 @@ const props = defineProps<{
 
 const emits = defineEmits(['addCameraMaterial', 'updateCameraMaterial', 'close']);
 
-const title = computed(() => props.mediaSource ? t('Update Camera') : t('Add Camera'));
+const title = computed(() => props.mediaSource ? t('LiveScenePanel.Update Camera') : t('LiveScenePanel.Add Camera'));
 
-const confirmText = computed(() => props.mediaSource ? t('Update Camera') : t('Add Camera'));
-const cancelText = t('Cancel');
+const confirmText = computed(() => props.mediaSource ? t('LiveScenePanel.Update Camera') : t('LiveScenePanel.Add Camera'));
+const cancelText = t('LiveScenePanel.Cancel');
 
 const currentCameraId = ref(props.mediaSource?.camera?.cameraId || cameraList.value[0]?.deviceId);
 const currentResolution = ref('');
@@ -99,6 +111,18 @@ const videoResolutionList: Ref<Array<{
   value: string;
 }>> = ref([]);
 
+const cameraPermission = ref<CameraPermissionState>('unsupported');
+const cameraPreviewFailure = ref<CameraGuidanceState>(CameraGuidanceState.None);
+const cameraGuidanceState = computed(() => resolveCameraGuidanceState({
+  cameraCount: cameraList.value.length,
+  permission: cameraPermission.value,
+  previewFailure: cameraPreviewFailure.value,
+}));
+const cameraGuidance = computed(() => getCameraGuidanceKeys(cameraGuidanceState.value));
+const isConfirmDisabled = computed(() => (
+  cameraGuidance.value !== null || !isPreviewStarted.value
+));
+
 // Guards the confirm button. Set to false during camera switching to prevent
 // users from adding an unavailable camera; restored to true after success.
 const isPreviewStarted = ref(false);
@@ -106,6 +130,21 @@ const isPreviewStarted = ref(false);
 // Tracks whether startCameraDeviceTest is currently active. When stopped
 // (e.g. after a failed switch), the next successful switch must restart it.
 const isDeviceTestRunning = ref(false);
+
+async function queryCameraPermission(): Promise<CameraPermissionState> {
+  // Some TypeScript DOM libraries do not include the camera permission name.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const permissions: any = typeof navigator === 'undefined' ? null : navigator.permissions;
+  if (!permissions?.query) {
+    return 'unsupported';
+  }
+  try {
+    const status = await permissions.query({ name: 'camera' });
+    return status.state;
+  } catch {
+    return 'unsupported';
+  }
+}
 
 // Switches the active camera device and manages the device-test session state.
 // Sets isPreviewStarted to false at the start to guard the confirm button during
@@ -122,19 +161,17 @@ const switchCameraDevice = async (deviceId: string): Promise<boolean> => {
       isDeviceTestRunning.value = true;
     }
     isPreviewStarted.value = true;
+    cameraPreviewFailure.value = CameraGuidanceState.None;
     return true;
   } catch (error) {
     console.error('Failed to switch camera:', error);
     isPreviewStarted.value = false;
+    cameraPreviewFailure.value = CameraGuidanceState.SwitchFailed;
     // Stop device test to clear the stale preview frame from the previous camera.
     if (isDeviceTestRunning.value) {
       previewTRTCCloud.stopCameraDeviceTest();
       isDeviceTestRunning.value = false;
     }
-    TUIToast({
-      type: TOAST_TYPE.ERROR,
-      message: t('The camera may be in use by another application. Please select a different camera.'),
-    });
     return false;
   }
 };
@@ -283,6 +320,7 @@ watch(() => cameraList.value, async () => {
 });
 
 onMounted(async () => {
+  cameraPermission.value = await queryCameraPermission();
   const targetId = props.mediaSource?.camera?.cameraId ?? cameraList.value[0]?.deviceId;
   if (!targetId) {
     return;
@@ -333,10 +371,7 @@ onMounted(async () => {
       console.error('Failed to start camera preview:', error);
       isPreviewStarted.value = false;
       isDeviceTestRunning.value = false;
-      TUIToast({
-        type: TOAST_TYPE.ERROR,
-        message: t('The camera may be in use by another application. Please select a different camera.'),
-      });
+      cameraPreviewFailure.value = CameraGuidanceState.OpenFailed;
     }
   }
 });
@@ -494,10 +529,40 @@ const handleClose = () => {
   }
 }
 
-.video-preview {
+.video-preview-wrapper {
+  position: relative;
   width: 100%;
   height: 300px;
+  overflow: hidden;
   background-color: #000;
+  border-radius: 8px;
+}
+
+.video-preview {
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+}
+
+.camera-guidance {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  color: var(--text-color-secondary);
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+
+  strong {
+    color: var(--text-color-primary);
+    font-size: 16px;
+    font-weight: 500;
+  }
 }
 
 .basic-setting {

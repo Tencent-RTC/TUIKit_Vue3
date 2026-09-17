@@ -1,3 +1,11 @@
+## [6.5.10] (2026-09-17)
+### fix
+* Room/Live: Fixed the issue where the speaker test failed to play because Safari does not support `setSinkId`
+
+## [6.5.8] (2026-09-04)
+### feat
+* Chat: chat-store supports the parsing of streaming messages.
+
 ## [6.5.7] (2026-08-26)
 ### fix
 * Room: Fixed an issue where video streams covered the header after joining a webinar room.

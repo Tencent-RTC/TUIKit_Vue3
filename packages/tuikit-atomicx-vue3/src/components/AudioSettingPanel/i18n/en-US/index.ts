@@ -9,4 +9,10 @@ export const resource = {
   'AudioSettingPanel.UnrecognizedDevice': 'Unrecognized device',
   'AudioSettingPanel.Test': 'Test',
   'AudioSettingPanel.Stop': 'Stop',
+  'AudioSettingPanel.Microphone permission is unavailable. Allow it in browser or system settings, then test again.': 'Microphone permission is unavailable. Allow it in browser or system settings, then test again.',
+  'AudioSettingPanel.No microphone device detected. Check the connection, then test again.': 'No microphone device detected. Check the connection, then test again.',
+  'AudioSettingPanel.Microphone is being used by another application. Close that application, then test again.': 'Microphone is being used by another application. Close that application, then test again.',
+  'AudioSettingPanel.This microphone does not support capture.': 'This microphone does not support capture.',
+  'AudioSettingPanel.Unable to test microphone. Please try again.': 'Unable to test microphone. Please try again.',
+  'AudioSettingPanel.Unable to test speaker. Check the output device, then try again.': 'Unable to test speaker. Check the output device, then try again.',
 };

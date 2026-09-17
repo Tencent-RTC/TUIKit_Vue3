@@ -9,4 +9,10 @@ export const resource = {
   'AudioSettingPanel.UnrecognizedDevice': '未识别设备',
   'AudioSettingPanel.Test': '测试',
   'AudioSettingPanel.Stop': '停止测试',
+  'AudioSettingPanel.Microphone permission is unavailable. Allow it in browser or system settings, then test again.': '麦克风权限不可用，请在浏览器或系统设置中允许使用后再次测试。',
+  'AudioSettingPanel.No microphone device detected. Check the connection, then test again.': '未检测到麦克风设备，请检查设备连接后再次测试。',
+  'AudioSettingPanel.Microphone is being used by another application. Close that application, then test again.': '麦克风正在被其他应用使用，请关闭占用应用后再次测试。',
+  'AudioSettingPanel.This microphone does not support capture.': '当前麦克风不支持采集。',
+  'AudioSettingPanel.Unable to test microphone. Please try again.': '麦克风测试失败，请重试。',
+  'AudioSettingPanel.Unable to test speaker. Check the output device, then try again.': '扬声器测试失败，请检查输出设备后重试。',
 };

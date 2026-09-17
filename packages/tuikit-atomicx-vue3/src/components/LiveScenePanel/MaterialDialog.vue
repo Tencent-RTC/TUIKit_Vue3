@@ -2,18 +2,18 @@
   <div v-if="props.visible" class="material-dialog-overlay" @click="handleClose">
     <div class="material-dialog" @click.stop>
       <div class="dialog-header">
-        <h3>{{ t('Add Material') }}</h3>
+        <h3>{{ t('LiveScenePanel.Add Material') }}</h3>
         <button class="close-btn" @click="handleClose">×</button>
       </div>
 
       <div class="dialog-content">
         <!-- 外接设备 -->
         <div class="category-section">
-          <h4>{{ t('External Devices') }}</h4>
+          <h4>{{ t('LiveScenePanel.External Devices') }}</h4>
           <div class="material-grid">
             <div class="material-option" @click="selectMaterial(TRTCMediaSourceType.kCamera)">
               <div class="option-icon">📹</div>
-              <span class="option-label">{{ t('Camera') }}</span>
+              <span class="option-label">{{ t('LiveScenePanel.Camera') }}</span>
               <div class="status-dot active"></div>
             </div>
           </div>
@@ -21,7 +21,7 @@
 
         <!-- 多媒体 -->
         <div class="category-section">
-          <h4>{{ t('Multimedia') }}</h4>
+          <h4>{{ t('LiveScenePanel.Multimedia') }}</h4>
           <div class="material-grid">
             <div class="material-option" @click="selectMaterial(TRTCMediaSourceType.kVideo)">
               <div class="option-icon">▶️</div>
@@ -29,22 +29,22 @@
             </div>
             <div class="material-option" @click="selectMaterial(TRTCMediaSourceType.kImage)">
               <div class="option-icon">🖼️</div>
-              <span class="option-label">{{ t('Image') }}</span>
+              <span class="option-label">{{ t('LiveScenePanel.Image') }}</span>
             </div>
             <div class="material-option" @click="selectMaterial(TRTCMediaSourceType.kText)">
               <div class="option-icon">📝</div>
-              <span class="option-label">{{ t('Text') }}</span>
+              <span class="option-label">{{ t('LiveScenePanel.Text') }}</span>
             </div>
           </div>
         </div>
 
         <!-- 画面捕捉 -->
         <div class="category-section">
-          <h4>{{ t('Screen Capture') }}</h4>
+          <h4>{{ t('LiveScenePanel.Screen Capture') }}</h4>
           <div class="material-grid">
             <div class="material-option" @click="selectMaterial(TRTCMediaSourceType.kScreen)">
               <div class="option-icon">🤖</div>
-              <span class="option-label">{{ t('Screen') }}</span>
+              <span class="option-label">{{ t('LiveScenePanel.Screen') }}</span>
               <div class="status-dot active"></div>
             </div>
           </div>

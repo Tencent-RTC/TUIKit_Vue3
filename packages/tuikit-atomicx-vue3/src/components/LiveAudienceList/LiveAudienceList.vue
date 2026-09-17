@@ -37,21 +37,21 @@
         v-if="isLoading"
         class="loading-indicator"
       >
-        {{ t('Loading...') }}
+        {{ t('LiveAudienceList.Loading...') }}
       </div>
 
       <div
         v-if="audienceCount >= MAX_AUDIENCE_COUNT"
         class="viewer-bottom-line"
       >
-        {{ t('Only show 200 viewers') }}
+        {{ t('LiveAudienceList.Only show 200 viewers') }}
       </div>
 
       <div
         v-if="audienceList.length === 0 && !isLoading"
         class="empty-state"
       >
-        <p>{{ t('No audience yet') }}</p>
+        <p>{{ t('LiveAudienceList.No audience yet') }}</p>
       </div>
     </div>
     <UserActionMenu

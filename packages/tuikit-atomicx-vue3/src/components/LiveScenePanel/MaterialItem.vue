@@ -128,13 +128,13 @@ const getMaterialControls = (mediaSourceType: TRTCMediaSourceType) => {
   const commonControls = [
     {
       key: 'rename',
-      label: t('Rename'),
+      label: t('LiveScenePanel.Rename'),
       icon: IconEdit,
       onClick: renameMaterial,
     },
     {
       key: 'delete',
-      label: t('Delete'),
+      label: t('LiveScenePanel.Delete'),
       icon: IconDelIcon,
       onClick: handleDeleteMaterial,
       dangerous: true,

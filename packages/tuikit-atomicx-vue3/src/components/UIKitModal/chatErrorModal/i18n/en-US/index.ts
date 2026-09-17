@@ -11,6 +11,14 @@ export const resource = {
   'ChatErrorModal.login_user_id_not_match_user_sig': 'The UserID in the request does not match the UserID used to generate the userSig. You can use <a target="_blank" href="https://console.trtc.io/">Chat > Auxiliary Tools > UserSig Tools</a>.',
   'ChatErrorModal.login_sdk_app_id_not_match_user_sig': 'The SDKAppID in the request does not match the SDKAppID used to generate the userSig. You can use <a target="_blank" href="https://console.trtc.io/">Chat > Auxiliary Tools > UserSig Tools</a>.',
   'ChatErrorModal.login_sdk_app_id_not_found': 'SDKAppID not found. Please confirm the application information in the <a target="_blank" href="https://console.trtc.io/">Chat Console</a>.',
+  'ChatErrorModal.login_user_sig_key_mismatch': 'UserSig verification failed. This usually happens when the UserSig was generated with the private key or secret key of a different SDKAppID. Please regenerate the UserSig with the key that belongs to the current SDKAppID (<a target="_blank" href="https://cloud.tencent.com/document/product/269/32688">Documentation</a>).',
+
+  // Server common
+  'ChatErrorModal.server_invalid_http_url': 'The HTTP request could not be parsed. Please check the request URL format. If you configured a private deployment address or an internal proxy for Chat, make sure the address is well-formed.',
+  'ChatErrorModal.server_invalid_account': 'The userID or UserSig in the request is incorrect. Please check that userID and userSig match. You can verify them via <a target="_blank" href="https://console.trtc.io/">Chat > Auxiliary Tools > UserSig Tools</a>.',
+  'ChatErrorModal.server_invalid_sdk_app_id': 'The SDKAppID is invalid. Please verify it in the <a target="_blank" href="https://console.trtc.io/">Chat Console</a>.',
+  'ChatErrorModal.server_sdk_app_id_missing': 'The request is missing the SDKAppID. Please check that SDKAppID is passed in the login parameters.',
+  'ChatErrorModal.server_sdk_app_id_forbidden': 'The SDKAppID has been disabled. Please <a target="_blank" href="https://console.cloud.tencent.com/workorder/category">submit a ticket</a> to contact support.',
 
   // Package
   'ChatErrorModal.package_not_purchased': 'You have not purchased a plan package, or the package has expired, or the purchased package is being configured and not yet effective. Please log in to the <a target="_blank" href="https://console.trtc.io/subscription/buy/chat?packType=pro">Chat Purchase Page</a> to repurchase the package. It will take effect 5 minutes after purchase.',
