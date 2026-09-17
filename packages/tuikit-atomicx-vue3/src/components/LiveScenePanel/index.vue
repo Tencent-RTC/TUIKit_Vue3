@@ -48,6 +48,7 @@ import CameraSettingDialog from './CameraSettingDialog.vue';
 import LiveSceneSelect from './LiveSceneSelect.vue';
 import MaterialItem from './MaterialItem.vue';
 import MaterialRenameDialog from './MaterialRenameDialog.vue';
+import { createCameraSettingsOpener } from './cameraSettingsOpener';
 import type { MediaSource } from '../../types';
 
 const { t } = useUIKit();
@@ -107,7 +108,7 @@ const addCameraMaterial = async (material: Partial<MediaSource>) => {
     if (error.name === 'NotAllowedError' && error.message.includes('Permission denied')) {
       TUIToast({
         type: TOAST_TYPE.WARNING,
-        message: t('Please check the current browser camera permission'),
+        message: t('LiveScenePanel.Please check the current browser camera permission'),
       });
     }
   } finally {
@@ -130,6 +131,21 @@ const updateMaterialName = (material: MediaSource) => {
 };
 
 const cameraSettingMediaSource = ref<MediaSource | null>(null);
+const refreshAndOpenCameraSettings = createCameraSettingsOpener<MediaSource | null>({
+  refreshCameraList: getCameraList,
+  openDialog: (mediaSource) => {
+    cameraSettingMediaSource.value = mediaSource;
+    showCameraSettingDialog.value = true;
+  },
+});
+
+async function openCameraSettings(mediaSource: MediaSource | null) {
+  try {
+    await refreshAndOpenCameraSettings(mediaSource);
+  } catch (error) {
+    console.error('Failed to refresh camera list before opening camera settings:', error);
+  }
+}
 
 function getCanvasSize(
   videoResolution: TUIVideoQuality,
@@ -179,7 +195,7 @@ function addImageMaterial() {
       await addMediaSource({
         id: `${TRTCMediaSourceType.kImage}_${getNanoId(5)}`,
         type: TRTCMediaSourceType.kImage,
-        name: t('Image'),
+        name: t('LiveScenePanel.Image'),
         image: {
           url,
         },
@@ -204,14 +220,13 @@ const selectMaterial = async (type: TRTCMediaSourceType) => {
 
   switch (type) {
     case TRTCMediaSourceType.kCamera:
-      cameraSettingMediaSource.value = null;
-      showCameraSettingDialog.value = true;
+      await openCameraSettings(null);
       break;
     case TRTCMediaSourceType.kScreen:
       await addMediaSource({
         id: `${TRTCMediaSourceType.kScreen}_${getNanoId(5)}`,
         type: TRTCMediaSourceType.kScreen,
-        name: t('Screen'),
+        name: t('LiveScenePanel.Screen'),
         screen: {
           resolution: { width: 5760, height: 3240 },
           systemAudio: true,
@@ -226,7 +241,7 @@ const selectMaterial = async (type: TRTCMediaSourceType) => {
       await addMediaSource({
         id: `${TRTCMediaSourceType.kVideo}_${getNanoId(5)}`,
         type: TRTCMediaSourceType.kVideo,
-        name: t('Video'),
+        name: t('LiveScenePanel.Video'),
         video: {
           url: 'https://cdn.pixabay.com/video/2025/05/06/277097_tiny.mp4',
         },
@@ -236,7 +251,7 @@ const selectMaterial = async (type: TRTCMediaSourceType) => {
       await addMediaSource({
         id: `${TRTCMediaSourceType.kText}_${getNanoId(5)}`,
         type: TRTCMediaSourceType.kText,
-        name: t('Text'),
+        name: t('LiveScenePanel.Text'),
         text: {
           content: 'Hello, World!',
           fontSize: 32,
@@ -249,15 +264,14 @@ const selectMaterial = async (type: TRTCMediaSourceType) => {
     default:
       TUIToast({
         type: TOAST_TYPE.WARNING,
-        message: t('This type of material is not supported yet'),
+        message: t('LiveScenePanel.This type of material is not supported yet'),
       });
       break;
   }
 };
 
-const updateCameraSetting = (material: MediaSource) => {
-  cameraSettingMediaSource.value = material;
-  showCameraSettingDialog.value = true;
+const updateCameraSetting = async (material: MediaSource) => {
+  await openCameraSettings(material);
 };
 
 onBeforeUnmount(() => {

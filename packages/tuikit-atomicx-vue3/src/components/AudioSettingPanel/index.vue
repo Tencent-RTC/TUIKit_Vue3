@@ -3,11 +3,17 @@
     <div class="item-setting">
       <span class="title">{{ t('AudioSettingPanel.Microphone') }}</span>
       <div class="flex">
-        <microphone-select class="select" />
+        <microphone-select
+          class="select"
+          :auto-refresh="!manageMicrophoneDevice"
+        />
         <TUIButton v-if="micTestVisible" @click="handleMicrophoneTest">
           {{ isMicrophoneTesting ? t('AudioSettingPanel.Stop') : t('AudioSettingPanel.Test') }}
         </TUIButton>
       </div>
+      <p v-if="testFailureGuidanceVisible && microphoneTestFailureGuidanceKey" class="test-failure-guidance">
+        {{ t(microphoneTestFailureGuidanceKey) }}
+      </p>
     </div>
     <div v-if="inputVolumeLevelVisible" class="item-setting">
       <span class="title">{{ t('AudioSettingPanel.InputLevel') }}</span>
@@ -45,6 +51,9 @@
           {{ isSpeakerTesting ? t('AudioSettingPanel.Stop') : t('AudioSettingPanel.Test') }}
         </TUIButton>
       </div>
+      <p v-if="testFailureGuidanceVisible && speakerTestFailureGuidanceKey" class="test-failure-guidance">
+        {{ t(speakerTestFailureGuidanceKey) }}
+      </p>
     </div>
     <div v-if="outputVolumeVisible" class="item-setting">
       <span class="title">{{ t('AudioSettingPanel.OutputVolume') }}</span>
@@ -65,8 +74,17 @@
 import { ref, watch, computed, onUnmounted } from 'vue';
 import { useUIKit, TUIButton, TUISlider } from '@tencentcloud/uikit-base-component-vue3';
 import { useDeviceState } from '../../states/DeviceState';
+import { DeviceError } from '../../types/device';
 import MicrophoneSelect from './MicrophoneSelect.vue';
 import SpeakerSelect from './SpeakerSelect.vue';
+import {
+  getMicrophoneTestFailureGuidanceKey,
+  getSpeakerTestFailureGuidanceKey,
+} from './audioTestGuidance';
+import {
+  type MicrophonePermissionState,
+  syncMicrophoneDeviceSelection,
+} from './audioDeviceSelectionRecovery';
 
 const { t } = useUIKit();
 
@@ -91,6 +109,18 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  testFailureGuidanceVisible: {
+    type: Boolean,
+    default: false,
+  },
+  manageMicrophoneDevice: {
+    type: Boolean,
+    default: false,
+  },
+  microphoneDeviceSyncActive: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const {
@@ -98,6 +128,11 @@ const {
   currentMicVolume,
   testingMicVolume,
   outputVolume,
+  microphoneLastError,
+  microphoneList,
+  currentMicrophone,
+  getMicrophoneList,
+  setCurrentMicrophone,
   setCaptureVolume,
   setOutputVolume,
   isMicrophoneTesting,
@@ -108,11 +143,98 @@ const {
   stopSpeakerTest,
 } = useDeviceState();
 
-function handleMicrophoneTest() {
+const microphoneTestFailureGuidanceKey = ref<string | null>(null);
+const speakerTestFailureGuidanceKey = ref<string | null>(null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let microphonePermissionStatus: any = null;
+let microphoneSyncVersion = 0;
+let isUnmounted = false;
+
+const handleMicrophonePermissionChange = () => {
+  if (props.manageMicrophoneDevice && props.microphoneDeviceSyncActive) {
+    void syncMicrophoneDevice();
+  }
+};
+
+async function queryMicrophonePermission(isActive: () => boolean): Promise<MicrophonePermissionState> {
+  // Some TypeScript DOM libraries do not include the microphone permission name.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const permissions: any = typeof navigator === 'undefined' ? null : navigator.permissions;
+  if (!permissions?.query) {
+    return 'unsupported';
+  }
+  try {
+    const status = await permissions.query({ name: 'microphone' });
+    if (!isActive()) {
+      return status.state;
+    }
+    if (microphonePermissionStatus !== status) {
+      microphonePermissionStatus?.removeEventListener('change', handleMicrophonePermissionChange);
+      microphonePermissionStatus = status;
+      microphonePermissionStatus.addEventListener('change', handleMicrophonePermissionChange);
+    }
+    return status.state;
+  } catch {
+    return 'unsupported';
+  }
+}
+
+function stopObservingMicrophonePermission() {
+  microphonePermissionStatus?.removeEventListener('change', handleMicrophonePermissionChange);
+  microphonePermissionStatus = null;
+}
+
+async function syncMicrophoneDevice(): Promise<boolean> {
+  const syncVersion = ++microphoneSyncVersion;
+  const isActive = () => !isUnmounted && syncVersion === microphoneSyncVersion;
+  const permission = await queryMicrophonePermission(isActive);
+  if (!isActive()) {
+    return false;
+  }
+  microphoneTestFailureGuidanceKey.value = null;
+  const result = await syncMicrophoneDeviceSelection({
+    permission,
+    refreshDevices: getMicrophoneList,
+    getCurrentDeviceId: () => currentMicrophone.value?.deviceId,
+    getDevices: () => microphoneList.value,
+    selectDevice: deviceId => setCurrentMicrophone({ deviceId }),
+    isActive,
+  });
+  if (!isActive() || (!result.success && result.reason === 'cancelled')) {
+    return false;
+  }
+  if (!result.success) {
+    let error = microphoneLastError.value;
+    if (result.reason === 'permission-denied') {
+      error = DeviceError.NoSystemPermission;
+    } else if (result.reason === 'no-device') {
+      error = DeviceError.NoDeviceDetected;
+    } else if (error === DeviceError.NoError) {
+      error = DeviceError.UnknownError;
+    }
+    microphoneTestFailureGuidanceKey.value = getMicrophoneTestFailureGuidanceKey(error);
+    return false;
+  }
+  return true;
+}
+
+async function handleMicrophoneTest() {
   if (isMicrophoneTesting.value) {
-    stopMicrophoneTest();
-  } else {
-    startMicrophoneTest({ interval: 200 });
+    await stopMicrophoneTest();
+    return;
+  }
+  try {
+    if (props.manageMicrophoneDevice && !(await syncMicrophoneDevice())) {
+      return;
+    }
+    await startMicrophoneTest({ interval: 200 });
+  } catch (error) {
+    console.warn('Failed to start microphone test:', error);
+    microphoneTestFailureGuidanceKey.value = getMicrophoneTestFailureGuidanceKey(
+      microphoneLastError.value === DeviceError.NoError
+        ? DeviceError.UnknownError
+        : microphoneLastError.value,
+    );
   }
 }
 
@@ -120,11 +242,32 @@ async function handleSpeakerTest() {
   const SPEAKER_TEST_URL
     = 'https://web.sdk.qcloud.com/trtc/electron/download/resources/media/TestSpeaker.mp3';
   if (isSpeakerTesting.value) {
-    stopSpeakerTest();
-  } else {
-    startSpeakerTest({ filePath: SPEAKER_TEST_URL });
+    await stopSpeakerTest();
+    return;
+  }
+  speakerTestFailureGuidanceKey.value = null;
+  try {
+    await startSpeakerTest({ filePath: SPEAKER_TEST_URL });
+  } catch (error) {
+    console.warn('Failed to start speaker test:', error);
+    speakerTestFailureGuidanceKey.value = getSpeakerTestFailureGuidanceKey();
   }
 }
+
+watch(
+  () => props.microphoneDeviceSyncActive,
+  (active) => {
+    if (props.manageMicrophoneDevice && active) {
+      void syncMicrophoneDevice();
+      return;
+    }
+    if (!active) {
+      microphoneSyncVersion += 1;
+      stopObservingMicrophonePermission();
+    }
+  },
+  { immediate: true },
+);
 
 const volumeTotalNum = ref(28);
 
@@ -154,6 +297,9 @@ watch(outputVolumeValue, async (value) => {
 });
 
 onUnmounted(() => {
+  isUnmounted = true;
+  microphoneSyncVersion += 1;
+  stopObservingMicrophonePermission();
   if (isMicrophoneTesting.value) {
     stopMicrophoneTest();
   }
@@ -187,6 +333,13 @@ onUnmounted(() => {
 
   .select {
     flex: 1;
+  }
+
+  .test-failure-guidance {
+    margin: 8px 0 0;
+    color: var(--text-color-secondary);
+    font-size: 12px;
+    line-height: 20px;
   }
 
   .title {

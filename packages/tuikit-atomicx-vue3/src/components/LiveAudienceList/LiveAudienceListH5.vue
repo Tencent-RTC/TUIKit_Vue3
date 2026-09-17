@@ -23,10 +23,10 @@
           </div>
         </template>
       </div>
-      <div class="viewer-bottom-line" v-if="audienceCount >= MAX_AUDIENCE_COUNT">{{ t('Only show 200 viewers') }}</div>
+      <div class="viewer-bottom-line" v-if="audienceCount >= MAX_AUDIENCE_COUNT">{{ t('LiveAudienceList.Only show 200 viewers') }}</div>
 
       <div v-if="audienceList.length === 0" class="empty-state">
-        <p>{{ t('No audience yet') }}</p>
+        <p>{{ t('LiveAudienceList.No audience yet') }}</p>
       </div>
     </div>
   </div>

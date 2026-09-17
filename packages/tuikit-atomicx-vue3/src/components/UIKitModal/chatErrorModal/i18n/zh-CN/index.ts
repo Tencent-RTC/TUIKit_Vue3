@@ -11,6 +11,14 @@ export const resource = {
   'ChatErrorModal.login_user_id_not_match_user_sig': '请求中的 UserID 与生成 UserSig 时使用的 UserID 不一致，您可以使用<a target="_blank" href="https://console.cloud.tencent.com/im/tool-usersig">即时通信 IM 控制台 > 开发工具 > UserSig生成&校验</a>校验 UserSig。',
   'ChatErrorModal.login_sdk_app_id_not_match_user_sig': '请求中的 SDKAppID 与生成 UserSig 时使用的 SDKAppID 不一致。您可以使用<a target="_blank" href="https://console.cloud.tencent.com/im/tool-usersig">即时通信 IM 控制台 > 开发工具 > UserSig生成&校验</a>校验 UserSig。',
   'ChatErrorModal.login_sdk_app_id_not_found': 'SDKAppID 未找到，请在<a target="_blank" href="https://console.cloud.tencent.com/im">即时通信 IM 控制台</a>确认应用信息。',
+  'ChatErrorModal.login_user_sig_key_mismatch': 'UserSig 验证失败，通常是生成 UserSig 时混用了其他 SDKAppID 的私钥或密钥导致。请使用当前 SDKAppID 对应的私钥或密钥重新生成 UserSig（<a target="_blank" href="https://cloud.tencent.com/document/product/269/32688">文档</a>）。',
+
+  // Server common
+  'ChatErrorModal.server_invalid_http_url': 'HTTP 请求解析失败，请检查请求 URL 格式。若配置了 IM 私有化部署地址或内网代理，请确认地址格式正确。',
+  'ChatErrorModal.server_invalid_account': '请求中的 userID 或 UserSig 错误，请检查 userID 与 userSig 是否匹配。您可以使用<a target="_blank" href="https://console.cloud.tencent.com/im/tool-usersig">即时通信 IM 控制台 > 开发工具 > UserSig生成&校验</a>校验。',
+  'ChatErrorModal.server_invalid_sdk_app_id': 'SDKAppID 失效，请在<a target="_blank" href="https://console.cloud.tencent.com/im">即时通信 IM 控制台</a>核对 SDKAppID 的有效性。',
+  'ChatErrorModal.server_sdk_app_id_missing': '请求中缺少 SDKAppID，请检查登录参数中是否传入了 SDKAppID。',
+  'ChatErrorModal.server_sdk_app_id_forbidden': 'SDKAppID 已被禁用，请<a target="_blank" href="https://console.cloud.tencent.com/workorder/category">提交工单</a>联系客服确认。',
 
   // Package
   'ChatErrorModal.package_not_purchased': '您未购买套餐包，或套餐包已过期，或购买的套餐包正在配置中暂未生效。请登录<a target="_blank" href="https://buy.cloud.tencent.com/avc">即时通信 IM 购买页面</a>重新购买套餐包。购买后，将在5分钟后生效。',

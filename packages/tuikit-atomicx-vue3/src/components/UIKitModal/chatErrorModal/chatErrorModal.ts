@@ -2,7 +2,7 @@ import { i18next } from '@tencentcloud/uikit-base-component-vue3';
 import { UIKitModal } from '../UIKitModal';
 
 enum ChatErrorModalId {
-  // Login related errors (30000-30009)
+  // Login related errors
   LOGIN_INVALID_SDK_APP_ID = 30000,
   LOGIN_INVALID_USER_ID = 30001,
   LOGIN_INVALID_SECRET_KEY = 30004,
@@ -12,6 +12,14 @@ enum ChatErrorModalId {
   LOGIN_USER_ID_NOT_MATCH_USER_SIG = 30007,
   LOGIN_SDK_APP_ID_NOT_MATCH_USER_SIG = 30008,
   LOGIN_SDK_APP_ID_NOT_FOUND = 30041,
+  LOGIN_USER_SIG_KEY_MISMATCH = 30048,
+
+  // Server common errors (30043-30047)
+  SERVER_INVALID_HTTP_URL = 30043,
+  SERVER_INVALID_ACCOUNT = 30044,
+  SERVER_INVALID_SDK_APP_ID = 30045,
+  SERVER_SDK_APP_ID_MISSING = 30046,
+  SERVER_SDK_APP_ID_FORBIDDEN = 30047,
 
   // Package/Feature not enabled errors (30002, 30014-30019)
   PACKAGE_NOT_PURCHASED = 30002,
@@ -69,6 +77,14 @@ const MODAL_CONFIG_MAP: Record<number, ModalConfig> = {
   [ChatErrorModalId.LOGIN_USER_ID_NOT_MATCH_USER_SIG]: { i18nKey: 'login_user_id_not_match_user_sig' },
   [ChatErrorModalId.LOGIN_SDK_APP_ID_NOT_MATCH_USER_SIG]: { i18nKey: 'login_sdk_app_id_not_match_user_sig' },
   [ChatErrorModalId.LOGIN_SDK_APP_ID_NOT_FOUND]: { i18nKey: 'login_sdk_app_id_not_found' },
+  [ChatErrorModalId.LOGIN_USER_SIG_KEY_MISMATCH]: { i18nKey: 'login_user_sig_key_mismatch' },
+
+  // Server common
+  [ChatErrorModalId.SERVER_INVALID_HTTP_URL]: { i18nKey: 'server_invalid_http_url' },
+  [ChatErrorModalId.SERVER_INVALID_ACCOUNT]: { i18nKey: 'server_invalid_account' },
+  [ChatErrorModalId.SERVER_INVALID_SDK_APP_ID]: { i18nKey: 'server_invalid_sdk_app_id' },
+  [ChatErrorModalId.SERVER_SDK_APP_ID_MISSING]: { i18nKey: 'server_sdk_app_id_missing' },
+  [ChatErrorModalId.SERVER_SDK_APP_ID_FORBIDDEN]: { i18nKey: 'server_sdk_app_id_forbidden' },
 
   // Package
   [ChatErrorModalId.PACKAGE_NOT_PURCHASED]: { i18nKey: 'package_not_purchased' },
@@ -118,9 +134,25 @@ const ERROR_CODE_TO_MODAL_ID: Record<number, ChatErrorModalId> = {
   2003: ChatErrorModalId.LOGIN_INVALID_USER_SIG,
   70001: ChatErrorModalId.LOGIN_USER_SIG_EXPIRED,
   70003: ChatErrorModalId.LOGIN_USER_SIG_INVALID,
+  70005: ChatErrorModalId.LOGIN_USER_SIG_INVALID,
+  70009: ChatErrorModalId.LOGIN_USER_SIG_KEY_MISMATCH,
   70013: ChatErrorModalId.LOGIN_USER_ID_NOT_MATCH_USER_SIG,
   70014: ChatErrorModalId.LOGIN_SDK_APP_ID_NOT_MATCH_USER_SIG,
+  70016: ChatErrorModalId.LOGIN_USER_SIG_INVALID,
   70020: ChatErrorModalId.LOGIN_SDK_APP_ID_NOT_FOUND,
+  70052: ChatErrorModalId.LOGIN_USER_SIG_INVALID,
+
+  // Server common — surface during login when the app config or endpoint is wrong
+  60002: ChatErrorModalId.SERVER_INVALID_HTTP_URL,
+  60004: ChatErrorModalId.SERVER_INVALID_ACCOUNT,
+  60005: ChatErrorModalId.SERVER_INVALID_ACCOUNT,
+  60006: ChatErrorModalId.SERVER_INVALID_SDK_APP_ID,
+  60012: ChatErrorModalId.SERVER_SDK_APP_ID_MISSING,
+  60016: ChatErrorModalId.SERVER_SDK_APP_ID_FORBIDDEN,
+
+  // Package — 60020 says the package does not cover the feature the failing API needed.
+  // Callers wanting feature-specific wording override it via showChatErrorModalById.
+  60020: ChatErrorModalId.PACKAGE_NOT_PURCHASED,
 
   // Search
   60018: ChatErrorModalId.SEARCH_CLOUD_RATE_LIMIT,
@@ -175,7 +207,7 @@ function showChatErrorModalById(modalId: ChatErrorModalId): void {
  *   await sendMessage();
  * } catch (error) {
  *   // Will show modal for unique errorCodes like 2000, 70001, etc.
- *   // Will return false for ambiguous codes like -1, 80004, 3122, 60020
+ *   // Will return false for ambiguous codes like -1, 80004, 3122
  *   const handled = handleChatErrorWithModal(error);
  *   if (!handled) {
  *     // Handle ambiguous error manually based on context

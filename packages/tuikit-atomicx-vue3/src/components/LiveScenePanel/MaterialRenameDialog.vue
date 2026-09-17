@@ -1,8 +1,8 @@
 <template>
   <TUIDialog
     :visible="true"
-    :title="t('Rename')"
-    :confirmText="t('Save as new name')"
+    :title="t('LiveScenePanel.Rename')"
+    :confirmText="t('LiveScenePanel.Save as new name')"
     @confirm="handleRename"
     @close="closeMaterialRenameDialog"
     @cancel="closeMaterialRenameDialog"

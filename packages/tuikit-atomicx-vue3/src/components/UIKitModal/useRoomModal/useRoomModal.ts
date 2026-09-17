@@ -11,6 +11,9 @@ export enum ErrorCode {
   DEVICE_FAILED = 5300,
   DEVICE_NOT_DETECTED = 5301,
   DEVICE_PERMISSION_DENIED = 5302,
+  INVALID_OPERATION = 5100,
+  VIRTUAL_BACKGROUND_PACKAGE_REQUIRED = 5401,
+  RECORDING_CONFIG_NOT_FOUND = 101072,
 }
 
 interface ErrorConfig {
@@ -33,6 +36,8 @@ const ERROR_MATCHERS: ErrorMatcher[] = [
   { code: ErrorCode.DEVICE_FAILED, config: { id: 20008, i18nKey: 'Modal.DeviceFailed' } },
   { code: ErrorCode.DEVICE_NOT_DETECTED, config: { id: 20009, i18nKey: 'Modal.DeviceNotDetected' } },
   { code: ErrorCode.DEVICE_PERMISSION_DENIED, config: { id: 20010, i18nKey: 'Modal.DevicePermissionDenied' } },
+  { code: ErrorCode.VIRTUAL_BACKGROUND_PACKAGE_REQUIRED, config: { id: 20022, i18nKey: 'Modal.VirtualBackgroundPackageRequired' } },
+  { code: ErrorCode.RECORDING_CONFIG_NOT_FOUND, config: { id: 20023, i18nKey: 'Modal.RecordingConfigNotFound' } },
   { code: ErrorCode.USER_SIG_EXPIRED, config: { id: 20004, i18nKey: 'Modal.UserSigExpired' } },
   { code: ErrorCode.INVALID_SIGNATURE, config: { id: 20005, i18nKey: 'Modal.InvalidSignature' } },
   { code: ErrorCode.USER_ID_NOT_MATCH_USER_SIG, config: { id: 20006, i18nKey: 'Modal.UserIdNotMatchUserSig' } },
@@ -43,6 +48,22 @@ const ERROR_MATCHERS: ErrorMatcher[] = [
   { code: TUIErrorCode.ERR_MICROPHONE_NOT_AUTHORIZED, config: { id: 20013, i18nKey: 'Modal.MicrophonePermissionDenied' } },
   { code: TUIErrorCode.ERR_CAMERA_START_FAILED, config: { id: 20014, i18nKey: 'Modal.CameraStartFailed' } },
   { code: TUIErrorCode.ERR_MICROPHONE_START_FAILED, config: { id: 20015, i18nKey: 'Modal.MicrophoneStartFailed' } },
+  { code: TUIErrorCode.ERR_OPERATION_INVALID_BEFORE_ENTER_ROOM, config: { id: 20024, i18nKey: 'Modal.PleaseJoinRoomFirst' } },
+  // TRTC reports every pre-join plugin/stream call as the generic INVALID_OPERATION,
+  // so the message is what distinguishes "not joined yet" from other invalid operations.
+  { code: ErrorCode.INVALID_OPERATION, messagePattern: /not join/i, config: { id: 20024, i18nKey: 'Modal.PleaseJoinRoomFirst' } },
+  // Credential / app configuration
+  { code: TUIErrorCode.ERR_SDKAPPID_NOT_FOUND, config: { id: 20026, i18nKey: 'Modal.SdkAppIdNotFound' } },
+  // Fallback for the SDK-reported "not logged in" code. The API-specific login matchers below
+  // only match the locally thrown Error, which carries a message but no code.
+  { code: TUIErrorCode.ERR_SDK_NOT_INITIALIZED, config: { id: 20025, i18nKey: 'Modal.PleaseLoginFirst' } },
+  // Invalid arguments passed by the integrator
+  { code: TUIErrorCode.ERR_ROOM_ID_INVALID, config: { id: 20027, i18nKey: 'Modal.RoomIdInvalid' } },
+  { code: TUIErrorCode.ERR_ROOM_NAME_INVALID, config: { id: 20028, i18nKey: 'Modal.RoomNameInvalid' } },
+  { code: TUIErrorCode.ERR_ROOM_METADATA_EXCEED_KEY_COUNT_LIMIT, config: { id: 20030, i18nKey: 'Modal.RoomMetadataExceedKeyCountLimit' } },
+  { code: TUIErrorCode.ERR_ROOM_METADATA_EXCEED_VALUE_SIZE_LIMIT, config: { id: 20031, i18nKey: 'Modal.RoomMetadataExceedValueSizeLimit' } },
+  // Package quota
+  { code: TUIErrorCode.ERR_MAX_SEAT_COUNT_LIMIT, config: { id: 20029, i18nKey: 'Modal.MaxSeatCountLimit' } },
   // roomManager error code — all three are API-specific so apiName is required for them to match
   { messagePattern: /Please login firstly by useLoginState/, apiName: 'createAndJoinRoom', config: { id: 20016, i18nKey: 'Modal.PleaseLoginFirstBeforeCreateAndJoinRoom' } },
   { messagePattern: /Please login firstly by useLoginState/, apiName: 'joinRoom', config: { id: 20017, i18nKey: 'Modal.PleaseLoginFirstBeforeJoinRoom' } },
@@ -105,7 +126,6 @@ function handleErrorWithModal(error: { code?: number; message?: string }, apiNam
       content: t(`Room.${config.i18nKey}`),
       type: 'error',
     });
-    return;
   }
 }
 

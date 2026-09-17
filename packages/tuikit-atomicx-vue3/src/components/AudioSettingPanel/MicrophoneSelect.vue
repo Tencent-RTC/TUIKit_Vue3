@@ -30,9 +30,11 @@ const { t } = useUIKit();
 interface Props {
   onChange?: (id: string) => void;
   disabled?: boolean;
+  autoRefresh?: boolean;
 }
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
+  autoRefresh: true,
 });
 const currentDeviceId = ref(currentMicrophone.value?.deviceId);
 
@@ -63,6 +65,9 @@ async function handleChange(deviceId: string) {
 }
 
 onBeforeMount(async () => {
+  if (!props.autoRefresh) {
+    return;
+  }
   TUIRoomEngine.once('ready', async () => {
     await getMicrophoneList();
   });

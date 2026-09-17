@@ -74,23 +74,23 @@ const actions = computed(() => {
   const isDisableSendMessage = currentUserInfo.value?.isMessageDisabled;
   if (!isDisableSendMessage) {
     tempActions.push({
-      label: t('Mute'),
+      label: t('LiveAudienceList.Mute'),
       action: 'disableSendMessage',
       actionFn: () => disableSendMessage({ userId: props.userId, isDisable: true }),
     });
   }
   if (isDisableSendMessage) {
     tempActions.push({
-      label: t('Unmute'),
+      label: t('LiveAudienceList.Unmute'),
       action: 'disableSendMessage',
       actionFn: () => disableSendMessage({ userId: props.userId, isDisable: false }),
     });
   }
   if (isInCoGuest) {
-    tempActions.push({ label: t('Kick out'), action: 'disconnect', actionFn: () => kickUserOutOfSeat({ userId: props.userId }) });
+    tempActions.push({ label: t('LiveAudienceList.Kick out'), action: 'disconnect', actionFn: () => kickUserOutOfSeat({ userId: props.userId }) });
   }
   tempActions.push({
-    label: t('Kick out of room'),
+    label: t('LiveAudienceList.Kick out of room'),
     action: 'kickUserOutOfRoom',
     actionFn: () => kickUserOutOfRoom({ userId: props.userId }),
   });
@@ -102,12 +102,12 @@ const handleAction = async (action: { actionFn: () => Promise<void>; label: stri
   try {
     await action.actionFn();
     TUIToast.success({
-      message: t('Operation successful'),
+      message: t('LiveAudienceList.Operation successful'),
     });
   } catch (error) {
     console.error('Action failed:', error);
     TUIToast.error({
-      message: t('Operation failed'),
+      message: t('LiveAudienceList.Operation failed'),
     });
   }
   emit('close');

@@ -1,7 +1,7 @@
 <template>
   <div class="live-scene-placeholder" v-if="displayMode === 'panel'">
     <div class="live-scene-placeholder-content">
-      <span>{{ t('We support you to add rich sources') }}</span>
+      <span>{{ t('LiveScenePanel.We support you to add rich sources') }}</span>
       <div class="add-material-list">
         <div
           class="add-material-item"
@@ -23,7 +23,7 @@
   >
     <div class="add-material-button">
       <svg-icon :icon="AddIcon" class="icon-container" />
-      <span>{{ t('Add') }}</span>
+      <span>{{ t('LiveScenePanel.Add') }}</span>
     </div>
     <transition name="dropdown">
       <div class="add-material-list" v-show="isDropdownVisible">
@@ -62,9 +62,9 @@ const isDropdownVisible = ref(false);
 let hideTimer: ReturnType<typeof setTimeout> | null = null;
 
 const defaultMaterialList = [
-  { icon: CameraIcon, title: t('Add Camera'), type: TRTCMediaSourceType.kCamera },
-  { icon: ScreenIcon, title: t('Add Screen Share'), type: TRTCMediaSourceType.kScreen },
-  { icon: ImageIcon, title: t('Add Image'), type: TRTCMediaSourceType.kImage },
+  { icon: CameraIcon, title: t('LiveScenePanel.Add Camera'), type: TRTCMediaSourceType.kCamera },
+  { icon: ScreenIcon, title: t('LiveScenePanel.Add Screen Share'), type: TRTCMediaSourceType.kScreen },
+  { icon: ImageIcon, title: t('LiveScenePanel.Add Image'), type: TRTCMediaSourceType.kImage },
 ];
 
 // 鼠标进入时显示下拉列表
