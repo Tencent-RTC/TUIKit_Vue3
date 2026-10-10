@@ -1,3 +1,11 @@
+## [6.5.12] (2026-10-10)
+### fix
+* Chat/Room/Live: Fixed the issue where the login state of each module was not reset after the user was kicked offline or the userSig expired in on-demand loading scenarios.
+
+## [6.5.11] (2026-09-18)
+### feat
+* Chat: chat-store supports streaming messages in cloud search results.
+
 ## [6.5.10] (2026-09-17)
 ### fix
 * Room/Live: Fixed the issue where the speaker test failed to play because Safari does not support `setSinkId`

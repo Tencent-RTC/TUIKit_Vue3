@@ -36,6 +36,17 @@ export default class ChatLoginServer {
         TUIConstants.TUILogin.EVENT_SUB_KEY.USER_LOGOUT_SUCCESS,
         this,
       );
+      // 被踢 / userSig 过期都要把 chat 标记为已退出
+      TUICore.registerEvent(
+        TUIConstants.TUILogin.EVENT.LOGIN_STATE_CHANGED,
+        TUIConstants.TUILogin.EVENT_SUB_KEY.USER_KICKED_OFFLINE,
+        this,
+      );
+      TUICore.registerEvent(
+        TUIConstants.TUILogin.EVENT.LOGIN_STATE_CHANGED,
+        TUIConstants.TUILogin.EVENT_SUB_KEY.USER_SIG_EXPIRED,
+        this,
+      );
     }
   }
 
@@ -49,6 +60,8 @@ export default class ChatLoginServer {
           this.login();
           break;
         case TUIConstants.TUILogin.EVENT_SUB_KEY.USER_LOGOUT_SUCCESS:
+        case TUIConstants.TUILogin.EVENT_SUB_KEY.USER_KICKED_OFFLINE:
+        case TUIConstants.TUILogin.EVENT_SUB_KEY.USER_SIG_EXPIRED:
           this.logout();
           break;
         default:
