@@ -476,11 +476,22 @@ const streamViewSize = computed(() => ({
 // not visual position/size.
 const SELF_SEAT_Z_INDEX = 100;
 
+// In mixer mode the local seat style is applied to the local mixer, a sibling
+// of `.live-core-ui` (z-index 1) rather than a seat inside it. Any z-index
+// above 0, including the host's own zOrder, hides every remote seat.
+const MIXER_LOCAL_SEAT_Z_INDEX = 0;
+
+const getSeatZIndex = (userInfo: SeatUserInfo | undefined, zOrder: unknown): number => {
+  if (isLocalUserSeat(userInfo)) {
+    return isInStreamMixerComp.value ? MIXER_LOCAL_SEAT_Z_INDEX : SELF_SEAT_Z_INDEX;
+  }
+  return Number(zOrder) || 0;
+};
+
 const handleLandscapeVideoForAudioConnectInPortraitContainer = (index: number): any => {
   const layout = ratioLayoutList.value[index];
   const seat = seatList.value[index];
   const connectVideoHeight = liveCoreViewContainerSize.value.height * audioConnectHeightInPortraitContainerRatio;
-  const isSelf = isLocalUserSeat(seat.userInfo);
 
   seatListWithRealSize.value.push({
     userInfo: seat.userInfo as SeatUserInfo,
@@ -490,7 +501,7 @@ const handleLandscapeVideoForAudioConnectInPortraitContainer = (index: number): 
       top: `${liveCoreViewContainerSize.value.height - topAndBottomMargin * 2 - index * (connectVideoHeight + audioConnectGap)}px`,
       width: `${connectVideoHeight}px`,
       height: `${connectVideoHeight}px`,
-      zIndex: isSelf ? SELF_SEAT_Z_INDEX : (Number(layout.zOrder) || 0),
+      zIndex: getSeatZIndex(seat.userInfo, layout.zOrder),
     },
   });
 };
@@ -507,8 +518,7 @@ watch(() => [seatList.value, streamViewSize.value, liveCoreViewContainerSize.val
     // intercept the click, so tapping the thumbnail never opens the
     // self-device menu. Elevating only the local seat's z-index keeps the
     // visual layout identical while making the thumbnail reliably clickable.
-    const isSelf = isLocalUserSeat(item.userInfo);
-    const seatZIndex = isSelf ? SELF_SEAT_Z_INDEX : (Number(ratioLayout.zOrder) || 0);
+    const seatZIndex = getSeatZIndex(item.userInfo, ratioLayout.zOrder);
     if (!isInStreamMixerComp.value && isPortraitAndFill && isSampleWithCanvas) {
       seatListWithRealSize.value.push({
         userInfo: item.userInfo as SeatUserInfo,
@@ -956,7 +966,12 @@ onBeforeUnmount(() => {
     .live-core-ui {
       width: 100%;
       height: 100%;
-      z-index: 1;
+      // z-index MUST be 5: the RTC video tiles in `.stream-content` carry
+      // the seat's engine zOrder as an explicit z-index (typically 1-2), so a
+      // value of 1 lets the remote video cover this whole layer — the
+      // co-guest avatar widget "flashes" on connect then disappears under
+      // the video. Must stay below PlayerControl / overlays (z-index: 10).
+      z-index: 5;
       position: absolute;
       pointer-events: none;
       top: 0;
