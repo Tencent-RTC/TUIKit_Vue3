@@ -34,6 +34,11 @@ export enum VideoQuality {
   Quality1080P = 4,
 }
 
+export enum VideoOrientation {
+  Landscape = 0,
+  Portrait = 1,
+}
+
 export enum MediaSettingDisplayMode {
   Icon = 'Icon',
   IconWithPanel = 'IconWithPanel',
@@ -132,7 +137,7 @@ export interface IDeviceState {
   setCurrentCamera: (options: { deviceId: string }) => Promise<void>;
   switchCamera: (options: { isFrontCamera: boolean }) => Promise<void>;
   switchMirror: (options: { mirror: MirrorType }) => Promise<void>;
-  updateVideoQuality: (options: { quality: VideoQuality }) => Promise<void>;
+  updateVideoQuality: (options: { quality: VideoQuality; orientation?: VideoOrientation }) => Promise<void>;
   startCameraTest: (options: { view: string | HTMLDivElement }) => Promise<void>;
   stopCameraTest: () => Promise<void>;
   // Screen share actions

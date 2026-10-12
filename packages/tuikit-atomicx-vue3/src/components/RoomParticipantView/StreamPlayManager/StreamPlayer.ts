@@ -7,6 +7,32 @@ import { VideoStreamQuality } from './types';
 const roomEngine = useRoomEngine();
 const { loginUserInfo } = useLoginState();
 
+/** TRTCCloud screen-share preview update (no public setLocalScreenView). */
+type TRTCCloudScreenShareBridge = {
+  _setScreenShareParams?: (params: {
+    view?: string | string[] | HTMLElement | HTMLElement[] | null;
+    fillMode?: 'contain' | 'cover' | 'fill';
+  }) => void;
+  _updateLocalScreen?: () => Promise<void>;
+};
+
+function getPictureInPictureDocument(): Document | null {
+  const pictureInPicture = (
+    globalThis as { documentPictureInPicture?: { window?: Window | null } }
+  ).documentPictureInPicture;
+  return pictureInPicture?.window?.document ?? null;
+}
+
+/** Same lookup as the engine adapter: main document first, then the PiP document. */
+function resolveViewElement(token: string): HTMLElement | null {
+  if (!token) {
+    return null;
+  }
+  return document.getElementById(token)
+    ?? getPictureInPictureDocument()?.getElementById(token)
+    ?? null;
+}
+
 /**
  * 流播放器 - 负责视频流的播放控制
  * 职责：
@@ -33,6 +59,9 @@ export class StreamPlayer {
       if (userId === loginUserInfo.value?.userId) {
         if (playStreamType === TUIVideoStreamType.kCameraStream || playStreamType === TUIVideoStreamType.kCameraStreamLow) {
           await roomEngine.instance?.setLocalVideoView({ view: viewIdList });
+        } else if (playStreamType === TUIVideoStreamType.kScreenStream) {
+          await this.setLocalScreenView(viewIdList);
+          console.log(`[StreamPlayer] setLocalScreenView: ${userId}_${streamType}`);
         }
       } else {
         await roomEngine.instance?.setRemoteVideoView({
@@ -66,6 +95,9 @@ export class StreamPlayer {
       if (userId === loginUserInfo.value?.userId) {
         if (playStreamType === TUIVideoStreamType.kCameraStream || playStreamType === TUIVideoStreamType.kCameraStreamLow) {
           await roomEngine.instance?.setLocalVideoView({ view: null });
+        } else if (playStreamType === TUIVideoStreamType.kScreenStream) {
+          // Clear preview only — do not stop the active screen capture.
+          await this.setLocalScreenView(null);
         }
       } else {
         await roomEngine.instance?.stopPlayRemoteVideo({
@@ -100,6 +132,8 @@ export class StreamPlayer {
       if (userId === loginUserInfo.value?.userId) {
         if (playStreamType === TUIVideoStreamType.kCameraStream || playStreamType === TUIVideoStreamType.kCameraStreamLow) {
           await roomEngine.instance?.setLocalVideoView({ view: viewIdList });
+        } else if (playStreamType === TUIVideoStreamType.kScreenStream) {
+          await this.setLocalScreenView(viewIdList);
         }
       } else {
         // 远程视频流
@@ -151,6 +185,13 @@ export class StreamPlayer {
     const fillMode = fillModeMap[renderParams.fillMode || FillMode.Fit];
     try {
       if (userId === loginUserInfo.value?.userId) {
+        if (streamType === VideoStreamType.Screen) {
+          // Camera setLocalRenderParams must not be applied to the screen preview.
+          await this.setLocalScreenFillMode(
+            renderParams.fillMode === FillMode.Fill ? 'cover' : 'contain',
+          );
+          return;
+        }
         await trtcCloud?.setLocalRenderParams({
           fillMode,
         });
@@ -163,6 +204,39 @@ export class StreamPlayer {
       console.error('[StreamPlayer] setRenderParams error:', userId, streamType, error);
       throw error;
     }
+  }
+
+  /**
+   * Bind or clear local screen-share preview after capture has started.
+   * RoomEngine.setLocalVideoView only covers the camera path; screen preview
+   * is updated through TRTCCloud private APIs today.
+   *
+   * REVIEW: trtcCloud should expose a public API to update screenShare preview
+   * (e.g. updateLocalScreenView), then replace _setScreenShareParams / _updateLocalScreen.
+   */
+  private async setLocalScreenView(viewIdList: string[] | null): Promise<void> {
+    const trtcCloud = roomEngine.instance?.getTRTCCloud() as TRTCCloudScreenShareBridge | undefined;
+    if (!trtcCloud?._setScreenShareParams || !trtcCloud._updateLocalScreen) {
+      return;
+    }
+
+    // updateScreenShare rejects a string[] (arrayItem must be HTMLElement). Resolve
+    // ids the same way the engine does: main document, then the PiP document.
+    const view = viewIdList
+      ? viewIdList.map(resolveViewElement).filter((el): el is HTMLElement => !!el)
+      : null;
+    trtcCloud._setScreenShareParams({ view });
+    await trtcCloud._updateLocalScreen();
+  }
+
+  private async setLocalScreenFillMode(fillMode: 'contain' | 'cover' | 'fill'): Promise<void> {
+    const trtcCloud = roomEngine.instance?.getTRTCCloud() as TRTCCloudScreenShareBridge | undefined;
+    if (!trtcCloud?._setScreenShareParams || !trtcCloud._updateLocalScreen) {
+      return;
+    }
+
+    trtcCloud._setScreenShareParams({ fillMode });
+    await trtcCloud._updateLocalScreen();
   }
 
   private getPlayStreamType(streamType: VideoStreamType, videoQuality?: VideoStreamQuality): TUIVideoStreamType {

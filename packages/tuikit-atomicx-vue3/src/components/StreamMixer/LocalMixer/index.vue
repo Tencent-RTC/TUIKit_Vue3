@@ -22,6 +22,11 @@
   </div>
 </template>
 
+<script lang="ts">
+// Module scope: every LocalMixer instance drives the same SDK mixing manager singleton.
+let pendingTeardown: Promise<void> | null = null;
+</script>
+
 <script setup lang="ts">
 import type { Ref } from 'vue';
 import { ref, onMounted, watch, onBeforeUnmount, computed, nextTick } from 'vue';
@@ -44,9 +49,22 @@ const { currentLive } = useLiveListState();
 
 const mixControlRef = ref<InstanceType<typeof MixerControl> | null>(null);
 const { publishVideoQuality, activeMediaSource, enableLocalVideoMixer, mediaSourceList, isVideoMixerEnabled } = useVideoMixerState();
-enableLocalVideoMixer().catch((err: unknown) => {
-  console.error('[LocalMixer] enableLocalVideoMixer failed:', err);
-});
+
+function enableMixer() {
+  return enableLocalVideoMixer().catch((err: unknown) => {
+    console.error('[LocalMixer] enableLocalVideoMixer failed:', err);
+  });
+}
+
+// A remount (route change, HMR) starts while the previous instance is still
+// destroying the shared SDK mixing manager; that destroy clears the SDK
+// singleton when it finishes, so this instance must not touch the manager
+// until then.
+const previousTeardown = pendingTeardown;
+if (!previousTeardown) {
+  enableMixer();
+}
+let isUnmounting = false;
 
 const currentLiveOrientation = computed(() => {
   if (currentLive.value
@@ -212,14 +230,26 @@ const re = new ResizeObserver(() => {
 onMounted(() => {
   re.observe(localMixerRef.value);
   TUIRoomEngine.once('ready', async () => {
+    if (previousTeardown) {
+      await previousTeardown;
+      if (isUnmounting) {
+        return;
+      }
+      await enableMixer();
+    }
     const mixerView = document.getElementById('local-video-mixer');
-    if (!mixerView) {
+    if (!mixerView || isUnmounting) {
       return;
     }
 
     const mediaSourceManager = roomEngine.instance?.getTRTCCloud().getMediaMixingManager();
     await mediaSourceManager.bindPreviewArea(mixerView as HTMLElement);
     getMixControlStyle();
+    // Mounted mid-live: the liveId watch below has no change to react to, so
+    // the new mix track must be published here.
+    if (currentLive.value?.liveId && !isUnmounting) {
+      await mediaSourceManager.startPublish();
+    }
   });
 
   watch(() => currentLive.value?.liveId, async (newVal) => {
@@ -233,11 +263,34 @@ onMounted(() => {
   });
 });
 
-onBeforeUnmount(async () => {
+onBeforeUnmount(() => {
+  isUnmounting = true;
   re.unobserve(localMixerRef.value);
   isVideoMixerEnabled.value = false;
   const mediaSourceManager = roomEngine.instance?.getTRTCCloud().getMediaMixingManager();
-  await mediaSourceManager?.destroy();
+  const isPublishing = !!currentLive.value?.liveId;
+  const teardown = (async () => {
+    // Unpublish before destroy ends the mix track: the SDK recaptures an
+    // ended published track from the real camera and keeps publishing it.
+    if (isPublishing) {
+      try {
+        await mediaSourceManager?.stopPublish();
+      } catch (err: unknown) {
+        console.error('[LocalMixer] stopPublish before destroy failed:', err);
+      }
+    }
+    try {
+      await mediaSourceManager?.destroy();
+    } catch (err: unknown) {
+      console.error('[LocalMixer] destroy failed:', err);
+    }
+  })();
+  pendingTeardown = teardown;
+  teardown.finally(() => {
+    if (pendingTeardown === teardown) {
+      pendingTeardown = null;
+    }
+  });
 });
 </script>
 

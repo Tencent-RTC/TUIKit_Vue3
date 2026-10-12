@@ -1,3 +1,7 @@
+## [6.6.0] (2026-10-12)
+### Fix
+* Room: Fixed an initialization issue in the room members module where the watcher was not properly unsubscribed upon component destruction.
+
 ## [6.5.12] (2026-10-10)
 ### fix
 * Chat/Room/Live: Fixed the issue where the login state of each module was not reset after the user was kicked offline or the userSig expired in on-demand loading scenarios.
@@ -9,6 +13,10 @@
 ## [6.5.10] (2026-09-17)
 ### fix
 * Room/Live: Fixed the issue where the speaker test failed to play because Safari does not support `setSinkId`
+
+## [6.5.9] (2026-09-15)
+### feat
+* Live: Unified device failure prompts and recovery guidance, with persistent explanations and user-controlled recovery
 
 ## [6.5.8] (2026-09-04)
 ### feat

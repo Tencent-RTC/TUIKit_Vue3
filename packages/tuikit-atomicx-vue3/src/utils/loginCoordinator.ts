@@ -47,3 +47,33 @@ export async function waitForLogin(): Promise<void> {
     await loginPromise;
   }
 }
+
+/**
+ * Wait until the chat SDK is fully ready.
+ * Error 2025 from chat login means an earlier login of the same user is still
+ * in progress and will succeed later, so wait for SDK_READY instead of
+ * treating chat as logged in (same approach as TUICallEngine TSignalClient.login).
+ * Rejects on SDK_NOT_READY (logout / kicked) so callers never hang forever.
+ * @internal
+ */
+export function waitForChatReady(chat: any, EVENT: { SDK_READY: string; SDK_NOT_READY: string }): Promise<void> {
+  if (!chat || chat.isReady()) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      chat.off(EVENT.SDK_READY, onReady);
+      chat.off(EVENT.SDK_NOT_READY, onNotReady);
+    };
+    const onReady = () => {
+      cleanup();
+      resolve();
+    };
+    const onNotReady = () => {
+      cleanup();
+      reject(new Error('Chat SDK not ready'));
+    };
+    chat.on(EVENT.SDK_READY, onReady);
+    chat.on(EVENT.SDK_NOT_READY, onNotReady);
+  });
+}

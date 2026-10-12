@@ -149,7 +149,9 @@ onBeforeUnmount(async () => {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #000;
+  /* Avoid blue selection flash on the video after double-clicking an empty tile. */
+  -webkit-user-select: none;
+  user-select: none;
   &.screen-overscan {
     :deep(video) {
       width: calc(100% + 2px) !important;

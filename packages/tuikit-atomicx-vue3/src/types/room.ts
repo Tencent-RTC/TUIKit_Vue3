@@ -141,7 +141,7 @@ export interface RecordingInfo {
   /** 云端录制状态 */
   readonly status: RecordingStatus;
   /** 开始录制的用户 */
-  readonly operator: RoomUser;
+  readonly operatorUser: RoomUser;
   /** 开始录制的时间戳 */
   readonly startTime: number;
 }

@@ -5,7 +5,7 @@ import TUICore, { TUILogin, TUIConstants } from '@tencentcloud/tui-core-lite';
 import TUIRoomEngine from '@tencentcloud/tuiroom-engine-js';
 import { dataReport, MetricsKey } from '../../report';
 import { isMobile } from '../../utils';
-import { waitForLogin } from '../../utils/loginCoordinator';
+import { waitForChatReady, waitForLogin } from '../../utils/loginCoordinator';
 
 export default class RTCLoginServer {
   private static instance: RTCLoginServer;
@@ -101,12 +101,14 @@ export default class RTCLoginServer {
         userID,
         userSig,
       }).catch((error: any) => {
-        // Ignore error code 2025 (duplicate login), allow subsequent code to continue
+        // 2025: an earlier chat login is still in progress, wait for SDK_READY below
         if (error?.code === 2025) {
           return;
         }
         throw error;
       });
+      // TUIRoomEngine depends on a fully logged-in chat instance
+      await waitForChatReady(TUIChatEngine.chat, TUIChatEngine.EVENT);
       const res = await TUIRoomEngine.login({
         sdkAppId: SDKAppID,
         userId: userID,
